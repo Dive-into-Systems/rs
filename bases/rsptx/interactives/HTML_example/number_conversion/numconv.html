@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>qnum testing &#8212; Runestone Interactive Overview</title>
+
+    <!-- KCW: Replaced static jquery with CDN version. -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+
+    <!-- BEGIN LINKED FILES -->
+    <link rel="stylesheet" type="text/css" href="../runestone/dist/vendors-node_modules_bootstrap_dist_js_bootstrap_js-node_modules_jquery-ui_jquery-ui_js-node_-72cd89.cd688d1623c9932e.css" />
+    <link rel="stylesheet" type="text/css" href="../runestone/dist/runestone.8cc3d7e65ac22823.css" />
+    <script src="../runestone/dist/runtime.5af9a881ad0b00e6.bundle.js"></script>
+    <script src="../runestone/dist/vendors-node_modules_bootstrap_dist_js_bootstrap_js-node_modules_jquery-ui_jquery-ui_js-node_-72cd89.51d9dde4e5162190.bundle.js"></script>
+    <script src="../runestone/dist/runestone.a22800ca61841f05.bundle.js"></script>
+    <!-- END LINKED FILES -->
+
+<script>
+  eBookConfig = {};
+
+    eBookConfig.useRunestoneServices = false;
+    eBookConfig.host = 'http://127.0.0.1:8000' || 'http://127.0.0.1:8000';
+    eBookConfig.app = eBookConfig.host+'/runestone';
+    eBookConfig.course = 'testfitb';
+    eBookConfig.basecourse = 'testfitb';
+    eBookConfig.isLoggedIn = false;
+    eBookConfig.enableCompareMe = eBookConfig.useRunestoneServices;
+    eBookConfig.new_server_prefix = '';
+
+  eBookConfig.ajaxURL = eBookConfig.app+'/ajax/';
+  eBookConfig.logLevel = 0;
+  eBookConfig.loginRequired = false;
+  eBookConfig.build_info = "unknown";
+  eBookConfig.python3 = false;
+  eBookConfig.acDefaultLanguage = 'python' ? 'python' : 'python'
+  eBookConfig.runestone_version = '6.6.2';
+  eBookConfig.jobehost = 'http://jobe2.cosc.canterbury.ac.nz';
+  eBookConfig.proxyuri_runs = '/jobe/index.php/restapi/runs/';
+  eBookConfig.proxyuri_files = '/jobe/index.php/restapi/files/';
+  eBookConfig.enable_chatcodes = false ? false : false;
+  eBookConfig.enableScratchAC = true;
+
+</script>
+
+  </head><body>
+
+
+<div class="container" id="main-content" role="main">
+
+<section id="qnum-testing">
+<h1>qnum testing<a class="headerlink" href="#qnum-testing" title="Permalink to this heading">¶</a></h1>
+</section>
+
+
+<section id="fill-in-the-blank">
+<h1>Fill in the Blank<a class="headerlink" href="#fill-in-the-blank" title="Permalink to this heading">¶</a></h1>
+
+        <div class="runestone ">
+        <div data-component="fillintheblank" data-question_label="1" id="test_fitb_string"  style="visibility: hidden;">
+            <p>Before-5-After: Fill in the blanks to make the following sentence: “The red car drove away.”</p>
+<p>The <input type="text"> car drove <input type="text">.</p>
+
+        <script type="application/json">
+            [[{"regex": "^\\s*red\\s*$", "regexFlags": "", "feedback": "<p>Correct.</p>\n"}, {"regex": "^\\s*x\\s*$", "regexFlags": "", "feedback": "<p>Incorrect. Try \u2018red\u2019.</p>\n"}], [{"regex": "^\\s*away\\s*$", "regexFlags": "", "feedback": "<p>Correct.</p>\n"}, {"regex": "^\\s*x\\s*$", "regexFlags": "", "feedback": "<p>Incorrect. Try \u2018away\u2019.</p>\n"}]]
+        </script>
+
+        </div>
+        </div>
+            <p>Test 2 - test a numeric range.</p>
+
+        <div class="runestone ">
+        <div data-component="fillintheblank" data-question_label="2" id="test_fitb_number"  style="visibility: hidden;">
+            <p>Before-6-After:</p>
+<p>What is the solution to the following:</p>
+<p><span class="math notranslate nohighlight">\(2 * \pi =\)</span> <input type="text">.</p>
+        <script type="application/json">
+            [[{"number": [6.275, 6.285], "feedback": "<p>Good job.</p>\n"}, {"number": [0.27, 6.27], "feedback": "<p>Try higher.</p>\n"}, {"number": [6.289999999999999, 12.29], "feedback": "<p>Try lower.</p>\n"}, {"regex": "^\\s*.*\\s*$", "regexFlags": "", "feedback": "<p>Incorrect. Try again.</p>\n"}]]
+        </script>
+
+        </div>
+        </div>
+</section>
+
+</div>
+
+<script>
+  window.addEventListener('load', (event) => {
+    runestoneComponents.getSwitch();
+  });
+</script>
+
+  </body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Runestone Customized Interactive Components Overview</title>
+
+    <!-- KCW: Replaced static jquery with CDN version. -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+
+    <!-- BEGIN LINKED FILES -->
+    <link rel="stylesheet" type="text/css" href="../runestone/dist/vendors-node_modules_bootstrap_dist_js_bootstrap_js-node_modules_jquery-ui_jquery-ui_js-node_-72cd89.cd688d1623c9932e.css" />
+    <link rel="stylesheet" type="text/css" href="../runestone/dist/runestone.8cc3d7e65ac22823.css" />
+    <script src="../runestone/dist/runtime.832f0cdf75059c0d.bundle.js"></script>
+    <script src="../runestone/dist/vendors-node_modules_bootstrap_dist_js_bootstrap_js-node_modules_jquery-ui_jquery-ui_js-node_-72cd89.51d9dde4e5162190.bundle.js"></script>
+    <script src="../runestone/dist/runestone.a2b4edffdb160672.bundle.js"></script>
+    <!-- END LINKED FILES -->
+
+<script>
+  eBookConfig = {};
+
+    eBookConfig.useRunestoneServices = false;
+    eBookConfig.host = 'http://127.0.0.1:8000' || 'http://127.0.0.1:8000';
+    eBookConfig.app = eBookConfig.host+'/runestone';
+    eBookConfig.course = 'testfitb';
+    eBookConfig.basecourse = 'testfitb';
+    eBookConfig.isLoggedIn = false;
+    eBookConfig.enableCompareMe = eBookConfig.useRunestoneServices;
+    eBookConfig.new_server_prefix = '';
+
+  eBookConfig.ajaxURL = eBookConfig.app+'/ajax/';
+  eBookConfig.logLevel = 0;
+  eBookConfig.loginRequired = false;
+  eBookConfig.build_info = "unknown";
+  eBookConfig.python3 = false;
+  eBookConfig.acDefaultLanguage = 'python' ? 'python' : 'python'
+  eBookConfig.runestone_version = '6.6.2';
+  eBookConfig.jobehost = 'http://jobe2.cosc.canterbury.ac.nz';
+  eBookConfig.proxyuri_runs = '/jobe/index.php/restapi/runs/';
+  eBookConfig.proxyuri_files = '/jobe/index.php/restapi/files/';
+  eBookConfig.enable_chatcodes = false ? false : false;
+  eBookConfig.enableScratchAC = true;
+
+</script>
+
+  </head><body>
+
+
+<div class="container" id="main-content" role="main">
+
+
+<section id="fill-in-the-blank">
+<h1>Number Conversion<a class="headerlink" href="#number-conversion" title="Permalink to this heading">¶</a></h1>
+            <p>Test 1 - test the number conversion component.</p>
+
+        <div class="runestone ">
+        <div data-component="numberconversion" data-question_label="1" id="test_number_conversion"  style="visibility: hidden;">
+            <!-- <p>Before-6-After:</p>
+<p>What is the solution to the following:</p>
+<p><span class="math notranslate nohighlight">\(2 * \pi =\)</span> <input type="text">.</p>
+
+        <script type="application/json">
+            [[{"number": [6.275, 6.285], "feedback": "<p>Good job.</p>\n"}, {"number": [0.27, 6.27], "feedback": "<p>Try higher.</p>\n"}, {"number": [6.289999999999999, 12.29], "feedback": "<p>Try lower.</p>\n"}, {"regex": "^\\s*.*\\s*$", "regexFlags": "", "feedback": "<p>Incorrect. Try again.</p>\n"}]]
+        </script> -->
+<!--         <bits value="16"/> -->
+<!--            {"bits": 16, "from-options" : ["binary", "decimal-unsigned", "decimal-signed"], "to-options" : ["binary", "hexadecimal"]}-->
+        <script type="application/json">
+            {"bits": 4}
+        </script>
+      </div>
+        </div>
+</section>
+
+<section id="caching info">
+  <h1>Cache Info<a class="headerlink" href="#number-conversion" title="Permalink to this heading">¶</a></h1>
+            <p>Test 2 - test the cache info component.</p>
+
+        <div class="runestone ">
+        <div data-component="cacheinfo" data-question_label="2" id="test_caching_info"  style="visibility: hidden;"></div>
+        </div>
+</section>
+
+<section id="caching partition">
+  <h1>Cache Partition<a class="headerlink" href="#number-conversion" title="Permalink to this heading">¶</a></h1>
+            <p>Test 3 - test the cache partition component.</p>
+        <div class="runestone ">
+        <div data-component="cachepartition" data-question_label="3" id="test_caching_partition"  style="visibility: hidden;"></div>
+        </div>
+</section>
+
+<section id="cache table">
+  <h1>Cache Table<a class="headerlink" href="#cache-table" title="Permalink to this heading">¶</a></h1>
+            <p>Test 4 - test the cache table component.</p>
+
+        <div class="runestone ">
+        <div data-component="cachetable" data-question_label="4" id="test_caching_table_1"  style="visibility: hidden;">
+        <script type="application/json">
+            {
+              "ref": 8, 
+             "index": 3,
+             "init-valid-rate": 0.2,
+             "algorithm": "boost"
+            }
+        </script>       
+        </div>
+        </div>
+</section>
+
+<section id="cache table">
+  <h1>Cache Table<a class="headerlink" href="#cache-table" title="Permalink to this heading">¶</a></h1>
+            <p>Test 5 - test the cache table component (set associative).</p>
+
+        <div class="runestone ">
+        <div data-component="cachetable" data-question_label="5" id="test_caching_table_2"  style="visibility: hidden;">
+        <script type="application/json">
+          {
+            "cache-org": "2-Way Set Associative",
+            "init-valid-rate": 0.35,
+            "offset": 1,
+            "index": 3,
+            "debug": true
+          }
+        </script>       
+        </div>
+        </div>
+</section>
+
+<section id="cache table">
+  <h1>Cache Table<a class="headerlink" href="#cache-table" title="Permalink to this heading">¶</a></h1>
+            <p>Test 6 - test the cache table component (fixed table 1).</p>
+
+        <div class="runestone ">
+        <div data-component="cachetable" data-question_label="6" id="test_caching_table_3"  style="visibility: hidden;">
+        <script type="application/json">
+          {
+            "offset": 1,
+            "index": 2,
+            "debug": true,
+            "fixed": true,
+            "reference-list":
+            [
+              ["00101010", "R"],
+              ["00101011", "W"],
+              ["11001100", "R"],
+              ["11001010", "R"],
+              ["11001011", "R"],
+              ["00111101", "W"],
+              ["00111100", "R"],
+              ["00101100", "W"]
+            ]
+          }
+        </script>       
+        </div>
+        </div>
+</section>
+
+<section id="cache table">
+  <h1>Cache Table<a class="headerlink" href="#cache-table" title="Permalink to this heading">¶</a></h1>
+            <p>Test 7 - test the cache table component (fixed table 2).</p>
+
+        <div class="runestone ">
+        <div data-component="cachetable" data-question_label="7" id="test_caching_table_4"  style="visibility: hidden;">
+        <script type="application/json">
+          {
+            "cache-org": "2-Way Set Associative",
+            "offset": 1,
+            "index": 2,
+            "debug": true,
+            "fixed": true,
+            "init-cache-table": 
+            [
+              {
+                "index": 0,
+                "lru": 1,
+                "left": {
+                  "valid":1,
+                  "tag":"10101"
+                }
+              } ,
+              {
+                "index": 3,
+                "lru": 1,
+                "right": {
+                  "valid":1,
+                  "dirty":1,
+                  "tag":"11111"
+                }
+              } 
+            ],
+            "reference-list":
+            [
+              ["00101010", "R"],
+              ["00101011", "W"],
+              ["11001100", "R"],
+              ["11001010", "R"],
+              ["11001011", "R"],
+              ["00111101", "W"],
+              ["00111100", "R"],
+              ["00101100", "W"]
+            ]
+          }
+        </script>       
+        </div>
+        </div>
+</section>
+
+<section id="cache table">
+  <h1>Cache Table<a class="headerlink" href="#vm-table" title="Permalink to this heading">¶</a></h1>
+            <p>Test 8 - test the virtual memory table component.</p>
+
+        <div class="runestone ">
+        <div data-component="vmtable" data-question_label="8" id="test_virtual_memory_table_1"  style="visibility: hidden;">
+        </div>
+        </div>
+</section>
+
+<script>
+  window.addEventListener('load', (event) => {
+    runestoneComponents.getSwitch();
+  });
+</script>
+
+  </body>
+</html>

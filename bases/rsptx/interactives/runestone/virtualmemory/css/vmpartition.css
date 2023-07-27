@@ -1,0 +1,89 @@
+.selectwidthauto {
+    width:auto !important;
+    display: inline-block !important;
+    margin: 5px;
+}
+
+input.input-validation-error {
+   border: 1px solid #e80c4d;
+}
+
+.vm.ui-selecting {background: #ffcccb;}
+.vm.ui-selected {background: #ff7f7f; color: white;}
+
+#selectable {list-style-type: none; margin: 0; padding: 0; display: inline;}
+#selectable li {margin: 2px; padding: 4px; display: inline; font-family: 'Courier New', Courier, monospace;  border-radius: 8px; overflow: auto; }
+
+.indexclass {
+   color: ghostwhite;
+   background: CornflowerBlue; 
+}
+
+.offsetclass {
+   color: Grey; 
+   background: #ffef96;
+}
+
+.notselected {
+   color: DimGray;
+   background: Gainsboro;
+}
+
+.button {
+   /* background-color: Gainsboro; */
+   border: none;
+   /* color: Dimgray; */
+   padding: 15px 32px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 16px;
+   margin: 4px 2px;
+   cursor: pointer;
+ }
+
+ .prevent-select {
+   -webkit-user-select: none; /* Safari */
+   -ms-user-select: none; /* IE 10 and IE 11 */
+   user-select: none; /* Standard syntax */
+ }
+
+.tagbutton {
+   color: "MistyRose" !important; 
+   background-color: "indianred" !important;
+}
+
+.indexbutton {
+   color: "ghostwhite" !important; 
+   background-color: "CornflowerBlue" !important;
+}
+
+.offsetbutton {
+   color: "Azure" !important; 
+   background-color: "Bisque" !important;
+}
+
+input[disabled] {
+   background-color: rgb(172, 172, 172);
+}
+
+table, td, tr, th {
+   border: 1px solid;
+}
+
+th, td {
+   height: 20px;
+}
+
+table {
+   border-collapse: collapse;
+   word-wrap: break-word;
+   line-break: strict;
+}
+
+.aligned-tables {
+   height: auto;
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+}
