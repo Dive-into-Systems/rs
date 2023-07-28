@@ -246,3 +246,7 @@ Here are some examples of how to use it:
     </div>
 </section>
 ```
+
+### Notes on Algorithm analysis
+Currently, `vmAlgoStats.py` hosts `vmAlgo` class. Each file would generate an instance of this `vmAlgo` class.
+In the future, a better algorithm testing structure might be having a hierachical class for `vmAlgo` as an abstract class and others as subclass.

@@ -245,4 +245,5 @@ Here are some examples of how to use it:
 ```
 
 ### Notes on algorithm analysis
-Currently, randAlgoAnalysis.py
+Currently, `randAlgoStats.py` hosts `RandAlgo` class. Each file would generate an instance of this `RandAlgo` class.
+In the future, a better algorithm testing structure might be having a hierachical class for `RandAlgo` as an abstract class and others as subclass.
