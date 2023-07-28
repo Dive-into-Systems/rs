@@ -1,0 +1,117 @@
+= TODO list of our changes to RunestoneComponents
+
+Add entries for features/functionality to add to different parts of core
+code or to individual components.  When complete an item, check its box
+and move to end of the list (rather than delete, so we can remember what
+we have alread tested).  You could add a note to how tested or example
+test code locations where appropriate.  
+
+== Runestone Infrastructure
+
+This is for any TODO changes and testing to RunestoneComponents outside of
+the individual components, or that spans multiple components.  
+
+== Individual Components
+
+=== Number Conversion
+
+This is the number conversion component. Student can practice number
+conversion among different bases. 
+Source code is in /runestone/numconv/js/numconv.js with /runestone/numconv/css/numconv.css and
+/runestone/numconv/js/numconv-i18n.en.js .
+
+ * Features/Functionality to Add:
+   ** [ ] more context-specific feedback for wrong answers    
+
+ * Testing: 
+
+   ** correctness of conversions
+     *** [ ] binary to unsigned
+     *** [x] unsigned to binary
+     *** [ ] binary to signed
+     *** [ ] signed to binary
+     *** [x] binary to hex
+     *** [ ] hex to binary
+     *** [ ] add more here ...
+
+
+=== Cache Info
+
+This is the cache info component. Students can practice their understanding of cache information,
+through answering the size of cache data block (in bytes), the number of entries, and the number of lines 
+in a given cache structure.
+Source code is in /runestone/cache/js/cacheinfo.js with /runestone/cache/css/cache.css and
+/runestone/cache/js/cache-i18n.en.js .
+
+ * Features/Functionality to Add:
+   ** [ ] more context-specific feedback for wrong answers  (wrong number of bits,
+       incorrect address bits, ...)
+   ** [ ] other features to add ...
+
+
+ * Testing:
+   ** [x] works correctly for different size addresses
+   ** [ ] other things to test ...
+
+=== Cache Partition
+
+This is the cache partition component. Students can practice their understanding of how a cache
+system partitions a memory address into different parts.
+Source code is in /runestone/cache/js/cachepartition.js with /runestone/cache/css/cache.css and
+/runestone/cache/js/cache-i18n.en.js .
+
+ * Features/Fuctionality to Add:
+   ** [ ] more context-specific feedback for wrong answers  (wrong number of bits,
+       incorrect address bits, ...)
+   ** [ ] other features to add ...
+
+ * Testing:
+   ** [ ] works correctly for different size addresses
+   ** [ ] other things to test ...
+
+==== Direct Mapped (add subsection if it makes sense to break it up in this way)
+
+This is the direct mapped mode of cache table component. 
+Source code is in /runestone/cache/js/cachetable.js with /runestone/cache/css/cache.css and
+/runestone/cache/js/cache-i18n.en.js . 
+By default the mode of cache table is direct mapped. To specify, 
+add line "cache-org": "Direct-Mapped" to the option json scripts. 
+
+ * Features/Functionality to Add:
+   ** [ ] more specific feedback
+   ** [ ] add more guidance
+   ** [ ] build a more user-friendly interface
+
+ * Question Quality analysis
+   ** [ ] understand the difference between different algorithms
+   ** [ ] decide which algorithm we want to use
+   ** [ ] try out dynamic parameterizing in bound algorithm
+
+ * Testing:
+   ** [ ] works correctly for different address sizes
+   ** [ ] works correctly for evicting 
+   ** [ ] valid generation
+
+==== 2-Way Set Associative (add subsection if it makes sense to break it up in this way)
+
+This is the 2-way set associative mode of cache table component. 
+Source code is in /runestone/cache/js/cachetable.js with /runestone/cache/css/cache.css and
+/runestone/cache/js/cache-i18n.en.js . 
+By default the mode of cache table is direct mapped. To switch to 2-way set associative mode, 
+add line "cache-org": "2-Way Set Associative" to the option json scripts. 
+
+ * Features/Functionality to Add:
+   ** [ ] more specific feedback
+   ** [ ] build a more user-friendly interface
+   ** [ ] try to reduce the number of input fields requires to fill
+   ** [ ] add more guidance
+   ** [ ] develop other random generation algorithms
+
+ * Question Quality Analysis:
+   ** [ ] find statistics that are more unique to set associative
+
+ * Testing:
+   ** [ ] works correctly for different adress sizes
+   ** [ ] works correctly for evicting 
+   ** [ ] determines LRU correctly
+   ** [ ] valid generation
