@@ -1,0 +1,43 @@
+= Minimal HTML example for editing Runestone components
+
+The `minimal.html` file in this directory was initially generated with `poetry
+run pytest` in the `fitb` (fill in the blank) runestone component directory.  I
+(KCW) stripped out large portions of the file that weren't relevant to testing
+runestone.
+
+Rather than linking to the `_static` version of runestone that `poetry` built,
+I wrote a small script here, `link-runestone-js.py`, that will edit the
+`minimial.html` file (or any other file with the appropriate markers) to refer
+to a version of runestone that we build using `npm run build`.
+
+To try this out, you need to:
+
+. Edit the code in `runestone/fitb/js` to add the behavior you're interested in testing.
+
+. Build runestone with `npm run build`. NOTE: this requires your environment to
+be properly configured.  See the `BUILDING_RUNESTONE_JS.adoc` file in the root
+of the repository for instructions on setting up the node/npm build
+environment.
+
+. Run the `link-runestone-js.py` script on the HTML file of your choice:
++
+----
+./link-runestone-js.py ../runestone/dist/webpack_static_imports.json minimal.html
+----
+
+. Open your HTML file in a browser to test it out.
+
+== HTML file markers
+
+For the `link-runestone-js.py` script to work, it *must* find the following block
+in the HTML file you passed it:
+
+----
+<!-- BEGIN LINKED FILES -->
+...
+<!-- END LINKED FILES -->
+----
+
+Anything in between those two markers (the `...` above) will be overwritten by
+the script to include the runestone files you built.  All other lines will be
+passed through without changes.

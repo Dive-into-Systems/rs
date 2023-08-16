@@ -1,0 +1,233 @@
+= How to create new Runestone Components
+
+This documentation is a discriptive guide on how to create new components for Runestone. Known limitations include:
+
+* [ ] Pretext not YET supported, still need to implement in HTML
+* [ ] Server-side not YET explored: all answer checking managed on front-end; no functionality for sending data to our server
+* [ ] Question timing is not YET explored
+
+== Step 1: Setting up your repository
+. Make sure that you have forked and cloned the repository
++
+[source, console]
+git clone git@github.com:Dive-into-Systems/RunestoneComponents.git
+cd RunestoneComponents/
+. Set up the virtual environment and install the dependencies
++
+[source, console]
+----
+mkvirtualenv runestone-build
+
+pip install nodeenv
+nodeenv -p
+
+npm install
+----
+
+== Step 2: Create new components
+. Name your component
+.. Have a full name discriptive for its function
+.. Have an acronym as ```keyword``` for this component
+. Create a component directory inside ```../runestone``` (Note: the suggestions below are not required but good as a convention)
+.. *Recommended: Duplicate a most relevant component*
+.. Name the directory as the keyword of the component ```../runestone/keyword```
+.. It's good to have a subdirectory ```../runestone/keyword/css```
+.. It's good to have a subdirectory ```../runestone/keyword/js```
+.. Inside the ```../runestone/keyword/js``` subdirectory, it's good to have a JavaScript file for this component ```keyword.js```
+. Add your component into keyword mapping
+.. In ```../webpack.index.js``` file, add a keyword-source statement into ```module_map``` with syntax:
++
+[source, javascript]
+keyword: () => import("./runestone/keyword/js/keyword.js"),
++
+Again, you do not need to match the names for folder, file, and keyword. To make the program knows how to map the keyword to corresponding implementation is the only goal.
+.. In ```./runestone/keyword/js/keyword.js``` file, look for a code block with title "*Find the custom HTML tags and execute our code on them*" at the end of the file.
++
+Set ```data-component``` to your ```keyword``` in the following line:
++
+[source, javascript]
+$("[data-component=keyword]").each(function (index) {
++
+======
+**Remarks:**
+
+* Leave the following line unchanged for now (unless you are now comfortable working on exercise timing)
+[source, javascript]
+if ($(this).closest("[data-component=timedAssessment]").length == 0) {
+* You must match your ```keyword``` in _3.a_ and _3.b_
+======
+
+== Step 3: Compile your component in an HTML test file
+. Build the component with ```npm```, run from console:
+[source, console]
+npm run build
+It will create ```webpack_static_imports.json``` in ```/runestone/dist``` directory. 
+. Create an HTML file in ```../HTML_example```
+.. *Recommended*: duplicate an existing HTML file
+. In the body of the HTML file, create a ```<section>``` that contains a ```<div>``` with the ```data-component``` being tested, as the example shown below:
++
+[source, html]
+----
+<section id="exercise name">
+  <h1>Exercise Name<a class="headerlink" href="#component-abbreviation" title="Permalink to this heading">¶</a></h1>
+            <p>Exercise Title </p>
+
+        <div class="runestone ">
+        <div data-component="keyword" data-question_label="a number" id="a unique id"  style="visibility: hidden;">
+        </div>
+        </div>
+</section>
+----
++
+====
+*Remark:*
+
+The most important goal is to set ```data-component``` as your ```keyword``` such that Runestone knows to compile your component here.
+
+Don't forget that you can configure some questions to your preference with ```JSON```.
+
+Moreover, make sure question has a different ```id```. 
+====
+. Go into the ```../HTML_example``` folder and link required .js and .css files using the `link-runestone-js.py` script. 
++
+[source, console]
+----
+cd HTML_example
+./link-runestone-js.py ../runestone/dist/webpack_static_imports.json <name of your html file>
+----
++
+.. For the `link-runestone-js.py` script to work, it *must* find the following block
+in the HTML file you passed it:
++
+[source, html]
+----
+<!-- BEGIN LINKED FILES -->
+...
+<!-- END LINKED FILES -->
+----
++
+.. Anything in between those two markers (the `...` above) will be overwritten by
+the script to include the runestone files you built.  All other lines will be
+passed through without changes.
+
+. Open the html file in a browser to check whether the component is rendered correctly or not. 
+
+== Step 4: Integrating with Pretext
+
+====
+*Notice:*
+
+By the time this documentation is written (Jul. 2023), we use ```<slate>``` or ```<iframe>``` to embed *each* question as an *individual* HTML. There are still unsolved problems including:
+
+. unexpected scroll bar
+. extraneous and repetitive code
+====
+. Make sure that you have pretext ready on your virtual environment
++
+[source, console]
+----
+pip install pretext
+----
++
+
+Make sure you have also cloned and now looking at your ```DIS_Exercises``` repository. (Or refer to another document and create a new pretext book if you want to.)
+
+. Create a ```*.ptx``` file
+.. If it is a chapter-level exercise, put your ```\*.ptx``` file in ```DIS_Exercises/DIS_Pretext/source/``` folder. "Include" your ```*.ptx``` file in ```main.ptx```:
++
+[source, pretext]
+----
+<xi:include href="./*.ptx"/>
+----
++
+.. You can also create a Chapter and put your exercise as a page in that chapter!
+... Create a folder inside ```DIS_Exercises/DIS_Pretext/source/``` and add a ```toctree.ptx``` file in that folder. Your ```toctree.ptx``` should "include" all pages of exercise in that chapter:
++
+[source, pretext]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="en-US">
+  <title>Your Title</title>
+  <xi:include href="./*.ptx"/>
+</chapter>
+----
++
+... Add the ```toctree.ptx``` file to ```main.ptx```
++
+----
+<xi:include href="./your_folder/toctree.ptx"/>
+----
++
+. Add your exercise to your ```*.ptx``` file.
+.. Add built-in question-types just as instructions on RuneStone. Note that this would use RuneStone from official release.
+.. Add your exercises built on your components:
+... Likewise, your exercise should be wrapped by ```<exercise>``` label and you should include a ```<title>```.
+... Write questions just like you would do in your HTML test file. You can directly use the code template below:
++
+[source, pretext]
+----
+  <exercise label="test-cacheinfo">
+    <title>Caching Info</title>
+
+    <interactive xml:id="interactive-test2"
+      platform="javascript"
+      width="100%"
+      aspect="8:9"
+      source= "dist/jquery.js dist/runestone/runestone.js dist/runestone/vendors.js dist/runestone/runtime.js"
+      css="dist/runestone/runestone.css dist/runestone/vendors.css">
+
+      <slate xml:id="test_cache_info" surface="html"
+        aspect="8:9">
+
+          <script>
+            eBookConfig = {};
+          
+            eBookConfig.useRunestoneServices = false;
+            eBookConfig.host = 'http://127.0.0.1:8000' || 'http://127.0.0.1:8000';
+            eBookConfig.app = eBookConfig.host+'/runestone';
+            eBookConfig.course = 'testfitb';
+            eBookConfig.basecourse = 'testfitb';
+            eBookConfig.isLoggedIn = false;
+            eBookConfig.enableCompareMe = eBookConfig.useRunestoneServices;
+            eBookConfig.new_server_prefix = '';
+          
+            eBookConfig.ajaxURL = eBookConfig.app+'/ajax/';
+            eBookConfig.logLevel = 0;
+            eBookConfig.loginRequired = false;
+            eBookConfig.build_info = "unknown";
+            eBookConfig.python3 = false;
+            eBookConfig.acDefaultLanguage = 'python' ? 'python' : 'python'
+            eBookConfig.runestone_version = '6.6.2';
+            eBookConfig.jobehost = 'http://jobe2.cosc.canterbury.ac.nz';
+            eBookConfig.proxyuri_runs = '/jobe/index.php/restapi/runs/';
+            eBookConfig.proxyuri_files = '/jobe/index.php/restapi/files/';
+            eBookConfig.enable_chatcodes = false ? false : false;
+            eBookConfig.enableScratchAC = true;
+          </script>
+
+          <div class="runestone ">
+          <div data-component="cacheinfo" data-question_label="1" id="test_caching_info"  style="visibility: hidden;">
+          </div>
+          </div>
+
+      </slate>
+    </interactive>
+  </exercise>
+----
++
+... Run the script ```/DIS_Exercises/DIS_Pretext/copy_runestone_bundles.py``` in terminal to copy your *already compiled* dist folder over.
++
+[source, console]
+----
+./copy_runestone_bundles.py <path/to/runestone/dist> [path/to/destination/dist]
+----
++
+... Change directory to ```/DIS_Exercises/DIS_Pretext/```. Use pretext to build and view the book from terminal
++
+[source, console]
+----
+pretext build web
+pretext view web
+----
++
+. Now you are able to view the interactive textbook
