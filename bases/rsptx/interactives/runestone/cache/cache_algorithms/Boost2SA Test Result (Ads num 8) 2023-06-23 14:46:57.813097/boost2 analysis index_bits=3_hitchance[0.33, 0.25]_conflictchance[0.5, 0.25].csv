@@ -1,0 +1,2 @@
+,Algorithm Name,Cold Start Miss avg,Cold Start Miss sd,Conflict Miss avg,Conflict Miss sd,Hit/Miss Ratio avg,Hit/Miss Ratio sd,Indices Coverage avg,Indices Coverage sd,Address Variety avg,Address Variety sd,Valid per Used avg,Valid per Used sd,LRU flips avg,LRU flips sd
+0,boost2_SA,2.4406666666666665,0.5573927520240057,2.009333333333333,0.7943552242985938,0.44375,0.1053743643924559,0.1795,0.06840104142710261,0.5185833333333333,0.10330629788648364,1.793111111111111,0.252062772032379,5.59,1.1051610383169244

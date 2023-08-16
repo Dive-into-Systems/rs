@@ -1,0 +1,2 @@
+,Algorithm Name,Cold Start Miss avg,Cold Start Miss sd,Conflict Miss avg,Conflict Miss sd,Hit/Miss Ratio avg,Hit/Miss Ratio sd,Indices Coverage avg,Indices Coverage sd,Address Variety avg,Address Variety sd
+0,boost2,1.686,0.6249794393816687,2.4775,0.7712270389274395,0.4795625,0.09803341965592509,0.4215,0.15624485984541717,0.491625,0.10472150052083701

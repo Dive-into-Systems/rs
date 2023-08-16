@@ -1,0 +1,191 @@
+.selectwidthauto {
+    width:auto !important;
+    display: inline-block !important;
+    margin: 5px;
+}
+
+input.input-validation-error {
+   border: 1px solid #e80c4d;
+}
+
+.resetbutton {
+   color: rgb(71, 71, 71);
+   background-color: rgb(232, 232, 232);
+   border-radius: 999px;
+   box-sizing: border-box;
+   cursor: pointer;
+   text-decoration: none;
+   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+   font-size: 15px;
+   line-height: 20px;
+   opacity: 1;
+   outline: 0 solid transparent;
+   padding: 6px 14px;
+   user-select: none;
+   -webkit-user-select: none;
+   touch-action: manipulation;
+   width: fit-content;
+   border: 0;
+   margin: 2px;
+   padding-top: -2px;
+}
+
+.tagbutton {
+   color: white !important; 
+   background-color: tomato !important;
+   border-radius: 999px;
+   box-sizing: border-box;
+   cursor: pointer;
+   text-decoration: none;
+   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+   font-size: 15px;
+   line-height: 20px;
+   opacity: 1;
+   outline: 0 solid transparent;
+   padding: 6px 14px;
+   user-select: none;
+   -webkit-user-select: none;
+   touch-action: manipulation;
+   width: fit-content;
+   border: 0;
+   margin: 2px;
+   padding-top: -2px;
+}
+
+.indexbutton {
+   color: white !important; 
+   background-color: CornflowerBlue !important;
+   border-radius: 999px;
+   box-sizing: border-box;
+   cursor: pointer;
+   text-decoration: none;
+   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+   font-size: 15px;
+   line-height: 20px;
+   opacity: 1;
+   outline: 0 solid transparent;
+   padding: 6px 14px;
+   user-select: none;
+   -webkit-user-select: none;
+   touch-action: manipulation;
+   width: fit-content;
+   border: 0;
+   margin: 2px;
+   padding-top: -2px;
+}
+
+.offsetbutton {
+   color: rgb(107, 107, 107) !important; 
+   background-color: #ffef96 !important;
+   border-radius: 999px;
+   box-sizing: border-box;
+   cursor: pointer;
+   text-decoration: none;
+   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+   font-size: 15px; 
+   line-height: 20px;
+   opacity: 1;
+   outline: 0 solid transparent;
+   padding: 6px 14px;
+   user-select: none;
+   -webkit-user-select: none;
+   touch-action: manipulation;
+   width: fit-content;
+   border: 0;
+   margin: 2px;
+   padding-top: -2px;
+}
+
+input[disabled] {
+   background-color: rgb(172, 172, 172);
+}
+
+table, td, tr, th {
+   border: 1px solid;
+}
+
+th, td {
+   height: 20px;
+   text-align: center;
+}
+
+table {
+   border-collapse: collapse;
+   word-wrap: break-word;
+   line-break: strict;
+}
+
+.aligned-tables {
+   height: auto;
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+}
+
+.statement-box {
+   border-width: 1px;
+   border-radius: 5px;
+   border-style: solid;
+   border-color: White;
+   background-color: White;
+   padding: 8px;
+}
+
+.at-center {
+   text-align: center;
+   font-size: x-large;
+}
+
+.offsetbutton:active {
+   transform: scale(0.98);
+   /* Scaling button to 0.98 to its original size */
+   box-shadow: 1px 1px 5px 1px rgba(70, 70, 70, 0.1);
+   /* Lowering the shadow */
+   background-color: #ffec81 !important;
+}
+.indexbutton:active {
+   transform: scale(0.98);
+   /* Scaling button to 0.98 to its original size */
+   box-shadow: 1px 1px 5px 1px rgba(70, 70, 70, 0.1);
+   /* Lowering the shadow */
+   background-color: rgb(69, 128, 237) !important;
+}
+.tagbutton:active {
+   transform: scale(0.98);
+   /* Scaling button to 0.98 to its original size */
+   box-shadow: 1px 1px 5px 1px rgba(70, 70, 70, 0.1);
+   /* Lowering the shadow */
+   background-color: rgb(255, 84, 54) !important;
+}
+.resetbutton:active {
+   transform: scale(0.98);
+   /* Scaling button to 0.98 to its original size */
+   box-shadow: 1px 1px 5px 1px rgba(70, 70, 70, 0.1);
+   /* Lowering the shadow */
+   background-color: rgb(202, 202, 202) !important;
+}
+
+/* selection animation for tag */
+.ui-selected {background-color: rgb(232, 232, 232);}
+.tagclass {color: MistyRose; background-color: Tomato;}
+.tagclass.ui-selecting {background: rgb(255, 165, 149);}
+.indexclass {color: ghostwhite; background-color: CornflowerBlue;}
+.indexclass.ui-selecting {background: rgb(156, 182, 231);}
+.offsetclass {color: Grey; background-color: #ffef96;}
+.offsetclass.ui-selecting {color: grey; background: #faefb2;}
+.notselected {color: rgb(101, 101, 101); background-color: rgb(232, 232, 232);}
+
+#selectable {list-style-type: none; margin: 0; padding: 0; display: inline; background-color: transparent;}
+#selectable ul {margin: 2px; padding: 4px; display: inline; font-family: 'Courier New', Courier, monospace;  border-radius: 8px; overflow: auto; }
+
+.prevent-select {
+   -webkit-user-select: none; /* Safari */
+   -ms-user-select: none; /* IE 10 and IE 11 */
+   user-select: none; /* Standard syntax */
+   /* background-color: transparent !important; */
+}
+
+.selectable.disabled {
+   background-color: rgb(217, 217, 217);
+   color: #606060; 
+}
