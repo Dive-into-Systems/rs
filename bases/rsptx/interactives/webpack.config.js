@@ -17,8 +17,8 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 module.exports = (env, argv) => {
     const is_dev_mode = argv.mode === "development";
     const bundleFormatString = is_dev_mode
-        ? "prefix-[name].bundle.js"
-        : "prefix-[name].[contenthash].bundle.js";
+        ? "[name].bundle.js"
+        : "[name].[contenthash].bundle.js";
 
     return {
         // Cache build results between builds in development mode, per the `docs <https://webpack.js.org/configuration/cache/>`__.
@@ -113,8 +113,8 @@ module.exports = (env, argv) => {
             }),
             new MiniCssExtractPlugin({
                 // See `output file naming`_.
-                filename: "prefix-[name].[contenthash].css",
-                chunkFilename: "prefix-[id].css",
+                filename: "[name].[contenthash].css",
+                chunkFilename: "[id].css",
             }),
             // Copied from the `webpack docs <https://webpack.js.org/plugins/compression-webpack-plugin>`_. This creates ``.gz`` versions of all files. The webserver in use needs to be configured to send this instead of the uncompressed versions.
             new CompressionPlugin(),
