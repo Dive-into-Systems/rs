@@ -11,6 +11,56 @@ import { Pass } from "codemirror";
 
 export var cacheinfoList = {}; // Object containing all instances of cacheinfo that aren't a child of a timed assessment.
 
+// // Example POST method implementation, edited for local server:
+// async function postData(url = "http://localhost:3000/api/data", data = {}) {
+//   // Default options are marked with *
+//   const response = await fetch(url, {
+//     method: "POST", // *GET, POST, PUT, DELETE, etc.
+//     mode: "cors", // no-cors, *cors, same-origin
+//     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+//     credentials: "include", // include, *same-origin, omit
+//     headers: {
+//       "Content-Type": "application/json",
+//       // 'Content-Type': 'application/x-www-form-urlencoded',
+//     },
+//     redirect: "follow", // manual, *follow, error
+//     referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+//     body: JSON.stringify(data) // body data type must match "Content-Type" header
+//   });
+//   return response.json(); // parses JSON response into native JavaScript objects
+// }
+
+function DIS_Log(QID, timestamp, data) {
+    // Print a message to the console for now
+    console.log("Logging data for question with ID:", QID);
+    console.log("Timestamp:", timestamp);
+    console.log("Data:", data);
+
+    //send asynchronous request to flask server
+    // JSON data to send
+    const postData = {
+        questionID: QID,
+        timestamp: timestamp,
+        data: data
+    };
+
+    // URL of the Flask route designed to accept POST requests
+    const url = 'http://localhost:5000/'; // CHANGE
+
+    fetch(url, {
+        method: 'POST', // Sending data as POST
+        headers: {
+            'Content-Type': 'application/json' // Specifying the content type
+        },
+        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
+    })
+    .then(response => response.json())
+    .then(data => console.log('Success:', data))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
 // cacheinfo constructor
 export default class cacheinfo extends RunestoneBase {
     constructor(opts) {
@@ -33,7 +83,7 @@ export default class cacheinfo extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-
+        this.generateButtonCounter = 0;
         this.contWrong = 0;
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -231,6 +281,7 @@ export default class cacheinfo extends RunestoneBase {
 
     renderCacheInfoButtons() {
         // "check me" button and "generate a number" button
+        //this is the "Check Answer" button
         this.submitButton = document.createElement("button");
         this.submitButton.textContent = $.i18n("msg_cacheinfo_check_me");
         $(this.submitButton).attr({
@@ -241,8 +292,21 @@ export default class cacheinfo extends RunestoneBase {
         this.submitButton.addEventListener(
             "click",
             function () {
+                //add additional button functions below here
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+                DIS_Log("11.1.1-submit_button", new Date().toISOString(), {
+                    //user answers
+                    user_block_size: this.inputNode1.value,
+                    user_num_lines: this.inputNode2.value,
+                    user_num_sets: this.inputNode3.value,
+
+                    //correct answers
+                    block_size: this.block_size_ans, 
+                    num_lines: this.num_line_ans,
+                    num_sets: this.num_entry,
+                    correct: this.correct,
+                });
             }.bind(this),
             false
         );
@@ -257,9 +321,14 @@ export default class cacheinfo extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
+                //insert additional onclick functions here
                 this.generateAddress();
                 this.clearInput();
                 this.generateAnswer();
+                this.generateButtonCounter++;
+                DIS_Log("11.1.1-generate_button", new Date().toISOString(), {
+                    Question_Regeneration_Count: this.generateButtonCounter,
+                });
             }.bind(this),
             false)
         ;

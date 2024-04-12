@@ -11,6 +11,37 @@ import { Pass } from "codemirror";
 
 export var cachepartitionList = {}; // Object containing all instances of cachepartition that aren't a child of a timed assessment.
 
+function DIS_Log(QID, timestamp, data) {
+    // Print a message to the console for now
+    console.log("Logging data for question with ID:", QID);
+    console.log("Timestamp:", timestamp);
+    console.log("Data:", data);
+
+    //send asynchronous request to flask server
+    // JSON data to send
+    const postData = {
+        questionID: QID,
+        timestamp: timestamp,
+        data: data
+    };
+
+    // URL of the Flask route designed to accept POST requests
+    const url = 'http://localhost:5000/submit-answer'; // CHANGE
+
+    fetch(url, {
+        method: 'POST', // Sending data as POST
+        headers: {
+            'Content-Type': 'application/json' // Specifying the content type
+        },
+        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
+    })
+    .then(response => response.json())
+    .then(data => console.log('Success:', data))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
 // cachepartition constructor
 export default class cachepartition extends RunestoneBase {
     constructor(opts) {
@@ -96,6 +127,7 @@ export default class cachepartition extends RunestoneBase {
         this.resetButton = document.createElement("button");
         this.submitButton = document.createElement("button");
         this.generateButton = document.createElement("button");
+        this.generateButtonCounter = 0;
         this.questionButtionDiv = document.createElement("div");
         this.questionButtionDiv.appendChild(this.tagButton);
         this.questionButtionDiv.appendChild(this.indexButton);
@@ -206,6 +238,10 @@ export default class cachepartition extends RunestoneBase {
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
         
+        // initialize counters for incorrect attempts
+        this.tagIncorrectCount = 0;
+        this.indexIncorrectCount = 0;
+        this.offsetIncorrectCount = 0;
 
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
@@ -251,6 +287,21 @@ export default class cachepartition extends RunestoneBase {
                 this.updateCPFeedbackDiv();
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+                DIS_Log("11.1.2-submit_button", new Date().toISOString(), {
+                    // user answers
+                    user_Tag_Bits: this.input_tag_bits,
+                    tagIncorrectCount: this.tagIncorrectCount,
+                    user_Index_Bits: this.input_index_bits,
+                    indexIncorrectCount: this.indexIncorrectCount,
+                    user_Offset_Bits: this.input_offset_bits,
+                    offsetIncorrectCount: this.offsetIncorrectCount,
+
+                    //correct answer
+                    correct_Tag_Bits: this.tag_bits,
+                    correct_Index_Bits: this.index_bits,
+                    correct_Offset_Bits: this.offset_bits,
+                    correct: this.correct,
+                });
             }.bind(this), false);
         
         this.generateButton.textContent = $.i18n("msg_cachepartition_generate_a_number");
@@ -265,6 +316,10 @@ export default class cachepartition extends RunestoneBase {
                 this.clearFeedback();
                 this.updatePromptNAnswer();
                 this.resetHighlight();
+                this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
+                DIS_Log("11.1.2-generate_button", new Date().toISOString(), {
+                    Question_Regeneration_Count: this.generateButtonCounter,
+                });
             }.bind(this), false);
         
         // set to TAG button
@@ -467,25 +522,41 @@ export default class cachepartition extends RunestoneBase {
     checkCurrentAnswer() {
         // the answer is correct if each of the input field is the same as its corresponding value in this.answers
         this.correct = true;
+        let tagCorrect = true, indexCorrect = true, offsetCorrect = true;
+
         
         for (let i = 0; i < this.tag_bits; i++) {
             if (!($(this.address_node_list[i]).hasClass("tagclass"))) {
-                this.correct = false;
-                return;
+                tagCorrect = false;
+                this.tagIncorrectCount++;  // Increment counter for incorrect tag attempts
+                break; // Exit early if any bit is incorrect
             }
         }
-        for (let i = this.tag_bits; i < (this.tag_bits + this.index_bits); i++) {
-            if (!($(this.address_node_list[i]).hasClass("indexclass"))) {
-                this.correct = false;
-                return;
+        if (tagCorrect) {
+            for (let i = this.tag_bits; i < (this.tag_bits + this.index_bits); i++) {
+                if (!($(this.address_node_list[i]).hasClass("indexclass"))) {
+                    indexCorrect = false;
+                    this.indexIncorrectCount++;  // Increment counter for incorrect index attempts
+                    break; // Exit early if any bit is incorrect
+                }
             }
         }
-        for (let i = (this.tag_bits + this.index_bits); i < this.num_bits; i++) {
-            if (!($(this.address_node_list[i]).hasClass("offsetclass"))) {
-                this.correct = false;
-                return;
+        if (indexCorrect) {
+            for (let i = (this.tag_bits + this.index_bits); i < this.num_bits; i++) {
+                if (!($(this.address_node_list[i]).hasClass("offsetclass"))) {
+                    offsetCorrect = false;
+                    this.offsetIncorrectCount++;  // Increment counter for incorrect offset attempts
+                    break; // Exit early if any bit is incorrect
+                }
             }
         }
+        // Store the results in the instance for later logging
+        this.tagCorrect = tagCorrect;
+        this.indexCorrect = indexCorrect;
+        this.offsetCorrect = offsetCorrect;
+
+        // The overall correctness is true only if all parts are correct
+        this.correct = tagCorrect && indexCorrect && offsetCorrect;
     }
 
     async logCurrentAnswer(sid) {

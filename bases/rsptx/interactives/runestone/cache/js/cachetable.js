@@ -16,6 +16,37 @@ const twoWaySetAssociative = "2-Way Set Associative";
 const algo_boost = "boost";
 const algo_hitNmiss = "hitNmiss";
 
+function DIS_Log(QID, timestamp, data) {
+    // Print a message to the console for now
+    console.log("Logging data for question with ID:", QID);
+    console.log("Timestamp:", timestamp);
+    console.log("Data:", data);
+
+    //send asynchronous request to flask server
+    // JSON data to send
+    const postData = {
+        questionID: QID,
+        timestamp: timestamp,
+        data: data
+    };
+
+    // URL of the Flask route designed to accept POST requests
+    const url = 'http://localhost:5000/submit-answer'; // CHANGE
+
+    fetch(url, {
+        method: 'POST', // Sending data as POST
+        headers: {
+            'Content-Type': 'application/json' // Specifying the content type
+        },
+        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
+    })
+    .then(response => response.json())
+    .then(data => console.log('Success:', data))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
 // cachetable constructor
 export default class cachetable extends RunestoneBase {
     constructor(opts) {
@@ -32,6 +63,15 @@ export default class cachetable extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+        this.incorrectAttempts = {
+            hitMiss: 0,
+            index: 0,
+            // in a 2-way set associative, must check 4 more values
+            valid: 0,
+            dirty: 0,
+            tag: 0,
+            lru: 0 
+        };
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -843,11 +883,17 @@ export default class cachetable extends RunestoneBase {
             "click",
             function () {
                 this.submitResponse();
+
+                DIS_Log("11.1.3-Submit Button", new Date().toISOString(), {
+                    incorrect_Attempts: this.incorrectAttempts
+                    // other data to log
+                });
             }.bind(this),
             false
         );
         
         this.generateButton = document.createElement("button");
+        this.generateButtonCounter = 0;
         this.generateButton.textContent = $.i18n("msg_cachetable_generate_another");
         $(this.generateButton).attr({
             class: "btn btn-success",
@@ -862,6 +908,13 @@ export default class cachetable extends RunestoneBase {
                 this.resetGeneration();
                 this.displayNecessaryFields();
                 this.hidefeedback();
+                Object.keys(this.incorrectAttempts).forEach(key=> {
+                    this.incorrectAttempts[key] = 0;
+                });
+                this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
+                DIS_Log("11.1.3-Generate Button", new Date().toISOString(), {
+                    Question_Regeneration_Count: this.generateButtonCounter
+                })
             }.bind(this),
             false
         );
@@ -1580,11 +1633,13 @@ export default class cachetable extends RunestoneBase {
             const curr_answers = this.answer_list[ curr_ref ];
             if ( curr_answers[ 1 ].toString() != response_index ) {
                 this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_index");
+                this.incorrectAttempts.index++;
                 return;
             }
 
             if ( this.hit_miss_list[ curr_ref ] != response_hit_miss  ) {
                 this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_HM");
+                this.incorrectAttempts.hitMiss++;
                 return;
             }
             // in 2-way set associative, we need to check 4 extra input fields
@@ -1599,6 +1654,7 @@ export default class cachetable extends RunestoneBase {
                     document.querySelector('input[name="Tag2' + curr_ref_str + '"]').value;
                 if ( curr_answers[ 8 ].toString() != response_lru ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_LRU");
+                    this.incorrectAttempts.lru++;
                     return;
                 }
                 if ( response_lru == 1 ) {
@@ -1608,14 +1664,17 @@ export default class cachetable extends RunestoneBase {
                     }
                     if ( curr_answers[ 2 ].toString() != response_valid ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_valid");
+                        this.incorrectAttempts.valid++;
                         return;
                     }
                     if ( curr_answers[ 3 ].toString() != response_dirty ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_dirty");
+                        this.incorrectAttempts.dirty++;
                         return;
                     }
                     if ( curr_answers[ 4 ].toString() != response_tag ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_tag");
+                        this.incorrectAttempts.tag++;
                         return;
                     }     
                 } else {
@@ -1625,14 +1684,17 @@ export default class cachetable extends RunestoneBase {
                     }
                     if ( curr_answers[ 5 ].toString() != response_valid2 ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_valid");
+                        this.incorrectAttempts.valid++;
                         return;
                     }
                     if ( curr_answers[ 6 ].toString() != response_dirty2 ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_dirty");
+                        this.incorrectAttempts.dirty++;
                         return;
                     }
                     if ( curr_answers[ 7 ].toString() != response_tag2 ) {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_tag");
+                        this.incorrectAttempts.tag++;
                         return;
                     }       
                 }
@@ -1640,14 +1702,17 @@ export default class cachetable extends RunestoneBase {
             } else {
                 if ( response_valid != "1" ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_valid");
+                    this.incorrectAttempts.valid++;
                     return;
                 }
                 if ( curr_answers[ 3 ].toString() != response_dirty ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_dirty");
+                    this.incorrectAttempts.dirty++;
                     return;
                 }
                 if ( curr_answers[ 4 ].toString() != response_tag ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_tag");
+                    this.incorrectAttempts.tag++;
                     return;
                 }       
             }     
