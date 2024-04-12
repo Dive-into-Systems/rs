@@ -45,7 +45,7 @@ function DIS_Log(QID, timestamp, data) {
     };
 
     // URL of the Flask route designed to accept POST requests
-    const url = 'http://localhost:5000/'; // CHANGE
+    const url = 'http://pikachu:5000/wtv-endpoint'; // CHANGE
 
     fetch(url, {
         method: 'POST', // Sending data as POST
