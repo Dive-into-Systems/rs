@@ -80,12 +80,12 @@ if ($(this).closest("[data-component=timedAssessment]").length == 0) {
 
 == Step 3: Integrating with Pretext
 
+[NOTE]
 ====
-*Notice:*
 
 By the time this documentation is written (Jul. 2023), we use 
-```<slate>``` or ```<iframe>``` to embed *each* question as an 
-*individual* HTML. There are still unsolved problems including:
+```<slate>``` or ```<iframe>``` to embed **each** question as an 
+**individual** HTML. There are still unsolved problems including:
 
 . unexpected scroll bar
 . extraneous and repetitive code
