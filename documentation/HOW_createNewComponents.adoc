@@ -27,19 +27,25 @@ npm install
 == Step 2: Create new components
 . Name your component
 .. Have a full name discriptive for its function
-.. Have an acronym as ```keyword``` for this component
+.. Have a shorthand such as ```"keyword"``` for this component
 . Create a component directory inside ```../runestone``` (Note: the suggestions below are not required but good as a convention)
 .. *Recommended: Duplicate a most relevant component*
-.. Name the directory as the keyword of the component ```../runestone/keyword```
-.. It's good to have a subdirectory ```../runestone/keyword/css```
-.. It's good to have a subdirectory ```../runestone/keyword/js```
-.. Inside the ```../runestone/keyword/js``` subdirectory, it's good to have a JavaScript file for this component ```keyword.js```
+.. Name the directory as the keyword of the component ```../runestone/"keyword"```
+.. It's good to have a subdirectory ```../runestone/"keyword"/css```
+.. It's good to have a subdirectory ```../runestone/"keyword"/js```
+.. Inside the ```../runestone/"keyword"/js``` subdirectory, it's good to have a JavaScript file for this component ```"keyword".js```
 . Add your component into keyword mapping
 .. In ```../webpack.index.js``` file, add a keyword-source statement into ```module_map``` with syntax:
 +
 [source, javascript]
-keyword: () => import("./runestone/keyword/js/keyword.js"),
+"keyword": () => import("./runestone/"keyword"/js/"keyword".js"),
 +
+For example, in the ```webpack.index.js```,  the ```numconv``` component would have:
++
+[source, javascript]
+numberconversion: () => import("./runestone/numconv/js/numconv.js"),
++
+The ```numberconversion``` shorthand will be used as the keyword when you link a data-component in one of your files in ```DIS_Pretext``` directory.
 Again, you do not need to match the names for folder, file, and keyword. To make the program knows how to map the keyword to corresponding implementation is the only goal.
 .. In ```./runestone/keyword/js/keyword.js``` file, look for a code block with title "*Find the custom HTML tags and execute our code on them*" at the end of the file.
 +
