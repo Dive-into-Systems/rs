@@ -83,9 +83,9 @@ if ($(this).closest("[data-component=timedAssessment]").length == 0) {
 [NOTE]
 ====
 
-By the time this documentation is written (Jul. 2023), we use 
-```<slate>``` or ```<iframe>``` to embed **each** question as an 
-**individual** HTML. There are still unsolved problems including:
+By the time this documentation is written (Jul. 2023), we use ```<slate>``` 
+or ```<iframe>``` to embed each question as an individual HTML. 
+There are still unsolved problems including:
 
 . unexpected scroll bar
 . extraneous and repetitive code
