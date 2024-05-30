@@ -63,7 +63,7 @@ Set ```data-component``` to your ```<keyword>``` in the following line:
 [source, javascript]
 $("[data-component=<keyword>]").each(function (index) {
 +
-======
+=====
 **Remarks:**
 
 * Leave the following line unchanged for now (unless you are now comfortable
@@ -75,83 +75,8 @@ if ($(this).closest("[data-component=timedAssessment]").length == 0) {
 ----
 
 * You must match your ```keyword``` in _3.a_ and _3.b_
-======
+=====
 
-////
-== Optional Step 3: 
-
-NOTE: don't do this step and just go to Step 4.
-
-Compile your component in an HTML test file. 
-                Build the component 
-           with ```npm```, run from console:
-+
-[source, console]
-----
-npm run build
-----
-+
-It will create ```webpack_static_imports.json``` in 
-```/runestone/dist``` directory. 
-
-. Create an HTML file in ```../HTML_example```
-
-.. *Recommended*: duplicate an existing HTML file
-
-. In the body of the HTML file, create a ```<section>``` that contains a
-```<div>``` with the ```data-component``` being tested, as the example shown
-below:
-+
-[source, html]
-----
-<section id="exercise name">
-  <h1>Exercise Name<a class="headerlink" href="#component-abbreviation" title="Permalink to this heading">¶</a></h1>
-            <p>Exercise Title </p>
-
-        <div class="runestone ">
-        <div data-component="keyword" data-question_label="a number" id="a unique id"  style="visibility: hidden;">
-        </div>
-        </div>
-</section>
-----
-+
-====
-*Remark:*
-
-The most important goal is to set ```data-component``` as your ```keyword```
-such that Runestone knows to compile your component here.
-
-Don't forget that you can configure some questions to your preference with
-```JSON```.
-
-Moreover, make sure question has a different ```id```. 
-====
-. Go into the ```../HTML_example``` folder and link required .js and .css files
-  using the `link-runestone-js.py` script. 
-+
-[source, console]
-----
-cd HTML_example
-./link-runestone-js.py ../runestone/dist/webpack_static_imports.json <name of your html file>
-----
-+
-.. For the `link-runestone-js.py` script to work, it *must* find the following block
-in the HTML file you passed it:
-+
-[source, html]
-----
-<!-- BEGIN LINKED FILES -->
-...
-<!-- END LINKED FILES -->
-----
-+
-.. Anything in between those two markers (the `...` above) will be overwritten
-   by the script to include the runestone files you built.  All other lines
-   will be passed through without changes.
-
-. Open the html file in a browser to check whether the component is rendered 
-  correctly or not. 
-////
 
 == Step 3: Integrating with Pretext
 
@@ -165,6 +90,7 @@ By the time this documentation is written (Jul. 2023), we use
 . unexpected scroll bar
 . extraneous and repetitive code
 ====
+
 . Make sure that you have pretext ready on your virtual environment
 +
 [source, console]
