@@ -27,50 +27,80 @@ npm install
 == Step 2: Create new components
 . Name your component
 .. Have a full name discriptive for its function
-.. Have a shorthand such as ```"keyword"``` for this component
-. Create a component directory inside ```../runestone``` (Note: the suggestions below are not required but good as a convention)
+.. Have an acronym as ```keyword``` for this component
+. Create a component directory inside ```../runestone``` 
+  (Note: the suggestions below are not required but good as a convention)
++
+----
+mkdr keyword
+---
+
 .. *Recommended: Duplicate a most relevant component*
-.. Name the directory as the keyword of the component ```../runestone/"keyword"```
-.. It's good to have a subdirectory ```../runestone/"keyword"/css```
-.. It's good to have a subdirectory ```../runestone/"keyword"/js```
-.. Inside the ```../runestone/"keyword"/js``` subdirectory, it's good to have a JavaScript file for this component ```"keyword".js```
+.. Name the directory your keyword of the component:
+   ```../runestone/<keyword>``` 
+   (Note: your keyword is shown as ```<keyword>``` path names)
+.. It's good to have a subdirectory ```../runestone/<keyword>/css```
+.. It's good to have a subdirectory ```../runestone/<keyword>/js```
+.. Inside the ```../runestone/<keyword>/js``` subdirectory, 
+   it's good to have a JavaScript file for this component ```<keyword>.js```
 . Add your component into keyword mapping
-.. In ```../webpack.index.js``` file, add a keyword-source statement into ```module_map``` with syntax:
+.. In ```../webpack.index.js``` file, add a keyword-source statement 
+   into ```module_map``` with syntax:
 +
 [source, javascript]
-"keyword": () => import("./runestone/"keyword"/js/"keyword".js"),
+keyword: () => import("./runestone/<keyword>/js/<keyword>.js"),
 +
-For example, in the ```webpack.index.js```,  the ```numconv``` component would have:
+Again, you do not need to match the names for folder, file, and keyword. To
+make the program knows how to map the keyword to corresponding implementation
+is the only goal.
+
+.. In ```./runestone/<keyword>/js/<keyword>.js``` file, look for a code block
+   with title "*Find the custom HTML tags and execute our code on them*" at 
+   the end of the file.
++
+Set ```data-component``` to your ```<keyword>``` in the following line:
 +
 [source, javascript]
-numberconversion: () => import("./runestone/numconv/js/numconv.js"),
-+
-The ```numberconversion``` shorthand will be used as the keyword when you link a data-component in one of your files in ```DIS_Pretext``` directory.
-Again, you do not need to match the names for folder, file, and keyword. To make the program knows how to map the keyword to corresponding implementation is the only goal.
-.. In ```./runestone/keyword/js/keyword.js``` file, look for a code block with title "*Find the custom HTML tags and execute our code on them*" at the end of the file.
-+
-Set ```data-component``` to your ```keyword``` in the following line:
-+
-[source, javascript]
-$("[data-component=keyword]").each(function (index) {
+$("[data-component=<keyword>]").each(function (index) {
 +
 ======
 **Remarks:**
 
-* Leave the following line unchanged for now (unless you are now comfortable working on exercise timing)
+* Leave the following line unchanged for now (unless you are now comfortable
+  working on exercise timing)
++
 [source, javascript]
+----
 if ($(this).closest("[data-component=timedAssessment]").length == 0) {
+----
+
 * You must match your ```keyword``` in _3.a_ and _3.b_
 ======
 
-== Step 3: Compile your component in an HTML test file
-. Build the component with ```npm```, run from console:
+////
+== Optional Step 3: 
+
+NOTE: don't do this step and just go to Step 4.
+
+Compile your component in an HTML test file. 
+                Build the component 
+           with ```npm```, run from console:
++
 [source, console]
+----
 npm run build
-It will create ```webpack_static_imports.json``` in ```/runestone/dist``` directory. 
+----
++
+It will create ```webpack_static_imports.json``` in 
+```/runestone/dist``` directory. 
+
 . Create an HTML file in ```../HTML_example```
+
 .. *Recommended*: duplicate an existing HTML file
-. In the body of the HTML file, create a ```<section>``` that contains a ```<div>``` with the ```data-component``` being tested, as the example shown below:
+
+. In the body of the HTML file, create a ```<section>``` that contains a
+```<div>``` with the ```data-component``` being tested, as the example shown
+below:
 +
 [source, html]
 ----
@@ -88,13 +118,16 @@ It will create ```webpack_static_imports.json``` in ```/runestone/dist``` direct
 ====
 *Remark:*
 
-The most important goal is to set ```data-component``` as your ```keyword``` such that Runestone knows to compile your component here.
+The most important goal is to set ```data-component``` as your ```keyword```
+such that Runestone knows to compile your component here.
 
-Don't forget that you can configure some questions to your preference with ```JSON```.
+Don't forget that you can configure some questions to your preference with
+```JSON```.
 
 Moreover, make sure question has a different ```id```. 
 ====
-. Go into the ```../HTML_example``` folder and link required .js and .css files using the `link-runestone-js.py` script. 
+. Go into the ```../HTML_example``` folder and link required .js and .css files
+  using the `link-runestone-js.py` script. 
 +
 [source, console]
 ----
@@ -112,18 +145,22 @@ in the HTML file you passed it:
 <!-- END LINKED FILES -->
 ----
 +
-.. Anything in between those two markers (the `...` above) will be overwritten by
-the script to include the runestone files you built.  All other lines will be
-passed through without changes.
+.. Anything in between those two markers (the `...` above) will be overwritten
+   by the script to include the runestone files you built.  All other lines
+   will be passed through without changes.
 
-. Open the html file in a browser to check whether the component is rendered correctly or not. 
+. Open the html file in a browser to check whether the component is rendered 
+  correctly or not. 
+////
 
-== Step 4: Integrating with Pretext
+== Step 3: Integrating with Pretext
 
 ====
 *Notice:*
 
-By the time this documentation is written (Jul. 2023), we use ```<slate>``` or ```<iframe>``` to embed *each* question as an *individual* HTML. There are still unsolved problems including:
+By the time this documentation is written (Jul. 2023), we use 
+```<slate>``` or ```<iframe>``` to embed *each* question as an 
+*individual* HTML. There are still unsolved problems including:
 
 . unexpected scroll bar
 . extraneous and repetitive code
@@ -136,18 +173,26 @@ pip install pretext
 ----
 +
 
-Make sure you have also cloned and now looking at your ```DIS_Exercises``` repository. (Or refer to another document and create a new pretext book if you want to.)
+Make sure you have also cloned and now looking at your ```DIS_Exercises```
+repository. (Or refer to another document and create a new pretext book if you
+want to.)
 
 . Create a ```*.ptx``` file
-.. If it is a chapter-level exercise, put your ```\*.ptx``` file in ```DIS_Exercises/DIS_Pretext/source/``` folder. "Include" your ```*.ptx``` file in ```main.ptx```:
+
+.. If it is a chapter-level exercise, put your ```\*.ptx``` file in
+   ```DIS_Exercises/DIS_Pretext/source/``` folder. "Include" your ```*.ptx```
+   file in ```main.ptx```:
 +
 [source, pretext]
 ----
 <xi:include href="./*.ptx"/>
 ----
 +
-.. You can also create a Chapter and put your exercise as a page in that chapter!
-... Create a folder inside ```DIS_Exercises/DIS_Pretext/source/``` and add a ```toctree.ptx``` file in that folder. Your ```toctree.ptx``` should "include" all pages of exercise in that chapter:
+.. You can also create a Chapter and put your exercise as a page in 
+   that chapter!
+... Create a folder inside ```DIS_Exercises/DIS_Pretext/source/``` and add a
+    ```toctree.ptx``` file in that folder. Your ```toctree.ptx``` should
+    "include" all pages of exercise in that chapter:
 +
 [source, pretext]
 ----
@@ -165,10 +210,16 @@ Make sure you have also cloned and now looking at your ```DIS_Exercises``` repos
 ----
 +
 . Add your exercise to your ```*.ptx``` file.
-.. Add built-in question-types just as instructions on RuneStone. Note that this would use RuneStone from official release.
+.. Add built-in question-types just as instructions on RuneStone. Note that
+   this would use RuneStone from official release.
 .. Add your exercises built on your components:
-... Likewise, your exercise should be wrapped by ```<exercise>``` label and you should include a ```<title>```.
-... Write questions just like you would do in your HTML test file. You can directly use the code template below:
+... Likewise, your exercise should be wrapped by ```<exercise>``` label and you
+    should include a ```<title>```.
+... Write questions just like you would do in your HTML test file. You can
+    directly use the code template below (note where you need to add your
+    component info...look for ```test_cache_info```, ```test-cacheinfo```, 
+    ```cacheinfo```, etc and change to yours, and be sure to set 
+    ```<div data_component=``` to yours):
 +
 [source, pretext]
 ----
@@ -221,14 +272,16 @@ Make sure you have also cloned and now looking at your ```DIS_Exercises``` repos
   </exercise>
 ----
 +
-... Run the script ```/DIS_Exercises/DIS_Pretext/copy_runestone_bundles.py``` in terminal to copy your *already compiled* dist folder over.
+... Run the script ```/DIS_Exercises/DIS_Pretext/copy_runestone_bundles.py```
+    in terminal to copy your *already compiled* dist folder over.
 +
 [source, console]
 ----
 ./copy_runestone_bundles.py <path/to/runestone/dist> [path/to/destination/dist]
 ----
 +
-... Change directory to ```/DIS_Exercises/DIS_Pretext/```. Use pretext to build and view the book from terminal
+... Change directory to ```/DIS_Exercises/DIS_Pretext/```. Use pretext to build
+    and view the book from terminal
 +
 [source, console]
 ----
