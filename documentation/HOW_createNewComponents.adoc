@@ -33,7 +33,7 @@ npm install
 +
 ----
 mkdr keyword
----
+----
 
 .. *Recommended: Duplicate a most relevant component*
 .. Name the directory your keyword of the component:
