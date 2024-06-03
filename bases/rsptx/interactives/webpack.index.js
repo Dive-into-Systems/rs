@@ -70,6 +70,7 @@ const module_map = {
     fillintheblank: () => import("./runestone/fitb/js/timedfitb.js"),
     numberconversion: () => import("./runestone/numconv/js/numconv.js"),
     assembly_arm64: () => import("./runestone/assembly/js/assembly_arm64.js"),
+    binops: () => import("./runestone/numconv/js/binops.js"),
     cachetable: () => import("./runestone/cache/js/cachetable.js"),
     cacheinfo: () => import("./runestone/cache/js/cacheinfo.js"),
     cachepartition: () => import("./runestone/cache/js/cachepartition.js"),
