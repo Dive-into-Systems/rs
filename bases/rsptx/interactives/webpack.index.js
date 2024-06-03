@@ -69,6 +69,7 @@ const module_map = {
     dragndrop: () => import("./runestone/dragndrop/js/timeddnd.js"),
     fillintheblank: () => import("./runestone/fitb/js/timedfitb.js"),
     numberconversion: () => import("./runestone/numconv/js/numconv.js"),
+    binops: () => import("./runestone/numconv/js/binops.js"),
     cachetable: () => import("./runestone/cache/js/cachetable.js"),
     cacheinfo: () => import("./runestone/cache/js/cacheinfo.js"),
     cachepartition: () => import("./runestone/cache/js/cachepartition.js"),
