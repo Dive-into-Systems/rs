@@ -4,6 +4,12 @@
 // This file contains the JS for the Runestone virtual memory component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
 "use strict";
 
+const Q_CORR = 0;
+const Q_BAD_TP = 0;
+const Q_BAD_CT = 0;
+const Q_BAD_ALL = 0;
+
+
 // NOTE:
 // main weights doesnt have to add up to 100, bad_ct and bad_type not mut exclusive
 class InstructionsFamily {
@@ -14,12 +20,6 @@ class InstructionsFamily {
         this.mainWeight = mainWeight;
         this.odds = oddsArr;
         this.instructions = insArr;
-        // this.odds = {
-        //     correct: oddsArr[0],
-        //     bad_ct: oddsArr[1], // wrong number of ops
-        //     bad_type: oddsArr[2] // memory register values mixup
-        //     bad_all: oddsArr[3] // memory register values mixup
-        // }
     }
 }
 
@@ -52,7 +52,7 @@ class ArchInstructions {
                 return i;
             }
         }
-        return 0;
+        return -1; // BAD
 
     }
 
@@ -77,7 +77,7 @@ class ArchInstructions {
 
         const op = family.instructions[Math.floor(Math.random() * family.instructions.length)];
         const q_type = this.weighed_pick(fam_odds)
-        return [op, (q_type&1) === 1, (q_type&2) === 2];
+        return [op, (q_type&1) == 1, (q_type&2) == 2];
     }
 
 }
@@ -116,30 +116,30 @@ export class ARM64_OPS extends ArchInstructions {
 }
 
 
-export class IA32_OPS extends ArchInstructions {
-    constructor() {
-        this.mem_ops = new InstructionsFamily(15, [40, 40, 20], ["mov"]);
-        this.stack_ops = new InstructionsFamily(15, [40, 40, 20], ["push", "pop"]);
-        this.arith_unary = new InstructionsFamily(20, [40, 30, 30], ["neg", "not"]);
-        this.arith_binary = new InstructionsFamily(30, [35, 35, 30], ["add", "sub", "and", "or", "xor"]);
-        this.bit_ops = new InstructionsFamily(20, [35, 35, 30], ["shl", "shr", "sar"]);
-        this.offsets = ["8", "16", "32"];
-    }
+// export class IA32_OPS extends ArchInstructions {
+//     constructor() {
+//         this.mem_ops = new InstructionsFamily(15, [40, 40, 20], ["mov"]);
+//         this.stack_ops = new InstructionsFamily(15, [40, 40, 20], ["push", "pop"]);
+//         this.arith_unary = new InstructionsFamily(20, [40, 30, 30], ["neg", "not"]);
+//         this.arith_binary = new InstructionsFamily(30, [35, 35, 30], ["add", "sub", "and", "or", "xor"]);
+//         this.bit_ops = new InstructionsFamily(20, [35, 35, 30], ["shl", "shr", "sar"]);
+//         this.offsets = ["8", "16", "32"];
+//     }
 
-    generateRegisters() {
-        let registers = [];
-        const regPrefixes = ['e', ''];
-        const regSuffixes = ['ax', 'bx', 'cx', 'dx', 'si', 'di', 'bp', 'sp'];
+//     generateRegisters() {
+//         let registers = [];
+//         const regPrefixes = ['e', ''];
+//         const regSuffixes = ['ax', 'bx', 'cx', 'dx', 'si', 'di', 'bp', 'sp'];
 
-        regPrefixes.forEach(prefix => {
-            regSuffixes.forEach(suffix => {
-                registers.push(prefix + suffix);
-            });
-        });
+//         regPrefixes.forEach(prefix => {
+//             regSuffixes.forEach(suffix => {
+//                 registers.push(prefix + suffix);
+//             });
+//         });
 
-        return registers;
-    }
-}
+//         return registers;
+//     }
+// }
 
 // Example usage:
 // const ia32Ops = new IA32_OPS();

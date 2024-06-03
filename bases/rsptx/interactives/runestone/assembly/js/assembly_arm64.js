@@ -1,215 +1,18 @@
 // *********
-// assembly_arm64.js
+// vo.js
 // *********
 // This file contains the JS for the Runestone virtual memory component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
-import ARM64_OPS from "./arch_generate.js"
 import "./vo-i18n.en.js";
 import "../css/vo.css";
-// import { Pass } from "codemirror";
-// import { validLetter } from "jexcel";
 
-export var VOList = {}; // Object containing all instances of VO that aren't a child of a timed assessment.
-
-class InstructionsFamily {
-    constructor(mainWeight, oddsArr, insArr) {
-        if (oddsArr.length !== 3) {
-            throw new Error("BAD ARR");
-        }
-        this.mainWeight = mainWeight;
-        this.odds = {
-            correct: oddsArr[0],
-            bad_ct: oddsArr[1], // wrong number of ops
-            bad_type: oddsArr[2] // memory register values mixup
-        }
-        this.instructions = insArr;
-    }
-}
-
-class ArchInstructions {
-    constructor() {
-        this.mem_ops        = null;
-        this.arch_ops       = null;
-        this.arith_unary    = null;
-        this.arith_binary   = null;
-        this.bit_ops        = null;
-        this.offsets        = null;
-        this.registers      = this.generateRegisters();
-    }
-
-    generateRegisters() {
-        return [];
-    }
-
-    pick_fam(odds) {
-        const total = odds.reduce((sum, a) => sum + a, 0);
-        let seed = 0;
-        while (seed === 0){
-            seed = Math.random() * total;
-        }// not possible to pick 0 weights events
-        let sum = 0;
-
-        for (let i = 0; i < odds.length; i++) {
-            sum += odds[i];
-            if (seed < sum) {
-                return i;
-            }
-        }
-        return 0;
-
-    }
-
-    pick_op(family)
-
-    generate_question_params(mem_arch, arith, bit) {
-        odds = [
-            mem_arch ? this.mem_ops.mainWeight      : 0,
-            mem_arch ? this.arch_ops.mainWeight     : 0,
-            arith    ? this.arith_unary.mainWeight  : 0,
-            arith    ? this.arith_binary.mainWeight : 0,
-            bit      ? this.bit_ops.mainWeight      : 0,
-        ]
-        let family;
-        const index = this.pick_fam(odds);
-        switch (index) {
-            case 0: return this.mem_ops;
-            case 1: return this.arch_ops;
-            case 2: return this.arith_unary;
-            case 3: return this.arith_binary;
-            case 4: return this.bit_ops;
-            default: throw new Error("Invalid operation index");
-        }
-    }
-
-}
-
-
-class ARM64_OPS extends ArchInstructions {
-    constructor() {
-        super();
-        this.mem_ops        = new InstructionsFamily(15, [40, 40, 20], ["mov"]),
-        this.arm_ops        = new InstructionsFamily(15, [40, 40, 20], ["ldr", "str"]),
-        this.arith_unary    = new InstructionsFamily(20, [40, 30, 30], ["neg", "mvn"]),
-        this.arith_binary   = new InstructionsFamily(30, [35, 35, 30], ["add", "sub", "and", "orr", "eor"]),
-        this.bit_ops        = new InstructionsFamily(20, [35, 35, 30], ["lsl", "lsr", "asr"]),
-        this.registers      = this.generateRegisters();
-        this.offsets        = ["#8", "#16", "#32"];
-    }
-
-    generateRegisters() {
-        // this.registers = [];
-        // this.registers_64bits = [];
-        // this.registers_32bits = [];
-        // for (let i = 0; i < 29; i++) {
-        //     this.registers_64bits.push("x" + i.toString());
-        //     this.registers_32bits.push("w" + i.toString());
-        // }
-        
-        let registers = [];
-        for (let i = 0; i < 29; i++) {
-            registers.push("x" + i.toString());
-        }
-        return registers;
-
-    }
-    
-
-}
-
-
-class IA32_OPS {
-    constructor() {
-        this.mem_ops = new InstructionsFamily(15, [40, 40, 20], ["mov"]);
-        this.stack_ops = new InstructionsFamily(15, [40, 40, 20], ["push", "pop"]);
-        this.arith_unary = new InstructionsFamily(20, [40, 30, 30], ["neg", "not"]);
-        this.arith_binary = new InstructionsFamily(30, [35, 35, 30], ["add", "sub", "and", "or", "xor"]);
-        this.bit_ops = new InstructionsFamily(20, [35, 35, 30], ["shl", "shr", "sar"]);
-        this.registers = this.generateRegisters();
-        this.offsets = ["8", "16", "32"];
-    }
-
-    generateRegisters() {
-        let registers = [];
-        const regPrefixes = ['e', ''];
-        const regSuffixes = ['ax', 'bx', 'cx', 'dx', 'si', 'di', 'bp', 'sp'];
-
-        regPrefixes.forEach(prefix => {
-            regSuffixes.forEach(suffix => {
-                registers.push(prefix + suffix);
-            });
-        });
-
-        return registers;
-    }
-
-    pick_op(mem, arith, bit) {
-        const odds = [
-            mem ? this.mem_ops.mainWeight : 0,
-            mem ? this.stack_ops.mainWeight : 0,
-            arith ? this.arith_unary.mainWeight : 0,
-            arith ? this.arith_binary.mainWeight : 0,
-            bit ? this.bit_ops.mainWeight : 0,
-        ];
-
-        // Calculate the total sum of the odds
-        const total = odds.reduce((psum, a) => psum + a, 0);
-
-        // Generate a random number between 0 and the total sum of the odds
-        const random = Math.random() * total;
-
-        // Iterate through the odds to determine which option to pick
-        let cumulativeSum = 0;
-        for (let i = 0; i < odds.length; i++) {
-            cumulativeSum += odds[i];
-            if (random < cumulativeSum) {
-                return i;
-            }
-        }
-
-        // In case of any rounding errors, return the last index
-        return odds.length - 1;
-    }
-
-    getRandomInstruction(mem, arith, bit) {
-        const index = this.pick_op(mem, arith, bit);
-        let family;
-        switch (index) {
-            case 0:
-                family = this.mem_ops;
-                break;
-            case 1:
-                family = this.stack_ops;
-                break;
-            case 2:
-                family = this.arith_unary;
-                break;
-            case 3:
-                family = this.arith_binary;
-                break;
-            case 4:
-                family = this.bit_ops;
-                break;
-            default:
-                throw new Error("Invalid operation index");
-        }
-        const instruction = family.instructions[Math.floor(Math.random() * family.instructions.length)];
-        return instruction;
-    }
-}
-
-// Example usage:
-// const ia32Ops = new IA32_OPS();
-// console.log(ia32Ops.getRandomInstruction(true, true, true)); // Random instruction from all categories
-// console.log(ia32Ops.getRandomInstruction(true, false, false)); // Random memory or stack operation instruction
-// console.log(ia32Ops.getRandomInstruction(false, true, true)); // Random arithmetic or bit operation instruction
-
-
+import ARM64_OPS from "./arch_generate.js"
+export var ARMList = {}; // Object containing all instances of VO that aren't a child of a timed assessment.
 
 // VO constructor
-export default class 
- extends RunestoneBase {
+export default class ASM_ARM64 extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig; // entire <p> element
@@ -237,7 +40,6 @@ export default class
     // Create the VO Element
     createVOElement() {
         this.initParams(); // init all
-        this.renderVOCheckBoxes();
         this.renderVOInputField();
         this.renderVOButtons();
         this.renderVOFeedbackDiv();
@@ -248,13 +50,11 @@ export default class
     initParams() {
         this.setDefaultParams();
         this.setCustomizedParams();
-        this.containerDiv = $("<div>").attr("id", this.divid);
     }
 
     // set default parameters
     setDefaultParams() {
         this.architecture = "IA32";
-        
         this.num_q_in_group = 4; // number of questions in a group
         this.memoryAccess_chance = 0.5; // probability of memory-accessing ops in one set
         this.constantInArthm_chance = 0.5; // probability of having a contant as src
@@ -271,46 +71,29 @@ export default class
     // load customized parameters
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
-        if (currentOptions["arch"] != undefined) {
-            this.architecture = currentOptions["arch"];
+        if (currentOptions["architecture"] != undefined) {
+            this.architecture = currentOptions["architecture"];
         }
-
-
-        // Set instruction types based on selected checkboxes
-        const selectedInstructionTypes = [];
-        if ($(`#${this.divid}_arithmetic`).is(":checked")) {
-            selectedInstructionTypes.push("arithmetic");
+        if (currentOptions["num_of_question_in_one_group"] != undefined) {
+            this.num_q_in_group = eval(currentOptions["num_of_question_in_one_group"]);
         }
-        if ($(`#${this.divid}_bitmanipulation`).is(":checked")) {
-            selectedInstructionTypes.push("bitmanipulation");
+        if (currentOptions["mem_access_chance"] != undefined) {
+            this.memoryAccess_chance = eval(currentOptions["mem_access_chance"]);
         }
-        if ($(`#${this.divid}_memorymanipulation`).is(":checked")) {
-            selectedInstructionTypes.push("memorymanipulation");
+        if (currentOptions["load_effective_address"] != undefined) {
+            this.lea = eval(currentOptions["load_effective_address"]);
         }
 
         if (this.architecture === "IA32") {
             // declare all IA32 elements for the prompt
-            // add operators based on selected types
             this.arthm_operators = ["addl", "subl", "imull", "sall", "sarl", "shrl", "xorl", "andl", "orl"];
-            this.mem_operators = ["movl"];
             this.mem_operators = ["movl"];
             this.registers = ["%eax", "%ecx", "%edx", "%ebx", "%esi", "%edi"];
             this.offsets = ["-0x8", "0x8", "8", "4", "-0x4", "0x4", ""];
         } else if (this.architecture === "ARM64") {
-            this.weightsArm64 = {
-                mem_ops:        new Weights(15, [40, 40, 20]),
-                arm_ops:        new Weights(15, [40, 40, 20]),
-                arith_unary:    new Weights(20, [40, 30, 30]),
-                arith_binary:   new Weights(30, [35, 35, 30]),
-                bit_ops:        new Weights(20, [35, 35, 30]),
-            };
-            this.mem_ops = ["mov"];
-            this.arm_ops = ["ldr", "str"];
-            this.arith_unary = ["neg", "mvn"];
-            this.arith_binary = ["add", "sub", "and", "orr", "eor"];
-            // this.arith_binary = ["add", "sub", "and", "orr", "eor", "mul", "udiv", "sdiv"];
-            this.bit_ops = ["lsl", "lsr", "asr"];
-            
+            // declare all ARM64 elements for the prompt
+            this.arthm_operators = ["mov", "add", "sub", "mul", "udiv", "sdiv", "and", "orr", "eor"];
+            this.mem_operators = ["ldr", "ldp", "str", "stp"];
             this.registers = [];
             this.registers_64bits = [];
             this.registers_32bits = [];
@@ -321,7 +104,7 @@ export default class
             this.offsets = ["#8", "#16", "#32"];
         }
     }
-    
+
 
     renderVOCheckBoxes() {
         const instructionTypes = [
@@ -347,10 +130,14 @@ export default class
     }
 
     renderVOInputField() {
+        this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
             "For each of the following " + 
             this.architecture + 
-            " instructions, if the syntax is <b>valid</b> or <b>invalid</b>");
+            " instructions, indicate whether the instruction " + 
+            "<b>could</b> cause a page fault, whether it <b>could</b> cause a cache miss, and " + 
+            "whether it <b>could</b> cause the dirty bit in the cache to be set to 1."
+        );
         this.statementDiv = $("<div>").append(this.instruction);
         this.statementDiv.append("<br>");
         this.inputBox = document.createElement("div");
@@ -360,7 +147,7 @@ export default class
         this.textNodes = []; // create a reference to all current textNodes for future update
         this.inputNodes = []; // create slots for inputs for future updates
         var textNode = null; 
-        
+        this.renderVOCheckBoxes();
         this.genPromptsNAnswer();
 
         // create and render all input fields in question group
@@ -447,16 +234,65 @@ export default class
         this.containerDiv.append(this.statementDiv);
     }
 
+    renderVOCheckBoxes() {
+        const instructionTypes = [
+            { label: 'Arithmetics', value: 'arithmetic' },
+            { label: 'Bit Operations', value: 'bitmanipulation' },
+            { label: 'Memory Manipulation', value: 'memorymanipulation' }
+        ];
     
+        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
+        instructionTypeDiv.append($("<h4>").text("Select Instruction Types:"));
+    
+        instructionTypes.forEach(type => {
+            const checkbox = $("<input>").attr({
+                type: "checkbox",
+                id: this.divid + "_" + type.value,
+                value: type.value
+            });
+            const label = $("<label>").attr("for", this.divid + "_" + type.value).text(type.label);
+            instructionTypeDiv.append(checkbox).append(label).append(" ");
+        });
+
+        this.containerDiv.append(instructionTypeDiv).append("<br>");
+    }
+
     genPromptsNAnswer() { // generates a group of prompts and their answers, sets answers with this.memAccess, this.src, this.dest
         this.memAccess = null;
         this.dest = null;
         this.src = null;
         var pf = null, cm = null, db = null;
         this.operatorList = [];
-        
+
         for (let k = 0; k < this.num_q_in_group; k++) {
-            this.generateQuestionARM64();
+            if (Math.random() < this.memoryAccess_chance) { // determine whether mem access at all, yes case
+                this.memAccess = true;
+                pf = true, cm = true;
+                if (Math.random() < 0.5) { // mem access is on src
+                    this.dest = "reg";
+                    this.src = "mem";
+                    db = false;
+                } else {  // mem access is on this.dest
+                    this.dest = "mem";
+                    this.src = "reg";
+                    db = true;
+                }
+            }
+            else { // no mem access case
+                if (Math.random() < 0.2 && this.lea === true && this.architecture === "IA32") {
+                    pf = false, cm = false, db = false;
+                    this.memAccess = "lea";
+                } else {
+                    this.memAccess = false;
+                    this.dest = "reg";
+                    pf = false, cm = false, db = false;
+                    if (Math.random() < this.constantInArthm_chance) {
+                        this.src = "const";
+                    } else {
+                        this.src = "reg";
+                    }
+                }
+            }
             this.answerList[k] = [pf, cm, db];
             this.promptList[k] = this.renderOnePrompt(); 
         }
@@ -474,8 +310,6 @@ export default class
             // render the operator
             if (this.memAccess === false) {
                 this.operator = this.pick(this.arthm_operators);
-                // if the current selected operator is not repeated within operator list
-                // we reselect operator randomly while operatorList still contains the selected operator
                 while (this.has(this.operator)) {
                     this.operator = this.pick(this.arthm_operators);
                 }
@@ -819,7 +653,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                VOList[this.id] = new VO(opts);
+                ARMList[this.id] = new ASM_ARM64(opts);
             } catch (err) {
                 console.log(
                     `Error rendering Virtual Memory Operations Problem ${this.id}
