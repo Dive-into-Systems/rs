@@ -7,12 +7,13 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./vo-i18n.en.js";
 import "../css/vo.css";
+import { Pass } from "codemirror";
+import { validLetter } from "jexcel";
 
-import ARM64_OPS from "./arch_generate.js"
-export var ARMList = {}; // Object containing all instances of VO that aren't a child of a timed assessment.
+export var VOList = {}; // Object containing all instances of VO that aren't a child of a timed assessment.
 
 // VO constructor
-export default class ASM_ARM64 extends RunestoneBase {
+export default class VO extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig; // entire <p> element
@@ -105,30 +106,6 @@ export default class ASM_ARM64 extends RunestoneBase {
         }
     }
 
-
-    renderVOCheckBoxes() {
-        const instructionTypes = [
-            { label: 'Arithmetics', value: 'arithmetic' },
-            { label: 'Bit Operations', value: 'bitmanipulation' },
-            { label: 'Memory Manipulation', value: 'memorymanipulation' }
-        ];
-    
-        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-        instructionTypeDiv.append($("<h4>").text("Select Instruction Types:"));
-    
-        instructionTypes.forEach(type => {
-            const checkbox = $("<input>").attr({
-                type: "checkbox",
-                id: this.divid + "_" + type.value,
-                value: type.value
-            });
-            const label = $("<label>").attr("for", this.divid + "_" + type.value).text(type.label);
-            instructionTypeDiv.append(checkbox).append(label).append(" ");
-        });
-
-        this.containerDiv.append(instructionTypeDiv).append("<br>");
-    }
-
     renderVOInputField() {
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
@@ -147,7 +124,7 @@ export default class ASM_ARM64 extends RunestoneBase {
         this.textNodes = []; // create a reference to all current textNodes for future update
         this.inputNodes = []; // create slots for inputs for future updates
         var textNode = null; 
-        this.renderVOCheckBoxes();
+        
         this.genPromptsNAnswer();
 
         // create and render all input fields in question group
@@ -232,29 +209,6 @@ export default class ASM_ARM64 extends RunestoneBase {
         // ***div STRUCTURE***: containerDiv consists of instruction, <br>, inputBox.
         // ***div STRUCTURE***: inputBox contains four newDiv. 
         this.containerDiv.append(this.statementDiv);
-    }
-
-    renderVOCheckBoxes() {
-        const instructionTypes = [
-            { label: 'Arithmetics', value: 'arithmetic' },
-            { label: 'Bit Operations', value: 'bitmanipulation' },
-            { label: 'Memory Manipulation', value: 'memorymanipulation' }
-        ];
-    
-        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-        instructionTypeDiv.append($("<h4>").text("Select Instruction Types:"));
-    
-        instructionTypes.forEach(type => {
-            const checkbox = $("<input>").attr({
-                type: "checkbox",
-                id: this.divid + "_" + type.value,
-                value: type.value
-            });
-            const label = $("<label>").attr("for", this.divid + "_" + type.value).text(type.label);
-            instructionTypeDiv.append(checkbox).append(label).append(" ");
-        });
-
-        this.containerDiv.append(instructionTypeDiv).append("<br>");
     }
 
     genPromptsNAnswer() { // generates a group of prompts and their answers, sets answers with this.memAccess, this.src, this.dest
@@ -645,7 +599,7 @@ export default class ASM_ARM64 extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    $("[data-component=assembly_arm64]").each(function (index) {
+    $("[data-component=vo]").each(function (index) {
         var opts = {
             orig: this,
             useRunestoneServices: eBookConfig.useRunestoneServices,
@@ -653,7 +607,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                ARMList[this.id] = new ASM_ARM64(opts);
+                VOList[this.id] = new VO(opts);
             } catch (err) {
                 console.log(
                     `Error rendering Virtual Memory Operations Problem ${this.id}
