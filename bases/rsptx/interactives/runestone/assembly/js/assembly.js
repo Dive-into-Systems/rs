@@ -7,8 +7,6 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./assembly-i18n.en.js";
 import "../css/assembly.css";
-import { Pass } from "codemirror";
-import { validLetter } from "jexcel";
 import {ARM64_OPS, IA32_OPS} from "./arch_generate.js"
 
 export var ARMList = {}; // Object containing all instances of ASM
@@ -30,18 +28,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.bit_checked = true;
         this.memo_checked = true;
 
-        // number of questions in the excercise
-        this.num_q_in_group = 6;
-
         this.setDefaultParams();
         this.setCustomizedParams();
-        this.genPromptsNAnswer();
-
-        this.renderHeader();
-        this.renderCheckboxes();
-        this.renderQuestions();
-        this.renderTryAgainButton();
-        this.renderFeedback();
+        this.renderFamilyOptions();
+        this.generateOneQuestion();
         // this.caption = "Assembly Syntax";
         // this.addCaption("runestone");
         // if (typeof Prism !== "undefined") {
@@ -77,22 +67,11 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     ===========================================*/
     // Create the ASM Element
     createAsmElement() {
+        this.renderASMInputField();
+        // replaces the intermediate HTML for this component with the rendered HTML of this component
     }
 
-    renderHeader() {
-        this.instruction = $("<div>").html(
-            "For each of the following " + 
-            this.architecture + 
-            " instructions, indicate whether the instruction " + 
-            "<b>could</b> be valid or invalid"
-        );
-        this.statementDiv = $("<div>").append(this.instruction);
-        this.statementDiv.append("<br>");
-        this.statementDiv.addClass("statement-box");
-        this.containerDiv.append(this.statementDiv);
-    }
-
-    renderCheckboxes() {
+    renderFamilyOptions() {
         // create three checkboxes that will be used later on for question generation
         const instructionTypes = [
             { label: 'Arithmetics', value: 'arithmetic' },
@@ -101,230 +80,136 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         ];
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-        instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
+        instructionTypeDiv.append($("<h4>").text("Select Instruction Types:"));
 
-        instructionTypes.forEach(family => {
-            let checkbox = $("<input>").attr({
+        instructionTypes.forEach(type => {
+            const checkbox = $("<input>").attr({
                 type: "checkbox",
-                id: family.value,
-                value: family.value,
-                checked: true
+                id: this.divid + "_" + type.value,
+                value: true
             });
-            checkbox.on("change", (event) => {
-                // Store the current state of checkboxes
-                const prevArithChecked = this.arith_checked;
-                const prevBitChecked = this.bit_checked;
-                const prevMemoChecked = this.memo_checked;
-            
-                // Update the states based on the checkbox change
-                switch(event.target.id){
-                    case "arithmetic":
-                        this.arith_checked = event.target.checked;
-                        break;
-                    case "bitmanipulation":
-                        this.bit_checked = event.target.checked;
-                        break;
-                    case "memorymanipulation":
-                        this.memo_checked = event.target.checked;
-                        break;
-                }
-            
-                // Check the condition and possibly revert changes
-                if (!this.arith_checked && !this.bit_checked && !this.memo_checked) {
-                    event.preventDefault();
-                    // Restore the previous states
-                    this.arith_checked = prevArithChecked;
-                    this.bit_checked = prevBitChecked;
-                    this.memo_checked = prevMemoChecked;
-                    
-                    // Restore the checkbox's checked state
-                    $(event.target).prop('checked', !event.target.checked);
-                }
-            });
-            
-            const label = $("<label>").attr("for", family.value).text(family.label);
+            checkbox.on("change", () => {
+                checkbox.value != checkbox.value;
+                console.log(checkbox.value);
+                console.log(checkbox.checked);
+            })
+            const label = $("<label>").attr("for", this.divid + "_" + type.value).text(type.label);
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
 
-        instructionTypeDiv.append("<br>");
-        this.containerDiv.append(instructionTypeDiv);
+        this.containerDiv.append(instructionTypeDiv).append("<br>");
     }
 
-    renderQuestions() {
-        this.questionDiv = $("<div>");
-    
+    renderASMInputField() {
+        this.instruction = $("<div>").html(
+            "For each of the following " + 
+            this.architecture + 
+            " instructions, indicate whether the instruction " + 
+            "<b>could</b> be valid or invalid"
+        );
+        this.statementDiv = $("<div>").append(this.instruction);
+        this.statementDiv.append("<br>");
+
         // input box generation
-        this.inputBox = $("<div>"); // contains all prompts and buttons
-    
+        this.inputBox = document.createElement("div");
+        this.inputBox = $(this.inputBox); // contains all prompts and buttons
+
         this.textNodes = []; // create a reference to all current textNodes for future update
         this.inputNodes = []; // create slots for inputs for future updates
         var textNode = null; 
-    
-        this.genPromptsNAnswer();
-    
-        // create and render all input fields in question group
-        for (let i = 0; i < this.num_q_in_group; i++) {
-            this.newDiv = $("<div>").attr("id", this.divid + "div" + i);
-            this.newDiv.append(String.fromCharCode((i + 97)) + ". "); // bulletin for each question
-            textNode = $(document.createElement("code")).text(this.promptList[i]); // create the prompt
-            textNode.css("font-size", "large");
-            this.textNodes.push(textNode);
-    
-            this.newDiv.append(textNode);
-            this.newDiv.append("<br>");
-    
-            this.radioButtons = [];
-            
-            // create and render valid/invalid answer fields
-            var btnYes = $("<input>").attr({
-                type: "radio",
-                value: true,
-                name: this.divid + "YN" + i,
-                id: "Yes" + i
-            }).on('change', function () {
-                $(this).removeClass('highlightWrong');
-                $(this).next('label').removeClass('highlightWrong');
-            });
-            var lblYes = $("<label>").attr("for", "Yes" + i).text("VALID");
+        this.generateOneQuestion();
+        // this.genPromptsNAnswer();
+
+        // // create and render all input fields in question group
+        // for (let i = 0; i < this.num_q_in_group; i++) {
+        //     this.newdivID = "div" + i;
+        //     this.newDiv = $("<div>").attr("id", this.divid + this.newdivID);
+        //     this.newDiv.append(String.fromCharCode((i + 97)) + ". "); // bulletin for each question
+        //     textNode = $(document.createElement("code")).text(this.promptList[i]); // create the prompt
+        //     textNode.css("font-size", "large");
+        //     this.textNodes.push(textNode);
+
+        //     this.newDiv.append(textNode);
+        //     this.newDiv.append("<br>");
+
+        //     this.radioButtons = [];
+        //     // create and render valid/invalid answer fields
+        //     this.newDiv.append("Valid? ");
+        //     var lblYes = $("<label>").text("YES");
+        //     var btnYes = $("<input>").attr({
+        //         type: "radio",
+        //         value: true,
+        //         name: this.divid + "YN" + i,
+        //         id: "Yes" + i
+        //     });
+        //     btnYes.on('change', function () {
+        //         $(this).removeClass('highlightWrong');
+        //         $(this).next('label').removeClass('highlightWrong');
+        //     });
+        //     var lblNo = $("<label>").text("NO");
+        //     var btnNo = $("<input>").attr({
+        //         type: "radio",
+        //         value: false,
+        //         name: this.divid + "YN" + i,
+        //         id: "No" + i
+        //     });
+        //     btnNo.on('change', function () {
+        //         $(this).removeClass('highlightWrong');
+        //         $(this).prev('label').removeClass('highlightWrong');
+        //     });
+        //     this.newDiv.append(lblYes);
+        //     this.newDiv.append(btnYes);
+        //     this.newDiv.append(lblNo);
+        //     this.newDiv.append(btnNo);
+
+        //     this.radioButtons.push([btnYes, btnNo]);
+        //     this.submitButton = $("<button>")
+        //         .text($.i18n("msg_ASM_check_me"))
+        //         .attr({
+        //             class: "button-check",
+        //             name: "answer",
+        //             type: "button",
+        //             id: this.divid + "submit" + i
+        //         })
+        //         .on("click", function() {
+        //             this.checkThisAnswers(i);
+        //         }.bind(this));
+        //     this.submitButton.addClass("button-check checkingbutton");
+        //     this.newDiv.append(this.submitButton);
+        //     this.inputBox.append(this.newDiv);
+        //     this.inputNodes.push(this.radioButtons);
+        // }
+        // this.statementDiv.append(this.inputBox);
+
+        // // copy the original elements to the container holding what the user will see.
+        // $(this.origElem).children().clone().appendTo(this.containerDiv);
         
-            // Add a label and radio button for the "Invalid" answer option
-            var btnNo = $("<input>").attr({
-                type: "radio",
-                value: false,
-                name: this.divid + "YN" + i,
-                id: "No" + i
-            }).on('change', function () {
-                $(this).removeClass('highlightWrong');
-                $(this).prev('label').removeClass('highlightWrong');
-            });
-            var lblNo = $("<label>").attr("for", "No" + i).text("INVALID");
-    
-            // Append the radio buttons and labels to the question div
-            this.newDiv.append(lblYes);
-            this.newDiv.append(btnYes);
-            this.newDiv.append(lblNo);
-            this.newDiv.append(btnNo);
-            this.newDiv.append($("<br>"));
-    
-            // this.radioButtons.push([btnYes, btnNo]);
-            this.submitButton = $("<button>")
-            .text($.i18n("msg_ASM_check_me")) // Using the localized string for the button text
-            .attr({
-                class: "button-check",
-                name: "answer",
-                type: "button",
-                id: this.divid + "submit" + i
-            })
-            .on("click", function() {
-                this.checkThisAnswers(i);
-            }.bind(this))
-            .addClass("button-check checkingbutton");
-    
-            this.newDiv.append(this.submitButton)
-            this.inputBox.append(this.newDiv);
-            this.inputNodes.push([btnYes, btnNo]);
-        }
-    
-        this.questionDiv.append(this.inputBox);
-    
-        // copy the original elements to the container holding what the user will see.
-        $(this.origElem).children().clone().appendTo(this.containerDiv);
+        // this.statementDiv.addClass("statement-box");
         
-        this.questionDiv.addClass("statement-box");
-        
-        // create a feedback div, will be removed in clear and added back when generate another question
-    
-        // remove the script tag.
-        this.scriptSelector(this.containerDiv).remove();
-        // ***div STRUCTURE***: questionDiv contains inputBox which contains number of question of newDiv. 
-        this.containerDiv.append(this.questionDiv);
+        // // create a feedback div, will be removed in clear and added back when generate another question
+        // this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
+
+        // // remove the script tag.
+        // this.scriptSelector(this.containerDiv).remove();
+        // // ***div STRUCTURE***: containerDiv consists of instruction, <br>, inputBox.
+        // // ***div STRUCTURE***: inputBox contains four newDiv. 
+        // this.containerDiv.append(this.statementDiv);
     }
+
+
 
     genPromptsNAnswer() {
         this.promptList = [];
         this.answerList = [];
-        this.errorTypes = []; // Store the error types for feedback
-    
-        for (let i = 0; i < this.num_q_in_group; i++) {
-            const [prompt, is_bad_type, is_bad_count] = this.generator.generate_question(
-                this.memo_checked, this.arith_checked, this.bit_checked
-            );
-    
-            this.promptList.push(prompt);
-            this.answerList.push(!(is_bad_type || is_bad_count));
-    
-            // Determine the error type
-            let errorType = '';
-            if (is_bad_type) {
-                errorType += 'Type Error ';
-            } else if (is_bad_count) {
-                errorType += 'Count Error ';
-            }
-            this.errorTypes.push(errorType);
-        }
     }
 
-    checkThisAnswers(index) {
-        const userAnswer = this.inputNodes[index].find(input => input.prop("checked")).val() === 'true';
-        const correctAnswer = this.answerList[index];
-        const errorType = this.errorTypes[index];
-    
-        if (userAnswer === correctAnswer) {
-            this.feedbackDiv.html($("<div>").text(`Question ${index + 1}: Correct!`));
-        } else {
-            this.feedbackDiv.html($("<div>").text(`Question ${index + 1}: Incorrect! Error Type: ${errorType}`));
-        }
-    }
+    generateOneQuestion() {
+        // generate_question_params(mem_arch, arith, bit)
+        let [instruction, is_bad_type, is_bad_count] = this.generator.generate_question_params(true, true, true);
 
-    renderTryAgainButton(){
-        this.generateButton = document.createElement("button");
-        this.generateButton.textContent = $.i18n("msg_ASM_generate_another");
-        $(this.generateButton).attr({
-            class: "btn btn-success",
-            name: "generate a number",
-            type: "button",
-            id: this.divid + "submit",
-        });
-        this.generateButton.addEventListener("click", () => {
-            this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
-            this.updatePrompts();
-        });
-        this.containerDiv.append("<br>");
-        this.containerDiv.append(this.generateButton);
-    }
-
-    renderFeedback(){
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-        this.containerDiv.append(this.feedbackDiv);
-    }
-
-    cleanInputNFeedbackField () {
-        // clear all previous selection
-        $('input[type="radio"]').prop('checked', false);
-
-        // enable all previously disabled element
-        for (let h = 0; h < this.num_q_in_group; h++) {
-            var currDivID = this.divid + "div" + h; // index into the current div
-            var currSubmitID = this.divid + "submit" + h; // index into the submit button in the current divid
-
-            $("#" + currDivID).prop("disabled", false).removeClass("prohibited");
-            $("#" + currDivID).find("*").prop("disabled", false).removeClass("input[disabled]");
-            $("#" + currDivID).find("code").removeClass("disabled-code");
-            $(currSubmitID).prop("disabled", false);
-        }
-        // clear feedback field
-        $(this.feedbackDiv).remove();
-    }
-
-    updatePrompts(){
-        // create and render all input fields in question group
-        this.genPromptsNAnswer();
-        for (let i = 0; i < this.num_q_in_group; i++) {
-            this.textNodes[i].text(this.promptList[i]);
-        }
-        // create another feedback div
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-        this.containerDiv.append(this.feedbackDiv);
+        console.log("Instruction:", instruction);
+        console.log("Is bad type:", is_bad_type);
+        console.log("Is bad count:", is_bad_count);
     }
 
 
@@ -351,9 +236,11 @@ $(document).on("runestone:login-complete", function () {
                 ARMList[this.id] = new ASM_EXCERCISE(opts);
             } catch (err) {
                 console.log(
-                    `Error rendering Assembly Syntax Problem ${this.id}\nDetails: ${err}\n${err.stack}`
+                    `Error rendering Assembly Syntax Problem ${this.id}
+                     Details: ${err}`
                 );
             }
+            console.log("rendering donee!");
         }
     });
 });

@@ -129,10 +129,10 @@ export default class BO extends RunestoneBase {
         // Build the inner HTML using template literals
         var html =   "<span class='anchor'>Select Operators</span>"+
         "<ul class='items'>"+
-        "  <li><input type='checkbox' value='AND' />AND </li>"+
-        "  <li><input type='checkbox' value='OR' />OR </li>"+
-          "<li><input type='checkbox' value='XOR' />XOR </li>"+
-          "<li><input type='checkbox' value='NOT' />NOT </li>"+
+        "  <li><input type='checkbox' value='AND' checked/>AND </li>"+
+        "  <li><input type='checkbox' value='OR' checked/>OR </li>"+
+          "<li><input type='checkbox' value='XOR' checked/>XOR </li>"+
+          "<li><input type='checkbox' value='NOT' checked/>NOT </li>"+
           "<li><input type='checkbox' value='Left Shift' />Left Shift </li>"+
           "<li><input type='checkbox' value='Right Shift(Logical)' />Right Shift(Logical) </li>"+
           "<li><input type='checkbox' value='Right Shift(Arithmetic)' />Right Shift(Arithmetic) </li>"+
@@ -152,16 +152,16 @@ export default class BO extends RunestoneBase {
 
         this.menuNode1.addEventListener("change",
         function () {
-            this.clearAnswer();
-            this.checkValidConversion();
+        //     this.clearAnswer();
         //    this.getCheckedValues();
-            if (this.displayed_num_string == undefined){
-                console.log("display string undefined");
-                this.getCheckedValues();
-                this.generateNumber();
-            }
-            this.checkValidConversion();
-            this.generateAnswer();
+        //    this.checkValidConversion();
+        //     if (this.displayed_num_string == undefined){
+        //         console.log("display string undefined");
+        //         // this.getCheckedValues();
+        //         this.generateNumber();
+        //     }
+        //     this.generateAnswer();
+            this.getCheckedValues();
         }.bind(this),
         false);
       
@@ -209,8 +209,8 @@ export default class BO extends RunestoneBase {
         this.statementDiv.style.borderWidth = "1px";
         this.statementDiv.style.borderRadius = "5px";
         this.statementDiv.style.borderBlockStyle = "solid";
-        this.statementDiv.style.borderBlockColor = "white";
-        this.statementDiv.style.backgroundColor = "white";
+        this.statementDiv.style.borderBlockColor = "transparent";
+        // this.statementDiv.style.backgroundColor = "white";
         this.statementDiv.style.padding = "8px";
 
 
@@ -272,7 +272,7 @@ export default class BO extends RunestoneBase {
         this.scriptSelector(this.containerDiv).remove();
         // Set the class for the text inputs, then store references to them.
         let ba = $(this.containerDiv).find(":input");
-        ba.attr("class", "form form-control selectwidthauto");
+        // ba.attr("class", "form form-control selectwidthauto");
         ba.attr("aria-label", "input area");
         this.blankArray = ba.toArray();
         // Set the style of code
@@ -329,7 +329,7 @@ export default class BO extends RunestoneBase {
 
 
         this.generateButton = document.createElement("button");
-        this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
+        this.generateButton.textContent = "Try Another";
         $(this.generateButton).attr({
             class: "btn btn-success",
             name: "generate a number",

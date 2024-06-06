@@ -1,6 +1,5 @@
 $.i18n().load({
     en: {
-        MSG_ASSEMBLY: "hello!",
         msg_no_answer: "No answer provided.",
         msg_VO_check_me: "Check",
         msg_VO_compare_me: "Compare me",
