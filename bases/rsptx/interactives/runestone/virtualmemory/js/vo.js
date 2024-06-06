@@ -138,11 +138,12 @@ export default class VO extends RunestoneBase {
 
             this.newDiv.append(textNode);
             this.newDiv.append("<br>");
+            this.innerQuestions = $("<div>").css("font-size", "14px");
 
             this.radioButtons = [];
             // create and render page fault, cache miss, dirty bit answer fields
             for (let j = 0; j < 3; j++) {
-                this.newDiv.append(this.fieldList[j]);
+                this.innerQuestions.append(this.fieldList[j]);
                 // create labels and buttons for YES and NO
                 var lblYes = $("<label>").text("YES");
                 var btnYes = $("<input>").attr({
@@ -166,13 +167,13 @@ export default class VO extends RunestoneBase {
                     $(this).removeClass('highlightWrong');
                     $(this).prev('label').removeClass('highlightWrong');
                 });
-                this.newDiv.append(lblYes);
-                this.newDiv.append(btnYes);
-                this.newDiv.append(lblNo);
-                this.newDiv.append(btnNo);
+                this.innerQuestions.append(lblYes);
+                this.innerQuestions.append(btnYes);
+                this.innerQuestions.append(lblNo);
+                this.innerQuestions.append(btnNo);
                 if (j !== 2) { 
-                    this.newDiv.append(" | ");
-                    this.newDiv.append(document.createTextNode( '\u00A0' ));
+                    this.innerQuestions.append(" | ");
+                    this.innerQuestions.append(document.createTextNode( '\u00A0' ));
                 }
                 this.radioButtons.push([btnYes, btnNo]);
             }
@@ -190,7 +191,8 @@ export default class VO extends RunestoneBase {
                     this.logCurrentAnswer();
                 }.bind(this));
             this.submitButton.addClass("button-check checkingbutton");
-            this.newDiv.append(this.submitButton);
+            this.innerQuestions.append(this.submitButton);
+            this.newDiv.append(this.innerQuestions);
             this.inputBox.append(this.newDiv);
             this.inputNodes.push(this.radioButtons);
         }
@@ -617,3 +619,4 @@ $(document).on("runestone:login-complete", function () {
         }
     });
 });
+
