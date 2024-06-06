@@ -6,7 +6,7 @@ $.i18n().load({
         msg_ASM_incorrect: "Incorrect. Please think again.",
         msg_ASM_correct: "Correct. Good job!",
         msg_ASM_generate_another: "Ask me another",
-        msg_ASM_imcomplete_answer: "Your selection is incomplete"
+        msg_ASM_imcomplete_answer: "Your selection is incomplete",
     }
 }).done(function() {
     console.log("i18n messages loaded successfully");

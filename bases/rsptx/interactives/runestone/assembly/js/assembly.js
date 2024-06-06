@@ -9,7 +9,7 @@ import "./assembly-i18n.en.js";
 import "../css/assembly.css";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
-import {ARM64_OPS, IA32_OPS} from "./arch_generate.js"
+import {ARM64_OPS, X86_32_OPS} from "./arch_generate.js"
 
 export var ARMList = {}; // Object containing all instances of ASM
 
@@ -41,7 +41,6 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.renderCheckboxes();
         this.renderQuestions();
         this.renderTryAgainButton();
-        this.renderFeedback();
         // this.caption = "Assembly Syntax";
         // this.addCaption("runestone");
         // if (typeof Prism !== "undefined") {
@@ -66,7 +65,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         }
 
         switch (this.architecture) {
-            case "IA32":  this.generator = new IA32_OPS();       break;
+            case "X86_32":  this.generator = new X86_32_OPS();       break;
             case "ARM64": this.generator = new ARM64_OPS();      break;
             default: throw new Error("Invalid architecture option");
         }
@@ -164,18 +163,41 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     
         // create and render all input fields in question group
         for (let i = 0; i < this.num_q_in_group; i++) {
+
+            //creation of new div
             this.newDiv = $("<div>").attr("id", this.divid + "div" + i);
-            this.newDiv.append(String.fromCharCode((i + 97)) + ". "); // bulletin for each question
-            textNode = $(document.createElement("code")).text(this.promptList[i]); // create the prompt
+
+            //create a first line node to contain the first line of elements, easy for spacing
+            this.firstLine = $("<div>");
+            this.firstLine.css({
+                "display": "flex",
+                "justify-content": "space-between"
+             })
+
+            //create a propmpt item node to contain the letter and the prompt
+            this.propmtItem = $("<div>");
+            this.propmtItem.css({
+                "display": "flex",
+             })
+
+            // create the prompt
+            textNode = $(document.createElement("code")).text(this.promptList[i]); 
             textNode.css("font-size", "large");
             this.textNodes.push(textNode);
-    
-            this.newDiv.append(textNode);
-            this.newDiv.append("<br>");
-    
-            this.radioButtons = [];
-            
+
+            // create the feedback
+            var feedbackDiv = $("<span>").attr("id", this.divid + "feedback" + i).addClass("feedback");
+
+            // start appending the letter, the propmpt, the feedback for the first line
+            this.propmtItem.append(String.fromCharCode((i + 97)) + ". ");
+            this.propmtItem.append(textNode);
+            this.firstLine.append(this.propmtItem);
+            this.firstLine.append(feedbackDiv);
+            this.newDiv.append(this.firstLine);
+
+
             // create and render valid/invalid answer fields
+            this.radioButtons = [];
             var btnYes = $("<input>").attr({
                 type: "radio",
                 value: true,
@@ -184,6 +206,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             }).on('change', function () {
                 $(this).removeClass('highlightWrong');
                 $(this).next('label').removeClass('highlightWrong');
+                $(this).removeClass('highlightRight');
+                $(this).next('label').removeClass('highlightRight');
             });
             var lblYes = $("<label>").attr("for", "Yes" + i).text("VALID");
         
@@ -196,6 +220,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             }).on('change', function () {
                 $(this).removeClass('highlightWrong');
                 $(this).prev('label').removeClass('highlightWrong');
+                $(this).removeClass('highlightRight');
+                $(this).next('label').removeClass('highlightRight');
             });
             var lblNo = $("<label>").attr("for", "No" + i).text("INVALID");
     
@@ -204,8 +230,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             this.newDiv.append(btnYes);
             this.newDiv.append(lblNo);
             this.newDiv.append(btnNo);
-            this.newDiv.append($("<br>"));
-    
+
             // this.radioButtons.push([btnYes, btnNo]);
             this.submitButton = $("<button>")
             .text($.i18n("msg_ASM_check_me")) // Using the localized string for the button text
@@ -217,7 +242,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             })
             .on("click", function() {
                 this.checkThisAnswers(i);
-            }.bind(this))
+                }.bind(this))
             .addClass("button-check checkingbutton");
     
             this.newDiv.append(this.submitButton)
@@ -231,8 +256,6 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         $(this.origElem).children().clone().appendTo(this.containerDiv);
         
         this.questionDiv.addClass("statement-box");
-        
-        // create a feedback div, will be removed in clear and added back when generate another question
     
         // remove the script tag.
         this.scriptSelector(this.containerDiv).remove();
@@ -265,16 +288,29 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     }
 
     checkThisAnswers(index) {
-        const userAnswer = this.inputNodes[index].find(input => input.prop("checked")).val() === 'true';
+        const checkedAnswer = this.inputNodes[index].find(input => input.prop("checked"));
+        const feedbackDiv = $("#" + this.divid + "feedback" + index);
+        if (checkedAnswer === undefined) {
+            feedbackDiv.html($("<span>").text(`Please choose one answer`));
+            return;
+        }
+        const userAnswer = checkedAnswer.val() === 'true';
         const correctAnswer = this.answerList[index];
         const errorType = this.errorTypes[index];
-    
+        let btnName = this.divid + 'YN' + index;
+
+        let msg;
         if (userAnswer === correctAnswer) {
-            this.feedbackDiv.html($("<div>").text(`Question ${index + 1}: Correct!`));
+            msg = `Correct!`;
+            checkedAnswer.addClass('highlightRight');
+            checkedAnswer.next('label').addClass('highlightRight');
         } else {
-            this.feedbackDiv.html($("<div>").text(`Question ${index + 1}: Incorrect! Error Type: ${errorType}`));
+            msg = `Incorrect! Error Type: ${errorType}`;
+            checkedAnswer.addClass('highlightWrong');
+            checkedAnswer.next('label').addClass('highlightWrong');
         }
-    }
+        feedbackDiv.html($("<span>").text(`${msg}`));
+        }
 
     renderTryAgainButton(){
         this.generateButton = document.createElement("button");
@@ -293,11 +329,6 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(this.generateButton);
     }
 
-    renderFeedback(){
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-        this.containerDiv.append(this.feedbackDiv);
-    }
-
     cleanInputNFeedbackField () {
         // clear all previous selection
         $('input[type="radio"]').prop('checked', false);
@@ -311,9 +342,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             $("#" + currDivID).find("*").prop("disabled", false).removeClass("input[disabled]");
             $("#" + currDivID).find("code").removeClass("disabled-code");
             $(currSubmitID).prop("disabled", false);
+
+            // clear individual feedback fields
+            $("#" + this.divid + "feedback" + h).empty();
         }
-        // clear feedback field
-        $(this.feedbackDiv).remove();
     }
 
     updatePrompts(){
@@ -322,9 +354,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         for (let i = 0; i < this.num_q_in_group; i++) {
             this.textNodes[i].text(this.promptList[i]);
         }
-        // create another feedback div
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-        this.containerDiv.append(this.feedbackDiv);
+        // clear and recreate feedback divs for each question
+        for(let i = 0; i < this.num_q_in_group; i++){
+            $("#" + this.divid + "feedback" + i).empty(); // empty old feedback div
+        }
     }
 
 
