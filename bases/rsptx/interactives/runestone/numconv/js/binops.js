@@ -24,15 +24,16 @@ export default class BO extends RunestoneBase {
        this.origElem = orig;
        this.divid = orig.id;
        this.correct = null;
-       // default number of bits = 4
-       this.num_bits = 4;
+       this.num_bits = 4; // default number of bits = 4
+       this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
+       this.toOpt = ["4", "6", "8"];
       
-       this.createNCElement();
+       this.createBOElement();
        this.generateButton.click();
        this.caption = "Bitwise Operation";
        this.addCaption("runestone");
        this.checkServer("nc", true);
-       this.randomItem = "";
+    //    this.randomItem = "";
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
@@ -47,17 +48,17 @@ export default class BO extends RunestoneBase {
    ====   Functions generating final HTML   ====
    ===========================================*/
    // Create the NC Element
-   createNCElement() {
-       this.renderNCPromptAndInput();
-       this.renderNCButtons();
-       this.renderNCFeedbackDiv();
-    //    this.getCheckedValues();
-       // replaces the intermediate HTML for this component with the rendered HTML of this component
+   createBOElement() {
+       this.renderBOPromptAndInput();
+       this.renderBOButtons();
+       this.renderBOFeedbackDiv();
+        // this.getCheckedValues();
+        // replaces the intermediate HTML for this component with the rendered HTML of this component
        $(this.origElem).replaceWith(this.containerDiv);
    }
 
 
-   renderNCPromptAndInput() {
+   renderBOPromptAndInput() {
         // parse options from the JSON script inside
         var currOption = JSON.parse(
             this.scriptSelector(this.origElem).html()
@@ -72,7 +73,7 @@ export default class BO extends RunestoneBase {
             return;
         }
         // ensure number of bits is not too large
-        if ( this.num_bits > 64 ){
+        if ( this.num_bits > 16 ){
             alert($.i18n("msg_NC_too_many_bits"));
             return;
         }
@@ -83,42 +84,14 @@ export default class BO extends RunestoneBase {
         this.containerDiv.id = this.divid;
 
         this.statementDiv = document.createElement("div");
+        this.statementDiv.className = "statement-div";
 
 
         // specify the number of bits in the statement
         this.statementNode05 = document.createTextNode("Please do the bitwise operation based on the operator and the number of bits you select.");
 
 
-        this.statementNode1 = document.createTextNode("Choose an operator: ");
-        // default menu options
-        //    this.menuArray1 = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
-        //    this.menuArray2 = ["4", "6", "8"];
-
-
-        this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
-        this.toOpt = ["4", "6", "8"];
-
-
-    //    // read binaryOperators-options as an array
-    //    if (currOption["from-options"] === undefined) {
-    //        this.fromOpt = this.menuArray1;
-    //    } else {
-    //        this.fromOpt = currOption["from-options"];
-    //    }
-    //     // read to-options as an array
-    //     if (currOption["to-options"] === undefined) {
-    //         this.toOpt = this.menuArray2;
-    //     } else {
-    //         this.toOpt = currOption["to-options"];
-    //     }
-
-    //    this.menuNode1 = document.createElement("select");
-    //    for (var i = 0; i < this.fromOpt.length; i++) {
-    //        var option = document.createElement("option");
-    //        option.value = this.fromOpt[i]; 
-    //        option.text = this.fromOpt[i];
-    //        this.menuNode1.appendChild(option);
-    //    }
+        this.statementNode1 = document.createTextNode(" Choose operators: ");
 
         this.menuNode1 = document.createElement("div");
         // Create the container for the dropdown this.menuNode1
@@ -183,10 +156,13 @@ export default class BO extends RunestoneBase {
         // generate a new answer.
         this.menuNode2.addEventListener("change",
             function () {
-                this.checkValidConversion();
+                    var random = this.randomItem;
+                    this.getCheckedValues();
+                    this.randomItem = random;
                     this.generateNumber();
                     this.clearAnswer();
                     this.generateAnswer();
+                    this.checkValidConversion();
                     this.contWrong = 0;
                 //    }
             }.bind(this),
@@ -198,66 +174,62 @@ export default class BO extends RunestoneBase {
         this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(this.statementNode2);
         this.statementDiv.appendChild(this.menuNode2);
-        this.statementDiv.appendChild(document.createElement("br"));
+        // this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(this.statementNode1);
-        // this.statementDiv.appendChild(this.menuNode1);
+        this.statementDiv.appendChild(this.menuNode1);
+        this.statementDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.statementDiv);
-        this.containerDiv.appendChild(this.menuNode1);
+        // this.containerDiv.appendChild(this.menuNode1);
         this.containerDiv.appendChild(document.createElement("br"));
 
-
-        this.statementDiv.style.borderWidth = "1px";
-        this.statementDiv.style.borderRadius = "5px";
-        this.statementDiv.style.borderBlockStyle = "solid";
-        this.statementDiv.style.borderBlockColor = "transparent";
-        // this.statementDiv.style.backgroundColor = "white";
-        this.statementDiv.style.padding = "8px";
-
-
         // create the node for the prompt
-        this.promptMainDiv = document.createElement("div");
+        // this.promptMainDiv = document.createElement("div");
         this.promptDiv = document.createElement("div");
-        this.promptDiv.style.fontSize = "x-large";
-        this.promptOLDiv = document.createElement("div");
-        this.promptOLDiv.style.fontSize = "x-large";
+        this.promptDiv.className = "prompt-div";
+        // this.promptOLDiv = document.createElement("div");
+        // this.promptOLDiv.className = "promptOL-div";
+        this.promptDiv.style.paddingRight = '0px';
             
 
         // create the node for the number being displayed (three lines)
-        this.promptDiv.style.width = "35%";
-        this.promptDiv.style.textAlign = "right";
         this.promptDivTextNode = document.createElement("code");
-        this.promptDivTextNode2 = document.createElement("code");
-        this.promptDivTextNode3 = document.createElement("code");
+        // this.promptDivTextNode2 = document.createElement("code");
+        // this.promptDivTextNode3 = document.createElement("code");
         this.promptDiv.appendChild(this.promptDivTextNode);
         this.promptDiv.appendChild(document.createElement("br"));
-        this.promptDiv.appendChild(this.promptDivTextNode2);
-        this.promptDiv.appendChild(document.createElement("br"));
+        // this.promptDiv.appendChild(this.promptDivTextNode2);
+        // this.promptDiv.appendChild(document.createElement("br"));
         //    this.promptDiv.appendChild(this.promptDivTextNode3);
 
         //create the node for the number being displayed (one line)
-        this.promptOLDivTextNode = document.createElement("code");
-        this.promptOLDiv.appendChild(this.promptOLDivTextNode);
+        // this.promptOLDivTextNode = document.createElement("code");
+        // this.promptOLDiv.appendChild(this.promptOLDivTextNode);
         
         // render the input field
+        this.answerDiv = document.createElement("div");
         this.inputNode = document.createElement("input");
         this.inputNode.setAttribute('type', 'text');
         this.inputNode.setAttribute("size", "20");
         this.inputNode.setAttribute("id", this.divid + "_input");
+        this.inputNode.className = "form form-control selectwidthauto";
+        this.statementNode11 = document.createTextNode("Your answer: ");
+        this.answerDiv.appendChild(this.statementNode11);
+        this.answerDiv.appendChild(this.inputNode);
+        // this.answerDiv.style.position = 'absolute';
     //    this.promptDiv.appendChild((this.inputNode));
     //    this.promptOLDiv.appendChild((this.inputNode));
     //    this.containerDiv.appendChild(this.promptOLDiv);
-        this.promptMainDiv.appendChild(this.promptOLDiv);
-        this.containerDiv.appendChild(this.promptMainDiv);
+        // this.promptMainDiv.appendChild(this.promptOLDiv);
+        // this.containerDiv.appendChild(this.promptMainDiv);
         this.containerDiv.appendChild(this.promptDiv);
-        this.statementNode11 = document.createTextNode("Your answer: ");
         this.containerDiv.appendChild(document.createElement("br"));
-        this.containerDiv.appendChild(this.statementNode11);
-        this.containerDiv.appendChild(this.inputNode);
+        this.containerDiv.appendChild(this.answerDiv);
+        // this.containerDiv.appendChild(this.inputNode);
 
 
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
-        this.promptOLDiv.style.visibility = "hidden";
+        // this.promptOLDiv.style.visibility = "hidden";
 
 
         this.feedbackDiv = document.createElement("div");
@@ -276,7 +248,7 @@ export default class BO extends RunestoneBase {
         ba.attr("aria-label", "input area");
         this.blankArray = ba.toArray();
         // Set the style of code
-        $(this.containerDiv).find("code").attr("class","code-inline tex2jax_ignore");
+        // $(this.containerDiv).find("code").attr("class","code-inline tex2jax_ignore");
         // When a blank is changed mark this component as interacted with.
         // And set a class on the component in case we want to render components that have been used
         // differently
@@ -305,7 +277,7 @@ export default class BO extends RunestoneBase {
     }
 
 
-    renderNCButtons() {
+    renderBOButtons() {
         // "check me" button and "generate a number" button
         this.submitButton = document.createElement("button");
         this.submitButton.textContent = $.i18n("msg_NC_check_me");
@@ -369,7 +341,7 @@ export default class BO extends RunestoneBase {
    }
 
 
-    renderNCFeedbackDiv() {
+    renderBOFeedbackDiv() {
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.feedbackDiv);
     }
@@ -411,10 +383,10 @@ export default class BO extends RunestoneBase {
     // generate a random number or two random numbers from 0 to 2^(this.num_bits)-1 based
     // on different operators and set the number to display
     generateNumber() {
-            this.num_bits = parseInt(this.menuNode2.value);
-            this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
-            this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
-            this.num_shift = Math.floor(Math.random() * (this.num_bits/2)) + 1;
+        this.num_bits = parseInt(this.menuNode2.value);
+        this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
+        this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
+        this.num_shift = Math.floor(Math.random() * (this.num_bits/2)) + 1;
         //    this.num_bits = parseInt(this.menuNode2.value);
         // ensure the number is not 2^(this.num_bits)
         if (this.target_num === (1 << this.num_bits)) {
@@ -423,6 +395,7 @@ export default class BO extends RunestoneBase {
         if (this.target_num2 === (1 << this.num_bits)) {
             this.target_num2 --;
         }
+        console.log("in generateNumber(), random item is" + this.randomItem);
         switch (this.randomItem) {
             case "AND":
                 this.displayed_num_string = this.toBinary(this.target_num);
@@ -501,31 +474,34 @@ export default class BO extends RunestoneBase {
     //    }
        switch(this.randomItem) {
            case "AND" :
-                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                this.promptDivTextNode2.textContent = "AND(&) " + "0b" + this.displayed_num_string2;
-                this.promptDivTextNode3.textContent = "=";
+                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
+                // this.promptDivTextNode2.textContent = "AND(&) " + "0b" + this.displayed_num_string2;
+                // this.promptDivTextNode3.textContent = "=";
+                this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> AND(&) 0b' + this.displayed_num_string2;
                 break;
            case "OR" :
-                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                this.promptDivTextNode2.textContent = "OR(|) " + "0b" + this.displayed_num_string2;
-                this.promptDivTextNode3.textContent = "=";
+                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
+                // this.promptDivTextNode2.textContent = "OR(|) " + "0b" + this.displayed_num_string2;
+                // this.promptDivTextNode3.textContent = "=";
+                this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> OR(|) 0b' + this.displayed_num_string2;
                 break;
            case "XOR" :
-                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                this.promptDivTextNode2.textContent = "XOR(^) " + "0b" + this.displayed_num_string2;
-                this.promptDivTextNode3.textContent = "=";
+                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
+                // this.promptDivTextNode2.textContent = "XOR(^) " + "0b" + this.displayed_num_string2;
+                // this.promptDivTextNode3.textContent = "=";
+                this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> XOR(^) 0b' + this.displayed_num_string2;
                 break;
            case "NOT" :
-                this.promptOLDivTextNode.textContent = " NOT(~) " + "0b" +  this.displayed_num_string;
+                this.promptDivTextNode.innerHTML = " NOT(~) " + "0b" +  this.displayed_num_string;
                 break; 
            case "Left Shift" :
-                this.promptOLDivTextNode.textContent = "0b" + this.displayed_num_string + " << " + this.num_shift.toString();
+            this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " << " + this.num_shift.toString();
                 break;
            case "Right Shift(Arithmetic)" :
-                this.promptOLDivTextNode.textContent = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
+                this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
                 break;
            case "Right Shift(Logical)" :
-                this.promptOLDivTextNode.textContent = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
+                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
                 break;           
        }
 
@@ -546,23 +522,26 @@ export default class BO extends RunestoneBase {
         if (this.checkedValues.length == 0){
             this.promptOLDiv.style.visibility = "hidden";
             this.promptDiv.style.visibility = "hidden";
+            console.log("both not visible");
             // this.inputNode.style.visibility = "hidden";
             // this.statementNode11.style.visibility = "hidden";
             return;
         }
-        switch (this.randomItem){
-            case "AND":
-            case "OR":
-            case "XOR":
-                this.promptDiv.style.visibility = "visible";
-                this.promptOLDiv.style.visibility = "hidden";
-                break;
-            default:
-                this.promptOLDiv.style.visibility = "visible";
-                this.promptDiv.style.visibility = "hidden";
-                break;
-        }
-        // this.promptDiv.style.visibility = "visible";
+        // switch (this.randomItem){
+        //     case "AND":
+        //     case "OR":
+        //     case "XOR":
+        //         this.promptDiv.style.visibility = "visible";
+        //         this.promptOLDiv.style.visibility = "hidden";
+        //         console.log("checkValidConversion: case 1");
+        //         break;
+        //     default:
+        //         this.promptOLDiv.style.visibility = "visible";
+        //         this.promptDiv.style.visibility = "hidden";
+        //         console.log("checkValidConversion: case 1");
+        //         break;
+        // }
+        this.promptDiv.style.visibility = "visible";
    }
   
    // check if the answer is correct
