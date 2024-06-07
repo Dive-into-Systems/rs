@@ -65,11 +65,13 @@ button[disabled] {
   left: 30px;
 }
 
-.statement-box {
-  border-width: 1px;
-  border-radius: 5px;
-  border-style: solid;
-  border-color: white;
-  background-color: white;
-  padding: 8px;
+#containerDiv {
+  height: auto; /* Automatically adjust height */
+  max-height: 10000px; /* Maximum height limited to the viewport height */
+  padding: 10px; /* Add some padding for better appearance */
+}
+
+/* Optional: Specific styles for the question div to ensure they fit */
+.questionDiv {
+  margin-bottom: 10px; /* Add margin between questions */
 }
