@@ -202,8 +202,7 @@ export default class NC extends RunestoneBase {
         ba.attr("class", "form form-control selectwidthauto");
         ba.attr("aria-label", "input area");
         this.blankArray = ba.toArray();
-        // Set the style of code
-        $(this.containerDiv).find("code").attr("class","code-inline tex2jax_ignore");
+        // Set the style of coded
         // When a blank is changed mark this component as interacted with.
         // And set a class on the component in case we want to render components that have been used
         // differently

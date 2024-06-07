@@ -1,6 +1,7 @@
 $.i18n().load({
     en: {
         msg_no_answer: "No answer provided.",
+        msg_boxes_unchecked: "No operators selected.",
         msg_NC_check_me: "Check answer",
         msg_NC_compare_me: "Compare me",
         msg_NC_generate_a_number: "Try a new value",
