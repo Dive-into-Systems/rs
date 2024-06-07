@@ -64,7 +64,7 @@ class InstructionsFamily {
             throw new Error("BAD ARR");
         }
         this.mainWeight = mainWeight;
-        this.odds = oddsArr;
+        this.errorOdds = oddsArr;
         this.instructions = insArr;
     }
 }
@@ -93,49 +93,22 @@ class ArchInstructions {
         this.registers_64  = config.registers_64;
     }
 
-    _generateRegisters() {
-        return [];
-    }
-
-    _weighted_pick(odds) {
-        const total = odds.reduce((sum, a) => sum + a, 0);
-        let seed = 0;
-        while (seed === 0){
-            seed = Math.random() * total;
-        }// not possible to pick 0 weights events
-        let sum = 0;
-
-        for (let i = 0; i < odds.length; i++) {
-            sum += odds[i];
-            if (seed < sum && odds[i] != 0) {
-                return i;
-            }
-        }
-        return -1; // BAD
-
-    }
-
-    _unif_pick(arr) {
-        return Math.floor(Math.random() * arr.length);
-    }
-
-    generate_question_params(mem_arch, arith, bit) {
+    generate_question(mem_arch, arith, bit) {
         const fam_weights = [
             mem_arch ? this.memOps.mainWeight      : 0,
             mem_arch ? this.archOps.mainWeight     : 0,
             arith    ? this.arithUnary.mainWeight  : 0,
             arith    ? this.arithBinary.mainWeight : 0,
-            bit      ? this.bitOps.mainWeight      : 0,
+            bit      ? this.bitLogic.mainWeight    : 0,
+            bit      ? this.bitShift.mainWeight    : 0,
         ];
         let index = weightedPickId(fam_weights);
         return this._makePrompt(index);
     }
 
-        // bit operations to check which case we are instead of doing switches
-        const q_type = this._weighted_pick(family.odds);
-        const is_bad_type = (q_type&1) == 1;
-        const is_bad_count = (q_type&2) == 2;
-        return [op, is_bad_type, is_bad_count];
+    _makePrompt() {
+        return ["NOT IMPLEMENTED", false, false];
+    }
 
     _getTrueReg(is32) {
         return unifPickItem(is32?this.registers_32:this.registers_64);
@@ -175,9 +148,7 @@ export class ARM64_OPS extends ArchInstructions {
             this.registers_64.push(`x${i}`);
             this.registers_32.push(`w${i}`);
         }
-        return registers;
     }
-    
 
     _makePrompt(index) {
         let family;
