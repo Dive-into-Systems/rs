@@ -25,7 +25,7 @@ export default class BO extends RunestoneBase {
        this.divid = orig.id;
        this.correct = null;
        this.num_bits = 4; // default number of bits = 4
-       this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
+       this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
        this.toOpt = ["4", "6", "8"];
       
        this.createBOElement();
@@ -125,15 +125,6 @@ export default class BO extends RunestoneBase {
 
         this.menuNode1.addEventListener("change",
         function () {
-        //     this.clearAnswer();
-        //    this.getCheckedValues();
-        //    this.checkValidConversion();
-        //     if (this.displayed_num_string == undefined){
-        //         console.log("display string undefined");
-        //         // this.getCheckedValues();
-        //         this.generateNumber();
-        //     }
-        //     this.generateAnswer();
             this.getCheckedValues();
         }.bind(this),
         false);
@@ -174,36 +165,22 @@ export default class BO extends RunestoneBase {
         this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(this.statementNode2);
         this.statementDiv.appendChild(this.menuNode2);
-        // this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(this.statementNode1);
         this.statementDiv.appendChild(this.menuNode1);
         this.statementDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.statementDiv);
-        // this.containerDiv.appendChild(this.menuNode1);
         this.containerDiv.appendChild(document.createElement("br"));
 
         // create the node for the prompt
-        // this.promptMainDiv = document.createElement("div");
         this.promptDiv = document.createElement("div");
         this.promptDiv.className = "prompt-div";
-        // this.promptOLDiv = document.createElement("div");
-        // this.promptOLDiv.className = "promptOL-div";
         this.promptDiv.style.paddingRight = '0px';
             
 
         // create the node for the number being displayed (three lines)
         this.promptDivTextNode = document.createElement("code");
-        // this.promptDivTextNode2 = document.createElement("code");
-        // this.promptDivTextNode3 = document.createElement("code");
         this.promptDiv.appendChild(this.promptDivTextNode);
         this.promptDiv.appendChild(document.createElement("br"));
-        // this.promptDiv.appendChild(this.promptDivTextNode2);
-        // this.promptDiv.appendChild(document.createElement("br"));
-        //    this.promptDiv.appendChild(this.promptDivTextNode3);
-
-        //create the node for the number being displayed (one line)
-        // this.promptOLDivTextNode = document.createElement("code");
-        // this.promptOLDiv.appendChild(this.promptOLDivTextNode);
         
         // render the input field
         this.answerDiv = document.createElement("div");
@@ -215,16 +192,9 @@ export default class BO extends RunestoneBase {
         this.statementNode11 = document.createTextNode("Your answer: ");
         this.answerDiv.appendChild(this.statementNode11);
         this.answerDiv.appendChild(this.inputNode);
-        // this.answerDiv.style.position = 'absolute';
-    //    this.promptDiv.appendChild((this.inputNode));
-    //    this.promptOLDiv.appendChild((this.inputNode));
-    //    this.containerDiv.appendChild(this.promptOLDiv);
-        // this.promptMainDiv.appendChild(this.promptOLDiv);
-        // this.containerDiv.appendChild(this.promptMainDiv);
         this.containerDiv.appendChild(this.promptDiv);
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.answerDiv);
-        // this.containerDiv.appendChild(this.inputNode);
 
 
         // prompt is invisible by default
@@ -311,10 +281,8 @@ export default class BO extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
-                //    this.checkValidConversion();
                 this.clearAnswer();
                 this.getCheckedValues();
-                // console.log(this.checkedValues);
                 if (this.checkedValues.length != 0){
                     this.generateNumber();
                     this.generateAnswer();
@@ -360,7 +328,6 @@ export default class BO extends RunestoneBase {
         }
         var index = Math.floor(Math.random() * array.length);
         this.randomItem = array[index];
-        console.log("random item: " + this.randomItem);
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
@@ -387,15 +354,12 @@ export default class BO extends RunestoneBase {
         this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
         this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
         this.num_shift = Math.floor(Math.random() * (this.num_bits/2)) + 1;
-        //    this.num_bits = parseInt(this.menuNode2.value);
-        // ensure the number is not 2^(this.num_bits)
         if (this.target_num === (1 << this.num_bits)) {
             this.target_num --;
         }
         if (this.target_num2 === (1 << this.num_bits)) {
             this.target_num2 --;
         }
-        console.log("in generateNumber(), random item is" + this.randomItem);
         switch (this.randomItem) {
             case "AND":
                 this.displayed_num_string = this.toBinary(this.target_num);
@@ -468,40 +432,27 @@ export default class BO extends RunestoneBase {
    // Update the prompt to display
    generatePrompt() {
        this.inputNode.style.visibility = 'visible';
-    //    if (this.checkedValues.length == 0){
-    //     this.promptOLDivTextNode.textContent = "";
-    //     return;
-    //    }
        switch(this.randomItem) {
            case "AND" :
-                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                // this.promptDivTextNode2.textContent = "AND(&) " + "0b" + this.displayed_num_string2;
-                // this.promptDivTextNode3.textContent = "=";
                 this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> AND(&) 0b' + this.displayed_num_string2;
                 break;
            case "OR" :
-                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                // this.promptDivTextNode2.textContent = "OR(|) " + "0b" + this.displayed_num_string2;
-                // this.promptDivTextNode3.textContent = "=";
                 this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> OR(|) 0b' + this.displayed_num_string2;
                 break;
            case "XOR" :
-                // this.promptDivTextNode.textContent = "0b" + this.displayed_num_string;
-                // this.promptDivTextNode2.textContent = "XOR(^) " + "0b" + this.displayed_num_string2;
-                // this.promptDivTextNode3.textContent = "=";
                 this.promptDivTextNode.innerHTML = '0b' + this.displayed_num_string + '<br> XOR(^) 0b' + this.displayed_num_string2;
                 break;
            case "NOT" :
                 this.promptDivTextNode.innerHTML = " NOT(~) " + "0b" +  this.displayed_num_string;
                 break; 
            case "Left Shift" :
-            this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " << " + this.num_shift.toString();
+                this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " << " + this.num_shift.toString();
                 break;
            case "Right Shift(Arithmetic)" :
-                this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
+                this.promptDivTextNode.innerHTML = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString() + " (Arithmetic)";
                 break;
            case "Right Shift(Logical)" :
-                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString();
+                this.promptDivTextNode.textContent = "0b" + this.displayed_num_string + " >> " + this.num_shift.toString() + " (Logical)";
                 break;           
        }
 
@@ -522,25 +473,8 @@ export default class BO extends RunestoneBase {
         if (this.checkedValues.length == 0){
             this.promptOLDiv.style.visibility = "hidden";
             this.promptDiv.style.visibility = "hidden";
-            console.log("both not visible");
-            // this.inputNode.style.visibility = "hidden";
-            // this.statementNode11.style.visibility = "hidden";
             return;
         }
-        // switch (this.randomItem){
-        //     case "AND":
-        //     case "OR":
-        //     case "XOR":
-        //         this.promptDiv.style.visibility = "visible";
-        //         this.promptOLDiv.style.visibility = "hidden";
-        //         console.log("checkValidConversion: case 1");
-        //         break;
-        //     default:
-        //         this.promptOLDiv.style.visibility = "visible";
-        //         this.promptDiv.style.visibility = "hidden";
-        //         console.log("checkValidConversion: case 1");
-        //         break;
-        // }
         this.promptDiv.style.visibility = "visible";
    }
   
@@ -552,10 +486,6 @@ export default class BO extends RunestoneBase {
            this.feedback_msg = ($.i18n("msg_no_answer"));
            this.correct = false;
        } 
-    //    else if (this.displayed_num_string == undefined) {
-    //         this.feedback_msg = ($.i18n("msg_boxes_unchecked"));
-    //         this.correct = false;
-    //    }
        else if ( input_value != this.target_num_string ) {
            this.feedback_msg = ($.i18n("msg_NC_incorrect"));
            this.contWrong ++;
@@ -584,7 +514,6 @@ export default class BO extends RunestoneBase {
                         this.feedback_msg += ("\n" + $.i18n("msg_hint_shift"));
                         break;
                 }
-                // this.contWrong = 0;  ToDo: fix the counting issue
             }          
        } else {
            this.feedback_msg = ($.i18n("msg_NC_correct"));
