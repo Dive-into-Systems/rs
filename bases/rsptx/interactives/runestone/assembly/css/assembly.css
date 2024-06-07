@@ -36,6 +36,10 @@ button[disabled] {
  accent-color: brown;
 }
 
+.highlightRight {
+  accent-color: green;
+ }
+
 .button-check.checkingbutton {
   background-color: HoneyDew;
   border-radius: 8px;
