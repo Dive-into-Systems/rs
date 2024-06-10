@@ -21,37 +21,39 @@ export default class BinCalc extends RunestoneBase {
        this.origElem = orig;
        this.divid = orig.id;
        this.correct = null;
-       // fixed number of bits = 6
-       this.num_bits = 6;
+       this.num_bits = 6; // default number of bits is 6
        this.shift_bits = 3;
-      
-       this.createNCElement();
-       this.caption = "Bitwise Operation Calculator";
+       this.operatorList = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
+       this.bitShiftList = ["1", "2", "3", "4","5"];
+       this.numBitsList = ["4", "6", "8"];
+
+       this.initBinCalcElement();
+       this.caption = "Binary Calculator";
        this.addCaption("runestone");
        this.checkServer("nc", true);
        if (typeof Prism !== "undefined") {
-
            Prism.highlightAllUnder(this.containerDiv);
        }
-
-       this.contWrong = 0;
    }
 
    // Find the script tag containing JSON in a given root DOM node.
    scriptSelector(root_node) {
        return $(root_node).find(`script[type="application/json"]`);
-
    }
 
-    createNCElement() {
-        this.renderNCPromptAndInput();
-        this.renderNCButtons();
-        this.renderNCFeedbackDiv();
+   /*===========================================
+   ====   Functions generating final HTML   ====
+   ===========================================*/
+   // Component initialization
+    initBinCalcElement() {
+        this.renderBinCalcPromptAndInput();
+        this.renderBinCalcButtons();
+        this.renderBinCalcFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
    }
        
-   renderNCPromptAndInput() {
+   renderBinCalcPromptAndInput() {
     // parse options from the JSON script inside
     var currOption = JSON.parse(this.scriptSelector(this.origElem).html());
 
@@ -60,51 +62,78 @@ export default class BinCalc extends RunestoneBase {
     this.containerDiv.id = this.divid;
 
     this.statementDiv = document.createElement("div");
-    this.statementNode05 = document.createTextNode("Please enter two 6 bit values and choose an operator.");
+    this.statementDiv.className = "statement-div"
+
+    this.statementNode = document.createTextNode("Choose an operator: ");
+    this.instructionNode = document.createTextNode("This is a binary value calculator. You can experiment with 6-bit value(s) with your chosen operator.");   
 
     this.buttonsDiv = document.createElement("div");
 
     this.rightDiv = document.createElement("div");
 
-    this.statementNode1 = document.createTextNode("Choose an operator: ");
-    this.menuArray1 = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
-    this.menuArray2 = ["1", "2", "3", "4","5"];
-    this.fromOpt = this.menuArray1;
-    this.toOpt = this.menuArray2;
-
-    // read binaryOperators-options as an array
-    if (currOption["from-options"] === undefined) {
-        this.fromOpt = this.menuArray1;
+    // read binary operators options as an array
+    if (currOption["operator-options"] === undefined) {
+        this.operatorMenu = this.operatorList;
     } else {
-        this.fromOpt = currOption["from-options"];
+        this.operatorMenu = currOption["operator-options"];
     }
 
     // read to-options as an array
-    if (currOption["to-options"] === undefined) {
-        this.toOpt = this.menuArray2;
+    if (currOption["bitshift-options"] === undefined) {
+        this.bitShiftList = this.bitShiftList;
     } else {
-        this.toOpt = currOption["to-options"];
+        this.bitShiftList = currOption["bitshift-options"];
     }
 
-    this.menuNode1 = document.createElement("select");
-    for (var i = 0; i < this.fromOpt.length; i++) {
-        var option = document.createElement("option");
-        option.value = this.fromOpt[i];
-        option.text = this.fromOpt[i];
-        this.menuNode1.appendChild(option);
+    // read to-options as an array
+    if (currOption["num-bits-options"] === undefined) {
+        this.numBitsList = this.numBitsList;
+    } else {
+        this.numBitsList = currOption["num-bits-options"];
     }
-    this.menuNode1.setAttribute("class", "form form-control selectwidthauto");
-    // When the value of menuNode1 is changed, clear the answer
-    this.menuNode1.addEventListener("change",
+
+    // change number of bits - numBitsMenu
+    this.numBitsMenu = document.createElement("select");
+    for (var i = 0; i < this.numBitsList.length; i++) {
+        var option = document.createElement("option");
+        option.value = this.numBitsList[i];
+        option.text = this.numBitsList[i];
+        this.numBitsMenu.appendChild(option);
+    }
+    this.numBitsMenu.setAttribute("class", "form form-control selectwidthauto");
+    // When the value of numBitsMenu is changed and the conversion is valid,
+    // generate a new answer.
+    this.numBitsMenu.addEventListener("change",
+        function () {
+            var temp = 0;
+        }.bind(this),
+    false);
+
+    this.operatorMenu = document.createElement("select");
+    this.operatorMenu.style.border = "none";
+    this.operatorMenu.style.fontFamily = "Courier New";
+    this.operatorMenu.style.fontWeight = "700";
+
+    this.operatorMenu.className = "code-style-menu";
+    this.operatorMenu.setAttribute("class", "selectwidthauto code-style-menu");
+    for (var i = 0; i < this.operatorList.length; i++) {
+        var option = document.createElement("option");
+        option.value = this.operatorList[i];
+        option.text = this.operatorList[i];
+        this.operatorMenu.appendChild(option);
+    }
+
+    // When the value of operatorMenu is changed, clear the answer
+    this.operatorMenu.addEventListener("change",
         function () {
             this.clearAnswer();
-            if (this.menuNode1.value == "Left Shift" || this.menuNode1.value == "Right Shift(Logical)" || this.menuNode1.value == "Right Shift(Arithmetic)"){
-                this.inputNode1.style.visibility = "hidden";
-                this.menuNode2.style.visibility = "visible";
+            if (this.operatorMenu.value == "Left Shift" || this.operatorMenu.value == "Right Shift (Logical)" || this.operatorMenu.value == "Right Shift (Arithmetic)"){
+                this.inputBoxTop.style.visibility = "hidden";
+                this.bitShiftMenu.style.visibility = "visible";
                 bitsLabel.style.visibility = "visible"; // Show bitsLabel
             } else{
-                this.inputNode1.style.visibility = "visible";
-                this.menuNode2.style.visibility = "hidden";
+                this.inputBoxTop.style.visibility = "visible";
+                this.bitShiftMenu.style.visibility = "hidden";
                 bitsLabel.style.visibility = "hidden"; // Hide bitsLabel
             }
         }.bind(this),
@@ -113,92 +142,93 @@ export default class BinCalc extends RunestoneBase {
     // Initialize bitsLabel
     const bitsLabel = document.createElement("span");
     bitsLabel.textContent = "Number of shifts: ";
-    bitsLabel.style.fontSize = "large";
-    bitsLabel.style.fontWeight = "500";
-    bitsLabel.style.marginRight = "10px";
-    bitsLabel.style.visibility = "hidden"; // Initially hidden
+    bitsLabel.className = "bits-label";
+    bitsLabel.style.visibility = "hidden";
 
-    // change number of bits - menuNode2
-    this.menuNode2 = document.createElement("select");
-    for (var i = 0; i < this.toOpt.length; i++) {
+    // change number of bits - bit shift menu
+    this.bitShiftMenu = document.createElement("select");
+    for (var i = 0; i < this.bitShiftList.length; i++) {
         var option = document.createElement("option");
-        option.value = this.toOpt[i];
-        option.text = this.toOpt[i];
-        this.menuNode2.appendChild(option);
+        option.value = this.bitShiftList[i];
+        option.text = this.bitShiftList[i];
+        this.bitShiftMenu.appendChild(option);
     }
-    this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
-    this.menuNode2.style.visibility = "hidden";
-    // When the value of menuNode2 is changed and the conversion is valid,
+    this.bitShiftMenu.setAttribute("class", "form form-control selectwidthauto");
+    this.bitShiftMenu.style.visibility = "hidden";
+
+    // When the value of bitShiftMenu is changed and the conversion is valid,
     // generate a new answer.
-    this.menuNode2.addEventListener("change",
-        function () {
-            // attempting to generate new answer
-            this.checkValidConversion();
-            if (this.valid_conversion) {
-                this.clearAnswer();
-                this.generateAnswer();
-            }
-        }.bind(this),
-        false);
+    this.bitShiftMenu.addEventListener("change",
+    function () {
+        // attempting to generate new answer
+        this.checkValidConversion();
+        if (this.valid_conversion) {
+            this.clearAnswer();
+            this.generateAnswer();
+        }
+    }.bind(this),
+    false);
 
     // Create input fields for the two values
-    this.inputNode1 = document.createElement("input");
-    this.inputNode1.setAttribute('type', 'text');
-    this.inputNode1.setAttribute("size", "20");
-    this.inputNode1.setAttribute("maxlength", this.num_bits);
-    this.inputNode1.setAttribute("id", this.divid + "_input1");
+    this.inputBoxTop = document.createElement("input");
+    this.inputBoxTop.className = "number-input-box";
+    this.inputBoxTop.setAttribute('type', 'text');
+    // this.inputBoxTop.setAttribute("size", "x-large");
+    this.inputBoxTop.setAttribute("maxlength", this.num_bits);
+    this.inputBoxTop.setAttribute("id", this.divid + "_input1");
+    this.inputBoxTop.setAttribute("class", "form form-control selectwidthauto");
+    
+    this.inputBoxBottom = document.createElement("input");
+    this.inputBoxBottom.className = "number-input-box";
+    this.inputBoxBottom.setAttribute('type', 'text');
+    // this.inputBoxBottom.setAttribute("size", "x-large");
+    this.inputBoxBottom.setAttribute("maxlength", this.num_bits);
+    this.inputBoxBottom.setAttribute("id", this.divid + "_input2");
+    this.inputBoxBottom.setAttribute("class", "form form-control selectwidthauto");
 
-    this.inputNode2 = document.createElement("input");
-    this.inputNode2.setAttribute('type', 'text');
-    this.inputNode2.setAttribute("size", "20");
-    this.inputNode2.setAttribute("maxlength", this.num_bits);
-    this.inputNode2.setAttribute("id", this.divid + "_input2");
-
-    this.rightDiv.appendChild(this.inputNode1);
+    this.rightDiv.appendChild(this.inputBoxTop);
     this.rightDiv.appendChild(document.createElement("br"));
-    this.rightDiv.appendChild(this.menuNode1);
-    this.rightDiv.appendChild(this.inputNode2);
+    // this.rightDiv.appendChild(this.operatorMenu);
+    this.rightDiv.appendChild(this.operatorMenu);
+    this.rightDiv.appendChild(this.inputBoxBottom);
+    this.rightDiv.appendChild(document.createElement("br"));
     this.rightDiv.appendChild(bitsLabel); // Append bitsLabel here
-    this.rightDiv.appendChild(this.menuNode2);
-    this.rightDiv.style.width = "80%";
+    this.rightDiv.appendChild(this.bitShiftMenu);
+    this.rightDiv.style.width = "90%";
     this.rightDiv.style.textAlign = "right";
 
     // render the statement
-    this.statementDiv.appendChild(this.statementNode05);
+    this.statementDiv.appendChild(this.instructionNode);
     this.statementDiv.appendChild(document.createElement("br"));
+    this.statementDiv.appendChild(this.numBitsMenu);
+    // this.statementDiv.appendChild(document.createElement("br"));
     this.statementDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(this.statementDiv);
+    // this.containerDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(this.rightDiv);
     this.containerDiv.appendChild(document.createElement("br"));
 
-    this.statementDiv.style.borderWidth = "1px";
-    this.statementDiv.style.borderRadius = "5px";
-    this.statementDiv.style.borderBlockStyle = "solid";
-    this.statementDiv.style.borderBlockColor = "white";
-    this.statementDiv.style.backgroundColor = "white";
-    this.statementDiv.style.padding = "8px";
-
     // create the node for the prompt
     this.promptDiv = document.createElement("div");
-    this.promptDiv.style.fontSize = "x-large";
+    this.promptDiv.className = "prompt-div";
 
     this.promptDivTextNode = document.createElement("code");
     this.promptDiv.appendChild(this.promptDivTextNode);
 
     var placeholder;
     this.promptDivTextNode.append("0b");
-    placeholder = "your input (" + this.num_bits.toString() + "-digit binary value)";
-    this.inputNode1.setAttribute("placeholder", placeholder);
-    this.inputNode1.setAttribute("size", placeholder.length);
-    this.inputNode1.setAttribute("maxlength", 1 + this.num_bits);
-    placeholder = "your input (" + this.num_bits.toString() + "-digit binary value)";
-    this.inputNode2.setAttribute("placeholder", placeholder);
-    this.inputNode2.setAttribute("size", placeholder.length);
-    this.inputNode2.setAttribute("maxlength", 1 + this.num_bits);
+    placeholder = this.num_bits.toString() + "-digit binary value";
+    this.inputBoxTop.setAttribute("placeholder", placeholder);
+    this.inputBoxTop.setAttribute("size", placeholder.length);
+    this.inputBoxTop.setAttribute("maxlength", this.num_bits);
+    placeholder = this.num_bits.toString() + "-digit binary value";
+    this.inputBoxBottom.setAttribute("placeholder", placeholder);
+    this.inputBoxBottom.setAttribute("size", placeholder.length);
+    this.inputBoxBottom.setAttribute("maxlength", this.num_bits);
 
     this.inputNode = document.createElement("input");
     this.inputNode.setAttribute('type', 'text');
-    this.inputNode.setAttribute("size", "20");
+    this.inputNode.setAttribute("size", "xx-large");
     this.inputNode.setAttribute("id", this.divid + "_input");
     this.promptDiv.appendChild((this.inputNode));
     this.containerDiv.appendChild(this.promptDiv);
@@ -216,7 +246,7 @@ export default class BinCalc extends RunestoneBase {
     this.scriptSelector(this.containerDiv).remove();
     // Set the class for the text inputs, then store references to them.
     let ba = $(this.containerDiv).find(":input");
-    ba.attr("class", "form form-control selectwidthauto");
+    // ba.attr("class", "form form-control selectwidthauto");
     ba.attr("aria-label", "input area");
     this.blankArray = ba.toArray();
     // Set the style of code
@@ -228,15 +258,15 @@ export default class BinCalc extends RunestoneBase {
 
     const validCharRegex = /^[01]+$/; // Matches a string containing only "0" or "1" characters
 
-    // Add event listener for key press on inputNode1
-    this.inputNode1.addEventListener("keypress", function(event) {
+    // Add event listener for key press on inputBoxTop
+    this.inputBoxTop.addEventListener("keypress", function(event) {
         if (!validCharRegex.test(event.key)) {
             event.preventDefault();
         }
     });
 
-    // Add event listener for key press on inputNode2
-    this.inputNode2.addEventListener("keypress", function(event) {
+    // Add event listener for key press on inputBoxBottom
+    this.inputBoxBottom.addEventListener("keypress", function(event) {
         if (!validCharRegex.test(event.key)) {
             event.preventDefault();
         }
@@ -248,7 +278,7 @@ export default class BinCalc extends RunestoneBase {
        this.isAnswered = true;
    }
 
-   renderNCButtons() {
+   renderBinCalcButtons() {
        // "Show Answer" button
        this.submitButton = document.createElement("button");
        this.submitButton.textContent = "Show Answer";
@@ -273,18 +303,21 @@ export default class BinCalc extends RunestoneBase {
        this.generateButton = document.createElement("button");
        this.generateButton.textContent = "Generate Values";
        $(this.generateButton).attr({
-           class: "btn btn-primary",
+           class: "btn btn-success",
            name: "generate values",
            type: "button",
        });
        // Generate random values for the input fields
        this.generateButton.addEventListener(
-           "click",
-           function () {
-               this.generateRandomValues();
-           }.bind(this),
-           false
-       );
+        "click",
+        function () {
+            this.generateRandomValues();
+            if (this.answerDiv != undefined){
+                this.answerDiv.style.visibility = "hidden";
+               }
+        }.bind(this),
+        false
+    );
 
        this.generateButton.style.marginRight = "10px";
        this.buttonsDiv.appendChild(this.generateButton);
@@ -305,7 +338,7 @@ export default class BinCalc extends RunestoneBase {
        );
    }
 
-   renderNCFeedbackDiv() {
+   renderBinCalcFeedbackDiv() {
        this.containerDiv.appendChild(document.createElement("br"));
        this.containerDiv.appendChild(this.feedbackDiv);
    }
@@ -320,8 +353,8 @@ export default class BinCalc extends RunestoneBase {
 
    // Generate random values for the input fields
    generateRandomValues() {
-       this.inputNode1.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
-       this.inputNode2.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+       this.inputBoxTop.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+       this.inputBoxBottom.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
    }
 
    // Convert an integer to its binary expression with leading zeros as a string.
@@ -345,17 +378,17 @@ export default class BinCalc extends RunestoneBase {
    generateAnswer() {
         this.hideFeedback();
         this.feedback_msg = "";
-        this.shift_bits = parseInt(this.menuNode2.value);
+        this.shift_bits = parseInt(this.bitShiftMenu.value);
         // Check if both inputs are 6 bits long
-        if (this.inputNode1.value == 'AND' || this.inputNode1.value == 'OR' || this.inputNode1.value == 'XOR') {
-            if (this.inputNode1.value.length !== this.num_bits || this.inputNode2.value.length !== this.num_bits) {
-                this.feedback_msg = "Please 6-bit binary number inputs.";
+        if (this.inputBoxTop.value == 'AND' || this.inputBoxTop.value == 'OR' || this.inputBoxTop.value == 'XOR') {
+            if (this.inputBoxTop.value.length !== this.num_bits || this.inputBoxBottom.value.length !== this.num_bits) {
+                this.feedback_msg = "Please input 6-bit binary number(s).";
                 this.renderFeedback();
                 return;
             }
         } else{
-            if (this.inputNode2.value.length !== this.num_bits) {
-                this.feedback_msg = "Please 6-bit binary number inputs.";
+            if (this.inputBoxBottom.value.length !== this.num_bits) {
+                this.feedback_msg = "Please input 6-bit binary number(s).";
                 this.renderFeedback();
                 return;
             }
@@ -371,9 +404,9 @@ export default class BinCalc extends RunestoneBase {
         this.promptDiv.removeChild(this.inputNode);
         }
     
-        let num1 = parseInt(this.inputNode1.value, 2);
-        let num2 = parseInt(this.inputNode2.value, 2);
-        switch (this.menuNode1.value) {
+        let num1 = parseInt(this.inputBoxTop.value, 2);
+        let num2 = parseInt(this.inputBoxBottom.value, 2);
+        switch (this.operatorMenu.value) {
             case "AND" :
                 this.target_num_string = this.toBinary(num1 & num2);
                 break;
@@ -395,14 +428,12 @@ export default class BinCalc extends RunestoneBase {
             case "Right Shift(Arithmetic)" :
                 console.log("in right shift");
                 if (this.toBinary(num2)[0] === "1"){
-                    //this.target_num_string = this.toBinary(((((~num2) & ((1 << this.shift_bits)-1))) | num2) >> this.shift_bits);
-                    console.log("test test test");
-                    this.target_num_string = ((num2 >> this.shift_bits) & ((1 << this.shift_bits)-1)).toString(2).padStart(this.shift_bits, '1');
+                    this.target_num_string = ((num2 >> this.shift_bits) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');                
                 }
                 else{
                     this.target_num_string = this.toBinary(num2 >> this.shift_bits);  
                 }
-                console.log(((num2 >> this.shift_bits) & ((1 << this.shift_bits)-1)).toString(2).padStart(this.shift_bits, '1'));
+                // console.log(((num2 >> this.shift_bits) & ((1 << this.shift_bits)-1)).toString(2).padStart(this.shift_bits, '1'));
                 break; 
         }
         this.promptDiv.innerHTML = ""; 
@@ -414,8 +445,10 @@ export default class BinCalc extends RunestoneBase {
         this.answerNode.style.textAlign = "right";
       
         // Add the answer element to the prompt div
-        this.promptDiv.appendChild(answerLabel);
-        this.promptDiv.appendChild(this.answerNode);
+        this.answerDiv = document.createElement("div");
+        this.answerDiv.appendChild(answerLabel);
+        this.answerDiv.appendChild(this.answerNode);
+        this.promptDiv.appendChild(this.answerDiv);
         this.promptDiv.style.width = "48%";
         this.promptDiv.style.textAlign = "right";
         this.promptDiv.style.visibility = 'visible';
