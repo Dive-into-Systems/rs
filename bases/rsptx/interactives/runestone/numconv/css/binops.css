@@ -11,7 +11,6 @@ input.input-validation-error {
 .binops-inline{
   padding: 0px;
   font-size: 100%;
-  /* color: #c7254e; */
   background-color: #f9f2f4;
   border-radius: 4px;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -19,26 +18,73 @@ input.input-validation-error {
 }
 
 .number-input-box {
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-  font-size: 20px;
-  width:auto;
-  padding:5px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
+  font-size: 18px !important;
+  width: 45% !important;
+  margin:3px !important;
 }
+
 .code-style-menu {
-  font-weight: 500;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
+  border: none;
+  font-weight: 550 !important;
   display: block;
   width: 100%;
   height: 34px;
   padding: 6px 12px;
   color: #c7254e !important;
-  font-size: large;
+  font-size: large !important;
   border-radius: 4px;
-  background-color: #f9f2f4;
+  background-color: #f9f2f4 !important;
+}
+
+.calculate-btn {
+  background-color: HoneyDew !important;
+  border-radius: 8px !important;
+  color: seagreen !important;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 500;
+  line-height: 20px !important;
+  text-align: center;
+  transition: all 200ms;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
+  left: 30px;
+}
+
+.clear-btn {
+  background-color: grey !important;
+  border-radius: 8px !important;
+  color: whitesmoke !important;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 500;
+  line-height: 20px !important;
+  text-align: center;
+  transition: all 200ms;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
+  left: 30px;
 }
 
 .bits-label {
-  font-size: large;
-  font-weight: 500;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
+  font-size: 18px;
+  font-weight: 550;
+  color: #c7254e !important;
   margin-right: 10px;
   visibility: hidden;
 }
@@ -60,6 +106,9 @@ input.input-validation-error {
   padding-right: 10px;
 }
 
+.result-div {
+  text-align: right;
+}
 .promptOL-div{
   font-size: x-large;
 }
