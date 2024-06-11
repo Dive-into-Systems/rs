@@ -91,3 +91,8 @@ button[disabled] {
   border: 1px solid transparent;
   border-radius: 4px;
 }
+
+.centerplease {
+  text-align: center;
+  vertical-align: baseline;
+}

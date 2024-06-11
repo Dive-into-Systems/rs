@@ -209,7 +209,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 $(this).next('label').removeClass('highlightWrong');
                 $(this).removeClass('highlightRight');
                 $(this).next('label').removeClass('highlightRight');
-            });
+            }).addClass("centerplease");
             var lblYes = $("<label>").attr("for", "Yes" + i).text("VALID");
         
             // Add a label and radio button for the "Invalid" answer option
@@ -223,7 +223,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 $(this).prev('label').removeClass('highlightWrong');
                 $(this).removeClass('highlightRight');
                 $(this).next('label').removeClass('highlightRight');
-            });
+            }).addClass("centerplease");
             var lblNo = $("<label>").attr("for", "No" + i).text("INVALID");
     
             // Append the radio buttons and labels to the question div
@@ -267,23 +267,16 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     genPromptsNAnswer() {
         this.promptList = [];
         this.answerList = [];
-        this.errorTypes = []; // Store the error types for feedback
+        this.feedbackMsgs = []; // Store the error types for feedback
     
         for (let i = 0; i < this.num_q_in_group; i++) {
-            const [prompt, is_bad_type, is_bad_count] = this.generator.generate_question(
+            const [prompt, q_type, feedbackMsg] = this.generator.generate_question(
                 this.memo_checked, this.arith_checked, this.bit_checked
             );
     
             this.promptList.push(prompt);
-            this.answerList.push(!(is_bad_type || is_bad_count));
-    
-            // Determine the error type
-            let errorType = '';
-            if (is_bad_type || is_bad_count) {
-                errorType += is_bad_type?'Type Error ':'';
-                errorType += is_bad_count?'Count Error ':'';
-            }
-            this.errorTypes.push(errorType);
+            this.answerList.push(q_type==0);
+            this.feedbackMsgs.push(feedbackMsg);
         }
     }
 
@@ -298,7 +291,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         }
         const userAnswer = checkedAnswer.val() === 'true';
         const correctAnswer = this.answerList[index];
-        const errorType = this.errorTypes[index];
+        const feedbackMsg = this.feedbackMsgs[index];
         let btnName = this.divid + 'YN' + index;
 
         let msg;
@@ -308,11 +301,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             checkedAnswer.addClass('highlightRight');
             checkedAnswer.next('label').addClass('highlightRight');
         } else {
-            if(errorType == ""){
-                msg = "Incorrect! This instruction is valid!"
-            } else{
-                msg = `Incorrect! Error Type: ${errorType}`;
-            }
+            msg = `Incorrect! ${feedbackMsg}`;
             feedbackDiv.addClass("feedbackError");
             checkedAnswer.addClass('highlightWrong');
             checkedAnswer.next('label').addClass('highlightWrong');
