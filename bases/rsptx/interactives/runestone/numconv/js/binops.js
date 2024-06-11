@@ -57,7 +57,7 @@ export default class BO extends RunestoneBase {
        $(this.origElem).replaceWith(this.containerDiv);
    }
 
-
+   // Generate the layout of the prompt and input
    renderBOPromptAndInput() {
         // parse options from the JSON script inside
         var currOption = JSON.parse(
@@ -79,30 +79,27 @@ export default class BO extends RunestoneBase {
         }
 
 
-        // Generate the two dropdown menus for bitwise operation
+        // Create the parent div which contains everything
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
+        // Create the statement div
         this.statementDiv = document.createElement("div");
         this.statementDiv.className = "statement-div";
-
-
-        // specify the number of bits in the statement
         this.statementNode05 = document.createTextNode("Please do the bitwise operation based on the operator and the number of bits you select.");
-
-
         this.statementNode1 = document.createTextNode(" Choose operators: ");
 
+        // Create the container for the dropdown checkbox list
         this.menuNode1 = document.createElement("div");
-        // Create the container for the dropdown this.menuNode1
         this.menuNode1.id = 'list1';
         this.menuNode1.className = 'dropdown-check-list';
         this.menuNode1.tabIndex = 100;  // Set tabindex to make the div focusable
 
         // Build the inner HTML using template literals
+        // Inner HTML defines the items in the dropdown
         var html =   "<span class='anchor'>Select Operators</span>"+
         "<ul class='items'>"+
-        "  <li><input type='checkbox' value='AND' checked/>AND </li>"+
+        "  <li><input type='checkbox' value='AND' checked/>AND </li>"+ //pre checked item
         "  <li><input type='checkbox' value='OR' checked/>OR </li>"+
           "<li><input type='checkbox' value='XOR' checked/>XOR </li>"+
           "<li><input type='checkbox' value='NOT' checked/>NOT </li>"+
@@ -123,6 +120,14 @@ export default class BO extends RunestoneBase {
                 this.menuNode1.classList.add('visible');
         }.bind(this);
 
+        // Event lister that shrinks the dropdown whenever clicking outside of it
+        document.addEventListener('click', function (e) {
+            if (!this.menuNode1.contains(e.target) && this.menuNode1.classList.contains('visible')) {
+                this.menuNode1.classList.remove('visible');
+            }
+        }.bind(this), false);
+
+        // What happens when there is a change to the dropdown
         this.menuNode1.addEventListener("change",
         function () {
             this.getCheckedValues();
@@ -131,20 +136,18 @@ export default class BO extends RunestoneBase {
       
         this.statementNode2 = document.createTextNode(" Select the number of bits: ");
 
-            // change number of bits - menuNode2
+        // Assign the items in the menuNode2
         this.menuNode2 = document.createElement("select");
         for (var i = 0; i < this.toOpt.length; i++) {
             var option = document.createElement("option");
             option.value = this.toOpt[i];
             option.text = this.toOpt[i];
-            //    if ( i === 1 ) {
-            //        option.selected = "selected";
-            //    }
             this.menuNode2.appendChild(option);
         }
+
+        // Assign the class of menuNode2. form-control is a class inherited from pretext
         this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
-        // When the value of menuNode2 is changed and the conversion is valid,
-        // generate a new answer.
+        // When the value of menuNode2 is changed, do these...
         this.menuNode2.addEventListener("change",
             function () {
                     var random = this.randomItem;
@@ -155,12 +158,12 @@ export default class BO extends RunestoneBase {
                     this.generateAnswer();
                     this.checkValidConversion();
                     this.contWrong = 0;
-                //    }
             }.bind(this),
             false);
 
-        // render the statement
+        // Render the statement
         this.statementDiv.appendChild(this.statementNode05);
+        // br element starts a new line in the statement
         this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.appendChild(this.statementNode2);
@@ -171,14 +174,15 @@ export default class BO extends RunestoneBase {
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
 
-        // create the node for the prompt
+        // create the div node for the prompt
         this.promptDiv = document.createElement("div");
         this.promptDiv.className = "prompt-div";
         this.promptDiv.style.paddingRight = '0px';
             
 
-        // create the node for the number being displayed (three lines)
-        this.promptDivTextNode = document.createElement("code");
+        // create the node for the number being displayed
+        this.promptDivTextNode = document.createElement("binops-inline");
+        this.promptDivTextNode.className = "binops-inline";
         this.promptDiv.appendChild(this.promptDivTextNode);
         this.promptDiv.appendChild(document.createElement("br"));
         
@@ -199,12 +203,10 @@ export default class BO extends RunestoneBase {
 
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
-        // this.promptOLDiv.style.visibility = "hidden";
 
-
+        // create the feedback div
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-
 
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
@@ -227,13 +229,14 @@ export default class BO extends RunestoneBase {
         }
    }
 
+    // Get the list of operators being checked
     getCheckedValues(){
         this.checkedValues = [];
         var checkBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
         checkBoxes.forEach(function(checkbox){
             this.checkedValues.push(checkbox.value);
         }.bind(this));
-
+        // if there is item being checked, randomly select an operator
         if (this.checkedValues.length > 0){
             this.getRandomItem(this.checkedValues);
         } else{
@@ -242,13 +245,14 @@ export default class BO extends RunestoneBase {
         console.log("checked values: " + this.checkedValues);
     }
 
+    // Keep track whether the user answer the question
     recordAnswered() {
         this.isAnswered = true;
     }
 
-
+    // Create the buttons
     renderBOButtons() {
-        // "check me" button and "generate a number" button
+        // "check answer" button
         this.submitButton = document.createElement("button");
         this.submitButton.textContent = $.i18n("msg_NC_check_me");
         $(this.submitButton).attr({
@@ -256,7 +260,7 @@ export default class BO extends RunestoneBase {
             name: "do answer",
             type: "button",
         });
-        // check the answer when the conversion is valid
+        // check the answer
         this.submitButton.addEventListener(
             "click",
             function () {
@@ -269,7 +273,7 @@ export default class BO extends RunestoneBase {
             false
         );
 
-
+        // "try another" button
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = "Try Another";
         $(this.generateButton).attr({
@@ -277,12 +281,13 @@ export default class BO extends RunestoneBase {
             name: "generate a number",
             type: "button",
         });
-        // generate a new number for conversion
+        // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
             function () {
                 this.clearAnswer();
                 this.getCheckedValues();
+                // only generate new prompt when there is item selected
                 if (this.checkedValues.length != 0){
                     this.generateNumber();
                     this.generateAnswer();
@@ -292,12 +297,12 @@ export default class BO extends RunestoneBase {
             false
         );
 
-
+        // Add the buttons in the container
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
 
-
+        // Check answer when pressing "Enter"
         this.inputNode.addEventListener(
             "keypress",
             function(event) {
@@ -308,12 +313,11 @@ export default class BO extends RunestoneBase {
             );
    }
 
-
+    // Add the feedback in the container
     renderBOFeedbackDiv() {
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.feedbackDiv);
     }
-
 
     // clear the input field
     clearAnswer() {
@@ -321,6 +325,7 @@ export default class BO extends RunestoneBase {
         this.feedbackDiv.remove();
     }
 
+    // Select an item among the operators selected
     getRandomItem(array){
         if (!array || array.length == 0){
             console.error("The array is empty or undefined.");
@@ -353,6 +358,7 @@ export default class BO extends RunestoneBase {
         this.num_bits = parseInt(this.menuNode2.value);
         this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
         this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
+        // 1<=this.num_shift<=half of this.num_bits
         this.num_shift = Math.floor(Math.random() * (this.num_bits/2)) + 1;
         if (this.target_num === (1 << this.num_bits)) {
             this.target_num --;
@@ -428,8 +434,8 @@ export default class BO extends RunestoneBase {
        this.generatePrompt();
    }
 
-
    // Update the prompt to display
+   // Use innerHTML to deal with prompts of different number of lines
    generatePrompt() {
        this.inputNode.style.visibility = 'visible';
        switch(this.randomItem) {
@@ -458,7 +464,6 @@ export default class BO extends RunestoneBase {
 
        // the placeholder tells what the desired input should be like
        var placeholder;
-        // placeholder = "your answer (" + this.num_bits.toString() + "-digit binary value)";
         placeholder = this.num_bits.toString() + "-digit binary value";
         this.inputNode.setAttribute("placeholder", placeholder);
         this.inputNode.setAttribute("size", placeholder.length);
@@ -466,7 +471,7 @@ export default class BO extends RunestoneBase {
         this.inputNode.setAttribute('style', 'width: 50ptx;');
    }
 
-   // check if the conversion is valid 
+   // check if the prompt is valid 
    checkValidConversion() {
         this.hideFeedback();
         this.valid_conversion = true;
@@ -490,6 +495,7 @@ export default class BO extends RunestoneBase {
            this.feedback_msg = ($.i18n("msg_NC_incorrect"));
            this.contWrong ++;
            this.correct = false;
+           // Give the user a hint if number of wrong attemps reaches 3
             if (this.contWrong >= 3){
                 switch(this.randomItem) {
                     case "AND" :
@@ -521,8 +527,6 @@ export default class BO extends RunestoneBase {
            this.contWrong = 0;
        }
    }
-
-   
 
    // log the answer and other info to the server (in the future)
    async logCurrentAnswer(sid) {
@@ -563,16 +567,17 @@ export default class BO extends RunestoneBase {
        // pass
    }
   
+   // Make the feedback hidden
    hideFeedback() {
        this.feedbackDiv.remove();
    }
 
-
+   // Make the feedback visible
    displayFeedback() {
        this.feedbackDiv.style.visibility = "visible";
    }
 
-
+   // Update the feedback message
    renderFeedback() {
        this.feedbackDiv = document.createElement("div");
        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
