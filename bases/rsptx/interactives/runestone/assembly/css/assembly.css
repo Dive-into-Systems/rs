@@ -75,3 +75,24 @@ button[disabled] {
 .questionDiv {
   margin-bottom: 10px; /* Add margin between questions */
 }
+
+.feedbackCorrect {
+  background-color: lightgreen;
+  border: 1px solid transparent;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 4px;
+}
+
+.feedbackError{
+  background-color: var(--dangerAlerts);
+  padding-left: 3px;
+  padding-right: 3px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.centerplease {
+  text-align: center;
+  vertical-align: baseline;
+}
