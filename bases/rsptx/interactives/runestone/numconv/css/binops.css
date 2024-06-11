@@ -8,8 +8,18 @@ input.input-validation-error {
  border: 1px solid #e80c4d;
 }
 
+.binops-inline{
+  padding: 0px;
+  font-size: 100%;
+  /* color: #c7254e; */
+  background-color: #f9f2f4;
+  border-radius: 4px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  box-sizing: border-box;
+}
+
 .number-input-box {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
   font-size: 20px;
   width:auto;
   padding:5px;
