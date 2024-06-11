@@ -9,7 +9,7 @@ import "./assembly-i18n.en.js";
 import "../css/assembly.css";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
-import {ARM64_OPS, X86_32_OPS} from "./arch_generate.js"
+import {ARM64_OPS, X86_32_OPS, X86_64_OPS} from "./arch_generate.js"
 
 export var ARMList = {}; // Object containing all instances of ASM
 
@@ -66,6 +66,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
         switch (this.architecture) {
             case "X86_32":  this.generator = new X86_32_OPS();       break;
+            case "X86_64":  this.generator = new X86_64_OPS();       break;
             case "ARM64": this.generator = new ARM64_OPS();      break;
             default: throw new Error("Invalid architecture option");
         }
@@ -233,7 +234,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
             // this.radioButtons.push([btnYes, btnNo]);
             this.submitButton = $("<button>")
-            .text($.i18n("msg_ASM_check_me")) // Using the localized string for the button text
+            .text($.i18n("msg_asm_check_me")) // Using the localized string for the button text
             .attr({
                 class: "button-check",
                 name: "answer",
@@ -278,10 +279,9 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     
             // Determine the error type
             let errorType = '';
-            if (is_bad_type) {
-                errorType += 'Type Error ';
-            } else if (is_bad_count) {
-                errorType += 'Count Error ';
+            if (is_bad_type || is_bad_count) {
+                errorType += is_bad_type?'Type Error ':'';
+                errorType += is_bad_count?'Count Error ':'';
             }
             this.errorTypes.push(errorType);
         }
@@ -290,8 +290,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     checkThisAnswers(index) {
         const checkedAnswer = this.inputNodes[index].find(input => input.prop("checked"));
         const feedbackDiv = $("#" + this.divid + "feedback" + index);
+        feedbackDiv.removeClass("feedbackError").removeClass("feedbackCorrect")
         if (checkedAnswer === undefined) {
             feedbackDiv.html($("<span>").text(`Please choose one answer`));
+            feedbackDiv.addClass("feedbackError");
             return;
         }
         const userAnswer = checkedAnswer.val() === 'true';
@@ -302,10 +304,16 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         let msg;
         if (userAnswer === correctAnswer) {
             msg = `Correct!`;
+            feedbackDiv.addClass("feedbackCorrect");
             checkedAnswer.addClass('highlightRight');
             checkedAnswer.next('label').addClass('highlightRight');
         } else {
-            msg = `Incorrect! Error Type: ${errorType}`;
+            if(errorType == ""){
+                msg = "Incorrect! This instruction is valid!"
+            } else{
+                msg = `Incorrect! Error Type: ${errorType}`;
+            }
+            feedbackDiv.addClass("feedbackError");
             checkedAnswer.addClass('highlightWrong');
             checkedAnswer.next('label').addClass('highlightWrong');
         }
@@ -314,7 +322,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
     renderTryAgainButton(){
         this.generateButton = document.createElement("button");
-        this.generateButton.textContent = $.i18n("msg_ASM_generate_another");
+        this.generateButton.textContent = $.i18n("msg_asm_generate_another");
         $(this.generateButton).attr({
             class: "btn btn-success",
             name: "generate a number",
@@ -356,7 +364,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         }
         // clear and recreate feedback divs for each question
         for(let i = 0; i < this.num_q_in_group; i++){
-            $("#" + this.divid + "feedback" + i).empty(); // empty old feedback div
+            $("#" + this.divid + "feedback" + i).empty().removeClass("feedbackError").removeClass("feedbackCorrect"); // empty old feedback div
         }
     }
 

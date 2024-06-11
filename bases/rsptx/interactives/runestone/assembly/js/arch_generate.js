@@ -33,19 +33,21 @@ function weightedPickId(odds) {
 
 }
 
+
 function unifPickId(arr)  {return Math.floor(randomFloat() * arr.length);}
 function unifPickItem(...items) {
     // Combine all arrays into one
     const combinedArray = items.flat();
-
+    
     if (combinedArray.length === 0) {
         throw new Error("No arrays provided or all provided arrays are empty.");
     }
-
+    
     // Return a random item from the combined array
     return combinedArray[unifPickId(combinedArray)];
 }
 
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 function shuffle(array) {
     const copy = array.slice();
     let result = [];
@@ -87,7 +89,7 @@ class ArchInstructions {
                 throw new Error(`Missing configuration for ${key}`);
             }
         });
-
+        
         this.offsets    = config.offsets;
         this.registers_32  = config.registers_32;
         this.registers_64  = config.registers_64;
@@ -110,40 +112,15 @@ class ArchInstructions {
         return ["NOT IMPLEMENTED", false, false];
     }
 
-    _getTrueReg(is32) {
-        return unifPickItem(is32?this.registers_32:this.registers_64);
-    }
-    
-    _getTrueRegAny() {
-        return unifPickItem(this.registers_32, this.registers_64);
-    }
-
     _getTrueOffset(is32) {
         return unifPickItem(this.offsets);
-    }
-
-    _getReg(isBad, is32) {
-        const mem = this._getTrueMem(is32);
-        const reg = this._getTrueReg(is32);
-        return isBad?mem:reg;
-    }
-
-    _getMem(isBad, is32) {
-        const mem = this._getTrueMem(is32);
-        const reg = this._getTrueReg(is32);
-        return isBad?reg:mem;
-    }
-    _getNum(isBad, is32){
-        const mem = this._getTrueMem(is32);
-        const reg = this._getTrueReg(is32);
-        const num = this._getTrueNum(is32);
-        return isBad?unifPickItem(mem,reg):num;
     }
 }
 
 export class ARM64_OPS extends ArchInstructions {
     constructor() {
         super(arch_data.ARM64);
+        this.bad_dest = arch_data.ARM64.bad_dest;
         for (let i = 0; i <= 28; i++) {
             this.registers_64.push(`x${i}`);
             this.registers_32.push(`w${i}`);
@@ -167,37 +144,46 @@ export class ARM64_OPS extends ArchInstructions {
         const is_bad_count = (q_type&Q_BAD_COUNT) != 0;
 
         const is32 = unifPickItem(true, false);
-        const getTrueReg = () => this._getTrueReg(is32);
-        const getReg = (isBad) => this._getReg(isBad, is32);
-        const getMem = (isBad) => this._getMem(isBad, is32);
-        const getNum = (isBad) => this._getNum(isBad, is32);
+
+        const getReg = (isBad) => {
+            isBad?unifPickItem(this._getTrueLit(is32), this._getTrueMem(is32)):this._getTrueReg(is32);
+        }
+        const getMem = (isBad) => {
+            isBad?unifPickItem(this._getTrueLit(is32), this._getTrueReg(is32)):this._getTrueMem(is32);
+        }
+        const getLit = (isBad) => {
+            isBad?unifPickItem(this._getTrueReg(is32), this._getTrueMem(is32)):this._getTrueLit(is32);
+        }
 
         let prompt;
         switch (index) {
             case 0: // memOps
             case 2: // arithUnary
                 prompt = this._promptUnary(op, is_bad_type, is_bad_count,
-                    getTrueReg, getReg,
-                    getTrueReg, getReg, getReg
+                    getReg, getReg,
+                    getReg, getReg, getReg
                 );
                 break;
             case 1: // archOps
                 prompt = this._promptUnary(op, is_bad_type, is_bad_count,
-                    getTrueReg, getMem,
-                    getTrueReg, getReg, getMem
+                    getReg, getMem,
+                    getReg, getReg, getMem
                 );
                 break;
             case 3: // arithBinary
             case 4: // bitLogic
                 prompt = this._promptBinary(op, is_bad_type, is_bad_count,
-                    getTrueReg, getReg,
-                    getTrueReg, getReg, getReg
+                    getReg, getReg,
+                    getReg, getReg, getReg
                 );
                 break;
             case 5: // bitShift
+                const getShiftOp = (isBad) => {
+                    isBad?this._getTrueMem(is32):unifPickItem(this._getTrueLit(is32), this._getTrueReg(is32));
+                }
                 prompt = this._promptBinary(op, is_bad_type, is_bad_count,
-                    getTrueReg, getNum,
-                    getTrueReg, getReg, getNum
+                    getReg, getShiftOp,
+                    getReg, getReg, getShiftOp
                 );
                 break;
             default: throw new Error("Invalid operation index");
@@ -210,24 +196,33 @@ export class ARM64_OPS extends ArchInstructions {
             arg_una1, arg_una2,
             arg_bin1, arg_bin2, arg_bin3
         ) {
-        const pattern = is_bad_type?unifPickItem(1,2,3):0; // bad count pattern
-        return (!is_bad_count) ?
-            `${op} ${arg_una1()}, ${arg_una2(is_bad_type)}`:
-            `${op} ${arg_bin1()}, ${arg_bin2(pattern&1)}, ${arg_bin3(pattern&2)}`;
+        return this._promptBinary(op, is_bad_type, (!is_bad_count),
+            arg_una1, arg_una2,
+            arg_bin1, arg_bin2, arg_bin3);
     }
 
     _promptBinary(op, is_bad_type, is_bad_count,
             arg_una1, arg_una2,
             arg_bin1, arg_bin2, arg_bin3
         ) {
-        const pattern = is_bad_type?unifPickItem(1,2,3):0; // bad count pattern
-        return is_bad_count ?
-            `${op} ${arg_una1()}, ${arg_una2(is_bad_type)}`:
-            `${op} ${arg_bin1()}, ${arg_bin2(pattern&1)}, ${arg_bin3(pattern&2)}`;
+        let [bad_dest, pattern_una, pattern_bin] = [0, 0, 0];
+        if (is_bad_type) {
+            bad_dest = 1-weightedPickId(this.bad_dest);
+            pattern_una = unifPickItem(bad_dest?range(1,3):range(1,1)); // bad count pattern
+            pattern_bin = unifPickItem(bad_dest?range(1,7):range(1,3)); // bad count pattern
+        }
+        const prompt = (is_bad_count) ?
+        `${op} ${arg_una1(pattern_una&2)}, ${arg_una2(pattern_una&1)}`:
+        `${op} ${arg_bin1(pattern_bin&4)}, ${arg_bin2(pattern_bin&2)}, ${arg_bin3(pattern_bin&1)}`;
+        return prompt;
     }
 
-    _getTrueNum(is32) {
-        return Math.floor(randomFloat() * 63);
+    _getTrueReg(is32) {
+        return unifPickItem(is32?this.registers_32:this.registers_64);
+    }
+
+    _getTrueLit(is32) {
+        return `#${Math.floor(randomFloat() * 63)}`;
     }
 
     _getTrueMem(is32) {
@@ -238,9 +233,11 @@ export class ARM64_OPS extends ArchInstructions {
 }
 
 export class X86_32_OPS extends ArchInstructions {
-    constructor() {
-        super(arch_data.X86_32);
+    constructor(config) {
+        if (arguments.length >0) {super(config);}
+        else {super(arch_data.X86_32);}
     }
+    is_32() {return true;}
 
     _makePrompt(index) {
         let family;
@@ -253,12 +250,12 @@ export class X86_32_OPS extends ArchInstructions {
             case 5: family = this.bitShift;    break;
             default: throw new Error("Invalid operation index");
         }
+        const is32 = this.is_32();
         const op = unifPickItem(family.instructions);
         const q_type = weightedPickId(family.errorOdds);
         const is_bad_type = (q_type&Q_BAD_TYPE) != 0;
         const is_bad_count = (q_type&Q_BAD_COUNT) != 0;
-        const is32 = true;
-        const getMem = (isBad) => this._getMem(isBad, is32);
+
 
         let prompt;
         switch (index) {
@@ -267,16 +264,10 @@ export class X86_32_OPS extends ArchInstructions {
             case 4: // bitLogic
             case 2: // arithUnary
             case 5: // bitShift
-                prompt = this._promptBinary(op, is_bad_type, is_bad_count,
-                    getMem,
-                    getMem, getMem
-                );
+                prompt = this._promptBinary(op, is_bad_type, is_bad_count, is32);
                 break;
             case 1: // archOps
-                prompt = this._promptUnary(op, is_bad_type, is_bad_count,
-                    getMem,
-                    getMem, getMem
-                );
+                prompt = this._promptUnary(op, is_bad_type, is_bad_count, is32);
                 break;
             default: throw new Error("Invalid operation index");
         }
@@ -284,123 +275,48 @@ export class X86_32_OPS extends ArchInstructions {
         return [prompt, is_bad_type, is_bad_count];
     }
 
-    _promptUnary(op, is_bad_type, is_bad_count,
+ 
+
+    _promptUnary(op, is_bad_type, is_bad_count, is32) {
+    return this._promptBinary(op, is_bad_type, (!is_bad_count), is32,
         arg_una1,
-        arg_bin1, arg_bin2
-    ) {
-        const pattern = is_bad_type?unifPickItem(2,3):0; // bad count pattern
-        return (!is_bad_count) ?
-            `${op} ${arg_una1(is_bad_type)}`:
-            `${op} ${arg_bin1(pattern&1)}, ${arg_bin2(pattern&2)}`;
+        arg_bin1, arg_bin2);
     }
 
-    _promptBinary(op, is_bad_type, is_bad_count,
-            arg_una1,
-            arg_bin1, arg_bin2
-        ) {
-        const pattern = is_bad_type?unifPickItem(2,3):0; // bad count pattern
-        return is_bad_count ?
-            `${op} ${arg_una1(is_bad_type)}`:
-            `${op} ${arg_bin1(pattern&1)}, ${arg_bin2(pattern&2)}`;
+    _promptBinary(op, is_bad_type, is_bad_count, is32) {
+        const pattern_una = unifPickItem(range(0,1));
+        const pattern_bin = unifPickItem(range(0,2));
+        let una1 = pattern_una?this._getTrueMem(is32):this._getTrueReg(is32);
+        let bin1 = pattern_bin&1?this._getTrueMem(is32):this._getTrueReg(is32);
+        let bin2 = pattern_bin&2?this._getTrueMem(is32):this._getTrueReg(is32);
+
+        if (is_bad_type) {
+            bad_dest = 1-weightedPickId(this.bad_dest);
+            pattern_una = bad_dest;
+            pattern_bin = unifPickItem(bad_dest?range(1,3):1); // bad count pattern
+        }
+        const prompt =  is_bad_count ?
+        `${op} ${una1}`:
+        `${op} ${bin1}, ${bin2}`;
+        return prompt;
     }
     
-    _getTrueNum(is32){
-        return `\$${Math.floor(randomFloat() * 63)}`;
+    _getTrueLit(is32){
+        return `\$${Math.floor(randomFloat32() * MAX_NUM)}`;
     }
     _getTrueMem(is32) {
-        const a = `%${this._getTrueReg(is32)}`;
-        const b = `0x${this._getTrueOffset(is32)}(${a})`;
+        const a = `(${this._getTrueReg(is32)})`;
+        const b = `0x${this._getTrueOffset(is32)}${a}`;
         return unifPickItem(a, b);
     }
-
-    _getMem(isBad, is32) {
-        return isBad?
-        this._getTrueNum(is32):
-        this._getTrueMem(is32);
+    _getTrueReg(is32) {
+        return `%${unifPickItem(is32?this.registers_32:this.registers_64)}`
     }
 
 }
 
-export class X86_64_OPS extends ArchInstructions {
-    constructor() {
-        super(arch_data.X86_64);
-    }
+export class X86_64_OPS extends X86_32_OPS {
+    constructor() {super(arch_data.X86_64);}
 
-    _makePrompt(index) {
-        let family;
-        switch (index) {
-            case 0: family = this.memOps;      break;
-            case 1: family = this.archOps;     break;
-            case 2: family = this.arithUnary;  break;
-            case 3: family = this.arithBinary; break;
-            case 4: family = this.bitLogic;    break;
-            case 5: family = this.bitShift;    break;
-            default: throw new Error("Invalid operation index");
-        }
-        const op = unifPickItem(family.instructions);
-        const q_type = weightedPickId(family.errorOdds);
-        const is_bad_type = (q_type&Q_BAD_TYPE) != 0;
-        const is_bad_count = (q_type&Q_BAD_COUNT) != 0;
-        const is32 = false;
-        const getMem = (isBad) => this._getMem(isBad, is32);
-
-        let prompt;
-        switch (index) {
-            case 0: // memOps
-            case 3: // arithBinary
-            case 4: // bitLogic
-            case 2: // arithUnary
-            case 5: // bitShift
-                prompt = this._promptBinary(op, is_bad_type, is_bad_count,
-                    getMem,
-                    getMem, getMem
-                );
-                break;
-            case 1: // archOps
-                prompt = this._promptUnary(op, is_bad_type, is_bad_count,
-                    getMem,
-                    getMem, getMem
-                );
-                break;
-            default: throw new Error("Invalid operation index");
-        }
-
-        return [prompt, is_bad_type, is_bad_count];
-    }
-
-    _promptUnary(op, is_bad_type, is_bad_count,
-        arg_una1,
-        arg_bin1, arg_bin2
-    ) {
-        const pattern = is_bad_type?unifPickItem(2,3):0; // bad count pattern
-        return (!is_bad_count) ?
-            `${op} ${arg_una1(is_bad_type)}`:
-            `${op} ${arg_bin1(pattern&1)}, ${arg_bin2(pattern&2)}`;
-    }
-
-    _promptBinary(op, is_bad_type, is_bad_count,
-            arg_una1,
-            arg_bin1, arg_bin2
-        ) {
-        const pattern = is_bad_type?unifPickItem(2,3):0; // bad count pattern
-        return is_bad_count ?
-            `${op} ${arg_una1(is_bad_type)}`:
-            `${op} ${arg_bin1(pattern&1)}, ${arg_bin2(pattern&2)}`;
-    }
-    
-    _getTrueNum(is32){
-        return `\$${Math.floor(randomFloat() * 63)}`;
-    }
-    _getTrueMem(is32) {
-        const a = `%${this._getTrueReg(is32)}`;
-        const b = `0x${this._getTrueOffset(is32)}(${a})`;
-        return unifPickItem(a, b);
-    }
-
-    _getMem(isBad, is32) {
-        return isBad?
-        this._getTrueNum(is32):
-        this._getTrueMem(is32);
-    }
-
+    static is_32() {return (weightedPickId(BIT_ODDS_X86_64) == 0);}
 }
