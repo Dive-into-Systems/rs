@@ -5,11 +5,15 @@
 // Created By Tony Cao, Arys Aikyn, June 2024
 "use strict";
 
-const Q_BAD_TYPE = 1;
-const Q_BAD_COUNT = 2;
 
 import arch_data from './arch_data.json';
-const MAX_NUM = arch_data.MAX_NUM
+const MAX_NUM = arch_data.MAX_NUM;
+const BIT_ODDS_X86_64 = arch_data.BIT_ODDS_X86_64;
+
+const MSG_OK = arch_data.MSG_OK;
+const MSG_BAD_DEST = arch_data.MSG_BAD_DEST;
+const MSG_BAD_SRC = arch_data.MSG_BAD_SRC;
+const MSG_CT = arch_data.MSG_CT;
 
 
 function randomFloat32() {
@@ -64,8 +68,8 @@ class ArchInstructions {
             throw new Error("Config data required");
         }
 
-        this.instructionKeys = ['memOps', 'archOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'];
-        this.instructionKeys.forEach(key => {
+        let instructionKeys = ['memOps', 'archOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'];
+        instructionKeys.forEach(key => {
             if (config[key]) {
                 this[key] = new InstructionsFamily(
                     config[key].mainWeight,
@@ -109,24 +113,24 @@ class ArchInstructions {
         }
         const op = unifPickItem(family.instructions);
         const q_type = weightedPickId(family.errorsOdds);
-        let expr;
+        let expr = "";
         let feedback = "";
         switch (q_type) {
             case 0:
                 expr = family.errors.ok;
-                feedback = arch_data.MSG_OK;
+                feedback = MSG_OK;
                 break;
             case 1:
                 expr = family.errors.bad_dest;
-                feedback = arch_data.MSG_BAD_DEST;
+                feedback = MSG_BAD_DEST;
                 break;
             case 2:
                 expr = family.errors.bad_src;
-                feedback = arch_data.MSG_BAD_SRC;
+                feedback = MSG_BAD_SRC;
                 break;
             case 3:
                 expr = family.errors.bad_ct;
-                feedback = arch_data.MSG_CT;
+                feedback = MSG_CT;
                 break;
             default: throw new Error("Invalid operation index");
         }
@@ -171,7 +175,7 @@ class ArchInstructions {
         }
         if (cloneExpr.includes('/')) {
             const options = cloneExpr.split('/');
-            return this._evalPrompt(unifPickItem(options));
+            return this._evalPrompt(unifPickItem(options), is32);
         }
         const solveChar = (char) => this._solveChar(char, is32);
         return cloneExpr.split('').map(solveChar).join(", ");
@@ -181,8 +185,6 @@ class ArchInstructions {
 export class ARM64_OPS extends ArchInstructions {
     constructor() {
         super(arch_data.ARM64);
-        // this.bad_dest = arch_data.ARM64.bad_dest;
-        this.bad_dest = [50,50];
         for (let i = 0; i <= 28; i++) {
             this.registers_64.push(`x${i}`);
             this.registers_32.push(`w${i}`);
@@ -208,22 +210,15 @@ export class ARM64_OPS extends ArchInstructions {
 
 }
 
-export class X86_32_OPS extends ArchInstructions {
+export class X86_BASE extends ArchInstructions {
     constructor(config) {
-        if (arguments.length >0) {
-            super(config);
-            this.bad_dest = [50,50];
-
-        }
-        else {
-            super(arch_data.X86_32);
-            this.bad_dest = [50,50];
-        }
-
+        super(config);
     }
-    _is_32() {return true;}
-
+    
     _getTrueReg(is32) {
+        console.log(this.registers_32);
+        console.log(this.registers_64);
+        console.log(is32);
         return `%${unifPickItem(is32?this.registers_32:this.registers_64)}`
     }
     _getTrueMem(is32) {
@@ -236,8 +231,14 @@ export class X86_32_OPS extends ArchInstructions {
     }
 }
 
-export class X86_64_OPS extends X86_32_OPS {
+export class X86_32_OPS extends X86_BASE {
+    constructor() {super(arch_data.X86_32);}
+    
+    _is_32() {return true;}
+}
+
+export class X86_64_OPS extends X86_BASE {
     constructor() {super(arch_data.X86_64);}
 
-    static _is_32() {return (weightedPickId(BIT_ODDS_X86_64) == 0);}
+    _is_32() {return (weightedPickId(BIT_ODDS_X86_64) == 0);}
 }

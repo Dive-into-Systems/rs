@@ -1,10 +1,10 @@
 {
     "MAX_NUM" : 63,
     "BIT_ODDS_X86_64" : [0.25, 0.75],
-    "MSG_OK" : "This message is valid!",
-    "MSG_BAD_DEST" : "Check if destination operand type is allowed.",
-    "MSG_BAD_SRC" : "Check if source operand(s) type combination is allowed.",
-    "MSG_CT" : "Check if instruction has too many or too few operands.",
+    "MSG_OK" : "This instruction is valid!",
+    "MSG_BAD_DEST" : "Invalid destination operand type.",
+    "MSG_BAD_SRC" : "Invalid source operands type combination.",
+    "MSG_CT" : "Invalid operands count.",
     "ARM64": {
         "bad_dest" : [0.40, 0.60],
         "memOps": {
@@ -13,7 +13,7 @@
             "errorsOdds" : [40, 25, 25, 10],
             "errors" : {
                 "ok": "r-(l/r)",
-                "bad_dest" : "(l/m)-(l/m)",
+                "bad_dest" : "(l/m)-(r/l/m)",
                 "bad_src" : "r-m",
                 "bad_ct" : "r-r-r"
             }
@@ -24,8 +24,8 @@
             "errorsOdds" : [40, 25, 25, 10],
             "errors" : {
                 "ok": "r-m",
-                "bad_dest" : "m-m",
-                "bad_src" : "r-l",
+                "bad_dest" : "(l/m)-(l/m)",
+                "bad_src" : "r-r",
                 "bad_ct" : "r-r-r"
             }
         },
@@ -35,7 +35,7 @@
             "errorsOdds" : [40, 25, 20, 15],
             "errors" : {
                 "ok": "r-(r/l)",
-                "bad_dest" : "m-(r/l)",
+                "bad_dest" : "(m/l)-(r/l)",
                 "bad_src" : "r-m",
                 "bad_ct" : "r-(r/l)-(r/l)"
             }
