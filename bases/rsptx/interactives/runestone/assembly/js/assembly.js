@@ -21,7 +21,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
-        
+
         // create an container div to store the displayed component
         this.containerDiv = $("<div>").attr("id", this.divid);
 
@@ -81,9 +81,9 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
     renderHeader() {
         this.instruction = $("<div>").html(
-            "For each of the following " + 
-            this.architecture + 
-            " instructions, indicate whether the instruction " + 
+            "For each of the following " +
+            this.architecture +
+            " instructions, indicate whether the instruction " +
             "<b>could</b> be valid or invalid"
         );
         this.statementDiv = $("<div>").append(this.instruction);
@@ -115,7 +115,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 const prevArithChecked = this.arith_checked;
                 const prevBitChecked = this.bit_checked;
                 const prevMemoChecked = this.memo_checked;
-            
+
                 // Update the states based on the checkbox change
                 switch(event.target.id){
                     case "arithmetic":
@@ -128,7 +128,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                         this.memo_checked = event.target.checked;
                         break;
                 }
-            
+
                 // Check the condition and possibly revert changes
                 if (!this.arith_checked && !this.bit_checked && !this.memo_checked) {
                     event.preventDefault();
@@ -136,12 +136,12 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                     this.arith_checked = prevArithChecked;
                     this.bit_checked = prevBitChecked;
                     this.memo_checked = prevMemoChecked;
-                    
+
                     // Restore the checkbox's checked state
                     $(event.target).prop('checked', !event.target.checked);
                 }
             });
-            
+
             const label = $("<label>").attr("for", family.value).text(family.label);
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
@@ -152,16 +152,16 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
     renderQuestions() {
         this.questionDiv = $("<div>");
-    
+
         // input box generation
         this.inputBox = $("<div>"); // contains all prompts and buttons
-    
+
         this.textNodes = []; // create a reference to all current textNodes for future update
         this.inputNodes = []; // create slots for inputs for future updates
-        var textNode = null; 
-    
+        var textNode = null;
+
         this.genPromptsNAnswer();
-    
+
         // create and render all input fields in question group
         for (let i = 0; i < this.num_q_in_group; i++) {
 
@@ -182,12 +182,12 @@ export default class ASM_EXCERCISE extends RunestoneBase {
              })
 
             // create the prompt
-            textNode = $(document.createElement("code")).text(this.promptList[i]); 
-            textNode.css("font-size", "large");
+            textNode = $(document.createElement("code")).text(this.promptList[i]);
+            textNode.css({"font-size": "large", "height": "25px"});
             this.textNodes.push(textNode);
 
             // create the feedback
-            var feedbackDiv = $("<span>").attr("id", this.divid + "feedback" + i).addClass("feedback");
+            var feedbackDiv = $("<span>").attr("id", this.divid + "feedback" + i).addClass("feedback")
 
             // start appending the letter, the propmpt, the feedback for the first line
             this.propmtItem.append(String.fromCharCode((i + 97)) + ". ");
@@ -211,7 +211,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 $(this).next('label').removeClass('highlightRight');
             }).addClass("centerplease");
             var lblYes = $("<label>").attr("for", "Yes" + i).text("VALID");
-        
+
             // Add a label and radio button for the "Invalid" answer option
             var btnNo = $("<input>").attr({
                 type: "radio",
@@ -225,7 +225,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 $(this).next('label').removeClass('highlightRight');
             }).addClass("centerplease");
             var lblNo = $("<label>").attr("for", "No" + i).text("INVALID");
-    
+
             // Append the radio buttons and labels to the question div
             this.newDiv.append(lblYes);
             this.newDiv.append(btnYes);
@@ -245,22 +245,22 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 this.checkThisAnswers(i);
                 }.bind(this))
             .addClass("button-check checkingbutton");
-    
+
             this.newDiv.append(this.submitButton)
             this.inputBox.append(this.newDiv);
             this.inputNodes.push([btnYes, btnNo]);
         }
-    
+
         this.questionDiv.append(this.inputBox);
-    
+
         // copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
-        
+
         this.questionDiv.addClass("statement-box");
-    
+
         // remove the script tag.
         this.scriptSelector(this.containerDiv).remove();
-        // ***div STRUCTURE***: questionDiv contains inputBox which contains number of question of newDiv. 
+        // ***div STRUCTURE***: questionDiv contains inputBox which contains number of question of newDiv.
         this.containerDiv.append(this.questionDiv);
     }
 
@@ -268,12 +268,12 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.promptList = [];
         this.answerList = [];
         this.feedbackMsgs = []; // Store the error types for feedback
-    
+
         for (let i = 0; i < this.num_q_in_group; i++) {
             const [prompt, q_type, feedbackMsg] = this.generator.generate_question(
                 this.memo_checked, this.arith_checked, this.bit_checked
             );
-    
+
             this.promptList.push(prompt);
             this.answerList.push(q_type==0);
             this.feedbackMsgs.push(feedbackMsg);
