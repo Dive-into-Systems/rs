@@ -11,7 +11,7 @@ import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import {ARM64_OPS, X86_32_OPS, X86_64_OPS} from "./arch_generate.js"
 
-export var ARMList = {}; // Object containing all instances of ASM
+export var ASMList = {}; // Object containing all instances of ASM
 
 // ASM constructor
 export default class ASM_EXCERCISE extends RunestoneBase {
@@ -53,6 +53,11 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     scriptSelector(root_node) {
         return $(root_node).find(`script[type="application/json"]`);
     }
+
+    /*===========================================
+    ====   Functions generating final HTML   ====
+    ===========================================*/
+
     // set default parameters
     setDefaultParams() {
     }
@@ -70,13 +75,6 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             case "ARM64": this.generator = new ARM64_OPS();      break;
             default: throw new Error("Invalid architecture option");
         }
-    }
-
-    /*===========================================
-    ====   Functions generating final HTML   ====
-    ===========================================*/
-    // Create the ASM Element
-    createAsmElement() {
     }
 
     renderHeader() {
@@ -187,7 +185,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             this.textNodes.push(textNode);
 
             // create the feedback
-            var feedbackDiv = $("<span>").attr("id", this.divid + "feedback" + i).addClass("feedback")
+            var feedbackDiv = $("<span>").attr("id", this.divid + "feedback" + i).addClass("feedback").css({"width": "300px", "text-wrap": "pretty"});
 
             // start appending the letter, the propmpt, the feedback for the first line
             this.propmtItem.append(String.fromCharCode((i + 97)) + ". ");
@@ -378,7 +376,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                ARMList[this.id] = new ASM_EXCERCISE(opts);
+                ASMList[this.id] = new ASM_EXCERCISE(opts);
             } catch (err) {
                 console.log(
                     `Error rendering Assembly Syntax Problem ${this.id}\nDetails: ${err}\n${err.stack}`

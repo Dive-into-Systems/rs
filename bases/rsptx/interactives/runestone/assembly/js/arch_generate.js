@@ -44,11 +44,11 @@ function unifPickId(arr)  {return Math.floor(randomFloat32() * arr.length);}
 // Combines multiple arrays and picks a random item from the combined array.
 function unifPickItem(...items) {
     const combinedArray = items.flat();
-    
+
     if (combinedArray.length === 0) {
         throw new Error("No arrays provided or all provided arrays are empty.");
     }
-    
+
     return combinedArray[unifPickId(combinedArray)];
 }
 
@@ -81,7 +81,7 @@ class ArchInstructions {
                 throw new Error(`Missing configuration for ${key}`);
             }
         });
-        
+
         this.offsets    = config.offsets;
         this.registers_32  = config.registers_32;
         this.registers_64  = config.registers_64;
@@ -168,7 +168,7 @@ class ArchInstructions {
     // recursively expressions
     _evalPrompt(expression, is32) {
         const evalPrompt = (expr) => this._evalPrompt(expr, is32);
-        
+
         let cloneExpr = this._solveNest(expression.replace(/\s+/g, ''), is32);
         if (cloneExpr.includes('-')) {
             return cloneExpr.split('-').map(evalPrompt).join(", ");
@@ -198,7 +198,7 @@ export class ARM64_OPS extends ArchInstructions {
     _getTrueReg(is32) {
         return unifPickItem(is32?this.registers_32:this.registers_64);
     }
-    
+
     _getTrueMem(is32) {
         const a = `[${this._getTrueReg(is32)}]`;
         const b = `[${this._getTrueReg(is32)}, ${unifPickItem(this._getTrueOffset(), this._getTrueReg(is32))}]`;
@@ -214,11 +214,8 @@ export class X86_BASE extends ArchInstructions {
     constructor(config) {
         super(config);
     }
-    
+
     _getTrueReg(is32) {
-        console.log(this.registers_32);
-        console.log(this.registers_64);
-        console.log(is32);
         return `%${unifPickItem(is32?this.registers_32:this.registers_64)}`
     }
     _getTrueMem(is32) {
@@ -233,7 +230,7 @@ export class X86_BASE extends ArchInstructions {
 
 export class X86_32_OPS extends X86_BASE {
     constructor() {super(arch_data.X86_32);}
-    
+
     _is_32() {return true;}
 }
 
