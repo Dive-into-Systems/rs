@@ -47,7 +47,7 @@ export default class BinCalc extends RunestoneBase {
     initBinCalcElement() {
         this.renderBinCalcPromptAndInput();
         this.renderBinCalcButtons();
-        this.renderBinCalcFeedbackDiv();
+        this.initFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
    }
@@ -72,7 +72,7 @@ export default class BinCalc extends RunestoneBase {
     this.buttonsDiv.style.justifyContent = 'center';
 
     this.inputDiv = document.createElement("div");
-    this.inputDiv.style.width = "90%";
+    this.inputDiv.style.width = "95%";
 
     // read binary operators options as an array
     if (currOption["operator-options"] === undefined) {
@@ -112,11 +112,8 @@ export default class BinCalc extends RunestoneBase {
     this.bitShiftMenu.addEventListener("change",
     function () {
         // attempting to generate new answer
-        this.checkValidConversion();
-        if (this.valid_conversion) {
-            this.clearAnswer();
-            this.generateAnswer();
-        }
+        $(this.feedbackDiv).remove();
+        this.generateAnswer();
     }.bind(this),
     false);
 
@@ -132,8 +129,9 @@ export default class BinCalc extends RunestoneBase {
     // When the value of operatorMenu is changed, clear the answer
     this.operatorMenu.addEventListener("change",
         function () {
-            this.clearAnswer();
+            $(this.feedbackDiv).remove();
             this.configInputDiv(this.operatorMenu.value);
+            this.generateAnswer();
         }.bind(this),
         false);
 
@@ -195,9 +193,6 @@ export default class BinCalc extends RunestoneBase {
     this.containerDiv.appendChild(this.inputDiv);
     this.containerDiv.appendChild(document.createElement("br"));
 
-    this.feedbackDiv = document.createElement("div");
-    this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-
     // Copy the original elements to the container holding what the user will see.
     $(this.origElem).children().clone().appendTo(this.containerDiv);
 
@@ -244,269 +239,190 @@ export default class BinCalc extends RunestoneBase {
        this.isAnswered = true;
    }
 
-   renderBinCalcButtons() {
-       // A button that calculates results
-       this.calculateButton = document.createElement("button");
-       this.calculateButton.textContent = "Calculate \u27A4";
-       $(this.calculateButton).attr({
-           class: "btn calculate-btn",
-           name: "calculate button",
-           type: "button",
-       });
-       // Show the answer when the button is clicked
-       this.calculateButton.addEventListener(
-           "click",
-           function () {
-               this.checkValidConversion();
-               if (this.valid_conversion) {
-                   this.generateAnswer();
-               }
-           }.bind(this),
-           false
-       );
-    
-       // A button that clears all input field and result
-       this.clearButton = document.createElement("button");
-       this.clearButton.textContent = "Clear input";
-       $(this.clearButton).attr({
-           class: "btn clear-btn",
-           name: "clear button",
-           type: "button",
-       });
-       // Show the answer when the button is clicked
-       this.clearButton.addEventListener(
-           "click",
-           function () {
-               this.clearAnswer();
-           }.bind(this),
-           false
-       );
+    renderBinCalcButtons() {
+        // A button that calculates results
+        this.calculateButton = document.createElement("button");
+        this.calculateButton.textContent = "Calculate \u27A4";
+        $(this.calculateButton).attr({
+            class: "btn calculate-btn",
+            name: "calculate button",
+            type: "button",
+        });
 
-       // "Generate Values" button
-       this.generateButton = document.createElement("button");
-       this.generateButton.textContent = "Generate Values";
-       $(this.generateButton).attr({
-           class: "btn generate-btn",
-           name: "generate values",
-           type: "button",
-       });
-       // Generate random values for the input fields
-       this.generateButton.addEventListener(
-        "click",
-        function () {
-            this.generateRandomValues();
-            if (this.answerDiv != undefined){
-                this.answerDiv.style.visibility = "hidden";
-               }
-        }.bind(this), false);
+        // Show the answer when the button is clicked
+        this.calculateButton.addEventListener(
+            "click",
+            function () {
+                this.generateAnswer();
+                this.renderBinCalcFeedbackDiv();
+            }.bind(this),
+            false
+        );
+        
+        // A button that clears all input field and result
+        this.clearButton = document.createElement("button");
+        this.clearButton.textContent = "Clear input";
+        $(this.clearButton).attr({
+            class: "btn clear-btn",
+            name: "clear button",
+            type: "button",
+        });
+        // Show the answer when the button is clicked
+        this.clearButton.addEventListener(
+            "click",
+            function () {
+                this.clearAnswer();
+            }.bind(this),
+            false
+        );
 
-       this.generateButton.style.marginRight = "10px";
-       
-       this.buttonsDiv.appendChild(this.calculateButton);
-       this.buttonsDiv.appendChild(this.clearButton);
-       this.buttonsDiv.appendChild(this.generateButton);
+        // "Generate Values" button
+        this.generateButton = document.createElement("button");
+        this.generateButton.textContent = "Generate Values";
+        $(this.generateButton).attr({
+            class: "btn generate-btn",
+            name: "generate values",
+            type: "button",
+        });
+        // Generate random values for the input fields
+        this.generateButton.addEventListener(
+            "click",
+            function () {
+                $(this.feedbackDiv).remove();
+                this.generateRandomValues();
+                if (this.answerDiv != undefined){
+                    this.answerDiv.style.visibility = "hidden";
+                }
+            }.bind(this), false);
 
-       this.containerDiv.appendChild(this.buttonsDiv);
-   }
+        this.generateButton.style.marginRight = "10px";
+        
+        this.buttonsDiv.appendChild(this.calculateButton);
+        this.buttonsDiv.appendChild(this.clearButton);
+        this.buttonsDiv.appendChild(this.generateButton);
 
-   renderBinCalcFeedbackDiv() {
-       this.containerDiv.appendChild(document.createElement("br"));
-       this.containerDiv.appendChild(this.feedbackDiv);
-   }
+        this.containerDiv.appendChild(this.buttonsDiv);
+    }
 
-   // clear the input field
-   clearAnswer() {
-       this.feedbackDiv.remove();
-       this.inputBoxTop.value = "";
-       this.inputBoxBottom.value = "";
-   }
+    // clear the input field
+    clearAnswer() {
+        this.feedbackDiv.remove();
+        this.inputBoxTop.value = "";
+        this.inputBoxBottom.value = "";
+    }
 
-   // Generate random values for the input fields
-   generateRandomValues() {
-       this.inputBoxTop.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
-       this.inputBoxBottom.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
-   }
+    // Generate random values for the input fields
+    generateRandomValues() {
+        this.inputBoxTop.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+        this.inputBoxBottom.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+    }
 
-   // Convert an integer to its binary expression with leading zeros as a string.
-   // The string always has length of this.num_bits
-   toBinary(num) {
-       var str = num.toString(2);
-       if (str.length < this.num_bits) {
-           var leading_zeros = "";
-           for ( var i = str.length ; i < this.num_bits; i ++ ) {
-               leading_zeros += "0";
-           }
-           str = leading_zeros + str;
-       }
-       if (str.length > this.num_bits){
-            str = str.slice(str.length-this.num_bits);
-       }
-       return str;
-   }
-
-   // generate the answer as a string based on the user input
-   generateAnswer() {
-        this.hideFeedback();
-        this.feedback_msg = "";
-        this.shift_bits = parseInt(this.bitShiftMenu.value);
-        // Check if both inputs are 6 bits long
-        if (this.inputBoxTop.value == 'AND' || this.inputBoxTop.value == 'OR' || this.inputBoxTop.value == 'XOR') {
-            if (this.inputBoxTop.value.length !== this.num_bits || this.inputBoxBottom.value.length !== this.num_bits) {
-                this.feedback_msg = "Please input 6-bit binary number(s).";
-                this.renderFeedback();
-                return;
+    // Convert an integer to its binary expression with leading zeros as a string.
+    // The string always has length of this.num_bits
+    toBinary(num) {
+        var str = num.toString(2);
+        if (str.length < this.num_bits) {
+            var leading_zeros = "";
+            for ( var i = str.length ; i < this.num_bits; i ++ ) {
+                leading_zeros += "0";
             }
-        } else{
-            if (this.inputBoxBottom.value.length !== this.num_bits) {
-                this.feedback_msg = "Please input 6-bit binary number(s).";
-                this.renderFeedback();
-                return;
-            }
+            str = leading_zeros + str;
         }
-        const answerLabel = document.createElement("span");
-        answerLabel.textContent = "Answer: ";
-        answerLabel.style.fontSize = "x-large";
-        answerLabel.style.fontWeight = "500";
-        answerLabel.style.marginRight = "10px";
+        if (str.length > this.num_bits){
+                str = str.slice(str.length-this.num_bits);
+        }
+        return str;
+    }
+
+    initFeedbackDiv() {
+        this.feedbackDiv = document.createElement("div");
+        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
+    }
+    // generate the answer as a string based on the user input
+    generateAnswer() {
     
         let num1 = parseInt(this.inputBoxTop.value, 2);
         let num2 = parseInt(this.inputBoxBottom.value, 2);
+        this.twoBoxes = 0;
         switch (this.operatorMenu.value) {
             case "AND" :
-                this.target_num_string = this.toBinary(num1 & num2);
+                this.answerValue = this.toBinary(num1 & num2);
+                this.twoBoxes = 1;
                 break;
             case "NOT" :
-                this.target_num_string = this.toBinary((~num1) & ((1 << this.num_bits)-1));
+                this.answerValue = this.toBinary((~num1) & ((1 << this.num_bits)-1));
+                this.twoBoxes = 1;
                 break;
             case "OR" :
-                this.target_num_string = this.toBinary(num1 | num2);
+                this.answerValue = this.toBinary(num1 | num2);
+                this.twoBoxes = 1;
                 break;
             case "XOR" :
-                this.target_num_string = this.toBinary(num1 ^ num2);
+                this.answerValue = this.toBinary(num1 ^ num2);
                 break;
             case "Left Shift" :
-                this.target_num_string = this.toBinary(num2 << this.shift_bits);
+                this.answerValue = this.toBinary(num2 << this.shift_bits);
                 break;
             case "Right Shift(Logical)" :
-                this.target_num_string = this.toBinary(num2 >>> this.shift_bits);
+                this.answerValue = this.toBinary(num2 >>> this.shift_bits);
                 break;
             case "Right Shift(Arithmetic)" :
                 console.log("in right shift");
                 if (this.toBinary(num2)[0] === "1"){
-                    this.target_num_string = ((num2 >> this.shift_bits) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');                
+                    this.answerValue = ((num2 >> this.shift_bits) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');                
                 }
                 else{
-                    this.target_num_string = this.toBinary(num2 >> this.shift_bits);  
+                    this.answerValue = this.toBinary(num2 >> this.shift_bits);  
                 }
-                break; 
+                break;
         }
-        this.resultDiv.innerHTML = ""; 
-
-        this.answerNode = document.createElement("span");
-        this.answerNode.textContent = this.target_num_string;
-        this.answerNode.style.fontSize = "x-large";
-        this.answerNode.style.fontWeight = "500";
-        this.answerNode.style.textAlign = "right";
-      
-        // Add the answer element to the prompt div
-        this.answerDiv = document.createElement("div");
-        this.answerDiv.appendChild(answerLabel);
-        this.answerDiv.appendChild(this.answerNode);
-        this.resultDiv.appendChild(this.answerDiv);
-        this.resultDiv.style.width = "68%";
-        this.resultDiv.style.textAlign = "right";
-        // this.resultDiv.style.visibility = 'visible';
-        this.containerDiv.appendChild(this.resultDiv);
-   }
-
-   // Update the prompt to display
-   generatePrompt() {
-        this.resultDivTextNode.textContent = this.target_num_string;
-        // this.resultDiv.style.visibility = 'visible';
-        this.containerDiv.appendChild(this.resultDiv);
-   }
-
-   // check if the conversion is valid 
-   checkValidConversion() {
-       this.hideFeedback();
-       this.valid_conversion = true;
-   }
-
-   hideFeedback() {
-       this.feedbackDiv.innerHTML = "";
-   }
-
-   displayFeedback() {
-       this.feedbackDiv.style.visibility = "visible";
-   }
-
-   renderFeedback() {
-
-    //    this.hideFeedback();
-
-       
-    //    this.feedbackDiv = document.createElement("div");
-    //    this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-    //    this.containerDiv.appendChild(this.feedbackDiv);
-    //     /*
-    //    // only the feedback message needs to display
-    //    var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
-    //     */
-    //    var feedback_msg_elem = document.createElement("div");
-    //    feedback_msg_elem.innerHTML = this.feedback_msg;
-    //    var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
-    //    if (this.correct) {
-    //        $(this.feedbackDiv).attr("class", "alert alert-info");
-    //    } else {
-    //        $(this.feedbackDiv).attr("class", "alert alert-danger");
-    //    }
-      
-    //    this.feedbackDiv.innerHTML = feedback_msg_elem;
-    //    this.displayFeedback();
-    //    if (typeof MathJax !== "undefined") {
-    //        this.queueMathJax(document.body);
-    //    }
-    // this.feedbackDiv = document.createElement("div");
-    // this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-    this.containerDiv.appendChild(this.feedbackDiv);
-
-
-    // only the feedback message needs to display
-    var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
-    if (this.correct) {
-        $(this.feedbackDiv).attr("class", "alert alert-info");
-    } else {
-        $(this.feedbackDiv).attr("class", "alert alert-danger");
     }
-   
-    this.feedbackDiv.innerHTML = feedback_html;
-    this.displayFeedback();
-    if (typeof MathJax !== "undefined") {
-        this.queueMathJax(document.body);
+
+    renderBinCalcFeedbackDiv() {
+        
+        this.feedbackDiv.innerHTML = ""; 
+        
+        if (this.inputBoxTop.value == "" || (this.twoBoxes == 1 && this.inputBoxBottom == "")) {
+            this.feedbackDiv.className = "alert alert-danger";
+            this.feedbackDiv.innerHTML = "Please make sure you have enter the value(s)."
+        }
+        else {
+            // Add the result
+            let resultNode = document.createElement("span");
+            resultNode.textContent = `Result: ${this.answerValue}`;
+            this.feedbackDiv.appendChild(resultNode);
+        
+            this.feedbackDiv.className = "alert alert-info";
+        
+            // Check if MathJax needs to be processed
+            if (typeof MathJax !== "undefined") {
+                MathJax.typesetPromise([this.feedbackDiv]);
+            }
+        }
+    
+        this.containerDiv.appendChild(this.feedbackDiv);
     }
-   }
 }
-
-/*=================================
-== Find the custom HTML tags and ==
-==   execute our code on them    ==
-=================================*/
-$(document).on("runestone:login-complete", function () {
-   $("[data-component=bincalc]").each(function (index) {
-       var opts = {
-           orig: this,
-           useRunestoneServices: eBookConfig.useRunestoneServices,
-       };
-       if ($(this).closest("[data-component=timedAssessment]").length == 0) {
-           // If this element exists within a timed component, don't render it here
-           try {
-               BinCalcList[this.id] = new BinCalc(opts);
-           } catch (err) {
-               console.log(
-                   `Error rendering Bitwise Operation Problem ${this.id}
-                    Details: ${err}`
-               );
-           }
-       }
-   });
-});
+    /*=================================
+    == Find the custom HTML tags and ==
+    ==   execute our code on them    ==
+    =================================*/
+    $(document).on("runestone:login-complete", function () {
+    $("[data-component=bincalc]").each(function (index) {
+        var opts = {
+            orig: this,
+            useRunestoneServices: eBookConfig.useRunestoneServices,
+        };
+        if ($(this).closest("[data-component=timedAssessment]").length == 0) {
+            // If this element exists within a timed component, don't render it here
+            try {
+                BinCalcList[this.id] = new BinCalc(opts);
+            } catch (err) {
+                console.log(
+                    `Error rendering Bitwise Operation Problem ${this.id}
+                        Details: ${err}`
+                );
+            }
+        }
+    });
+    });
