@@ -114,6 +114,7 @@ export default class BinCalc extends RunestoneBase {
         // attempting to generate new answer
         $(this.feedbackDiv).remove();
         this.generateAnswer();
+        console.log(this.answerValue);
     }.bind(this),
     false);
 
@@ -187,7 +188,6 @@ export default class BinCalc extends RunestoneBase {
 
     // render the statement
     this.statementDiv.appendChild(this.instructionNode);
-    this.statementDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(this.statementDiv);
     this.containerDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(this.inputDiv);
@@ -235,9 +235,9 @@ export default class BinCalc extends RunestoneBase {
         this.inputDiv.style.textAlign = "right";
     }
 
-   recordAnswered() {
-       this.isAnswered = true;
-   }
+    recordAnswered() {
+        this.isAnswered = true;
+    }
 
     renderBinCalcButtons() {
         // A button that calculates results
@@ -338,24 +338,27 @@ export default class BinCalc extends RunestoneBase {
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
     }
-    // generate the answer as a string based on the user input
+
     generateAnswer() {
-    
+
+        this.incomplete = 0;
+        let opt = this.operatorMenu.value;
         let num1 = parseInt(this.inputBoxTop.value, 2);
         let num2 = parseInt(this.inputBoxBottom.value, 2);
-        this.twoBoxes = 0;
-        switch (this.operatorMenu.value) {
+        if ((this.inputBoxTop.value == "") || ((opt == "AND" || opt == "NOT" || opt == "OR" || opt == "XOR") && (this.inputBoxBottom.value == ""))) {
+            this.incomplete = 1;
+            return;
+        }
+
+        switch (opt) {
             case "AND" :
                 this.answerValue = this.toBinary(num1 & num2);
-                this.twoBoxes = 1;
                 break;
             case "NOT" :
                 this.answerValue = this.toBinary((~num1) & ((1 << this.num_bits)-1));
-                this.twoBoxes = 1;
                 break;
             case "OR" :
                 this.answerValue = this.toBinary(num1 | num2);
-                this.twoBoxes = 1;
                 break;
             case "XOR" :
                 this.answerValue = this.toBinary(num1 ^ num2);
@@ -363,11 +366,10 @@ export default class BinCalc extends RunestoneBase {
             case "Left Shift" :
                 this.answerValue = this.toBinary(num2 << this.shift_bits);
                 break;
-            case "Right Shift(Logical)" :
+            case "Right Shift (Logical)" :
                 this.answerValue = this.toBinary(num2 >>> this.shift_bits);
                 break;
-            case "Right Shift(Arithmetic)" :
-                console.log("in right shift");
+            case "Right Shift (Arithmetic)" :
                 if (this.toBinary(num2)[0] === "1"){
                     this.answerValue = ((num2 >> this.shift_bits) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');                
                 }
@@ -382,7 +384,7 @@ export default class BinCalc extends RunestoneBase {
         
         this.feedbackDiv.innerHTML = ""; 
         
-        if (this.inputBoxTop.value == "" || (this.twoBoxes == 1 && this.inputBoxBottom == "")) {
+        if (this.incomplete == 1) {
             this.feedbackDiv.className = "alert alert-danger";
             this.feedbackDiv.innerHTML = "Please make sure you have enter the value(s)."
         }
@@ -394,7 +396,6 @@ export default class BinCalc extends RunestoneBase {
         
             this.feedbackDiv.className = "alert alert-info";
         
-            // Check if MathJax needs to be processed
             if (typeof MathJax !== "undefined") {
                 MathJax.typesetPromise([this.feedbackDiv]);
             }
