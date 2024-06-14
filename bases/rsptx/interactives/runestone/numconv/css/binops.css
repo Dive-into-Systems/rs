@@ -40,9 +40,9 @@ input.input-validation-error {
 }
 
 .calculate-btn {
-  background-color: HoneyDew !important;
+  background-color: rgb(33, 187, 100) !important;
   border-radius: 8px !important;
-  color: seagreen !important;
+  color: rgb(255, 255, 255) !important;
   cursor: pointer;
   display: inline-block;
   font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
@@ -57,13 +57,36 @@ input.input-validation-error {
   -webkit-user-select: none;
   touch-action: manipulation;
   position: relative;
-  left: 30px;
+}
+
+.generate-btn {
+  background-color: rgb(75, 75, 255) !important;
+  border-radius: 8px !important;
+  color: rgb(255, 255, 255) !important;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 500;
+  line-height: 20px !important;
+  text-align: center;
+  transition: all 200ms;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
+}
+
+.input-div {
+  width: 95% !important;
 }
 
 .clear-btn {
-  background-color: grey !important;
+  background-color: #ababab !important;
   border-radius: 8px !important;
-  color: whitesmoke !important;
+  color: #ffffff !important;
   cursor: pointer;
   display: inline-block;
   font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
@@ -78,7 +101,6 @@ input.input-validation-error {
   -webkit-user-select: none;
   touch-action: manipulation;
   position: relative;
-  left: 30px;
 }
 
 .bits-label {
@@ -87,7 +109,6 @@ input.input-validation-error {
   font-weight: 550;
   color: #c7254e !important;
   margin-right: 10px;
-  visibility: hidden;
 }
 
 .statement-div {
