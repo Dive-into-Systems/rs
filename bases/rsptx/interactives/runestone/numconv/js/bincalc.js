@@ -6,7 +6,7 @@
 
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./nc-i18n.en.js";
-import "../css/binops.css";
+import "../css/bincalc.css";
 import { Pass } from "codemirror";
 
 export var BinCalcList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
@@ -22,8 +22,7 @@ export default class BinCalc extends RunestoneBase {
        this.divid = orig.id;
        this.correct = null;
        this.num_bits = 6; // default number of bits is 6
-       this.shift_bits = 3;
-       this.operatorList = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
+       this.operatorList = ["AND (&)", "OR (|)", "XOR (^)", "NOT (~)", "Left shift (<<)", "Logical right shift (>>)", "Arithmetic right shift (>>)"];
        this.bitShiftList = ["1", "2", "3", "4","5"];
 
        this.initBinCalcElement();
@@ -52,7 +51,7 @@ export default class BinCalc extends RunestoneBase {
         $(this.origElem).replaceWith(this.containerDiv);
    }
        
-   renderBinCalcPromptAndInput() {
+    renderBinCalcPromptAndInput() {
     // parse options from the JSON script inside
     var currOption = JSON.parse(this.scriptSelector(this.origElem).html());
 
@@ -65,7 +64,7 @@ export default class BinCalc extends RunestoneBase {
 
     this.statementNode = document.createTextNode("Choose an operator: ");
     this.instructionNode = document.createElement("div");
-    this.instructionNode.innerHTML = "This is a binary value calculator. You can experiment with 6-bit value(s) with your chosen operator.<br>You can only type in 0s and 1s in the boxes below.";
+    this.instructionNode.innerHTML = "This is a binary value calculator. You can experiment with 6-bit value(s) with your chosen operator. You can only type in 0s and 1s.";
 
     this.buttonsDiv = document.createElement("div");
     this.buttonsDiv.style.display = 'flex';
@@ -111,10 +110,8 @@ export default class BinCalc extends RunestoneBase {
     // generate a new answer.
     this.bitShiftMenu.addEventListener("change",
     function () {
-        // attempting to generate new answer
         $(this.feedbackDiv).remove();
         this.generateAnswer();
-        console.log(this.answerValue);
     }.bind(this),
     false);
 
@@ -163,16 +160,16 @@ export default class BinCalc extends RunestoneBase {
     const validCharRegex = /^[01]+$/;
 
     this.inputBoxTop.addEventListener("keypress", function(event) {
-        if (!validCharRegex.test(event.key)) {
+        if (!validCharRegex.test(event.key) || this.inputBoxTop.value.length >= this.num_bits) {
             event.preventDefault();
         }
-    });
-
+    }.bind(this));
+    
     this.inputBoxBottom.addEventListener("keypress", function(event) {
-        if (!validCharRegex.test(event.key)) {
+        if (!validCharRegex.test(event.key) || this.inputBoxBottom.value.length >= this.num_bits) {
             event.preventDefault();
         }
-    });
+    }.bind(this));
     
     // Configure the InputDiv with a randomly chosen operator
     const randomOperator = this.operatorList[Math.floor(Math.random() * this.operatorList.length)];
@@ -208,10 +205,10 @@ export default class BinCalc extends RunestoneBase {
     for (let blank of this.blankArray) {
         $(blank).change(this.recordAnswered.bind(this));
     }
-}
+    }
 
     configInputDiv(opt) {
-        if (opt == "Left Shift" || opt == "Right Shift (Logical)" || opt == "Right Shift (Arithmetic)"){
+        if (opt == "Left shift (<<)" || opt == "Logical right shift (>>)" || opt == "Arithmetic right shift (>>)"){
             while ( this.inputDiv.firstChild ) this.inputDiv.removeChild( this.inputDiv.firstChild );
             this.inputDiv.appendChild(this.operatorMenu);
             this.inputDiv.appendChild(this.inputBoxTop);
@@ -219,7 +216,7 @@ export default class BinCalc extends RunestoneBase {
             this.inputDiv.appendChild(this.bitsLabel);
             this.inputDiv.appendChild(this.bitShiftMenu);
         }
-        else if (opt == "NOT") {
+        else if (opt == "NOT (~)") {
             while ( this.inputDiv.firstChild ) this.inputDiv.removeChild( this.inputDiv.firstChild );
             this.inputDiv.appendChild(this.operatorMenu);
             this.inputDiv.appendChild(this.inputBoxTop);
@@ -289,10 +286,7 @@ export default class BinCalc extends RunestoneBase {
             "click",
             function () {
                 $(this.feedbackDiv).remove();
-                this.generateRandomValues();
-                if (this.answerDiv != undefined){
-                    this.answerDiv.style.visibility = "hidden";
-                }
+                this.generateRandomValues(this.operatorMenu.value);
             }.bind(this), false);
 
         this.generateButton.style.marginRight = "10px";
@@ -312,15 +306,17 @@ export default class BinCalc extends RunestoneBase {
     }
 
     // Generate random values for the input fields
-    generateRandomValues() {
+    generateRandomValues(opt) {
         this.inputBoxTop.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
-        this.inputBoxBottom.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+        if (opt == "AND (&)" || opt == "OR (|)" || opt == "XOR (^)") {
+            this.inputBoxBottom.value = this.toBinary(Math.floor(Math.random() * (1 << this.num_bits)));
+        }
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
     // The string always has length of this.num_bits
     toBinary(num) {
-        var str = num.toString(2);
+        let str = num.toString(2);
         if (str.length < this.num_bits) {
             var leading_zeros = "";
             for ( var i = str.length ; i < this.num_bits; i ++ ) {
@@ -343,40 +339,51 @@ export default class BinCalc extends RunestoneBase {
 
         this.incomplete = 0;
         let opt = this.operatorMenu.value;
-        let num1 = parseInt(this.inputBoxTop.value, 2);
-        let num2 = parseInt(this.inputBoxBottom.value, 2);
-        if ((this.inputBoxTop.value == "") || ((opt == "AND" || opt == "NOT" || opt == "OR" || opt == "XOR") && (this.inputBoxBottom.value == ""))) {
+        if ((this.inputBoxTop.value == "") || ((opt == "AND (&)" || opt == "OR (|)" || opt == "XOR (^)") && (this.inputBoxBottom.value == ""))) {
             this.incomplete = 1;
             return;
         }
 
+        let num1 = parseInt(this.inputBoxTop.value, 2);
+        let num2 = parseInt(this.inputBoxBottom.value, 2);
+        let shift_bits = parseInt(this.bitShiftMenu.value, 10);
+
         switch (opt) {
-            case "AND" :
-                this.answerValue = this.toBinary(num1 & num2);
+            case "AND (&)":
+                this.answerValue = num1 & num2;
                 break;
-            case "NOT" :
-                this.answerValue = this.toBinary((~num1) & ((1 << this.num_bits)-1));
+            case "NOT (~)":
+                this.answerValue = (~num1) & ((1 << this.num_bits) - 1);
                 break;
-            case "OR" :
-                this.answerValue = this.toBinary(num1 | num2);
+            case "OR (|)":
+                this.answerValue = num1 | num2;
                 break;
-            case "XOR" :
-                this.answerValue = this.toBinary(num1 ^ num2);
+            case "XOR (^)":
+                this.answerValue = num1 ^ num2;
                 break;
-            case "Left Shift" :
-                this.answerValue = this.toBinary(num2 << this.shift_bits);
+            case "Left shift (<<)":
+                this.answerValue = (num1 << shift_bits) & ((1 << this.num_bits) - 1);
                 break;
-            case "Right Shift (Logical)" :
-                this.answerValue = this.toBinary(num2 >>> this.shift_bits);
+            case "Logical right shift (>>)":
+                this.answerValue = num1 >>> shift_bits;
                 break;
-            case "Right Shift (Arithmetic)" :
-                if (this.toBinary(num2)[0] === "1"){
-                    this.answerValue = ((num2 >> this.shift_bits) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');                
+            case "Arithmetic right shift (>>)":
+                this.answerValue = num1 >> shift_bits;
+                this.answerValue = this.answerValue & ((1 << this.num_bits) - 1);
+                if (this.inputBoxTop.value[0] === "1") {
+                    this.answerValue = this.answerValue.toString(2).padStart(this.num_bits, '1');
+                } else {
+                    this.answerValue = this.answerValue.toString(2).padStart(this.num_bits, '0');
                 }
-                else{
-                    this.answerValue = this.toBinary(num2 >> this.shift_bits);  
-                }
                 break;
+            default:
+                this.answerValue = null;
+                break;
+        }
+    
+        // Convert the numeric answerValue to binary string for display
+        if (this.answerValue !== null) {
+            this.answerValue = this.toBinary(this.answerValue);
         }
     }
 
@@ -389,13 +396,26 @@ export default class BinCalc extends RunestoneBase {
             this.feedbackDiv.innerHTML = "Please make sure you have enter the value(s)."
         }
         else {
-            // Add the result
-            let resultNode = document.createElement("span");
-            resultNode.textContent = `Result: ${this.answerValue}`;
-            this.feedbackDiv.appendChild(resultNode);
-        
+            let binaryResultNode = document.createElement("span");
+            binaryResultNode.textContent = `Binary result: 0b${this.answerValue}`;
+            this.feedbackDiv.appendChild(binaryResultNode);
+            this.feedbackDiv.appendChild(document.createElement("br"));
+
+            // Convert binary string back to a number for decimal and hexadecimal
+            let dec = parseInt(this.answerValue, 2);
+
+            let decimalResultNode = document.createElement("span");
+            decimalResultNode.textContent = `Decimal result: 0d${dec}`;
+            this.feedbackDiv.appendChild(decimalResultNode);
+            this.feedbackDiv.appendChild(document.createElement("br"));
+
+            let hexResultNode = document.createElement("span");
+            let hex = dec.toString(16);
+            hexResultNode.textContent = `Hexadecimal result: 0x${hex}`;
+            this.feedbackDiv.appendChild(hexResultNode);
+
             this.feedbackDiv.className = "alert alert-info";
-        
+
             if (typeof MathJax !== "undefined") {
                 MathJax.typesetPromise([this.feedbackDiv]);
             }
