@@ -7,6 +7,17 @@ export class Node {
 }
 export const INDENT_SPC = 2;
 
+export function countPrints(node, printContent) {
+    if (!node) return 0;
+
+    let count = (node.value.includes(`printf("${printContent}")`)) ? 1 : 0;
+
+    count += countPrints(node.left, printContent);
+    count += countPrints(node.right, printContent);
+
+    return count;
+}
+
 export function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
     // return Math.random();
@@ -91,10 +102,25 @@ export function output(node) {
     if (!node) return "";
     return node.value + output(node.left) + output(node.right);
 }
+
 export function printTree(node, prefix = "", isRight = true) {
-    if (node.left) printTree(node.left, prefix + (isRight ? "|   " : "    "), false);
-    console.log(prefix + (isRight ? "└── " : "┌── ") + node.value);
-    if (node.right) printTree(node.right, prefix + (isRight ? "    " : "|   "), true);
+    if (!node) return "";
+
+    let result = "";
+
+    const childPrefix = prefix + (isRight ? "&emsp;&emsp;" : "&emsp;|&emsp;");
+
+    if (node.left) {
+        result += printTree(node.left, childPrefix, false);
+    }
+
+    result += prefix + (isRight ? "└─ " : "┌─ ") + node.value + "<br>";
+
+    if (node.right) {
+        result += printTree(node.right, childPrefix, true);
+    }
+
+    return result;
 }
 
 export function randInsert(mainStr, insertStr) {
@@ -115,13 +141,11 @@ export function genRandSourceCode(numFork, numPrints, printContent) {
     // Generate forking locations
     for (let i = 0; i < numFork; i++) {
         code = randInsert(code, "f(,)");
-        console.log(code);
     }
     
     // Generate print statement locations
     for (let i = 0; i < numPrints; i++) {
         code = randInsert(code, printContent);
-        console.log(code);
     }
 
     return code;

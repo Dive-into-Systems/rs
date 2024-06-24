@@ -7,7 +7,6 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
-// import { Node, genRandSourceCode } from './fork_algorithm.js';
 import * as forking from './fork_algorithm.js';
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
@@ -44,9 +43,9 @@ export default class Fork extends RunestoneBase {
     // Create the Fork Element
     createForkElement() {
         this.initParams(); // init all
-        this.renderForkInputField();
-        // this.renderForkButtons();
-        // this.renderForkFeedbackDiv();
+        this.initForkInputField();
+        this.initForkButtons();
+        this.initForkFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
@@ -55,10 +54,10 @@ export default class Fork extends RunestoneBase {
         this.printContent = "a";
     }
 
-    renderForkInputField() {
+    initForkInputField() {
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
-            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed," + 
+            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed, " + 
             "answer how many letters the process prints out with <code>printf()</code>."
         );
         this.statementDiv = $("<div>").append(this.instruction);
@@ -70,8 +69,14 @@ export default class Fork extends RunestoneBase {
         this.rightDiv = $("<div>").addClass("right-div-inline");
         this.prompt = $("<div>").html("How many times will <code>" + this.printContent + "</code> print?");
         this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
+        this.inputBox.attr("id", "input-field");
+        this.inputBox.addClass("form-control input-box");
+        this.treeDiv = $("<div>").addClass("tree-div");
+        $(this.treeDiv).css("visibility", "hidden");
+
         this.rightDiv.append(this.prompt);
         this.rightDiv.append(this.inputBox);
+        this.rightDiv.append(this.treeDiv);
 
         this.codeDiv = $("<div>").addClass("code-div-inline");
         this.codeDiv.append(this.cCode);
@@ -91,94 +96,25 @@ export default class Fork extends RunestoneBase {
         this.inputDiv.append(this.codeDiv);
         this.inputDiv.append(this.rightDiv);
         this.containerDiv.append(this.inputDiv);
-        this.containerDiv.append(this.tree);
-        this.containerDiv.append(this.source);
+        // this.containerDiv.append(this.outputTree);
     }
 
     genPromptsNAnswer() {
 
         this.source = forking.genRandSourceCode(3, 4, this.printContent);
         this.cCode = forking.transpileToC(this.source);
-        this.tree = forking.printTree();
+        this.tree = forking.buildTree(this.source);
+        this.outputTree = forking.printTree(this.tree);
+        this.count = forking.countPrints(this.tree, this.printContent);
+
+        console.log("Answer is: " + this.count);
+
     }
 
-    // renderOnePrompt() { // render one prompt based on source prompt, which is this.memAccess, this.src, and this.dest
-    //     this.operator = null;
-    //     this.pair = false;
-        
-    //     if (this.memAccess === "lea") {
-    //         var ret = this.renderLoadEffectiveAddress();
-    //         return "leal" + " " + ret;
-    //     }
-    //     else {
-    //         // render the operator
-    //         if (this.memAccess === false) {
-    //             this.operator = this.pick(this.arthm_operators);
-    //             while (this.has(this.operator)) {
-    //                 this.operator = this.pick(this.arthm_operators);
-    //             }
-    //             this.operatorList.push(this.operator);
-    //         } else {
-    //             this.operator = this.pick(this.mem_operators);
-    //         }
+    initForkButtons() {
 
-    //         // render all other
-    //         if (this.architecture === "IA32") {
-    //             if (this.src === "reg") { // this.src is register
-    //                 this.src = this.renderRegister();
-    //             } else if (this.src === "mem") { // this.src is memory
-    //                 this.src = this.renderMemAccess();
-    //             } else { // this.src is constant
-    //                 this.src = this.renderConstant();
-    //             }
-    //             if (this.dest === "reg") { // this.dest is register 
-    //                 this.dest = this.renderRegister();
-    //             } else { // this.dest is memory
-    //                 this.dest = this.renderMemAccess();
-    //             }
-    //             return this.operator + " " + this.src + ", " + this.dest;
-    //         }
-    //         else if (this.architecture === "ARM64") {
-    //             // determine the number of accessed bits in register, 32 bits or 64 bits
-    //             if (Math.random() < 0.5) {this.registers = this.registers_32bits;} 
-    //             else {this.registers = this.registers_64bits;}
-
-    //             if (this.memAccess === false) {
-    //                 if (this.operator === "mov") {
-    //                     this.src = this.renderRegister();
-    //                     this.dest = this.renderRegister();
-    //                 } else {
-    //                     if (Math.random() < 0.5) {
-    //                         this.op1 = this.renderRegister();
-    //                     } else {
-    //                         this.op1 = this.renderConstant();
-    //                     }
-    //                     this.op2 = this.renderRegister();
-    //                     this.src = this.op1 + ", " + this.op2;
-    //                     this.dest = this.renderRegister();
-    //                 }
-    //             } else {
-    //                 if (this.operator === "ldp" || this.operator == "stp") {
-    //                     this.pair = true;
-    //                 }
-    //                 this.dest = this.renderRegister();
-    //                 this.src = this.renderMemAccess();   
-    //             }
-    //             return this.operator + " " + this.dest + ", " + this.src;
-    //         }
-    //     }
-    // }
-
-    // has (o) {
-    //     for (let i = 0; i < this.operatorList.length; i++) {
-    //         if (this.operatorList[i] === o) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
-    renderForkButtons() {
+        this.buttonsDiv = $("<div>");//.addClass("distribute-even");
+        /* Ask me another button */
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");
         $(this.generateButton).attr({
@@ -188,10 +124,26 @@ export default class Fork extends RunestoneBase {
             id: this.divid + "submit",
         });
         this.generateButton.addEventListener("click", () => {
-            this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
+            this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
         });
 
+
+        /* Check answer button */
+        this.checkAnswerButton = document.createElement("button");
+        this.checkAnswerButton.textContent = $.i18n("msg_fork_check_answer");
+        $(this.checkAnswerButton).attr({
+            class: "btn btn-success",
+            name: "draw hierarchy tree",
+            type: "button",
+            id: this.divid + "check_answer",
+        });
+        this.checkAnswerButton.addEventListener("click", () => {
+            this.checkCurrentAnswer();
+            this.renderFeedback();
+        });
+
+        /* Reveal tree button */
         this.revealTreeButton = document.createElement("button");
         this.revealTreeButton.textContent = $.i18n("msg_fork_reveal_tree");
         $(this.revealTreeButton).attr({
@@ -201,29 +153,24 @@ export default class Fork extends RunestoneBase {
             id: this.divid + "draw_tree",
         });
         this.revealTreeButton.addEventListener("click", () => {
-            this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
-            this.updatePrompts();
+            this.showProcessHierarchy();
         });
 
         this.containerDiv.append("<br>");
-        this.containerDiv.append(this.generateButton);
-        this.containerDiv.append(this.revealTreeButton);
+
+        this.buttonsDiv.append(this.generateButton);
+        this.buttonsDiv.append(this.revealTreeButton);
+        this.buttonsDiv.append(this.checkAnswerButton);
+
+        this.containerDiv.append(this.buttonsDiv);
     }
 
-    cleanInputNFeedbackField () {
-        // // clear all previous selection
-        // $('input[type="radio"]').prop('checked', false);
+    clearInputNFeedbackField () {
+        // clear all previous selection
+        $('input').val("");
 
-        // // enable all previously disabled element
-        // for (let h = 0; h < this.num_q_in_group; h++) {
-        //     var currDivID = this.divid + "div" + h; // index into the current div
-        //     var currSubmitID = this.divid + "submit" + h; // index into the submit button in the current divid
-
-        //     $("#" + currDivID).prop("disabled", false).removeClass("prohibited");
-        //     $("#" + currDivID).find("*").prop("disabled", false).removeClass("input[disabled]");
-        //     $("#" + currDivID).find("code").removeClass("disabled-code");
-        //     $(currSubmitID).prop("disabled", false);
-        // }
+        $(this.treeDiv).html("");
+        $(this.treeDiv).css("visibility", "hidden");
 
         // clear feedback field
         $(this.feedbackDiv).remove();
@@ -232,186 +179,61 @@ export default class Fork extends RunestoneBase {
     updatePrompts(){
         // create and render all input fields in question group
         this.genPromptsNAnswer();
-        // for (let i = 0; i < this.num_q_in_group; i++) {
-        //     this.textNodes[i].text(this.promptList[i]);
-        // }
+
+        this.codeDiv.html(this.cCode);
 
         // create another feedback div
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
     }
 
-    checkThisAnswers(i) {
-        // this.feedback_msg = []; // clear feedback_msg
-        // this.correct = true; // init answer first as true, only update when incorrect choice occurs
-        // // this.wrongPF = false; // init all answer as correct
-        // // this.wrongCM = false; // init all answer as correct
-        // // this.wrongDB = false; // init all answer as correct
-        // this.incompleteAnswer = false;
-        // var currAnswer = null;
+    checkCurrentAnswer() {
+        this.feedback_msg = []; // clear feedback_msg
+        this.correct = true; // init answer first as true, only update when incorrect choice occurs
+        this.incompleteAnswer = false;
+        var currAnswer = $("#input-field").val();
 
-        // // for (let j = 0; j < 3; j++) {
-        // //     if (this.inputNodes[i][j][0].is(":checked")) { // when user chose YES
-        // //         currAnswer = true;
-        // //     } else if (this.inputNodes[i][j][1].is(":checked")) { // when user chose NO
-        // //         currAnswer = false;
-        // //     } else { // when user chose nothing
-        // //         currAnswer = "";
-        // //         this.correct = false;
-        // //         this.incompleteAnswer = true;
-        // //         break;
-        // //     }
+        if (currAnswer !== this.count) {
+            this.correct = false;
+            if (currAnswer === "") {
+                this.feedback_msg.push($.i18n("msg_no_answer"));
+            }
+            else {
+                this.feedback_msg.push($.i18n("msg_fork_incorrect"));
+            }
+        } else {
+            this.feedback_msg.push($.i18n("msg_fork_correct"));
+        }
+        this.renderFeedback();
+    }
 
-        // //     if ((currAnswer !== this.answerList[i][j])) {
-        // //         var btnName = this.divid + 'YN' + i + this.fieldID[j];
-        // //         $('input[type="radio"][name="' + btnName + '"]').addClass('highlightWrong');
-        // //         this.correct = false;
-        // //         if (j === 0) {
-        // //             this.wrongPF = true;
-        // //         }
-        // //         if (j === 1) {
-        // //             this.wrongCM = true;
-        // //         } 
-        // //         if (j === 2) {
-        // //             this.wrongDB = true;
-        // //         }
-        // //     }
-        // // }
+    showProcessHierarchy() {
+        this.treeDiv.html(this.outputTree);
+        $(this.treeDiv).css("visibility", "visible");
+    }
 
-        // // if (this.correct === false) {
-        // //     this.feedback_msg.push("&bull;" + " For question <b>" + String.fromCharCode((i + 97)) + "</b>" + ", "); 
-        // //     if (this.incompleteAnswer === true) {
-        // //         this.feedback_msg.push($.i18n("msg_Fork_imcomplete_answer"));
-        // //     } else {
-        // //         if (this.wrongPF === true) {
-        // //             this.feedback_msg.push($.i18n("msg_Fork_wrong_pf"));
-        // //         }
-        // //         if (this.wrongCM === true) {
-        // //             this.feedback_msg.push($.i18n("msg_Fork_wrong_cm"));
-        // //         }
-        // //         if (this.wrongDB === true) {
-        // //             this.feedback_msg.push($.i18n("msg_Fork_wrong_db"));
-        // //         }
-        // //     }
-        // // } else {
-        // //     this.disableThisRow(i);
-        // //     this.feedback_msg.push($.i18n("msg_Fork_correct"));
-        // // }
-        // this.renderFeedback();
+    initForkFeedbackDiv() {
+        this.containerDiv.append("<br>");
+        this.containerDiv.append(this.feedbackDiv);
     }
 
     renderFeedback() {
-        // var l = this.feedback_msg.length;
-        // var feedback_html = "";
-        // // format the feedback div w/ line break 
-        // for (let i = 0; i < l; i++) {
-        //     feedback_html += "<dev>" + this.feedback_msg[i] + "</dev>";
-        //     if (i < (this.feedback_msg.length - 1)) {
-        //         feedback_html += "<br/>";
-        //     }
-        // }
-        // // set the background color of feedback divid
-        // if (this.correct === true) {
-        //     $(this.feedbackDiv).attr("class", "alert alert-info");
-        // } else {
-        //     $(this.feedbackDiv).attr("class", "alert alert-danger");
-        // }
+        var feedback_html = this.feedback_msg;
+        // set the background color of feedback divid
+        if (this.correct === true) {
+            $(this.feedbackDiv).attr("class", "alert alert-info");
+        } else {
+            $(this.feedbackDiv).attr("class", "alert alert-danger");
+        }
         
-        // this.feedbackDiv.html(feedback_html);
-        // this.displayFeedback();
+        this.feedbackDiv.html(feedback_html);
+        this.displayFeedback();
         
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
     }
 
-    // renderLoadEffectiveAddress() {
-    //     var reg1 = null, reg2 = null;
-    //     var randVal = Math.random();
-    //     if (randVal < (1/4)) {
-    //         return this.pick(this.offsets) + "(" + this.pick(this.registers) + ")";
-    //     } else if (randVal < (1/2)) {
-    //         reg1 = this.pick(this.registers);
-    //         do {
-    //             reg2 = this.pick(this.registers);
-    //         } while (reg1 === reg2);
-    //         return "(" + reg1 + ", " +  reg2 + ")";
-    //     } else if (randVal < (3/4)) {
-    //         reg1 = this.pick(this.registers);
-    //         do {
-    //             reg2 = this.pick(this.registers);
-    //         } while (reg1 === reg2);
-    //         return "(" + reg1 + ", " + reg2 + ", " + this.pick(["2", "4", "8"]) + ")";
-    //     } else {
-    //         return this.pick(["0x20", "0x40", "0x80"]) + "(, " + this.pick(this.registers) + ", " + this.pick(["2", "4", "8"]) + ")";
-    //     }
-    // }
-
-    renderForkFeedbackDiv() {
-        this.containerDiv.append("<br>");
-        this.containerDiv.append(this.feedbackDiv);
-    }
-
-    // // render presentation of a constant based on language
-    // renderConstant() {
-    //     var myVal = Math.floor(Math.random() * this.constRange).toString();
-    //     if (this.architecture === "IA32") {
-    //         return "$" + myVal;
-    //     } else if (this.architecture === "ARM64") {
-    //         if (Math.random() < 0.5) {return "#" + myVal.toString(16);}
-    //         else {return "#" + myVal;}
-    //     }
-    // }
-
-    // // render presentation of memory access based on language
-    // renderMemAccess() {
-    //     var reg1 = null, reg2 = null;
-    //     if (this.architecture === "IA32") {
-    //         return this.pick(this.offsets) + "(" + this.pick(this.registers) + ")";
-    //     } else if (this.architecture === "ARM64") {
-    //         if (this.pair === true) {
-    //             return "[" + this.pick(this.registers) + "]";
-    //         } else {
-    //             var randVal = Math.random();
-    //             if (randVal < (1/3)) {
-    //                 return "[sp, " + this.pick(this.offsets) + "]";
-    //             } else if (randVal < (2/3)) {
-    //                 return "[" + this.pick(this.registers)  + ", " + this.pick(this.offsets) + "]";
-    //             } else {
-    //                 return "[" + this.pick(this.registers) + "]";
-    //             }
-    //         }
-    //     }
-    // }
-
-    // // render presentation of registers based on language
-    // renderRegister() {
-    //     var reg1 = null, reg2 = null;
-    //     if (this.pair === true) {
-    //         reg1 = this.pick(this.registers);
-    //         do {
-    //             reg2 = this.pick(this.registers);
-    //         } while (reg1 === reg2);
-    //         return reg1 + ", " + reg2;
-    //     } else {
-    //         return this.pick(this.registers);
-    //     }
-    // }
-
-    // pick(myList) { // randomly pick one item in list
-    //     const randIdx = Math.floor(Math.random() * (myList.length));
-    //     return myList[randIdx];
-    // }
-
-    // disableThisRow(i) { // disable elements of correct row
-    //     var currDivID = this.divid + "div" + i; // index into the current div
-    //     var currSubmitID = this.divid + "submit" + i; // index into the submit button in the current divid
-
-    //     $("#" + currDivID).prop("disabled", true).addClass("prohibited");
-    //     $("#" + currDivID).find("*").prop("disabled", true).addClass("input[disabled]");
-    //     $("#" + currDivID).find("code").addClass("disabled-code");
-    //     $(currSubmitID).prop("disabled", true);
-    // }
 
     /*===================================
     === Checking/loading from storage ===
