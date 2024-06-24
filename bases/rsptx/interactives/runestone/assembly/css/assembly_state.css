@@ -3,3 +3,8 @@
 
  .instruction-box {
  }
+
+ body {
+    overflow-y: hidden;
+    overflow-x: hidden;
+}

@@ -9,8 +9,12 @@ import "../css/assembly_state.css";
 import "./assembly-i18n.en.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
+import {ARM64_OPS, X86_32_OPS, X86_64_OPS} from "./arch_generate.js"
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
+const num_instructions = 5;
+const num_registers = 5;
+const num_addresses = 5;
 
 // ASMState constructor
 export default class ASMState_EXCERCISE extends RunestoneBase {
@@ -46,6 +50,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.renderCustomizations();
+
+        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
+        // this.allState = this.generator.executeInstructions(this.initialState[2], this.initialState[1], this.initialState[0])
+        console.log(this.initialState);
+        // console.log(this.allState);
+
+
         // this.renderTable();
 
         // provide values to the tab-les
@@ -59,70 +70,22 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // set default parameters
     setDefaultParams() {
-        this.defaultInitialState = {
-            registers: {
-                "%rax": 0,
-                "%rdi": 0,
-                "%rsi": 0,
-                "%rbx": 0
-            },
-            memory: {
-                '0x0000': 0,
-                '0x0004': 0,
-                '0x0008': 0,
-                '0x000C': 0,
-                '0x0010': 0,
-                '0x0014': 0,
-                '0x0018': 0,
-                '0x001C': 0
-            }
-        };
 
-        this.defaultInstructions = [
-            "MOV %rax, %rdi",
-            "ADD %rax, %rsi",
-            "SUB %rbx, %rax",
-            "LEA %rdi, [%rax + 4*%rsi]"
-        ];
-
-        this.defaultDebug = false;
-
-        // Apply default values
-        this.initialState = this.defaultInitialState;
-        this.instructions = this.defaultInstructions;
-        this.debug = this.defaultDebug;
-
-        // Initialize the register and memory states
-        this.registerState = this.initialState.registers;
-        this.memoryState = this.initialState.memory;
-        this.results = [];
     }
 
 
     // load customized parameters
     setCustomizedParams() {
-        try {
-            const currentOptions = JSON.parse(
-                this.scriptSelector(this.origElem).html()
-            );
-            if (currentOptions["initialState"] != undefined) {
-                this.initialState = currentOptions["initialState"];
-            }
-            if (currentOptions["instructions"] != undefined) {
-                this.instructions = currentOptions["instructions"];
-            }
-            if (currentOptions["debug"] != undefined) {
-                this.debug = eval(currentOptions["debug"]);
-            }
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["architecture"] != undefined) {
+            this.architecture = currentOptions["architecture"];
+        }
 
-            this.registerState = this.initialState.registers;
-            this.memoryState = this.initialState.memory;
-            this.results = [];
-
-        } catch (error) {
-            console.error('Error loading parameters:', error);
-            // Default values or error handling
-            this.setDefaultParams();
+        switch (this.architecture) {
+            case "X86_32":  this.generator = new X86_32_OPS();       break;
+            case "X86_64":  this.generator = new X86_64_OPS();       break;
+            case "ARM64": this.generator = new ARM64_OPS();      break;
+            default: throw new Error("Invalid architecture option");
         }
     }
 
@@ -133,7 +96,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             "Start with the initial state provided below, and sequentially apply each instruction, updating the state as you go.<br><br>"
         );
         this.headerDiv = $("<div>").append(this.header).addClass("header-box");
-        this.headerDiv.append("<br>")
         this.containerDiv.append(this.headerDiv);
     }
 
