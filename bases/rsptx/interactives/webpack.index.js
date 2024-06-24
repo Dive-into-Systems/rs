@@ -68,6 +68,7 @@ const module_map = {
     datafile: () => import("./runestone/datafile/js/datafile.js"),
     dragndrop: () => import("./runestone/dragndrop/js/timeddnd.js"),
     fillintheblank: () => import("./runestone/fitb/js/timedfitb.js"),
+    fork: () => import("./runestone/operatingsystem/js/fork.js"),
     numberconversion: () => import("./runestone/numconv/js/numconv.js"),
     assembly_syntax: () => import("./runestone/assembly/js/assembly.js"),
     assembly_state: () => import("./runestone/assembly/js/assembly_state.js"),
