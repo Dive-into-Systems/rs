@@ -1,0 +1,36 @@
+.code-div-inline {
+  display: inline-block;
+  border-width: 1px;
+  border-radius: 5px;
+  background-color: white;
+  padding: 10px;
+  width: 40%;
+  margin-top: 10px;
+  position: sticky;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.input-div {
+  position: relative; 
+}
+
+.right-div-inline {
+  display: inline-block;
+  border-width: 1px;
+  border-radius: 5px;
+  padding: 10px;
+  width: 50%;
+  margin-top: 10px;
+  position: fixed;
+}
+
+
+
+.statement-box {
+  border-width: 1px;
+  border-radius: 5px;
+  border-style: solid;
+  border-color: white;
+  background-color: white;
+  padding: 8px;
+}
