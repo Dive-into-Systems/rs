@@ -109,10 +109,8 @@ export default class Fork extends RunestoneBase {
 
         // ***div STRUCTURE***:
         this.statementDiv.append(this.instruction);
-        this.containerDiv.append(this.statementDiv);
-        this.promptDiv.append(this.codeDiv);
-        this.promptDiv.append(this.rightDiv);
-        this.containerDiv.append(this.promptDiv);
+        this.containerDiv.append(this.statementDiv, this.promptDiv);
+        this.promptDiv.append(this.codeDiv, this.rightDiv);
     }
 
     genPromptsNAnswer() {
@@ -129,7 +127,8 @@ export default class Fork extends RunestoneBase {
 
     initForkButtons() {
 
-        this.buttonsDiv = $("<div>");//.addClass("distribute-even");
+        this.buttonsDiv = $("<div>");
+
         /* Ask me another button */
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");
