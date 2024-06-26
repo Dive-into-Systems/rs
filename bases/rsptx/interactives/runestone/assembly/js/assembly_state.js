@@ -50,18 +50,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.renderCustomizations();
-<<<<<<< HEAD
-       
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
-        console.log(this.initialState);
-=======
 
         this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, [false, true, true, true]);
         console.log(this.initialState);
         this.allState = this.generator.executeInstructions(this.initialState);
         console.log(this.allState);
         // console.log(this.allState);
->>>>>>> 0d57640ffb3db28b58da4b30026882b896fe53e7
 
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
@@ -220,7 +214,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find('.instruction-container').remove();
         this.containerDiv.find('.tables-container').remove();
         this.containerDiv.find('.button-container').remove();
-        this.containerDiv.find('.feedback-container').remove(); 
+        this.containerDiv.find('.feedback-container').remove();
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
         this.renderButtons();
@@ -231,34 +225,34 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // Retrieve user's input values
         const registerInputs = this.containerDiv.find('.register-table tbody tr');
         const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
-    
+
         let userRegisters = {};
         registerInputs.each((index, row) => {
             const reg = $(row).find('td').eq(0).text();
             const userValue = $(row).find('input').val();
             userRegisters[reg] = userValue;
         });
-    
+
         let userMemory = {};
         memoryInputs.each((index, row) => {
             const address = $(row).find('td').eq(0).text();
             const userValue = $(row).find('input').val();
             userMemory[address] = userValue;
         });
-    
+
         // Compare user's inputs with the expected outputs
         const isCorrect = this.validateAnswers(userRegisters, userMemory);
-    
+
         // Provide feedback
         this.renderFeedback(isCorrect);
     }
-    
+
     validateAnswers(userRegisters, userMemory) {
-        
+
         "Arysssssssssssssssss"
         return true; // Placeholder, replace with actual comparison logic
     }
-    
+
 
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
@@ -276,44 +270,44 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderTables() {
         console.log("Rendering tables...");
         const [instructions, addresses, registers] = this.initialState;
-    
+
         const tablesContainer = $("<div>").addClass("tables-container");
-    
+
         // Registers table
         const registersWrapper = $("<div>").addClass("table-wrapper");
         const registersTable = $("<table>").addClass("register-table");
         registersWrapper.append($("<h3>").text("Registers"));
-    
+
         const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
         const registersTableBody = $("<tbody>");
-    
+
         ["rax", "rdi", "rsp"].forEach(reg => {
             const initialValue = registers.find(r => r.register === reg)?.value || "0x0";
             registersTableBody.append($("<tr>").append($("<td>").text(reg), $("<td>").text(initialValue), $("<td>").append($("<input>").attr("type", "text"))));
         });
-    
+
         registersTable.append(registersTableHead).append(registersTableBody);
         registersWrapper.append(registersTable);
-    
+
         // Memory changes table
         const memoryWrapper = $("<div>").addClass("table-wrapper");
         const memoryTable = $("<table>").addClass("memory-table");
         memoryWrapper.append($("<h3>").text("Memory Changes"));
-    
+
         const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
         const memoryTableBody = $("<tbody>");
-    
+
         addresses.forEach(addr => {
             memoryTableBody.append($("<tr>").append($("<td>").text(addr.address), $("<td>").text(addr.value), $("<td>").append($("<input>").attr("type", "text"))));
         });
-    
+
         memoryTable.append(memoryTableHead).append(memoryTableBody);
         memoryWrapper.append(memoryTable);
-    
+
         tablesContainer.append(registersWrapper).append(memoryWrapper);
         this.containerDiv.append(tablesContainer);
     }
-    
+
 
     renderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
@@ -322,7 +316,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             this.containerDiv.append(feedbackDiv);
         }
         feedbackDiv.empty();
-    
+
         const feedbackMessage = isCorrect ? "Correct! Well done." : "Incorrect. Please try again.";
         feedbackDiv.append("<br>");
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', isCorrect ? 'green' : 'red'));
