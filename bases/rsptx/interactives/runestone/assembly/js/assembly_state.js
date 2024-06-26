@@ -51,9 +51,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderHeader();
         this.renderCustomizations();
 
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
-        // this.allState = this.generator.executeInstructions(this.initialState[2], this.initialState[1], this.initialState[0])
+        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, [false, true, true, true]);
         console.log(this.initialState);
+        this.allState = this.generator.executeInstructions(this.initialState);
+        console.log(this.allState);
         // console.log(this.allState);
 
 
