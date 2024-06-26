@@ -127,14 +127,17 @@ function printTree (node, prefix = "", isRight = true) {
     return result;
 }
 
-function getTreeArr(root) {
+function getTreeArr(root,parentVal="") {
     if (!root) return [];
-    const result = (root.id!=root.parent)?[`${root.id},${root.parent}`]:[]
+    const result = (root.id!=root.parent)?[`${root.id}${root.value},${root.parent}${parentVal}`]:[]
     return [
         ...result,
-        ...getTreeArr(root.left),
-        ...getTreeArr(root.right)
+        ...getTreeArr(root.left, root.value),
+        ...getTreeArr(root.right, root.value)
     ];
+}
+function getTreeCSV(root) {
+    return "child,parent\n0\n"+getTreeArr(root).join("\n");
 }
 
 
@@ -189,7 +192,7 @@ function main() {
     console.log("-".repeat(10));
     console.log("EXPECTED OUTPUT: <"+output(tree).split("").sort().join("")+">")
     console.log("EXPECTED OUTPUT: <"+output(tree).length+">")
-    console.log(getTreeArr(tree).join("\n"));
+    console.log(getTreeCSV(tree));
 }
 
 main();
