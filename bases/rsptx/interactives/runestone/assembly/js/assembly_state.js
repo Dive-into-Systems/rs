@@ -51,28 +51,30 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderHeader();
         this.renderCustomizations();
 
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
-        // this.allState = this.generator.executeInstructions(this.initialState[2], this.initialState[1], this.initialState[0])
+        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, [false, true, true, true]);
         console.log(this.initialState);
+        this.allState = this.generator.executeInstructions(this.initialState);
+        console.log(this.allState);
         // console.log(this.allState);
 
+        this.renderInstructionsList(this.initialState[0]);
+        this.renderTables();
+        this.renderButtons();
 
-        // this.renderTable();
-
-        // provide values to the tab-les
+        // provide values to the tables
         // this.resetGeneration();
 
+        // Placeholder for rendering the "Try Again" button
         // this.renderTryAgainButton();
 
-        // render the layout for the tables
+        // Render the layout for the tables
         // this.renderLayout();
     }
 
     // set default parameters
     setDefaultParams() {
-
+        this.architecture = "X86_64"; // Default architecture
     }
-
 
     // load customized parameters
     setCustomizedParams() {
@@ -91,7 +93,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     renderHeader() {
         this.header = $("<div>").html(
-            "Given the initial state of machine registers and memory, determine the effects of executing the following x86 assembly instructions. " +
+            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions. " +
             "For each instruction provided, describe how it alters the values in registers or memory. " +
             "Start with the initial state provided below, and sequentially apply each instruction, updating the state as you go.<br><br>"
         );
@@ -99,34 +101,19 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(this.headerDiv);
     }
 
-    renderInstructions() {
-        this.instruction = $("<div>").html(
-            "<b>Instructions:</b><br>" +
-            "1. Analyze the initial values in the registers (e.g., EAX, EBX, ECX, EDX) and memory addresses provided.<br>" +
-            "2. For each assembly instruction listed, predict and write down the new values of the affected registers and memory addresses.<br>" +
-            "3. Consider simple arithmetic instructions (e.g., ADD, SUB) and memory operations (e.g., MOV). Include more complex instructions like LEA to examine address calculations.<br>" +
-            "4. Use the provided table to record the state of the registers and memory before and after each instruction.<br>" +
-            "5. Reflect on the changes and verify if your predictions align with the expected outcomes based on the x86 instruction set rules.<br><br>" +
-            "Fill in the resulting state of the machine after executing each of the provided instructions in sequence."
-        )
-        this.instructionDiv = $("<div>").append(this.instruction).addClass("instruction-box").addClass("instruction-box");
-        this.instructionDiv.append("<br>");
-        this.containerDiv.append(this.instructionDiv)
-    }
-
     renderCustomizations() {
-
         const difficultyTypes = [
-            { label: "Easy", value: "easy"},
-            { label: "Hard", value: "hard"}
-        ]
+            { label: "Easy", value: "easy" },
+            { label: "Hard", value: "hard" }
+        ];
 
-        // create three checkboxes that will be used later on for question generation
         const instructionTypes = [
             { label: 'Arithmetics', value: 'arithmetic' },
             { label: 'Bit Operations', value: 'bitmanipulation' },
             { label: 'Memory Manipulation', value: 'memorymanipulation' }
         ];
+
+        const customizationDiv = $("<div>").addClass("customization-container");
 
         const difficultyTypeDiv = $("<div>").attr("id", this.divid + "_difficulty_types");
         difficultyTypeDiv.append($("<div>").text("Select Difficulty"));
@@ -156,8 +143,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 type: "checkbox",
                 id: family.value,
                 value: family.value,
-                checked: true
+                checked: false
             });
+
             checkbox.on("change", (event) => {
                 // Store the current state of checkboxes
                 const prevArithChecked = this.arith_checked;
@@ -165,7 +153,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 const prevMemoChecked = this.memo_checked;
 
                 // Update the states based on the checkbox change
-                switch(event.target.id){
+                switch (event.target.id) {
                     case "arithmetic":
                         this.arith_checked = event.target.checked;
                         break;
@@ -194,26 +182,145 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
 
-
         difficultyTypeDiv.append("<br>");
         instructionTypeDiv.append("<br>");
-        this.containerDiv.append(difficultyTypeDiv);
-        this.containerDiv.append(instructionTypeDiv);
+        customizationDiv.append(difficultyTypeDiv);
+        customizationDiv.append(instructionTypeDiv);
+
+        this.containerDiv.append(customizationDiv);
     }
 
-    renderQuestions() {
 
+    renderButtons() {
+        const buttonContainer = $("<div>").addClass("button-container");
+
+        const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
+        const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
+        const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
+
+        buttonContainer.append(resetButton).append(tryAnotherButton).append(checkAnswerButton);
+        this.containerDiv.append(buttonContainer);
     }
 
-    genPromptsNAnswer() {
-
+    resetValues() {
+        this.containerDiv.find("input[type='text']").val("");
+        this.containerDiv.find('.feedback-container').remove();
     }
 
-    /*===================================
-    === Checking/loading from storage ===
-    ===================================*/
-    // Note: they are not needed here
+    tryAnother() {
+        console.log("tryin another question");
+        // Clear the current state and re-render the component
+        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
+        this.containerDiv.find('.instruction-container').remove();
+        this.containerDiv.find('.tables-container').remove();
+        this.containerDiv.find('.button-container').remove();
+        this.containerDiv.find('.feedback-container').remove();
+        this.renderInstructionsList(this.initialState[0]);
+        this.renderTables();
+        this.renderButtons();
+    }
 
+    checkAnswer() {
+        console.log("Checking answers.");
+        // Retrieve user's input values
+        const registerInputs = this.containerDiv.find('.register-table tbody tr');
+        const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
+
+        let userRegisters = {};
+        registerInputs.each((index, row) => {
+            const reg = $(row).find('td').eq(0).text();
+            const userValue = $(row).find('input').val();
+            userRegisters[reg] = userValue;
+        });
+
+        let userMemory = {};
+        memoryInputs.each((index, row) => {
+            const address = $(row).find('td').eq(0).text();
+            const userValue = $(row).find('input').val();
+            userMemory[address] = userValue;
+        });
+
+        // Compare user's inputs with the expected outputs
+        const isCorrect = this.validateAnswers(userRegisters, userMemory);
+
+        // Provide feedback
+        this.renderFeedback(isCorrect);
+    }
+
+    validateAnswers(userRegisters, userMemory) {
+
+        "Arysssssssssssssssss"
+        return true; // Placeholder, replace with actual comparison logic
+    }
+
+
+    renderInstructionsList(instructions) {
+        const instructionDiv = $("<div>").addClass("instruction-container");
+        instructionDiv.append($("<h3>").text("The Instructions"));
+
+        const instructionList = $("<ol>");
+        instructions.forEach(inst => {
+            instructionList.append($("<li>").text(inst));
+        });
+
+        instructionDiv.append(instructionList);
+        this.containerDiv.append(instructionDiv);
+    }
+
+    renderTables() {
+        console.log("Rendering tables...");
+        const [instructions, addresses, registers] = this.initialState;
+
+        const tablesContainer = $("<div>").addClass("tables-container");
+
+        // Registers table
+        const registersWrapper = $("<div>").addClass("table-wrapper");
+        const registersTable = $("<table>").addClass("register-table");
+        registersWrapper.append($("<h3>").text("Registers"));
+
+        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
+        const registersTableBody = $("<tbody>");
+
+        ["rax", "rdi", "rsp"].forEach(reg => {
+            const initialValue = registers.find(r => r.register === reg)?.value || "0x0";
+            registersTableBody.append($("<tr>").append($("<td>").text(reg), $("<td>").text(initialValue), $("<td>").append($("<input>").attr("type", "text"))));
+        });
+
+        registersTable.append(registersTableHead).append(registersTableBody);
+        registersWrapper.append(registersTable);
+
+        // Memory changes table
+        const memoryWrapper = $("<div>").addClass("table-wrapper");
+        const memoryTable = $("<table>").addClass("memory-table");
+        memoryWrapper.append($("<h3>").text("Memory Changes"));
+
+        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
+        const memoryTableBody = $("<tbody>");
+
+        addresses.forEach(addr => {
+            memoryTableBody.append($("<tr>").append($("<td>").text(addr.address), $("<td>").text(addr.value), $("<td>").append($("<input>").attr("type", "text"))));
+        });
+
+        memoryTable.append(memoryTableHead).append(memoryTableBody);
+        memoryWrapper.append(memoryTable);
+
+        tablesContainer.append(registersWrapper).append(memoryWrapper);
+        this.containerDiv.append(tablesContainer);
+    }
+
+
+    renderFeedback(isCorrect) {
+        let feedbackDiv = this.containerDiv.find('.feedback-container');
+        if (feedbackDiv.length === 0) {
+            feedbackDiv = $("<div>").addClass("feedback-container");
+            this.containerDiv.append(feedbackDiv);
+        }
+        feedbackDiv.empty();
+
+        const feedbackMessage = isCorrect ? "Correct! Well done." : "Incorrect. Please try again.";
+        feedbackDiv.append("<br>");
+        feedbackDiv.append($("<p>").text(feedbackMessage).css('color', isCorrect ? 'green' : 'red'));
+    }
 }
 
 /*=================================

@@ -135,17 +135,17 @@ export function randInsert(mainStr, insertStr) {
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, printContent) {
+export function genRandSourceCode(numFork, numPrints, printContent) {
     let code = "";
 
     // Generate forking locations
-    for (let i = 0; i < numForks; i++) {
+    for (let i = 0; i < numFork; i++) {
         code = randInsert(code, "f(,)");
     }
     
     // Generate print statement locations
     for (let i = 0; i < numPrints; i++) {
-        code = randInsert(code, printContent[i]);
+        code = randInsert(code, printContent);
     }
 
     return code;

@@ -13,7 +13,7 @@ import { validLetter } from "jexcel";
 
 export var ForkList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
-// Fork constructor 
+// Fork constructor
 export default class Fork extends RunestoneBase {
     constructor(opts) {
         super(opts);
@@ -51,51 +51,35 @@ export default class Fork extends RunestoneBase {
     }
 
     initParams() {
-        this.numForks = 3;
-        this.numPrints = 4;
-        this.printContent = [];
-        for (var i = 0; i < this.numPrints; i++) {
-            this.printContent.push(String.fromCharCode((i + 97)));
-        }
+        this.printContent = "a";
     }
 
     initForkInputField() {
-        // Create instructions
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
             "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed, " + 
             "answer how many letters the process prints out with <code>printf()</code>."
         );
-        this.statementDiv = $("<div>");
+        this.statementDiv = $("<div>").append(this.instruction);
 
         this.genPromptsNAnswer();
-
-        // Create prompt section
-        // ***STRUCTURE***: this.codeDiv  | this.rightDiv
-        this.promptDiv = $("<div>").addClass("prompt-div");
         
-        // Create C-code section
-        this.codeDiv = $("<div>").addClass("code-div-inline");
-        this.codeDiv.html(this.cCode);
+        this.inputDiv = $("<div>").addClass("input-div");
 
-        // Create question section
         this.rightDiv = $("<div>").addClass("right-div-inline");
-        for (var i = 0; i < this.numPrints; i++) {
-            this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i);
-            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
-            this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
-            this.inputBox.attr("id", "input-field");
-            this.inputBox.addClass("form-control input-box");
-            this.subQuestionDiv.append(this.subPrompt);
-            this.subQuestionDiv.append(this.inputBox);
-            this.rightDiv.append(this.subQuestionDiv);
-        }
-
+        this.prompt = $("<div>").html("How many times will <code>" + this.printContent + "</code> print?");
+        this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
+        this.inputBox.attr("id", "input-field");
+        this.inputBox.addClass("form-control input-box");
         this.treeDiv = $("<div>").addClass("tree-div");
         $(this.treeDiv).css("visibility", "hidden");
 
+        this.rightDiv.append(this.prompt);
+        this.rightDiv.append(this.inputBox);
         this.rightDiv.append(this.treeDiv);
 
+        this.codeDiv = $("<div>").addClass("code-div-inline");
+        this.codeDiv.append(this.cCode);
         // copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
         
@@ -108,14 +92,16 @@ export default class Fork extends RunestoneBase {
         // this.scriptSelector(this.containerDiv).remove();
 
         // ***div STRUCTURE***:
-        this.statementDiv.append(this.instruction);
-        this.containerDiv.append(this.statementDiv, this.promptDiv);
-        this.promptDiv.append(this.codeDiv, this.rightDiv);
+        this.containerDiv.append(this.statementDiv);
+        this.inputDiv.append(this.codeDiv);
+        this.inputDiv.append(this.rightDiv);
+        this.containerDiv.append(this.inputDiv);
+        // this.containerDiv.append(this.outputTree);
     }
 
     genPromptsNAnswer() {
 
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.printContent);
+        this.source = forking.genRandSourceCode(3, 4, this.printContent);
         this.cCode = forking.transpileToC(this.source);
         this.tree = forking.buildTree(this.source);
         this.outputTree = forking.printTree(this.tree);
@@ -127,8 +113,7 @@ export default class Fork extends RunestoneBase {
 
     initForkButtons() {
 
-        this.buttonsDiv = $("<div>");
-
+        this.buttonsDiv = $("<div>");//.addClass("distribute-even");
         /* Ask me another button */
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");

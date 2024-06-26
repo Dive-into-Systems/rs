@@ -6,6 +6,7 @@
     "MSG_BAD_SRC" : "Invalid source operands type combination.",
     "MSG_CT" : "Invalid operands count.",
     "ARM64": {
+        "name": "ARM64",
         "bad_dest" : [0.40, 0.60],
         "memOps": {
             "mainWeight": 15,
@@ -88,7 +89,6 @@
         ],
 
         "registers_stack": ["SP"],
-        "registers_count": ["PC"],
         "registers_regular": ["X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7",
             "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15",
             "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23",
@@ -96,6 +96,7 @@
 
     },
     "X86_32": {
+        "name": "X86_32",
         "memOps" : {
             "mainWeight" : 15,
             "instructions": ["mov"],
@@ -162,16 +163,16 @@
                 "bad_ct" : "a-a-r"
             }
         },
-        "offsets": ["8", "16", "32"],
+        "offsets": ["0x4", "0x8", "0x12", "0x16"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
-        
-        "registers_stack": ["esp", "ebp"],
-        "registers_count": ["eip"],
+
+        "registers_stack": ["ebp", "esp"],
         "registers_regular": ["eax", "ebx", "ecx", "edx", "esi", "edi"]
 
     },
     "X86_64": {
+        "name": "X86_64",
         "doubleMem_litDest": [0.60, 0.40],
         "bad_dest" : [0.40, 0.60],
         "memOps" : {
@@ -240,13 +241,12 @@
                 "bad_ct" : "a-a-r"
             }
         },
-        "offsets": ["", "0x8", "0x16", "0x32"],
+        "offsets": ["0x8", "0x16", "0x16", "0x32"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi"],
         "registers_64": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"],
 
-        "registers_stack": ["rsp", "rbp"],
-        "registers_count": ["rip"],
+        "registers_stack": ["rbp", "rsp"],
         "registers_regular": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
 
