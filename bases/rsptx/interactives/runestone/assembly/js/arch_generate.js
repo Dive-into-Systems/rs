@@ -1,11 +1,8 @@
 // arch_generate.js
 "use strict";
 
-<<<<<<< HEAD
-=======
 
 import { off } from 'codemirror';
->>>>>>> 0d57640ffb3db28b58da4b30026882b896fe53e7
 import arch_data from './arch_data.json';
 const MAX_NUM = arch_data.MAX_NUM;
 const BIT_ODDS_X86_64 = arch_data.BIT_ODDS_X86_64;
@@ -82,16 +79,10 @@ class ArchInstructions {
             }
         });
 
-<<<<<<< HEAD
-        this.offsets = config.offsets;
-        this.registers_32 = config.registers_32;
-        this.registers_64 = config.registers_64;
-=======
         this.architecture = config.name;
         this.offsets    = config.offsets;
         this.registers_32  = config.registers_32;
         this.registers_64  = config.registers_64;
->>>>>>> 0d57640ffb3db28b58da4b30026882b896fe53e7
     }
 
     generate_question(mem_arch, arith, bit) {
@@ -202,21 +193,6 @@ class ArchInstructions {
         for (let i = 0; i < num_addresses; i++) {
             let address = baseAddress - (i * increment);
             let hexAddress = "0x" + address.toString(16).padStart(3, '0').toUpperCase();
-<<<<<<< HEAD
-            // let decimalValue = Math.floor(Math.random() * 100); //modfified this
-            selected_addresses.push({ address: hexAddress, value: decimalValue });
-        }
-        
-        const selected_regular_registers = [];
-        for (let i = 0; i < (num_registers - registers_stack.length - registers_count.length) && i < registers_regular.length; i++) {
-            if (Math.random() < 0.5 && selected_addresses.length > 0) {
-                const addressIndex = Math.floor(Math.random() * selected_addresses.length);
-                selected_regular_registers.push({ register: registers_regular[i], value: selected_addresses[addressIndex].address, type: "memory" });
-            } else {
-                const randomValue = `0x${Math.floor(Math.random() * 0x100).toString(16).padStart(2, '0').toUpperCase()}`;
-                selected_regular_registers.push({ register: registers_regular[i], value: randomValue, type: "normal" });
-            }
-=======
             let hexValue = selection[0]
             ? (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 256).toString(16).padStart(2, '0'))
             : (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 16).toString(16))
@@ -232,7 +208,6 @@ class ArchInstructions {
         }
         for (let i = 0; i < registers_stack.length; i++) {
             selected_stack_resgisters.push({ register: registers_stack[i], value: selected_addresses[0].address, type:"memory"});
->>>>>>> 0d57640ffb3db28b58da4b30026882b896fe53e7
         }
         let selected_registers = [
             ...selected_regular_registers,
@@ -275,22 +250,11 @@ class ArchInstructions {
             '{op} {literal}, ({reg1}, {reg2})',
         ];
 
-<<<<<<< HEAD
-        switch (architecture) {
-            case "ARM64":
-                break;
-            case "X86_32":
-                break;
-            case "X86_64":
-                break;
-        }
-=======
         const possibleFormats = [
             '{op} ({reg1}), {reg2}',
             '{op} {reg1}, ({reg2})',
             '{op} ({reg1}), ({reg2})',
         ]
->>>>>>> 0d57640ffb3db28b58da4b30026882b896fe53e7
 
         let operations = []
         selection[1] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => {operations.push(instruction)});
