@@ -1,10 +1,5 @@
-// *********
 // arch_generate.js
-// *********
-// This file contains the JS for generating random params for assembly.
-// Created By Tony Cao, Arys Aikyn, June 2024
 "use strict";
-
 
 import arch_data from './arch_data.json';
 const MAX_NUM = arch_data.MAX_NUM;
@@ -15,9 +10,8 @@ const MSG_BAD_DEST = arch_data.MSG_BAD_DEST;
 const MSG_BAD_SRC = arch_data.MSG_BAD_SRC;
 const MSG_CT = arch_data.MSG_CT;
 
-
 function randomFloat32() {
-    return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
+    return window.crypto.getRandomValues(new Uint32Array(1))[0] / (2 ** 32);
 }
 
 function weightedPickId(odds) {
@@ -25,7 +19,7 @@ function weightedPickId(odds) {
     let seed = 0;
     while (seed === 0) {
         seed = randomFloat32() * total;
-    }// not possible to pick 0 weights events
+    } // not possible to pick 0 weights events
     let sum = 0;
 
     for (let i = 0; i < odds.length; i++) {
@@ -35,11 +29,12 @@ function weightedPickId(odds) {
         }
     }
     return -1; // BAD
-
 }
 
 // Selects a random index from an array.
-function unifPickId(arr)  {return Math.floor(randomFloat32() * arr.length);}
+function unifPickId(arr) {
+    return Math.floor(randomFloat32() * arr.length);
+}
 
 // Combines multiple arrays and picks a random item from the combined array.
 function unifPickItem(...items) {
@@ -52,7 +47,7 @@ function unifPickItem(...items) {
     return combinedArray[unifPickId(combinedArray)];
 }
 
-// main weights doesnt have to add up to 100, bad_ct and bad_type not mut exclusive
+// main weights doesn't have to add up to 100, bad_ct and bad_type not mut exclusive
 class InstructionsFamily {
     constructor(mainWeight, insArr, oddsArr, errorArr) {
         this.mainWeight = mainWeight;
@@ -82,19 +77,19 @@ class ArchInstructions {
             }
         });
 
-        this.offsets    = config.offsets;
-        this.registers_32  = config.registers_32;
-        this.registers_64  = config.registers_64;
+        this.offsets = config.offsets;
+        this.registers_32 = config.registers_32;
+        this.registers_64 = config.registers_64;
     }
 
     generate_question(mem_arch, arith, bit) {
         const fam_weights = [
-            mem_arch ? this.memOps.mainWeight      : 0,
-            mem_arch ? this.archOps.mainWeight     : 0,
-            arith    ? this.arithUnary.mainWeight  : 0,
-            arith    ? this.arithBinary.mainWeight : 0,
-            bit      ? this.bitLogic.mainWeight    : 0,
-            bit      ? this.bitShift.mainWeight    : 0,
+            mem_arch ? this.memOps.mainWeight : 0,
+            mem_arch ? this.archOps.mainWeight : 0,
+            arith ? this.arithUnary.mainWeight : 0,
+            arith ? this.arithBinary.mainWeight : 0,
+            bit ? this.bitLogic.mainWeight : 0,
+            bit ? this.bitShift.mainWeight : 0,
         ];
         let index = weightedPickId(fam_weights);
         return this._makePrompt(index);
@@ -103,12 +98,12 @@ class ArchInstructions {
     _makePrompt(index) {
         let family;
         switch (index) {
-            case 0: family = this.memOps;      break;
-            case 1: family = this.archOps;     break;
-            case 2: family = this.arithUnary;  break;
+            case 0: family = this.memOps; break;
+            case 1: family = this.archOps; break;
+            case 2: family = this.arithUnary; break;
             case 3: family = this.arithBinary; break;
-            case 4: family = this.bitLogic;    break;
-            case 5: family = this.bitShift;    break;
+            case 4: family = this.bitLogic; break;
+            case 5: family = this.bitShift; break;
             default: throw new Error("Invalid operation index");
         }
         const op = unifPickItem(family.instructions);
@@ -152,7 +147,7 @@ class ArchInstructions {
             case 'r': return reg;
             case 'm': return mem;
             case 'l': return lit;
-            case 'a': return unifPickItem(reg,mem,lit);
+            case 'a': return unifPickItem(reg, mem, lit);
             default: throw new Error(`Unexpected char: ${char}`);
         }
     }
@@ -193,22 +188,21 @@ class ArchInstructions {
         const maxAddress = 0xFFF;
 
         const baseAddress = Math.floor(Math.random() * (maxAddress - minAddress - num_addresses + 2)) + minAddress;
-
         for (let i = 0; i < num_addresses; i++) {
             let address = baseAddress + (i * 8);
             let hexAddress = "0x" + address.toString(16).padStart(3, '0').toUpperCase();
-            let hexValue = "0x0"
-            selected_addresses.push({ address: hexAddress, value: hexValue });
+            // let decimalValue = Math.floor(Math.random() * 100); //modfified this
+            selected_addresses.push({ address: hexAddress, value: decimalValue });
         }
-
+        
         const selected_regular_registers = [];
         for (let i = 0; i < (num_registers - registers_stack.length - registers_count.length) && i < registers_regular.length; i++) {
             if (Math.random() < 0.5 && selected_addresses.length > 0) {
                 const addressIndex = Math.floor(Math.random() * selected_addresses.length);
-                selected_regular_registers.push({ register: registers_regular[i], value: selected_addresses[addressIndex].address, type:"memory"});
+                selected_regular_registers.push({ register: registers_regular[i], value: selected_addresses[addressIndex].address, type: "memory" });
             } else {
                 const randomValue = `0x${Math.floor(Math.random() * 0x100).toString(16).padStart(2, '0').toUpperCase()}`;
-                selected_regular_registers.push({ register: registers_regular[i], value: randomValue, type:"normal"});
+                selected_regular_registers.push({ register: registers_regular[i], value: randomValue, type: "normal" });
             }
         }
 
@@ -255,7 +249,7 @@ class ArchInstructions {
             '{op} {literal}, ({reg1}, {reg2})',
         ];
 
-        switch (architecture){
+        switch (architecture) {
             case "ARM64":
                 break;
             case "X86_32":
@@ -309,7 +303,7 @@ export class ARM64_OPS extends ArchInstructions {
     }
 
     _getTrueReg(is32) {
-        return unifPickItem(is32?this.registers_32:this.registers_64);
+        return unifPickItem(is32 ? this.registers_32 : this.registers_64);
     }
 
     _getTrueMem(is32) {
@@ -320,7 +314,6 @@ export class ARM64_OPS extends ArchInstructions {
     _getTrueLit(is32) {
         return `#${Math.floor(randomFloat32() * 63)}`;
     }
-
 }
 
 export class X86_BASE extends ArchInstructions {
@@ -329,26 +322,26 @@ export class X86_BASE extends ArchInstructions {
     }
 
     _getTrueReg(is32) {
-        return `%${unifPickItem(is32?this.registers_32:this.registers_64)}`
+        return `%${unifPickItem(is32 ? this.registers_32 : this.registers_64)}`;
     }
     _getTrueMem(is32) {
         const a = `(${this._getTrueReg(is32)})`;
         const b = `${this._getTrueOffset(is32)}${a}`;
         return unifPickItem(a, b);
     }
-    _getTrueLit(is32){
+    _getTrueLit(is32) {
         return `\$${Math.floor(randomFloat32() * MAX_NUM)}`;
     }
 }
 
 export class X86_32_OPS extends X86_BASE {
-    constructor() {super(arch_data.X86_32);}
+    constructor() { super(arch_data.X86_32); }
 
-    _is_32() {return true;}
+    _is_32() { return true; }
 }
 
 export class X86_64_OPS extends X86_BASE {
-    constructor() {super(arch_data.X86_64);}
+    constructor() { super(arch_data.X86_64); }
 
-    _is_32() {return (weightedPickId(BIT_ODDS_X86_64) == 0);}
+    _is_32() { return (weightedPickId(BIT_ODDS_X86_64) == 0); }
 }
