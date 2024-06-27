@@ -29,8 +29,8 @@
   border-width: 1px;
   border-radius: 5px;
   padding: 5px;
-  background-color: white;
   margin-top: 10px;
+  justify-content: center;
 }
 
 .input-box {

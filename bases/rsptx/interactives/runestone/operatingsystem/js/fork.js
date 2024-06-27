@@ -65,7 +65,7 @@ export default class Fork extends RunestoneBase {
         // Create instructions
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
-            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed, " + 
+            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed), " + 
             "answer how many letters the process prints out with <code>printf()</code>."
         );
         this.statementDiv = $("<div>").addClass("statement-box");
@@ -112,9 +112,13 @@ export default class Fork extends RunestoneBase {
     genPromptsNAnswer() {
 
         this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.printContent);
+        console.log(this.source);
         this.cCode = forking.transpileToC(this.source);
-        // this.tree = forking.buildTree(this.source);
-        // this.outputTree = forking.printTree(this.tree);
+        console.log(this.cCode);
+        this.root = forking.buildTree(this.source);
+        console.log(this.root);
+        this.csvTree = forking.getTreeCSV(this.root);
+        console.log(this.csvTree);
         // this.count = forking.countPrints(this.tree, this.printContent);
     }
 
@@ -219,7 +223,8 @@ export default class Fork extends RunestoneBase {
 
     showProcessHierarchy() {
         // $(this.hierarchyTreeDiv).html("BOOM JUST TRYING THINGS OUT.");
-        $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
+        // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
+        $(this.hierarchyTreeDiv).html(drawing.drawHTree(this.csvTree));
     }
 
     initForkFeedbackDiv() {

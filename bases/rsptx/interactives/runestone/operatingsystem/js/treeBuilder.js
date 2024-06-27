@@ -129,7 +129,14 @@ function printTree (node, prefix = "", isRight = true) {
 
 function getTreeArr(root,parentVal="") {
     if (!root) return [];
-    const result = (root.id!=root.parent)?[`${root.id}${root.value},${root.parent}${parentVal}`]:[]
+   	let result, p1, p2;
+    if (root.id != root.parent) {
+    	p1 = (root.value == "") ? null : root.value;
+        p2 = (parentVal == "") ? null : parentVal;
+        result = [`${root.id} @ ${p1}, ${root.parent} @ ${p2}`];
+    } else {
+        result = [];
+    }
     return [
         ...result,
         ...getTreeArr(root.left, root.value),

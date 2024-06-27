@@ -1,20 +1,22 @@
-export class Node {
-    constructor(value, left = null, right = null) {
+export class ForkNode {
+    constructor(id = 0, parent = 0, value = "", left = null, right = null) {
+        this.id = id;
+        this.parent = parent;
         this.value = value;
         this.left = left;
         this.right = right;
     }
 }
-export const INDENT_SPC = 2;
+const INDENT_SPC = 2;
+const SPC = "&#8195;";
+const NEWLINE = "<br>";
+let nodeCounter = 1;
 
 export function countPrints(node, printContent) {
     if (!node) return 0;
-
     let count = (node.value.includes(`printf("${printContent}")`)) ? 1 : 0;
-
     count += countPrints(node.left, printContent);
     count += countPrints(node.right, printContent);
-
     return count;
 }
 
@@ -43,21 +45,27 @@ export function parseForkArgs(code, forkIndex) {
     ];
 }
 
-export function buildTree(code) {
+export function buildTree(code, id = 1, parent = 0, childCt = 0) {
     code = code.trim();
     if (code.length === 0) return null;
 
     let forkIndex = code.indexOf('f(');
     if (forkIndex === -1) {
-        return new Node(code); // no fork, plain print node
+        return new ForkNode(id, parent, code); // no fork, plain print node
     }
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
     leftCode += code.substring(end).trim(); // remaining code
     rightCode += code.substring(end).trim(); // remaining code
-    return new Node(
-        code.substring(0, forkIndex).trim() ?? '',
-        buildTree(leftCode),
-        buildTree(rightCode)
+    
+    const leftNode = buildTree(leftCode, id+1, id);
+    // childCt += rightCode?1:0;
+    const rightNode = buildTree(rightCode, id*10, id);
+    return new ForkNode(
+        id,
+        parent,
+        code.substring(0, forkIndex).trim() ?? "",
+        leftNode,
+        rightNode
     );
 }
 
@@ -65,6 +73,8 @@ export function transpileToC(code, indent = 0) {
     let result = "";
     let ptr = 0;
     let leftCode, rightCode;
+    let prefix = SPC.repeat(indent);
+    const lineC = (text) => {return(SPC.repeat(indent) + text + NEWLINE)};
     while (ptr < code.length) {
         if (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '(')) {
             let start = ptr;
@@ -73,25 +83,25 @@ export function transpileToC(code, indent = 0) {
             }
             let text = code.substring(start, ptr).trim();
             for (let i = 0; i < text.length; i++) {
-                result += '&#8195;'.repeat(indent) + `printf("${text[i]}");<br>`;
+                result += lineC(`printf("${text[i]}");`);
             }
         }
 
         if (code[ptr] === 'f' && code[ptr + 1] === '(') {
             [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
             if (!leftCode && !rightCode) {
-                result += '&#8195;'.repeat(indent) +"fork();<br>";
+                result += lineC("fork();");
                 continue;
             }
             if (leftCode) {
-                result += '&#8195;'.repeat(indent) + "if (fork()) {<br>";
+                result += lineC("if (fork()) {");
                 result += transpileToC(leftCode, indent + INDENT_SPC);
-                result += '&#8195;'.repeat(indent) + (rightCode?"} else {<br>":"}<br>");
+                result += lineC((rightCode?"} else {":"}"));
             }
             if (rightCode) {
-                result += leftCode?"":('&#8195;'.repeat(indent)+ "if (fork()==0) {<br>");
+                result += leftCode?"":lineC("if (fork()==0) {");
                 result += transpileToC(rightCode, indent + INDENT_SPC);
-                result += '&#8195;'.repeat(indent) + "}<br>";
+                result += lineC("}");
             }
         }
     }
@@ -121,6 +131,29 @@ export function printTree(node, prefix = "", isRight = true) {
     }
 
     return result;
+}
+
+export function getTreeArr(root, parentVal="") {
+    if (!root) return [];
+   	let result, p1, p2;
+    if (root.id != root.parent) {
+    	p1 = (root.value == "") ? null : root.value;
+        p2 = (parentVal == "") ? null : parentVal;
+        result = [`${root.id}@${p1},${root.parent}@${p2}`];
+    } else {
+        result = [];
+    }
+    return [
+        ...result,
+        ...getTreeArr(root.left, root.value),
+        ...getTreeArr(root.right, root.value)
+    ];
+}
+
+export function getTreeCSV(root) {
+    console.log('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h');
+    console.log("child,parent\n0\n"+getTreeArr(root).join("\n"));
+    return "child,parent\n0\n"+getTreeArr(root).join("\n");
 }
 
 export function randInsert(mainStr, insertStr) {

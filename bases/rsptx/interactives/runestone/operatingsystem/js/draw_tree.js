@@ -13,22 +13,53 @@ export function drawHTree(linksCsv) {
     const childColumn = links.columns[0];
     const parentColumn = links.columns[1];
 
-    const tree = stratify()
-        .id(d => d[childColumn])
-        .parentId(d => d[parentColumn]);
+    var nodeDef = new Set();
+    var edgeDef = [];
 
-    const root = tree(links);
-    console.log(root.data);
+    var digraphString = (
+        'digraph {' + 
+        'bgcolor = "transparent";' + 
+        'node [shape=circle, color=black, style=filled, fillcolor=lightblue];' +
+        'edge [color=black, penwidth=2.0];'
+    );
 
-    var digraphString = 'digraph {';
-    digraphString += 'node [shape=circle, color=black, style=filled, fillcolor=lightblue];';
-    digraphString += 'edge [color=black, penwidth=2.0];';
-
+    var nodeDef = new Set();
+    var edgeDef = [];
+    
     for (var i = 0; i < links.length; i++) {
-        var c = links[i][childColumn];
-        var p = links[i][parentColumn];
-        if (p) { digraphString += `${p} -> ${c};` }
+        const child = links[i].child.split('@');
+    const parent = links[i].parent.split('@');
+
+    const cId = child[0];
+    let cP = (child[1] === undefined || child[1] === "null") ? " " : child[1];
+    const pId = parent[0];
+    let pP = (parent[1] === undefined || parent[1] === "null") ? " " : parent[1];
+
+    console.log(cId + " " + cP + "==" + pId + " " + pP);
+
+       	if (pId) {
+        	nodeDef.add(`${pId} [label="${pP}"];`);
+        }
+        
+        if (cId) {
+        	nodeDef.add(`${cId} [label="${cP}"];`);
+        }
+
+        if (pId) {
+            edgeDef.push(`${pId} -> ${cId};`);
+        }
     }
+    
+	console.log(nodeDef);
+    
+    for (let value of nodeDef) {
+      digraphString += value;
+    }
+
+    for (var i = 0; i < edgeDef.length; i++) {
+        digraphString += edgeDef[i];
+    }
+
     digraphString += "}";
 
     console.log(digraphString);
