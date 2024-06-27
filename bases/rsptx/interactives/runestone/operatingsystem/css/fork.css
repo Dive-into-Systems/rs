@@ -1,3 +1,7 @@
+#graph {
+  background-color: transparent !important;
+}
+
 .code-div-inline {
   display: inline-block;
   border-width: 1px;
@@ -16,19 +20,21 @@
   height: auto;
   overflow-y: auto;
   position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 .tree-div {
   border-width: 1px;
   border-radius: 5px;
-  background-color: rgb(215, 227, 255);
-  color: rgb(0, 50, 165);
   padding: 5px;
   margin-top: 10px;
 }
 
 .input-box {
   margin-top: 5px !important;
+  margin-bottom: 5px !important;
 }
 
 .right-div-inline {

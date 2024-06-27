@@ -7,7 +7,8 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
-import * as forking from './fork_algorithm.js';
+import * as forking from "./fork_algorithm.js";
+import * as drawing from "./draw_tree.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -45,6 +46,7 @@ export default class Fork extends RunestoneBase {
         this.initParams(); // init all
         this.initForkInputField();
         this.initForkButtons();
+        this.initHierarchyTreeDiv();
         this.initForkFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
@@ -66,7 +68,11 @@ export default class Fork extends RunestoneBase {
             "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed, " + 
             "answer how many letters the process prints out with <code>printf()</code>."
         );
-        this.statementDiv = $("<div>");
+        this.statementDiv = $("<div>").addClass("statement-box");
+
+        // Prepare for hierarchy tree div
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
 
         this.genPromptsNAnswer();
 
@@ -91,19 +97,9 @@ export default class Fork extends RunestoneBase {
             this.rightDiv.append(this.subQuestionDiv);
         }
 
-        this.treeDiv = $("<div>").addClass("tree-div");
-        $(this.treeDiv).css("visibility", "hidden");
-
-        this.rightDiv.append(this.treeDiv);
-
         // copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
-        
-        this.statementDiv.addClass("statement-box");
-
-        // create a feedback div, will be removed in clear and added back when generate another question
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-
+    
         // remove the script tag.
         // this.scriptSelector(this.containerDiv).remove();
 
@@ -117,12 +113,9 @@ export default class Fork extends RunestoneBase {
 
         this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.printContent);
         this.cCode = forking.transpileToC(this.source);
-        this.tree = forking.buildTree(this.source);
-        this.outputTree = forking.printTree(this.tree);
-        this.count = forking.countPrints(this.tree, this.printContent);
-
-        console.log("Answer is: " + this.count);
-
+        // this.tree = forking.buildTree(this.source);
+        // this.outputTree = forking.printTree(this.tree);
+        // this.count = forking.countPrints(this.tree, this.printContent);
     }
 
     initForkButtons() {
@@ -184,22 +177,24 @@ export default class Fork extends RunestoneBase {
         // clear all previous selection
         $('input').val("");
 
-        $(this.treeDiv).html("");
-        $(this.treeDiv).css("visibility", "hidden");
-
         // clear feedback field
         $(this.feedbackDiv).remove();
+        $(this.hierarchyTreeDiv).remove();
     }
 
     updatePrompts(){
         // create and render all input fields in question group
         this.genPromptsNAnswer();
-
+        // update c code
         this.codeDiv.html(this.cCode);
 
         // create another feedback div
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
+
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
+        this.containerDiv.append(this.hierarchyTreeDiv);
     }
 
     checkCurrentAnswer() {
@@ -223,13 +218,20 @@ export default class Fork extends RunestoneBase {
     }
 
     showProcessHierarchy() {
-        this.treeDiv.html(this.outputTree);
-        $(this.treeDiv).css("visibility", "visible");
+        // $(this.hierarchyTreeDiv).html("BOOM JUST TRYING THINGS OUT.");
+        $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
     }
 
     initForkFeedbackDiv() {
         this.containerDiv.append("<br>");
+        // create a feedback div, will be removed in clear and added back when generate another question
+        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
+    }
+
+    initHierarchyTreeDiv() {
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        this.containerDiv.append(this.hierarchyTreeDiv);
     }
 
     renderFeedback() {
