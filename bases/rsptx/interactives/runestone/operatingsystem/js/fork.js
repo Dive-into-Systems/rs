@@ -78,7 +78,7 @@ export default class Fork extends RunestoneBase {
 
         // Create prompt section
         // ***STRUCTURE***: this.codeDiv  | this.rightDiv
-        this.promptDiv = $("<div>").addClass("prompt-div");
+        this.promptDiv = $("<div>").addClass("input-div");
         
         // Create C-code section
         this.codeDiv = $("<div>").addClass("code-div-inline");
@@ -223,7 +223,6 @@ export default class Fork extends RunestoneBase {
     }
 
     initForkFeedbackDiv() {
-        this.containerDiv.append("<br>");
         // create a feedback div, will be removed in clear and added back when generate another question
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
@@ -231,6 +230,7 @@ export default class Fork extends RunestoneBase {
 
     initHierarchyTreeDiv() {
         this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
         this.containerDiv.append(this.hierarchyTreeDiv);
     }
 
