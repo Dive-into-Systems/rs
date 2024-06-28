@@ -51,19 +51,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.renderCustomizations();
-<<<<<<< HEAD
         this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
         console.log(this.initialState);
         this.allState = this.generator.executeInstructions(this.initialState);
         console.log(this.allState);
-=======
-
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, [false, true, true, true]);
-        console.log(this.initialState);
-        this.allState = this.generator.executeInstructions(this.initialState);
-        console.log(this.allState);
-        // console.log(this.allState);
->>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
 
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
@@ -181,7 +172,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
         const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
         const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
-
+jjjjjjk
         buttonContainer.append(resetButton).append(tryAnotherButton).append(checkAnswerButton);
         this.containerDiv.append(buttonContainer);
     }
@@ -256,7 +247,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const userValue = $(row).find('input').val();
             userMemory[address] = userValue;
         });
-<<<<<<< HEAD
         console.log("user inputs for Registers")
         console.log(userRegisters)
         console.log("user inputs for Memory")
@@ -265,22 +255,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     
         // Provide feedback
         this.renderFeedback(isCorrect);
-=======
-
-        // Compare user's inputs with the expected outputs
-        const isCorrect = this.validateAnswers(userRegisters, userMemory);
-
-        // Provide feedback
-        this.renderFeedback(isCorrect);
-    }
-
-    validateAnswers(userRegisters, userMemory) {
-
-        "Arysssssssssssssssss"
-        return true; // Placeholder, replace with actual comparison logic
-    }
-
->>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
 
         if (isCorrect) {
             this.currentStep++;
@@ -321,11 +295,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
         const registersTableBody = $("<tbody>");
 
-<<<<<<< HEAD
         ["rax", "rdi", "rsp", "rdx"].forEach(reg => {
-=======
-        ["rax", "rdi", "rsp"].forEach(reg => {
->>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
             const initialValue = registers.find(r => r.register === reg)?.value || "0x0";
             registersTableBody.append($("<tr>").append($("<td>").text(reg), $("<td>").text(initialValue), $("<td>").append($("<input>").attr("type", "text"))));
         });
@@ -351,10 +321,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         tablesContainer.append(registersWrapper).append(memoryWrapper);
         this.containerDiv.append(tablesContainer);
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
 
     renderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
