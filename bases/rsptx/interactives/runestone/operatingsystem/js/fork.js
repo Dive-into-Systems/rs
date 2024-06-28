@@ -7,13 +7,14 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
-import * as forking from './fork_algorithm.js';
+import * as forking from "./fork_algorithm.js";
+import * as drawing from "./draw_tree.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
 export var ForkList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
-// Fork constructor
+// Fork constructor 
 export default class Fork extends RunestoneBase {
     constructor(opts) {
         super(opts);
@@ -45,75 +46,86 @@ export default class Fork extends RunestoneBase {
         this.initParams(); // init all
         this.initForkInputField();
         this.initForkButtons();
+        this.initHierarchyTreeDiv();
         this.initForkFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
     initParams() {
-        this.printContent = "a";
+        this.numForks = 3;
+        this.numPrints = 4;
+        this.printContent = [];
+        for (var i = 0; i < this.numPrints; i++) {
+            this.printContent.push(String.fromCharCode((i + 97)));
+        }
     }
 
     initForkInputField() {
+        // Create instructions
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
-            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed, " + 
+            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed), " + 
             "answer how many letters the process prints out with <code>printf()</code>."
         );
-        this.statementDiv = $("<div>").append(this.instruction);
+        this.statementDiv = $("<div>").addClass("statement-box");
+
+        // Prepare for hierarchy tree div
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
 
         this.genPromptsNAnswer();
+
+        // Create prompt section
+        // ***STRUCTURE***: this.codeDiv  | this.rightDiv
+        this.promptDiv = $("<div>").addClass("input-div");
         
-        this.inputDiv = $("<div>").addClass("input-div");
-
-        this.rightDiv = $("<div>").addClass("right-div-inline");
-        this.prompt = $("<div>").html("How many times will <code>" + this.printContent + "</code> print?");
-        this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
-        this.inputBox.attr("id", "input-field");
-        this.inputBox.addClass("form-control input-box");
-        this.treeDiv = $("<div>").addClass("tree-div");
-        $(this.treeDiv).css("visibility", "hidden");
-
-        this.rightDiv.append(this.prompt);
-        this.rightDiv.append(this.inputBox);
-        this.rightDiv.append(this.treeDiv);
-
+        // Create C-code section
         this.codeDiv = $("<div>").addClass("code-div-inline");
-        this.codeDiv.append(this.cCode);
+        this.codeDiv.html(this.cCode);
+
+        // Create question section
+        this.rightDiv = $("<div>").addClass("right-div-inline");
+        for (var i = 0; i < this.numPrints; i++) {
+            this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i);
+            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
+            this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
+            this.inputBox.attr("id", "input-field");
+            this.inputBox.addClass("form-control input-box");
+            this.subQuestionDiv.append(this.subPrompt);
+            this.subQuestionDiv.append(this.inputBox);
+            this.rightDiv.append(this.subQuestionDiv);
+        }
+
         // copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
-        
-        this.statementDiv.addClass("statement-box");
-
-        // create a feedback div, will be removed in clear and added back when generate another question
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-
+    
         // remove the script tag.
         // this.scriptSelector(this.containerDiv).remove();
 
         // ***div STRUCTURE***:
-        this.containerDiv.append(this.statementDiv);
-        this.inputDiv.append(this.codeDiv);
-        this.inputDiv.append(this.rightDiv);
-        this.containerDiv.append(this.inputDiv);
-        // this.containerDiv.append(this.outputTree);
+        this.statementDiv.append(this.instruction);
+        this.containerDiv.append(this.statementDiv, this.promptDiv);
+        this.promptDiv.append(this.codeDiv, this.rightDiv);
     }
 
     genPromptsNAnswer() {
 
-        this.source = forking.genRandSourceCode(3, 4, this.printContent);
+        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.printContent);
+        console.log(this.source);
         this.cCode = forking.transpileToC(this.source);
-        this.tree = forking.buildTree(this.source);
-        this.outputTree = forking.printTree(this.tree);
-        this.count = forking.countPrints(this.tree, this.printContent);
-
-        console.log("Answer is: " + this.count);
-
+        console.log(this.cCode);
+        this.root = forking.buildTree(this.source);
+        console.log(this.root);
+        this.csvTree = forking.getTreeCSV(this.root);
+        console.log(this.csvTree);
+        // this.count = forking.countPrints(this.tree, this.printContent);
     }
 
     initForkButtons() {
 
-        this.buttonsDiv = $("<div>");//.addClass("distribute-even");
+        this.buttonsDiv = $("<div>");
+
         /* Ask me another button */
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");
@@ -169,22 +181,24 @@ export default class Fork extends RunestoneBase {
         // clear all previous selection
         $('input').val("");
 
-        $(this.treeDiv).html("");
-        $(this.treeDiv).css("visibility", "hidden");
-
         // clear feedback field
         $(this.feedbackDiv).remove();
+        $(this.hierarchyTreeDiv).remove();
     }
 
     updatePrompts(){
         // create and render all input fields in question group
         this.genPromptsNAnswer();
-
+        // update c code
         this.codeDiv.html(this.cCode);
 
         // create another feedback div
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
+
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
+        this.containerDiv.append(this.hierarchyTreeDiv);
     }
 
     checkCurrentAnswer() {
@@ -208,13 +222,21 @@ export default class Fork extends RunestoneBase {
     }
 
     showProcessHierarchy() {
-        this.treeDiv.html(this.outputTree);
-        $(this.treeDiv).css("visibility", "visible");
+        // $(this.hierarchyTreeDiv).html("BOOM JUST TRYING THINGS OUT.");
+        // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
+        $(this.hierarchyTreeDiv).html(drawing.drawHTree(this.csvTree));
     }
 
     initForkFeedbackDiv() {
-        this.containerDiv.append("<br>");
+        // create a feedback div, will be removed in clear and added back when generate another question
+        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
+    }
+
+    initHierarchyTreeDiv() {
+        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        $(this.hierarchyTreeDiv).addClass("tree-div");
+        this.containerDiv.append(this.hierarchyTreeDiv);
     }
 
     renderFeedback() {
@@ -306,4 +328,3 @@ $(document).on("runestone:login-complete", function () {
         }
     });
 });
-

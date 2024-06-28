@@ -1,4 +1,4 @@
-export class ForkNode {
+class ForkNode {
     constructor(id = 0, parent = 0, value = "", left = null, right = null) {
         this.id = id;
         this.parent = parent;
@@ -8,24 +8,16 @@ export class ForkNode {
     }
 }
 const INDENT_SPC = 2;
-const SPC = "&#8195;";
-const NEWLINE = "<br>";
+const SPC = " ";
+const NEWLINE = "\n";
 let nodeCounter = 1;
 
-export function countPrints(node, printContent) {
-    if (!node) return 0;
-    let count = (node.value.includes(`printf("${printContent}")`)) ? 1 : 0;
-    count += countPrints(node.left, printContent);
-    count += countPrints(node.right, printContent);
-    return count;
+function randomFloat32() {
+    // return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
+    return Math.random();
 }
 
-export function randomFloat32() {
-    return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
-    // return Math.random();
-}
-
-export function parseForkArgs(code, forkIndex) {
+function parseForkArgs(code, forkIndex) {
     let balance = 1;
     let topLevelComma = null; // position of first top-level comma
     let [start, end] = [forkIndex + 2, forkIndex + 2]; // after 'f('
@@ -45,7 +37,7 @@ export function parseForkArgs(code, forkIndex) {
     ];
 }
 
-export function buildTree(code, id = 1, parent = 0, childCt = 0) {
+function buildTree(code, id = 1, parent = 0, childCt = 0) {
     code = code.trim();
     if (code.length === 0) return null;
 
@@ -69,11 +61,11 @@ export function buildTree(code, id = 1, parent = 0, childCt = 0) {
     );
 }
 
-export function transpileToC(code, indent = 0) {
+function transpileToC(code, indent = 0) {
     let result = "";
     let ptr = 0;
     let leftCode, rightCode;
-    let prefix = SPC.repeat(indent);
+    prefix = SPC.repeat(indent);
     const lineC = (text) => {return(SPC.repeat(indent) + text + NEWLINE)};
     while (ptr < code.length) {
         if (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '(')) {
@@ -108,38 +100,40 @@ export function transpileToC(code, indent = 0) {
     return result;
 }
 
-export function output(node) {
+function output(node) {
     if (!node) return "";
     return node.value + output(node.left) + output(node.right);
 }
 
-export function printTree(node, prefix = "", isRight = true) {
+function countPrints(node, printContent) {
+    if (!node) return 0;
+    let count = (node.value.includes(`printf("${printContent}")`)) ? 1 : 0;
+    count += countPrints(node.left, printContent);
+    count += countPrints(node.right, printContent);
+    return count;
+}
+
+function printTree (node, prefix = "", isRight = true) {
     if (!node) return "";
-
     let result = "";
-
-    const childPrefix = prefix + (isRight ? "&emsp;&emsp;" : "&emsp;|&emsp;");
-
-    if (node.left) {
-        result += printTree(node.left, childPrefix, false);
-    }
-
-    result += prefix + (isRight ? "└─ " : "┌─ ") + node.value + "<br>";
-
-    if (node.right) {
-        result += printTree(node.right, childPrefix, true);
-    }
-
+    const indentBlank = SPC.repeat(3);
+    const indentStick = "|"+SPC.repeat(2);
+    const indentDown = `└─ `;
+    const indentUp = `┌─ `;
+    result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
+    result += prefix + (isRight ? indentDown : indentUp) + (node.id) + " | " + (node.parent) + " | "+ node.value + "\n";
+    // result += prefix + (isRight ? indentDown : indentUp) + node.value + "\n";
+    result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
     return result;
 }
 
-export function getTreeArr(root, parentVal="") {
+function getTreeArr(root,parentVal="") {
     if (!root) return [];
    	let result, p1, p2;
     if (root.id != root.parent) {
     	p1 = (root.value == "") ? null : root.value;
         p2 = (parentVal == "") ? null : parentVal;
-        result = [`${root.id}@${p1},${root.parent}@${p2}`];
+        result = [`${root.id} @ ${p1}, ${root.parent} @ ${p2}`];
     } else {
         result = [];
     }
@@ -149,37 +143,63 @@ export function getTreeArr(root, parentVal="") {
         ...getTreeArr(root.right, root.value)
     ];
 }
-
-export function getTreeCSV(root) {
-    console.log('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h');
-    console.log("child,parent\n0\n"+getTreeArr(root).join("\n"));
+function getTreeCSV(root) {
     return "child,parent\n0\n"+getTreeArr(root).join("\n");
 }
 
-export function randInsert(mainStr, insertStr) {
+
+function randInsert(mainStr, insertStr, anySlot = false) {
     let validPositions = [];
 
-    for (let i = 0; i <= mainStr.length; i++) {
+    for (let i = 0; i < mainStr.length-1; i++) {
         if (mainStr[i] !== '(') {
-            validPositions.push(i);
+            if (anySlot || (mainStr[i] !== '-' && mainStr[i-1] !== '-')) {
+                validPositions.push(i);
+                
+            }
         }
     }
     const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, printContent) {
+function genRandSourceCode(numForks, numPrints) {
     let code = "";
 
     // Generate forking locations
     for (let i = 0; i < numForks; i++) {
-        code = randInsert(code, "f(,)");
+        code = randInsert(code, "f(,)", true);
     }
     
     // Generate print statement locations
     for (let i = 0; i < numPrints; i++) {
-        code = randInsert(code, printContent[i]);
+        code = randInsert(code, "-");
     }
-
-    return code;
+    // code  = "f(a,)f(f(f(,),b)f(f(,c)f(,),)f(,)f(df(,),),)" // super insane mode, 59 leaves, 69 prints
+    // replace dashes with alphabets
+    let i = 0;
+    const replaceChar = () => {
+        const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
+        i++;
+        return char;
+    };
+    return code.replace(/-/g, replaceChar);
 }
+
+function main() {
+    let code = genRandSourceCode(3,4);
+    console.log(code);
+    console.log("-".repeat(10));
+    console.log(transpileToC(code));
+    console.log("-".repeat(10));
+    
+    let tree = buildTree(code);
+    console.log(getTreeArr(tree).length);
+    console.log(printTree(tree));
+    console.log("-".repeat(10));
+    console.log("EXPECTED OUTPUT: <"+output(tree).split("").sort().join("")+">")
+    console.log("EXPECTED OUTPUT: <"+output(tree).length+">")
+    console.log(getTreeCSV(tree));
+}
+
+main();

@@ -3,6 +3,11 @@
 // This file contains the JS for the Runestone Assembly State component. It was created By Arys Aikyn, Tony Cao 06/03/2024
 "use strict";
 
+<<<<<<< HEAD
+=======
+
+import { off } from 'codemirror';
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
 import arch_data from './arch_data.json';
 const MAX_NUM = arch_data.MAX_NUM;
 const BIT_ODDS_X86_64 = arch_data.BIT_ODDS_X86_64;
@@ -80,9 +85,15 @@ class ArchInstructions {
         });
 
         this.architecture = config.name;
+<<<<<<< HEAD
         this.offsets = config.offsets;
         this.registers_32 = config.registers_32;
         this.registers_64 = config.registers_64;
+=======
+        this.offsets    = config.offsets;
+        this.registers_32  = config.registers_32;
+        this.registers_64  = config.registers_64;
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
     }
 
     generate_question(mem_arch, arith, bit) {
@@ -200,10 +211,19 @@ class ArchInstructions {
         for (let i = 0; i < num_addresses; i++) {
             let address = baseAddress - (i * increment);
             let hexAddress = "0x" + address.toString(16).padStart(3, '0').toUpperCase();
+<<<<<<< HEAD
             let decimalValue = Math.floor(Math.random() * 11) + 5; // Generate random initial decimal values between 5 and 15
             selected_addresses.push({ address: hexAddress, location: i != 0 ? `-${i * increment}` : "", value: decimalValue.toString() });
         }
     
+=======
+            let hexValue = selection[0]
+            ? (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 256).toString(16).padStart(2, '0'))
+            : (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 16).toString(16))
+            selected_addresses.push({ address: hexAddress, location: i != 0 ? `-0x${(i*increment).toString(16)}` : "", value: hexValue });
+        }
+
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
         // Registers
         const selected_regular_registers = [];
         const selected_stack_registers = [];
@@ -215,10 +235,14 @@ class ArchInstructions {
             }
         }
         for (let i = 0; i < registers_stack.length; i++) {
+<<<<<<< HEAD
             const randomStackRegister = registers_stack[i];
             if (allowedRegisters.includes(randomStackRegister)) {
                 selected_stack_registers.push({ register: randomStackRegister, value: selected_addresses[0].address, type: "memory" });
             }
+=======
+            selected_stack_resgisters.push({ register: registers_stack[i], value: selected_addresses[0].address, type:"memory"});
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
         }
         let selected_registers = [
             ...selected_regular_registers,
@@ -266,17 +290,31 @@ class ArchInstructions {
             '{op} ({reg1}, {reg2}), {reg2}',
             '{op} {literal}, ({reg1}, {reg2})',
         ];
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
         const possibleFormats = [
             '{op} ({reg1}), {reg2}',
             '{op} {reg1}, ({reg2})',
             '{op} ({reg1}), ({reg2})',
         ]
+<<<<<<< HEAD
     
         let operations = [];
         selection[1] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => { operations.push(instruction) });
         selection[3] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => { operations.push(instruction) });
     
+=======
+
+        let operations = []
+        selection[1] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => {operations.push(instruction)});
+        // selection[2] && arch_data[this.architecture]["bitLogic"].instructions.forEach((instruction) => {operations.push(instruction)});
+        // selection[2] && arch_data[this.architecture]["bitShift"].instructions.forEach((instruction) => {operations.push(instruction)});
+        selection[3] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => {operations.push(instruction)});
+
+>>>>>>> 39904ef2b95902bf08a8ad2e9de2b9d6f2a62f33
         const formats = selection[0] ? [...easyFormats, ...hardFormats] : [...easyFormats];
     
         // Pick a random operation and format
