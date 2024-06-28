@@ -172,7 +172,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
         const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
         const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
-jjjjjjk
+
         buttonContainer.append(resetButton).append(tryAnotherButton).append(checkAnswerButton);
         this.containerDiv.append(buttonContainer);
     }
