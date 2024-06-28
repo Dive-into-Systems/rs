@@ -1,13 +1,15 @@
 class ForkNode {
     constructor(id = 0, parent = 0, value = "", left = null, right = null) {
         this.id = id;
-        this.parent = parent;
+        this.timestep = parent;
         this.value = value;
         this.left = left;
         this.right = right;
     }
 }
-const INDENT_SPC = 2;
+const INDENT_SPC = 4;
+const DASH = "─";
+const BAR = "|";
 const SPC = " ";
 const NEWLINE = "\n";
 let nodeCounter = 1;
@@ -37,24 +39,22 @@ function parseForkArgs(code, forkIndex) {
     ];
 }
 
-function buildTree(code, id = 1, parent = 0, childCt = 0) {
+function buildTree(code, id = 0, time = 0, childCt = 0) {
     code = code.trim();
     if (code.length === 0) return null;
 
     let forkIndex = code.indexOf('f(');
-    if (forkIndex === -1) {
-        return new ForkNode(id, parent, code); // no fork, plain print node
-    }
+    if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
+    // return new ForkNode(id, time, code); 
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
     leftCode += code.substring(end).trim(); // remaining code
     rightCode += code.substring(end).trim(); // remaining code
-    
-    const leftNode = buildTree(leftCode, id+1, id);
-    // childCt += rightCode?1:0;
-    const rightNode = buildTree(rightCode, id*10, id);
+    childCt +=rightCode?1:0;
+    const leftNode = buildTree(leftCode, id, time+1, childCt);
+    const rightNode = buildTree(rightCode, id*10+childCt, 0);
     return new ForkNode(
         id,
-        parent,
+        time,
         code.substring(0, forkIndex).trim() ?? "",
         leftNode,
         rightNode
@@ -117,36 +117,60 @@ function printTree (node, prefix = "", isRight = true) {
     if (!node) return "";
     let result = "";
     const indentBlank = SPC.repeat(3);
-    const indentStick = "|"+SPC.repeat(2);
+    const indentStick = BAR+SPC.repeat(2);
     const indentDown = `└─ `;
     const indentUp = `┌─ `;
     result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
-    result += prefix + (isRight ? indentDown : indentUp) + (node.id) + " | " + (node.parent) + " | "+ node.value + "\n";
-    // result += prefix + (isRight ? indentDown : indentUp) + node.value + "\n";
+    result += prefix + (isRight ? indentDown : indentUp) + (node.id) + "." + (node.timestep) + ":"+ node.value + "\n";
     result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
     return result;
 }
 
+function printTreeVert(node, isRoot = true) {
+    const nullChar = "\\";
+    // if (!node) return [nullChar]; // show forked processes that does nothing
+    if (!node) return [];
+    
+    const leftSubtree = printTreeVert(node.left, false);
+    const rightSubtree = printTreeVert(node.right, false);
+
+    const hasLeft = leftSubtree.length > 0;
+    const hasRight = rightSubtree.length > 0;
+    
+    const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
+    
+    // spacing for subtrees
+    const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
+;
+    const indentRight = (hasLeft ? "|" : " ") + " ".repeat(Math.max(selfValue.length, leftWidth));
+    
+    const result = [];
+    result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
+    rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
+    // if (hasLeft) result.push(BAR);
+    leftSubtree.forEach(line => result.push(line+SPC.repeat(leftWidth-line.length)));
+
+    return isRoot ? result.join("\n") : result;
+}
+
+const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
+
 function getTreeArr(root,parentVal="") {
     if (!root) return [];
-   	let result, p1, p2;
-    if (root.id != root.parent) {
-    	p1 = (root.value == "") ? null : root.value;
-        p2 = (parentVal == "") ? null : parentVal;
-        result = [`${root.id} @ ${p1}, ${root.parent} @ ${p2}`];
-    } else {
-        result = [];
-    }
+    const result =[`${formatNode(root)}${parentVal?(","+ parentVal):""}`];
     return [
         ...result,
-        ...getTreeArr(root.left, root.value),
-        ...getTreeArr(root.right, root.value)
+        ...getTreeArr(root.left, `${formatNode(root)}`),
+        ...getTreeArr(root.right, `${formatNode(root)}`)
     ];
 }
 function getTreeCSV(root) {
-    return "child,parent\n0\n"+getTreeArr(root).join("\n");
+    return "child,parent\n"+getTreeArr(root).join("\n");
 }
-
+function nodeCount(root) {
+    if (!root) return 1;
+    return 1+nodeCount(root.left)+nodeCount(root.right);
+}
 
 function randInsert(mainStr, insertStr, anySlot = false) {
     let validPositions = [];
@@ -155,7 +179,6 @@ function randInsert(mainStr, insertStr, anySlot = false) {
         if (mainStr[i] !== '(') {
             if (anySlot || (mainStr[i] !== '-' && mainStr[i-1] !== '-')) {
                 validPositions.push(i);
-                
             }
         }
     }
@@ -175,8 +198,7 @@ function genRandSourceCode(numForks, numPrints) {
     for (let i = 0; i < numPrints; i++) {
         code = randInsert(code, "-");
     }
-    // code  = "f(a,)f(f(f(,),b)f(f(,c)f(,),)f(,)f(df(,),),)" // super insane mode, 59 leaves, 69 prints
-    // replace dashes with alphabets
+    // code  = "f(a,)f(f(f(,),b)f(f(,c)f(,),)f(,)f(df(,),),)"; // super insane mode, 59 leaves, 69 prints
     let i = 0;
     const replaceChar = () => {
         const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
@@ -186,16 +208,52 @@ function genRandSourceCode(numForks, numPrints) {
     return code.replace(/-/g, replaceChar);
 }
 
+// function histo(n, func) {
+//     let counts = {};
+//     let min = Infinity;
+//     let max = -Infinity;
+
+//     // Gather counts and dynamically find the min and max
+//     for (let i = 0; i < n; i++) {
+//         let result = func();
+//         min = Math.min(min, result);
+//         max = Math.max(max, result);
+//         counts[result] = (counts[result] || 0) + 1;
+//     }
+
+//     // Calculate percentages and print histogram
+//     // console.log("Histogram:");
+//     for (let num = min; num <= max; num++) {
+//         let count = counts[num] || 0;
+//         let percentage = (count / n * 100).toFixed(2);
+//         // Right-align the percentage and the number, scale bar length
+//         console.log(`${num.toString().padStart(2, ' ')} (${percentage.padStart(6, ' ')}%): ${'-'.repeat(Math.round(percentage))}`);
+//     }
+// }
+// const fork = 3;
+// const print = 5;
+// function randTreeCt() {
+//     const code = genRandSourceCode(fork,print);
+//     const tree = buildTree(code);
+//     return nodeCount(tree);
+// }
+
+// function randTreeLen() {
+//     const code = genRandSourceCode(fork,print);
+//     const tree = buildTree(code);
+//     return output(tree).length;
+// }
+
 function main() {
     let code = genRandSourceCode(3,4);
     console.log(code);
     console.log("-".repeat(10));
-    console.log(transpileToC(code));
-    console.log("-".repeat(10));
+    // console.log(transpileToC(code));
+    // console.log("-".repeat(10));
     
     let tree = buildTree(code);
-    console.log(getTreeArr(tree).length);
-    console.log(printTree(tree));
+    // console.log(printTree(tree));
+    console.log(printTreeVert(tree));
     console.log("-".repeat(10));
     console.log("EXPECTED OUTPUT: <"+output(tree).split("").sort().join("")+">")
     console.log("EXPECTED OUTPUT: <"+output(tree).length+">")
