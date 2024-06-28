@@ -1,8 +1,13 @@
+
+// *********
 // arch_generate.js
 // *********
 // This file contains the JS for the Runestone Assembly State component. It was created By Arys Aikyn, Tony Cao 06/03/2024
+
 "use strict";
 
+
+import { off } from 'codemirror';
 import arch_data from './arch_data.json';
 const MAX_NUM = arch_data.MAX_NUM;
 const BIT_ODDS_X86_64 = arch_data.BIT_ODDS_X86_64;
@@ -80,9 +85,9 @@ class ArchInstructions {
         });
 
         this.architecture = config.name;
-        this.offsets = config.offsets;
-        this.registers_32 = config.registers_32;
-        this.registers_64 = config.registers_64;
+        this.offsets    = config.offsets;
+        this.registers_32  = config.registers_32;
+        this.registers_64  = config.registers_64;
     }
 
     generate_question(mem_arch, arith, bit) {
@@ -183,82 +188,65 @@ class ArchInstructions {
         let offsets = arch_data[this.architecture]['offsets'];
         let registers_regular = arch_data[this.architecture]['registers_regular'];
         let registers_stack = arch_data[this.architecture]['registers_stack'];
-    
-        // Allowed registers
-        const allowedRegisters = ['rax', 'rdi', 'rsp', 'rdx'];
-    
-        // Filter regular and stack registers to include only allowed registers
-        registers_regular = registers_regular.filter(reg => allowedRegisters.includes(reg));
-        registers_stack = registers_stack.filter(reg => allowedRegisters.includes(reg));
-    
+
         // Addresses
         let selected_addresses = [];
-        let increment = this.architecture == "X86_32" ? 8 : 8; // Ensure increment is multiple of 8
+        let increment = this.architecture == "X86_32" ? 4 : 8;
         const minAddress = 0x000;
         const maxAddress = 0xFFF;
-        const baseAddress = Math.floor(Math.random() * ((maxAddress - minAddress) / increment + 1)) * increment + minAddress;
+        const baseAddress = Math.floor(Math.random() * (maxAddress - minAddress - num_addresses + 2)) + minAddress;
         for (let i = 0; i < num_addresses; i++) {
             let address = baseAddress - (i * increment);
             let hexAddress = "0x" + address.toString(16).padStart(3, '0').toUpperCase();
-            let decimalValue = Math.floor(Math.random() * 11) + 5; // Generate random initial decimal values between 5 and 15
-            selected_addresses.push({ address: hexAddress, location: i != 0 ? `-${i * increment}` : "", value: decimalValue.toString() });
+            let hexValue = selection[0]
+            ? (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 256).toString(16).padStart(2, '0'))
+            : (Math.random() < 0.5 ? "0x" : "0x" + Math.floor(Math.random() * 16).toString(16))
+            selected_addresses.push({ address: hexAddress, location: i != 0 ? `-0x${(i*increment).toString(16)}` : "", value: hexValue });
         }
-    
+
         // Registers
         const selected_regular_registers = [];
-        const selected_stack_registers = [];
+        const selected_stack_resgisters = [];
         for (let i = 0; i < (num_registers - registers_stack.length); i++) {
-            const randomRegister = registers_regular[i];
-            if (allowedRegisters.includes(randomRegister)) {
-                const randomValue = `0x${Math.floor(Math.random() * 0x100).toString(16).padStart(2, '0').toUpperCase()}`;
-                selected_regular_registers.push({ register: randomRegister, value: randomValue, type: "normal" });
-            }
+            const randomValue = `0x${Math.floor(Math.random() * 0x100).toString(16).padStart(2, '0').toUpperCase()}`;
+            selected_regular_registers.push({ register: registers_regular[i], value: randomValue, type:"normal"});
         }
         for (let i = 0; i < registers_stack.length; i++) {
-            const randomStackRegister = registers_stack[i];
-            if (allowedRegisters.includes(randomStackRegister)) {
-                selected_stack_registers.push({ register: randomStackRegister, value: selected_addresses[0].address, type: "memory" });
-            }
+            selected_stack_resgisters.push({ register: registers_stack[i], value: selected_addresses[0].address, type:"memory"});
         }
         let selected_registers = [
             ...selected_regular_registers,
-            ...selected_stack_registers,
+            ...selected_stack_resgisters,
         ];
-    
+
         // Instructions
         let selected_instructions = [];
         for (let i = 0; i < num_instructions; i++) {
-            selected_instructions[i] = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
+            selected_instructions[i] = this.generateComplexInstruction(selected_regular_registers, selected_stack_resgisters, selected_addresses, offsets, selection);
         }
-    
+
         // returning state
         return [selected_instructions, selected_addresses, selected_registers];
     }
-    
-    
+
     generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
-        // List of allowed registers
-        const allowedRegisters = ['rax', 'rdi', 'rsp', 'rdx'];
-    
-        // Filter the regular and stack registers to use only allowed registers
-        regular_registers = regular_registers.filter(reg => allowedRegisters.includes(reg.register));
-        stack_registers = stack_registers.filter(reg => allowedRegisters.includes(reg.register));
-    
+
+        // how are we gonna deal with formats?
         const easyFormats = [
             '{op} {reg1}, {reg2}',
             '{op} {reg2}, {reg1}',
             '{op} {reg1}, {memAddr}',
             '{op} {reg2}, {memAddr}',
-    
+
             '{op} {literal}, {reg1}',
             '{op} {literal}, {reg2}',
             '{op} {literal}, {memAddr}',
             '{op} {literal}, {memAddr}',
-    
+
             '{op} {memAddr}, {reg2}',
             '{op} {memAddr}, {reg1}',
         ];
-    
+
         const hardFormats = [
             '{op} {offset}({reg1}), {reg2}',
             '{op} {offset}({reg2}), {reg1}',
@@ -266,54 +254,56 @@ class ArchInstructions {
             '{op} ({reg1}, {reg2}), {reg2}',
             '{op} {literal}, ({reg1}, {reg2})',
         ];
-    
+
         const possibleFormats = [
             '{op} ({reg1}), {reg2}',
             '{op} {reg1}, ({reg2})',
             '{op} ({reg1}), ({reg2})',
         ]
-    
-        let operations = [];
-        selection[1] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => { operations.push(instruction) });
-        selection[3] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => { operations.push(instruction) });
-    
+
+        let operations = []
+        selection[1] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => {operations.push(instruction)});
+        // selection[2] && arch_data[this.architecture]["bitLogic"].instructions.forEach((instruction) => {operations.push(instruction)});
+        // selection[2] && arch_data[this.architecture]["bitShift"].instructions.forEach((instruction) => {operations.push(instruction)});
+        selection[3] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => {operations.push(instruction)});
+
         const formats = selection[0] ? [...easyFormats, ...hardFormats] : [...easyFormats];
-    
-        // Pick a random operation and format
+
+
+        // logical insturctions to be checked
         const op = unifPickItem(operations);
         let format = unifPickItem(formats);
-    
-        // Ensure we are picking from allowed registers
         let reg1 = unifPickItem(regular_registers);
         let reg2 = unifPickItem(regular_registers);
         let memItem = unifPickItem(memory);
-        while (stack_registers.find(r => r.value == memItem.address)) {
+        while(stack_registers.find(r => r.value == memItem.address)){
             memItem = unifPickItem(memory);
         }
         let offset = unifPickItem(offsets);
         let literal = Math.floor(Math.random() * 8) * 8;
-    
+
         // Adjust the format for offset-related instructions
         if (format.includes('offset')) {
             if (format.includes('memAddr')) {
-                const maxOffset = Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16);
+                const maxOffset = Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memAddr, 16);
                 offset = offset <= maxOffset ? offset : maxOffset;
             } else if (format.includes('reg')) {
-                const maxOffset = Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                const maxOffset = Math.max(...registers.map(item => parseInt(item.value, 16))) - parseInt(memAddr, 16);
                 while (isNaN(maxOffset)) {
-                    maxOffset = Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                    maxOffset = Math.max(...registers.map(item => parseInt(item.value, 16))) - parseInt(memAddr, 16);
                 }
                 offset = offset <= maxOffset ? offset : maxOffset;
             }
         }
-    
-        // Beautify instructions to be added
+
+        // beautified instructions to be added
         reg1 = "%" + reg1.register;
         reg2 = "%" + reg2.register;
         let memAddr = `${memItem.location}(%${stack_registers[0].register})`;
         let prefix = this.architecture === 'ARM64' ? '#' : '$';
         literal = `${prefix}${literal}`;
-    
+
+
         return format
             .replace(/\+0\b/g, '')
             .replace(/{op}/g, op)
@@ -323,8 +313,7 @@ class ArchInstructions {
             .replace(/{reg2}/g, reg2)
             .replace(/{literal}/g, literal);
     }
-    
-    
+
     parseInstruction(instruction) {
         const regex = /(\w+)\s+(.+)/;
         const match = instruction.match(regex);
