@@ -43,7 +43,7 @@
         },
         "arithBinary": {
             "mainWeight": 25,
-            "instructions": ["add", "sub", "mul", "udiv", "sdiv"],
+            "instructions": ["add", "sub"],
             "errorsOdds" : [30, 20, 20, 20],
             "errors" : {
                 "ok": "r-(r/l)-(r/l)",

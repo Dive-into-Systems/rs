@@ -11,7 +11,7 @@ import { validLetter } from "jexcel";
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
-const num_instructions = 1;
+const num_instructions = 5;
 const num_registers = 5;
 const num_addresses = 5;
 
@@ -51,14 +51,24 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.renderCustomizations();
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
-        console.log(this.initialState);
-        this.allState = this.generator.executeInstructions(this.initialState);
-        console.log(this.allState);
-
+        this.generateNewQuestion();
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
         this.renderButtons();
+    }
+
+    generateNewQuestion() {
+        console.log("Generating new question...");
+        this.initialState = this.generator.generateRandomInitialState(
+            num_instructions,
+            num_registers,
+            num_addresses,
+            [this.arith_checked, this.stack_checked, this.memo_checked]
+        );
+        console.log("Initial state:", this.initialState);
+        this.allStates = this.generator.executeInstructions(this.initialState);
+        console.log("All states:", this.allStates);
+        this.currentStep = 0;
     }
 
     // set default parameters
@@ -94,7 +104,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             "For each instruction provided, describe how it alters the values in registers or memory. " +
             "Start with the initial state provided below, and sequentially apply each instruction, updating the state as you go.<br><br>"
         );
-        this.headerDiv = $("<div>").append(this.header).addClass("header-box");
+        this.headerDiv = $("<div>").append(this.header); // .addClass("header-box"); ??
         this.containerDiv.append(this.headerDiv);
     }
 
@@ -104,17 +114,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             { label: 'Stack Operations', value: 'stackoperation', defaultChecked: false },
             { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false }
         ];
-    
+
         const customizationDiv = $("<div>").addClass("customization-container");
-    
+
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
         instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
-    
+
         // Initialize checkbox states
         this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
         this.stack_checked = instructionTypes.find(family => family.value === 'stackoperation').defaultChecked;
         this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
-    
+
         instructionTypes.forEach(family => {
             let checkbox = $("<input>").attr({
                 type: "checkbox",
@@ -122,13 +132,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 value: family.value,
                 checked: family.defaultChecked
             });
-    
+
             checkbox.on("change", (event) => {
                 // Store the current state of checkboxes
                 const prevArithChecked = this.arith_checked;
                 const prevStackChecked = this.stack_checked;
                 const prevMemoChecked = this.memo_checked;
-    
+
                 // Update the states based on the checkbox change
                 switch (event.target.id) {
                     case "arithmetic":
@@ -141,7 +151,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                         this.memo_checked = event.target.checked;
                         break;
                 }
-    
+
                 // Ensure at least one checkbox is always selected
                 if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
                     event.preventDefault();
@@ -149,22 +159,22 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                     this.arith_checked = prevArithChecked;
                     this.stack_checked = prevStackChecked;
                     this.memo_checked = prevMemoChecked;
-    
+
                     // Restore the checkbox's checked state
                     $(event.target).prop('checked', !event.target.checked);
                 }
             });
-    
+
             const label = $("<label>").attr("for", family.value).text(family.label);
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
-    
+
         instructionTypeDiv.append("<br>");
         customizationDiv.append(instructionTypeDiv);
-    
+
         this.containerDiv.append(customizationDiv);
     }
-    
+
 
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
@@ -183,10 +193,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     tryAnother() {
-        console.log("trying another question");
+        console.log("Trying another question");
         // Clear the current state and re-render the component
-        this.initialState = this.generator.generateRandomInitialState(num_instructions, num_registers, num_addresses, this.architecture);
-        this.currentStep = 0; // Reset the step counter
+        this.generateNewQuestion();
         this.containerDiv.find('.instruction-container').remove();
         this.containerDiv.find('.tables-container').remove();
         this.containerDiv.find('.button-container').remove();
@@ -197,37 +206,37 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     validateAnswers(userRegisters, userMemory, step) {
-        
-
-      
-        const expectedStates = this.generator.executeInstructions(this.initialState);
-        const expectedState = expectedStates[step];
+        console.log(`Validating answers for step ${step}`);
+        const expectedState = this.allStates[step];
         let isCorrect = true;
 
-        console.log("expected for Registers")
-        console.log(expectedState.registers)
-        console.log("expected for Memory")
-        console.log(expectedState.memory)
+        console.log("Expected state for Registers:", expectedState.registers);
+        console.log("Expected state for Memory:", expectedState.memory);
+
         // Validate registers
         for (let reg of expectedState.registers) {
             if (userRegisters[reg.register] === undefined || userRegisters[reg.register].toLowerCase() !== reg.value.toLowerCase()) {
+                console.log(`Mismatch in register ${reg.register}. Expected: ${reg.value}, Got: ${userRegisters[reg.register]}`);
                 isCorrect = false;
                 break;
             }
         }
-    
+
         // Validate memory
         if (isCorrect) {
             for (let mem of expectedState.memory) {
                 if (userMemory[mem.address] === undefined || userMemory[mem.address].toLowerCase() !== mem.value.toLowerCase()) {
+                    console.log(`Mismatch in memory address ${mem.address}. Expected: ${mem.value}, Got: ${userMemory[mem.address]}`);
                     isCorrect = false;
                     break;
                 }
             }
         }
+
+        console.log(`Validation result: ${isCorrect ? 'Correct' : 'Incorrect'}`);
         return isCorrect;
     }
-    
+
     checkAnswer() {
         console.log("Checking answers for step: ", this.currentStep);
         // Retrieve user's input values
@@ -252,7 +261,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         console.log("user inputs for Memory")
         console.log(userMemory)
         const isCorrect = this.validateAnswers(userRegisters, userMemory, this.currentStep);
-    
+
         // Provide feedback
         this.renderFeedback(isCorrect);
 
@@ -266,17 +275,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             }
         }
     }
-    
+
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
         instructionDiv.append($("<h3>").text("The Instructions"));
-    
+
         const instructionList = $("<ol>");
         instructions.forEach((inst, index) => {
             const listItem = $("<li>").text(inst);
             instructionList.append(listItem);
         });
-    
+
         instructionDiv.append(instructionList);
         this.containerDiv.append(instructionDiv);
     }
@@ -292,12 +301,16 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const registersTable = $("<table>").addClass("register-table");
         registersWrapper.append($("<h3>").text("Registers"));
 
-        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
+        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Value"), $("<th>").text("Post Instruction Value")));
         const registersTableBody = $("<tbody>");
 
-        ["rax", "rdi", "rsp", "rdx"].forEach(reg => {
-            const initialValue = registers.find(r => r.register === reg)?.value || "0x0";
-            registersTableBody.append($("<tr>").append($("<td>").text(reg), $("<td>").text(initialValue), $("<td>").append($("<input>").attr("type", "text"))));
+        registers.forEach(({register, value}) => {
+            const displayValue = value || "0"; // Use the register's value or default to "0" if undefined
+            registersTableBody.append($("<tr>").append(
+                $("<td>").text(register),
+                $("<td>").text(displayValue),
+                $("<td>").append($("<input>").attr("type", "text"))
+            ));
         });
 
         registersTable.append(registersTableHead).append(registersTableBody);
@@ -306,9 +319,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // Memory changes table
         const memoryWrapper = $("<div>").addClass("table-wrapper");
         const memoryTable = $("<table>").addClass("memory-table");
-        memoryWrapper.append($("<h3>").text("Memory Changes"));
+        memoryWrapper.append($("<h3>").text("Memory:"));
 
-        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Initial Values"), $("<th>").text("Post Instruction Values")));
+        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Initial Value"), $("<th>").text("Post Instruction Value")));
         const memoryTableBody = $("<tbody>");
 
         addresses.forEach(addr => {
