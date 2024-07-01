@@ -6,43 +6,10 @@
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
 <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
 
-<div id="hierarchy_graph" style="text-align: center;"></div>
+<div id="timeline_graph" style="text-align: center;"></div>
 
 <script>
-
-    function drawTimeline(links) {
-        pass;
-    }
-
-    function getHierarchyAttr(links, labels) {
-
-        nodeDef = "";
-        edgeDef = "";
-
-        // console.log("Labels: " + labels);
-        // console.log("Links: " + links);
-        for (let i = 0; i < labels.length; i++) {
-            let [ID, val] = labels[i].split(':');
-            console.log("Val: ", val);
-            let prints = val.trim().slice(1,-1).split(',').join('');
-            console.log("Prints: " + prints);
-            // nodeDef.push(`${ID} [label="${prints}"];`);
-            nodeDef += (`${ID} [label="${prints}"];`);
-        }
-
-        links.forEach(e => {
-            const c = e.child;
-            const p = e.parent;
-
-            if (p) { edgeDef += (`${p} -> ${c};`); }
-        });
-
-        console.log("Node def: " + nodeDef);
-        console.log("Edge def: " + edgeDef);
-
-        return [nodeDef, edgeDef];
-    }
-
+    
     function drawHierarchy(links, labels) {
 
         var digraphString = (

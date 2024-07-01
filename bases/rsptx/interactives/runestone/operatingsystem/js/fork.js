@@ -294,12 +294,6 @@ export default class Fork extends RunestoneBase {
     recordAnswered() {
         this.isAnswered = true;
     }
-    // hideFeedback() {
-    //     $(this.feedbackDiv).css("visibility", "hidden");
-    // }
-    // displayFeedback() {
-    //     $(this.feedbackDiv).css("visibility", "visible");
-    // }
     // log the answer and other info to the server (in the future)
     async logCurrentAnswer(sid) {
         let answer = JSON.stringify(this.inputNodes);

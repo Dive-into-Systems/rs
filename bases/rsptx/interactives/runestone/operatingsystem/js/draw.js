@@ -5,7 +5,6 @@ import { csvParse, stratify, select } from "d3";
 import { graphviz } from "d3-graphviz";
 import "@hpcc-js/wasm";
 
-
 function getHierarchyAttr(links, labels) {
 
     var nodeDef = "";
@@ -59,10 +58,22 @@ export function drawHierarchy(linksCsv, labels) {
         .renderDot(digraphString);
 }
 
+
+function getTimelineAttr() {
+    pass;
+}
+
 export function drawTimeline(linksCsv) {
 
     const links = csvParse(linksCsv);
     console.log(links);
+
+    var digraphString = (
+        'digraph {' + 
+        'bgcolor = "transparent";' + 
+        'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
+        'edge [color=black, penwidth=2.0];'
+    );
 
     // select("#timeline_graph").graphviz()
     //     .renderDot(digraphString);
