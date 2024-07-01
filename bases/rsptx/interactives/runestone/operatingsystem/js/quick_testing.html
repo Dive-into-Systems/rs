@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+<script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+
+<div id="hierarchy_graph" style="text-align: center;"></div>
+
+<script>
+
+    function drawTimeline(links) {
+        pass;
+    }
+
+    function getHierarchyAttr(links, labels) {
+
+        nodeDef = "";
+        // edgeDef = [];
+        edgeDef = "";
+
+        // console.log("Labels: " + labels);
+        // console.log("Links: " + links);
+        for (let i = 0; i < labels.length; i++) {
+            let [ID, val] = labels[i].split(':');
+            // console.log(labels[i]);
+            prints = val.slice(1,-1).split(',').join('');
+            // console.log(prints);
+            // nodeDef.push(`${ID} [label="${prints}"];`);
+            nodeDef += (`${ID} [label="${prints}"];`);
+        }
+
+        links.forEach(e => {
+            const c = e.child;
+            const p = e.parent;
+
+            if (p) { edgeDef += (`${p} -> ${c};`); }
+        });
+
+        console.log("Node def: " + nodeDef);
+        console.log("Edge def: " + edgeDef);
+
+        return [nodeDef, edgeDef];
+    }
+
+    function drawHierarchy(links, labels) {
+
+        var digraphString = (
+            'digraph {' + 
+            'bgcolor = "transparent";' + 
+            'node [shape=circle, color=black, style=filled, fillcolor=lightblue];' +
+            'edge [color=black, penwidth=2.0];'
+        );
+
+        const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
+
+        digraphString += nodeDef;
+        digraphString += edgeDef;
+
+        digraphString += "}";
+
+        console.log(digraphString);
+
+        d3.select("#hierarchy_graph").graphviz()
+            .renderDot(digraphString);
+    }
+
+    // const linksCvs = "child,parent\n0\n0.1@a\n0.2@b\n";
+    const labels = ['0:[,a,,,d]','3:[,d]','2:[c,,d]','20:[,d]','1:[b,,,d]','11:[,d]','10:[c,,d]','100:[,d]'];
+    const linksCsv = "child,parent\n0\n3,0\n2,0\n20,2\n1,0\n11,1\n10,1\n100,10"
+    console.log(linksCsv);
+    const links = d3.csvParse(linksCsv);
+    console.log(links);
+
+    drawHierarchy(links, labels);
+    // drawTimeline(links);
+
+</script>
+</body>
