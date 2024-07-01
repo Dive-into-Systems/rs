@@ -8,19 +8,11 @@ export class ForkNode {
     }
 }
 const INDENT_SPC = 2;
-const SPC = "&#8195;";
-const NEWLINE = "<br>";
 const DASH = "─";
 const BAR = "|";
+const SPC = "&#8195;";
+const NEWLINE = "<br>";
 let nodeCounter = 1;
-
-export function countPrints(node, printContent) {
-    if (!node) return 0;
-    let count = (node.value.includes(`printf("${printContent}")`)) ? 1 : 0;
-    count += countPrints(node.left, printContent);
-    count += countPrints(node.right, printContent);
-    return count;
-}
 
 export function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
@@ -108,23 +100,32 @@ export function transpileToC(code, indent = 0) {
     return result;
 }
 
-export function output(node) {
+function output(node) {
     if (!node) return "";
     return node.value + output(node.left) + output(node.right);
 }
 
-function printTree (node, prefix = "", isRight = true) {
-    if (!node) return "";
-    let result = "";
-    const indentBlank = SPC.repeat(3);
-    const indentStick = BAR+SPC.repeat(2);
-    const indentDown = `└─ `;
-    const indentUp = `┌─ `;
-    result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
-    result += prefix + (isRight ? indentDown : indentUp) + (node.id) + "." + (node.timestep) + ":"+ node.value + "\n";
-    result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
-    return result;
+export function getAnswer(node) {
+    let answer = output(node);
+    let map = {};
+    for (let i = 0; i < answer.length; i++) {
+        if (answer[i] in map) { map[answer[i]] += 1; }
+        else { map[answer[i]] = 1; }
+    }
+    return map;
 }
+// function printTree (node, prefix = "", isRight = true) {
+//     if (!node) return "";
+//     let result = "";
+//     const indentBlank = SPC.repeat(3);
+//     const indentStick = BAR+SPC.repeat(2);
+//     const indentDown = `└─ `;
+//     const indentUp = `┌─ `;
+//     result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
+//     result += prefix + (isRight ? indentDown : indentUp) + (node.id) + "." + (node.timestep) + ":"+ node.value + "\n";
+//     result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
+//     return result;
+// }
 
 function printTreeVert(node, isRoot = true) {
     const nullChar = "\\";
@@ -153,22 +154,37 @@ function printTreeVert(node, isRoot = true) {
     return isRoot ? result.join("\n") : result;
 }
 
-const formatNode = (node) => `${node.id}.${node.timestep}@${node.value}`;
 
-function getTreeArr(root,parentVal="") {
-    if (!root) return [];
-    const result =[`${formatNode(root)}${parentVal?(","+ parentVal):""}`];
-    return [
-        ...result,
-        ...getTreeArr(root.left, `${formatNode(root)}`),
-        ...getTreeArr(root.right, `${formatNode(root)}`)
-    ];
+const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
+
+function getTreeArr(root, parentVal = "", result = new Set(), valuesMap = new Map()) {
+    if (!root) return { treeSet: result, valuesMap };
+
+    // Add the parent-child entry to the set if IDs are different
+    const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
+    if (root.id.toString() !== parentVal) {
+        result.add(entry);
+    }
+
+    // Aggregate values by ID in a Map
+    if (valuesMap.has(root.id)) {
+        valuesMap.get(root.id).push(root.value);
+    } else {
+        valuesMap.set(root.id, [root.value]);
+    }
+
+    // Recursive calls to traverse left and right children
+    getTreeArr(root.left, `${root.id}`, result, valuesMap);
+    getTreeArr(root.right, `${root.id}`, result, valuesMap);
+
+    return { treeSet: result, valuesMap };
 }
 
 export function getTreeCSV(root) {
-    // console.log('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h');
-    // console.log("child,parent\n0\n"+getTreeArr(root).join("\n"));
-    return "child,parent\n0\n"+getTreeArr(root).join("\n");
+    const { treeSet, valuesMap } = getTreeArr(root);
+    const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
+    const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}: [${values.join(",")}]`);
+    return { csv: csvString, valuesList: valuesArray };
 }
 
 function nodeCount(root) {

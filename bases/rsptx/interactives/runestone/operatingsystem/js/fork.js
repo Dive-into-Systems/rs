@@ -69,10 +69,6 @@ export default class Fork extends RunestoneBase {
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        // Prepare for hierarchy tree div
-        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
-        $(this.hierarchyTreeDiv).addClass("tree-div");
-
         this.genPromptsNAnswer();
 
         // Create prompt section
@@ -89,7 +85,7 @@ export default class Fork extends RunestoneBase {
             this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i);
             this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
             this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
-            this.inputBox.attr("id", "input-field");
+            this.inputBox.attr("id", this.divid + "_input_" + i);
             this.inputBox.addClass("form-control input-box");
             this.subQuestionDiv.append(this.subPrompt);
             this.subQuestionDiv.append(this.inputBox);
@@ -116,8 +112,15 @@ export default class Fork extends RunestoneBase {
         console.log(this.cCode);
         this.root = forking.buildTree(this.source);
         console.log(this.root);
-        this.csvTree = forking.getTreeCSV(this.root);
-        console.log(this.csvTree);
+        // this.csvTree = forking.getTreeCSV(this.root);
+        // console.log(this.csvTree);
+        // this.labels = forking.get
+        // { csv: this.csvTree, valuesList: this.labels } = forking.getTreeCSV(this.root);
+        const { csv, valuesList } = forking.getTreeCSV(this.root);
+        this.csvTree = csv;
+        this.labels = valuesList;
+        this.answerMap = forking.getAnswer(this.root);
+        // const { csv: this.csvTree, valuesList: this.labels } = getTreeCSV(this.root);
     }
 
     initForkButtons() {
@@ -148,7 +151,7 @@ export default class Fork extends RunestoneBase {
         });
         this.checkAnswerButton.addEventListener("click", () => {
             this.checkCurrentAnswer();
-            this.renderFeedback();
+            this.updateFeedbackDiv();
         });
 
         /* Reveal tree button */
@@ -161,7 +164,8 @@ export default class Fork extends RunestoneBase {
             id: this.divid + "draw_tree",
         });
         this.revealTreeButton.addEventListener("click", () => {
-            this.showProcessHierarchy();
+            if ($(this.hierarchyTreeDiv).css('display') == 'none') { this.showProcessHierarchy(); }
+            else { this.hideProcessHierarchy(); }
         });
 
         /* Reveal timeline button */
@@ -174,10 +178,9 @@ export default class Fork extends RunestoneBase {
             id: this.divid + "draw_timeline",
         });
         this.revealTimelineButton.addEventListener("click", () => {
-            this.showProcessHierarchy();
+            if ($(this.timelineDiv).css('display') == 'none') { this.showTimeline(); }
+            else { this.hideTimeline(); }
         });
-
-        this.containerDiv.append("<br>");
 
         this.buttonsDiv = $("<div>");
 
@@ -194,9 +197,9 @@ export default class Fork extends RunestoneBase {
         $('input').val("");
 
         // clear feedback field
-        $(this.feedbackDiv).remove();
-        $(this.hierarchyTreeDiv).remove();
-        $(this.timelineDiv).remove();
+        $(this.feedbackDiv).css("display", "none");
+        $(this.hierarchyTreeDiv).css("display", "none");
+        $(this.timelineDiv).css("display", "none");
     }
 
     updatePrompts(){
@@ -204,67 +207,62 @@ export default class Fork extends RunestoneBase {
         this.genPromptsNAnswer();
         // update c code
         this.codeDiv.html(this.cCode);
-
-        // create another feedback div
-        this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
-        this.containerDiv.append(this.feedbackDiv);
-
-        this.hierarchyTreeDiv = $("<div>").attr("id", "hierarchy_graph");
-        $(this.hierarchyTreeDiv).addClass("tree-div");
-        this.containerDiv.append(this.hierarchyTreeDiv);
-
-        this.timelineDiv = $("<div>").attr("id", "timeline_graph");
-        $(this.timelineDiv).addClass("tree-div");
-        this.containerDiv.append(this.timelineDiv);
     }
 
     checkCurrentAnswer() {
         this.feedback_msg = []; // clear feedback_msg
         this.correct = true; // init answer first as true, only update when incorrect choice occurs
-        this.incompleteAnswer = false;
-        var currAnswer = $("#input-field").val();
 
-        if (currAnswer !== this.count) {
-            this.correct = false;
-            if (currAnswer === "") {
-                this.feedback_msg.push($.i18n("msg_no_answer"));
+        for (let i = 0; i < this.numPrints; i++) {
+            let currAnswer = $("#" + this.divid + "_input_" + i).val();
+            if (currAnswer !== this.answerMap[this.printContent[i]]) {
+                this.correct = false;
+                if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
+                else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
             }
-            else {
-                this.feedback_msg.push($.i18n("msg_fork_incorrect"));
-            }
-        } else {
-            this.feedback_msg.push($.i18n("msg_fork_correct"));
         }
-        this.renderFeedback();
+        if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct'))};
+        this.updateFeedbackDiv();
     }
 
     showProcessHierarchy() {
-        // $(this.hierarchyTreeDiv).html("BOOM JUST TRYING THINGS OUT.");
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
-        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree));
+        $(this.hierarchyTreeDiv).css("display", "block");
+        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
     }
-
+    hideProcessHierarchy() {
+        $(this.hierarchyTreeDiv).css("display", "none");
+    }
     showTimeline() {
+        $(this.timelineDiv).css("display", "block");
         $(this.timelineDiv).html(drawing.drawTimeline(this.csvTree));
+    }
+    hideTimeline() {
+        $(this.timelineDiv).css("display", "none");
     }
 
     initFeedback_Hierarchy_Timeline_Divs() {
         // Create a feedback div, will be removed in clear and added back when generate another question
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
+        $(this.feedbackDiv).css("display", "none");
         this.containerDiv.append(this.feedbackDiv);
 
         // Create a hierarchy tree div
         this.hierarchyTreeDiv = $("<div>").attr("id", "hierarchy_graph");
+        $(this.hierarchyTreeDiv).css("display", "none");
         $(this.hierarchyTreeDiv).addClass("tree-div");
         this.containerDiv.append(this.hierarchyTreeDiv);
 
         // Create a timeline div
         this.timelineDiv = $("<div>").attr("id", "timeline_graph");
+        $(this.timelineDiv).css("display", "none");
         $(this.timelineDiv).addClass("tree-div");
         this.containerDiv.append(this.timelineDiv);
     }
 
-    renderFeedback() {
+    updateFeedbackDiv() {
+        $(this.feedbackDiv).css("display", "block");
+
         var feedback_html = this.feedback_msg;
         // set the background color of feedback divid
         if (this.correct === true) {
@@ -274,13 +272,11 @@ export default class Fork extends RunestoneBase {
         }
         
         this.feedbackDiv.html(feedback_html);
-        // this.displayFeedback();
         
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
     }
-
 
     /*===================================
     === Checking/loading from storage ===
@@ -325,7 +321,7 @@ export default class Fork extends RunestoneBase {
             feedback = false;
         }
         // render the feedback
-        this.renderFeedback();
+        this.updateFeedbackDiv();
         return data;
     }
 }

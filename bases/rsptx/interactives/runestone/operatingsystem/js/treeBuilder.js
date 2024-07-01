@@ -1,7 +1,7 @@
 class ForkNode {
-    constructor(id = 0, parent = 0, value = "", left = null, right = null) {
+    constructor(id = 0, timestep = 0, value = "", left = null, right = null) {
         this.id = id;
-        this.timestep = parent;
+        this.timestep = timestep;
         this.value = value;
         this.left = left;
         this.right = right;
@@ -18,6 +18,7 @@ function randomFloat32() {
     // return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
     return Math.random();
 }
+
 
 function parseForkArgs(code, forkIndex) {
     let balance = 1;
@@ -39,19 +40,60 @@ function parseForkArgs(code, forkIndex) {
     ];
 }
 
+function transpileToC(code, indent = 0, activeProcesses = ["0"]) {
+    let result = [];
+    let ptr = 0;
+    let nextF;
+    let leftCode, rightCode;
+
+    function addLine(line) {
+        result.push(`${SPC.repeat(indent)}${line}`);
+    }
+
+    while (ptr < code.length) {
+        nextF = code.indexOf('f(', ptr);
+        if (nextF === -1 || nextF > ptr) {
+            // print plain text until 'f(' or end of string
+            let end = nextF === -1 ? code.length : nextF;
+            let text = code.substring(ptr, end);
+            for (let i = 0; i < text.length; i++) {
+                addLine(`printf("${text[i]}");`);
+            }
+            ptr = end;
+        }
+
+        if (nextF !== -1 && ptr === nextF) {
+            [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
+            if (!leftCode && !rightCode) addLine("fork();");
+            if (leftCode) {
+                addLine("if (fork()) {");
+                result = result.concat(transpileToC(leftCode, indent + INDENT_SPC));
+                addLine(rightCode ? "} else {" : "}");
+            }
+            if (rightCode) {
+                if (!leftCode) addLine("if (fork() == 0) {");
+                result = result.concat(transpileToC(rightCode, indent + INDENT_SPC));
+                addLine("}");
+            }
+        }
+    }
+    return result;
+}
+
+
 function buildTree(code, id = 0, time = 0, childCt = 0) {
     code = code.trim();
     if (code.length === 0) return null;
 
     let forkIndex = code.indexOf('f(');
     if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
-    // return new ForkNode(id, time, code); 
+    // return new ForkNode(id, time, code);
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
     leftCode += code.substring(end).trim(); // remaining code
     rightCode += code.substring(end).trim(); // remaining code
-    childCt +=rightCode?1:0;
+    childCt += rightCode?1:0;
     const leftNode = buildTree(leftCode, id, time+1, childCt);
-    const rightNode = buildTree(rightCode, id*10+childCt, 0);
+    const rightNode = buildTree(rightCode, (id*10)+childCt-(id?1:0), 0);
     return new ForkNode(
         id,
         time,
@@ -59,45 +101,6 @@ function buildTree(code, id = 0, time = 0, childCt = 0) {
         leftNode,
         rightNode
     );
-}
-
-function transpileToC(code, indent = 0) {
-    let result = "";
-    let ptr = 0;
-    let leftCode, rightCode;
-    prefix = SPC.repeat(indent);
-    const lineC = (text) => {return(SPC.repeat(indent) + text + NEWLINE)};
-    while (ptr < code.length) {
-        if (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '(')) {
-            let start = ptr;
-            while (ptr < code.length && (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '('))) {
-                ptr++;
-            }
-            let text = code.substring(start, ptr).trim();
-            for (let i = 0; i < text.length; i++) {
-                result += lineC(`printf("${text[i]}");`);
-            }
-        }
-
-        if (code[ptr] === 'f' && code[ptr + 1] === '(') {
-            [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-            if (!leftCode && !rightCode) {
-                result += lineC("fork();");
-                continue;
-            }
-            if (leftCode) {
-                result += lineC("if (fork()) {");
-                result += transpileToC(leftCode, indent + INDENT_SPC);
-                result += lineC((rightCode?"} else {":"}"));
-            }
-            if (rightCode) {
-                result += leftCode?"":lineC("if (fork()==0) {");
-                result += transpileToC(rightCode, indent + INDENT_SPC);
-                result += lineC("}");
-            }
-        }
-    }
-    return result;
 }
 
 function output(node) {
@@ -113,37 +116,37 @@ function countPrints(node, printContent) {
     return count;
 }
 
-function printTree (node, prefix = "", isRight = true) {
-    if (!node) return "";
-    let result = "";
-    const indentBlank = SPC.repeat(3);
-    const indentStick = BAR+SPC.repeat(2);
-    const indentDown = `└─ `;
-    const indentUp = `┌─ `;
-    result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
-    result += prefix + (isRight ? indentDown : indentUp) + (node.id) + "." + (node.timestep) + ":"+ node.value + "\n";
-    result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
-    return result;
-}
+// function printTree (node, prefix = "", isRight = true) {
+//     if (!node) return "";
+//     let result = "";
+//     const indentBlank = SPC.repeat(3);
+//     const indentStick = BAR+SPC.repeat(2);
+//     const indentDown = `└─ `;
+//     const indentUp = `┌─ `;
+//     result += printTree(node.left, prefix + (isRight ? indentStick : indentBlank), false);
+//     result += prefix + (isRight ? indentDown : indentUp) + formatNode(node) "\n";
+//     result += printTree(node.right, prefix + (isRight ? indentBlank : indentStick), true);
+//     return result;
+// }
 
 function printTreeVert(node, isRoot = true) {
-    const nullChar = "\\";
+    const nullChar = "[]";
     // if (!node) return [nullChar]; // show forked processes that does nothing
     if (!node) return [];
-    
+   
     const leftSubtree = printTreeVert(node.left, false);
     const rightSubtree = printTreeVert(node.right, false);
 
     const hasLeft = leftSubtree.length > 0;
     const hasRight = rightSubtree.length > 0;
-    
+   
     const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
-    
+   
     // spacing for subtrees
     const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
 ;
     const indentRight = (hasLeft ? "|" : " ") + " ".repeat(Math.max(selfValue.length, leftWidth));
-    
+   
     const result = [];
     result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
     rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
@@ -155,18 +158,37 @@ function printTreeVert(node, isRoot = true) {
 
 const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
 
-function getTreeArr(root,parentVal="") {
-    if (!root) return [];
-    const result =[`${formatNode(root)}${parentVal?(","+ parentVal):""}`];
-    return [
-        ...result,
-        ...getTreeArr(root.left, `${formatNode(root)}`),
-        ...getTreeArr(root.right, `${formatNode(root)}`)
-    ];
+function getTreeArr(root, parentVal = "", result = new Set(), valuesMap = new Map()) {
+    if (!root) return { treeSet: result, valuesMap };
+
+    // Add the parent-child entry to the set if IDs are different
+    const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
+    if (root.id.toString() !== parentVal) {
+        result.add(entry);
+    }
+
+    // Aggregate values by ID in a Map
+    if (valuesMap.has(root.id)) {
+        valuesMap.get(root.id).push(root.value);
+    } else {
+        valuesMap.set(root.id, [root.value]);
+    }
+
+    // Recursive calls to traverse left and right children
+    getTreeArr(root.left, `${root.id}`, result, valuesMap);
+    getTreeArr(root.right, `${root.id}`, result, valuesMap);
+
+    return { treeSet: result, valuesMap };
 }
+
 function getTreeCSV(root) {
-    return "child,parent\n"+getTreeArr(root).join("\n");
+    const { treeSet, valuesMap } = getTreeArr(root);
+    const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
+    const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}: [${values.join(",")}]`);
+    return { csv: csvString, valuesList: valuesArray };
 }
+
+
 function nodeCount(root) {
     if (!root) return 1;
     return 1+nodeCount(root.left)+nodeCount(root.right);
@@ -193,7 +215,7 @@ function genRandSourceCode(numForks, numPrints) {
     for (let i = 0; i < numForks; i++) {
         code = randInsert(code, "f(,)", true);
     }
-    
+   
     // Generate print statement locations
     for (let i = 0; i < numPrints; i++) {
         code = randInsert(code, "-");
@@ -245,19 +267,22 @@ function genRandSourceCode(numForks, numPrints) {
 // }
 
 function main() {
-    let code = genRandSourceCode(3,4);
+    let code = genRandSourceCode(4,4);
+    // code = "f()af(,b)cf(f(,)f(,)f(,f(d,)),)";
     console.log(code);
     console.log("-".repeat(10));
-    // console.log(transpileToC(code));
-    // console.log("-".repeat(10));
-    
+    console.log(transpileToC(code).join(NEWLINE));
+    console.log("-".repeat(10));
+   
     let tree = buildTree(code);
     // console.log(printTree(tree));
     console.log(printTreeVert(tree));
     console.log("-".repeat(10));
     console.log("EXPECTED OUTPUT: <"+output(tree).split("").sort().join("")+">")
     console.log("EXPECTED OUTPUT: <"+output(tree).length+">")
-    console.log(getTreeCSV(tree));
+    const { csv: childParCSV, valuesList: labels } = getTreeCSV(tree);
+    console.log(childParCSV);
+    console.log(labels);
 }
 
 main();

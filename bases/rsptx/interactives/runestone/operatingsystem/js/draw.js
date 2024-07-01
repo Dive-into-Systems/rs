@@ -5,60 +5,51 @@ import { csvParse, stratify, select } from "d3";
 import { graphviz } from "d3-graphviz";
 import "@hpcc-js/wasm";
 
-export function drawHierarchy(linksCsv) {
+
+function getHierarchyAttr(links, labels) {
+
+    var nodeDef = "";
+    var edgeDef = "";
+
+    // console.log("Labels: " + labels);
+    // console.log("Links: " + links);
+    for (let i = 0; i < labels.length; i++) {
+        let [ID, val] = labels[i].split(':');
+        // console.log("Val: ", val);
+        let prints = val.trim().slice(1,-1).split(',').join('');
+        // console.log("Prints: " + prints);
+        // nodeDef.push(`${ID} [label="${prints}"];`);
+        nodeDef += (`${ID} [label="${prints}"];`);
+    }
+
+    links.forEach(e => {
+        const c = e.child;
+        const p = e.parent;
+
+        if (p) { edgeDef += (`${p} -> ${c};`); }
+    });
+
+    // console.log("Node def: " + nodeDef);
+    // console.log("Edge def: " + edgeDef);
+    return [nodeDef, edgeDef];
+}
+
+export function drawHierarchy(linksCsv, labels) {
 
     const links = csvParse(linksCsv);
     console.log(links);
 
-    const childColumn = links.columns[0];
-    const parentColumn = links.columns[1];
-
-    var nodeDef = new Set();
-    var edgeDef = [];
-
     var digraphString = (
         'digraph {' + 
         'bgcolor = "transparent";' + 
-        'node [shape=circle, color=black, style=filled, fillcolor=lightblue];' +
+        'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
         'edge [color=black, penwidth=2.0];'
     );
 
-    var nodeDef = new Set();
-    var edgeDef = [];
-    
-    for (var i = 0; i < links.length; i++) {
-        const child = links[i].child.split('@');
-    const parent = links[i].parent.split('@');
+    const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
 
-    const cId = child[0];
-    let cP = (child[1] === undefined || child[1] === "null") ? " " : child[1];
-    const pId = parent[0];
-    let pP = (parent[1] === undefined || parent[1] === "null") ? " " : parent[1];
-
-    console.log(cId + " " + cP + "==" + pId + " " + pP);
-
-       	if (pId) {
-        	nodeDef.add(`${pId} [label="${pP}"];`);
-        }
-        
-        if (cId) {
-        	nodeDef.add(`${cId} [label="${cP}"];`);
-        }
-
-        if (pId) {
-            edgeDef.push(`${pId} -> ${cId};`);
-        }
-    }
-    
-	console.log(nodeDef);
-    
-    for (let value of nodeDef) {
-      digraphString += value;
-    }
-
-    for (var i = 0; i < edgeDef.length; i++) {
-        digraphString += edgeDef[i];
-    }
+    digraphString += nodeDef;
+    digraphString += edgeDef;
 
     digraphString += "}";
 
@@ -73,60 +64,6 @@ export function drawTimeline(linksCsv) {
     const links = csvParse(linksCsv);
     console.log(links);
 
-    const childColumn = links.columns[0];
-    const parentColumn = links.columns[1];
-
-    var nodeDef = new Set();
-    var edgeDef = [];
-
-    var digraphString = (
-        'digraph {' + 
-        'bgcolor = "transparent";' + 
-        'node [shape=circle, color=black, style=filled, fillcolor=lightblue];' +
-        'edge [color=black, penwidth=2.0];'
-    );
-
-    var nodeDef = new Set();
-    var edgeDef = [];
-    
-    for (var i = 0; i < links.length; i++) {
-        const child = links[i].child.split('@');
-    const parent = links[i].parent.split('@');
-
-    const cId = child[0];
-    let cP = (child[1] === undefined || child[1] === "null") ? " " : child[1];
-    const pId = parent[0];
-    let pP = (parent[1] === undefined || parent[1] === "null") ? " " : parent[1];
-
-    console.log(cId + " " + cP + "==" + pId + " " + pP);
-
-       	if (pId) {
-        	nodeDef.add(`${pId} [label="${pP}"];`);
-        }
-        
-        if (cId) {
-        	nodeDef.add(`${cId} [label="${cP}"];`);
-        }
-
-        if (pId) {
-            edgeDef.push(`${pId} -> ${cId};`);
-        }
-    }
-    
-	console.log(nodeDef);
-    
-    for (let value of nodeDef) {
-      digraphString += value;
-    }
-
-    for (var i = 0; i < edgeDef.length; i++) {
-        digraphString += edgeDef[i];
-    }
-
-    digraphString += "}";
-
-    console.log(digraphString);
-
-    select("#timeline_graph").graphviz()
-        .renderDot(digraphString);
+    // select("#timeline_graph").graphviz()
+    //     .renderDot(digraphString);
 }
