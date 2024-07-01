@@ -8,7 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
 import * as forking from "./fork_algorithm.js";
-import * as drawing from "./draw_tree.js";
+import * as drawing from "./draw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -46,8 +46,7 @@ export default class Fork extends RunestoneBase {
         this.initParams(); // init all
         this.initForkInputField();
         this.initForkButtons();
-        this.initHierarchyTreeDiv();
-        this.initForkFeedbackDiv();
+        this.initFeedback_Hierarchy_Timeline_Divs();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
@@ -119,12 +118,9 @@ export default class Fork extends RunestoneBase {
         console.log(this.root);
         this.csvTree = forking.getTreeCSV(this.root);
         console.log(this.csvTree);
-        // this.count = forking.countPrints(this.tree, this.printContent);
     }
 
     initForkButtons() {
-
-        this.buttonsDiv = $("<div>");
 
         /* Ask me another button */
         this.generateButton = document.createElement("button");
@@ -168,10 +164,26 @@ export default class Fork extends RunestoneBase {
             this.showProcessHierarchy();
         });
 
+        /* Reveal timeline button */
+        this.revealTimelineButton = document.createElement("button");
+        this.revealTimelineButton.textContent = $.i18n("msg_fork_reveal_timeline");
+        $(this.revealTimelineButton).attr({
+            class: "btn btn-success",
+            name: "draw timeline",
+            type: "button",
+            id: this.divid + "draw_timeline",
+        });
+        this.revealTimelineButton.addEventListener("click", () => {
+            this.showProcessHierarchy();
+        });
+
         this.containerDiv.append("<br>");
+
+        this.buttonsDiv = $("<div>");
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
+        this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
 
         this.containerDiv.append(this.buttonsDiv);
@@ -184,6 +196,7 @@ export default class Fork extends RunestoneBase {
         // clear feedback field
         $(this.feedbackDiv).remove();
         $(this.hierarchyTreeDiv).remove();
+        $(this.timelineDiv).remove();
     }
 
     updatePrompts(){
@@ -196,9 +209,13 @@ export default class Fork extends RunestoneBase {
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
 
-        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        this.hierarchyTreeDiv = $("<div>").attr("id", "hierarchy_graph");
         $(this.hierarchyTreeDiv).addClass("tree-div");
         this.containerDiv.append(this.hierarchyTreeDiv);
+
+        this.timelineDiv = $("<div>").attr("id", "timeline_graph");
+        $(this.timelineDiv).addClass("tree-div");
+        this.containerDiv.append(this.timelineDiv);
     }
 
     checkCurrentAnswer() {
@@ -224,19 +241,27 @@ export default class Fork extends RunestoneBase {
     showProcessHierarchy() {
         // $(this.hierarchyTreeDiv).html("BOOM JUST TRYING THINGS OUT.");
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
-        $(this.hierarchyTreeDiv).html(drawing.drawHTree(this.csvTree));
+        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree));
     }
 
-    initForkFeedbackDiv() {
-        // create a feedback div, will be removed in clear and added back when generate another question
+    showTimeline() {
+        $(this.timelineDiv).html(drawing.drawTimeline(this.csvTree));
+    }
+
+    initFeedback_Hierarchy_Timeline_Divs() {
+        // Create a feedback div, will be removed in clear and added back when generate another question
         this.feedbackDiv = $("<div>").attr("id", this.divid + "_feedback");
         this.containerDiv.append(this.feedbackDiv);
-    }
 
-    initHierarchyTreeDiv() {
-        this.hierarchyTreeDiv = $("<div>").attr("id", "graph");
+        // Create a hierarchy tree div
+        this.hierarchyTreeDiv = $("<div>").attr("id", "hierarchy_graph");
         $(this.hierarchyTreeDiv).addClass("tree-div");
         this.containerDiv.append(this.hierarchyTreeDiv);
+
+        // Create a timeline div
+        this.timelineDiv = $("<div>").attr("id", "timeline_graph");
+        $(this.timelineDiv).addClass("tree-div");
+        this.containerDiv.append(this.timelineDiv);
     }
 
     renderFeedback() {
@@ -249,7 +274,7 @@ export default class Fork extends RunestoneBase {
         }
         
         this.feedbackDiv.html(feedback_html);
-        this.displayFeedback();
+        // this.displayFeedback();
         
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
@@ -273,12 +298,12 @@ export default class Fork extends RunestoneBase {
     recordAnswered() {
         this.isAnswered = true;
     }
-    hideFeedback() {
-        $(this.feedbackDiv).css("visibility", "hidden");
-    }
-    displayFeedback() {
-        $(this.feedbackDiv).css("visibility", "visible");
-    }
+    // hideFeedback() {
+    //     $(this.feedbackDiv).css("visibility", "hidden");
+    // }
+    // displayFeedback() {
+    //     $(this.feedbackDiv).css("visibility", "visible");
+    // }
     // log the answer and other info to the server (in the future)
     async logCurrentAnswer(sid) {
         let answer = JSON.stringify(this.inputNodes);

@@ -4,6 +4,7 @@ $.i18n().load({
         msg_fork_check_answer: "Check answer",
         msg_fork_compare_me: "Compare me",
         msg_fork_reveal_tree: "Show process hierarchy",
+        msg_fork_reveal_timeline: "Show timeline",
         msg_fork_generate_another: "Ask me another",
         msg_fork_incorrect: "Incorrect. Please think again.",
         msg_fork_correct: "Correct. Good job!",
