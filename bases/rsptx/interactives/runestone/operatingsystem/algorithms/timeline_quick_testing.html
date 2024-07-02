@@ -10,55 +10,61 @@
 
 <script>
 
-    function drawTimeline(links) {
+    function connectNodes(values) {
+        var mainGraphEdges = [];
+        var subgraphEdges = []; // should be an array of links
+
+        for (let i = 0; i < values.length; i++) {
+            const [IDtime, print] = values[i].split(':');
+            const [ID, timestep] = IDtime.split('.');
+            console.log("Prints:", print, "ID:", ID, "Timestep:", timestep);
+            
+            
+            // mainGraphEdges[ID].push(values); // same ID should be linked in main graph
+            // subgraphEdges
+        }
+    }
+
+    function getSubgraph(i) {
+        var subgraphString = (
+            `subgraph cluster_${i} {` +
+                // `style=filled;` +
+                `color=white;` +
+                `node [color=black, style=filled, fillcolor=white];`
+                // `label = "p_${i}";`
+        );
+
+        if (i == 0) { subgraphString += `a0 -> a1 -> a2 -> a3;`; }
+        else { subgraphString += `b0 -> b1 -> b2 -> b3;`; }
+
+        subgraphString += '}';
+        // console.log(subgraphString);
+        return subgraphString;
+    }
+
+    function drawTimeline(links, values) {
+
         var digraphString = (
             'digraph G {' + 
             'bgcolor=transparent;' + 
             'node [shape=box, color=black, style=filled, fillcolor=white];' +
-            'edge [color=black, penwidth=2.0];' +
-            'splines=ortho;'
+            'edge [color=black, penwidth=2.0];' + 
+            'rankdir=LR;'
+            
         );
+        
+        connectNodes(values);
 
-        // const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
+        for (let i = 0; i < 2; i++) {
+            digraphString += getSubgraph(i);
+        }
 
-        // digraphString += 'A -> B';
-        // digraphString += edgeDef;
-        // digraphString += (
-        //     '"TL 1 event 1" [group=TL1];' + 
-        //     '"TL 1 event 2" [group=TL1];' + 
-        //     '"TL 1 event 3" [group=TL1];' + 
-        //     '"TL 2 event 1" [group=TL2];' +
-        //     '"TL 3 event 1" [group=TL3];' +
-        //     '"TL 1 event 1" -> "TL 1 event 2" [color=red];' +
-        //     '"TL 1 event 2" -> "TL 1 event 3" [color=red];' +
-        //     '"TL 2 event 1" -> "TL 1 event 1";' +
-        //     '"TL 3 event 1" -> "TL 1 event 1";'
-        // );
         digraphString += (
-            'subgraph cluster_0 {' +
-            'style=filled;' +
-            'color=lightgrey;' +
-            'node [style=filled,color=white];' +
-            'a0 -> a1 -> a2 -> a3;' +
-            'label = "process #1";' +
-            '}' +
-
-            'subgraph cluster_1 {' +
-            'node [style=filled];' +
-            'b0 -> b1 -> b2 -> b3;' +
-            'label = "process #2";' +
-            'color=blue' +
-            '}' +
-
-            'start -> a0;' +
-            'start -> b0;' +
             'a1 -> b3;' +
             'b2 -> a3;' +
-            'a3 -> a0;' +
             'a3 -> end;' +
             'b3 -> end;' +
 
-            'start [shape=Mdiamond];' +
             'end [shape=Msquare];'
         );
 
@@ -68,56 +74,6 @@
         console.log(digraphString);
 
         d3.select("#timeline_graph").graphviz()
-            .renderDot(digraphString);
-    }
-
-    function getHierarchyAttr(links, labels) {
-        nodeDef = "";
-        edgeDef = "";
-
-        // console.log("Labels: " + labels);
-        // console.log("Links: " + links);
-        for (let i = 0; i < labels.length; i++) {
-            let [ID, val] = labels[i].split(':');
-            console.log("Val: ", val);
-            let prints = val.trim().slice(1,-1).split(',').join('');
-            console.log("Prints: " + prints);
-            // nodeDef.push(`${ID} [label="${prints}"];`);
-            nodeDef += (`${ID} [label="${prints}"];`);
-        }
-
-        links.forEach(e => {
-            const c = e.child;
-            const p = e.parent;
-
-            if (p) { edgeDef += (`${p} -> ${c};`); }
-        });
-
-        console.log("Node def: " + nodeDef);
-        console.log("Edge def: " + edgeDef);
-
-        return [nodeDef, edgeDef];
-    }
-
-    function drawHierarchy(links, labels) {
-
-        var digraphString = (
-            'digraph {' + 
-            'bgcolor = "transparent";' + 
-            'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
-            'edge [color=black, penwidth=2.0];'
-        );
-
-        const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
-
-        digraphString += nodeDef;
-        digraphString += edgeDef;
-
-        digraphString += "}";
-
-        console.log(digraphString);
-
-        d3.select("#hierarchy_graph").graphviz()
             .renderDot(digraphString);
     }
 
@@ -268,11 +224,64 @@
         const { treeSet, valuesMap } = getTreeArr(root);
         const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
 
-        console.log("Tree set: ");
-        treeSet.forEach(item => console.log(item));
-
         const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}:[${values.map(value => value)}]`);
         return { csv: csvString, valuesList: valuesArray };
+    }
+
+    // function printTreeVert(node, isRoot = true, values = []) {
+    // const nullChar = "[]";
+    //     // if (!node) return [nullChar]; // show forked processes that does nothing
+    //     if (!node) return [];
+    
+    //     const leftSubtree = printTreeVert(node.left, false);
+    //     const rightSubtree = printTreeVert(node.right, false);
+
+    //     const hasLeft = leftSubtree.length > 0;
+    //     const hasRight = rightSubtree.length > 0;
+    
+    //     const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
+    //     values.push(selfValue);
+        
+    //     // spacing for subtrees
+    //     const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
+    // ;
+    //     const indentRight = (hasLeft ? "|" : " ") + "_".repeat(Math.max(selfValue.length, leftWidth));
+    
+    //     const result = [];
+    //     result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
+    //     rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
+    //     // if (hasLeft) result.push(BAR);
+    //     leftSubtree.forEach(line => result.push(line+SPC.repeat(leftWidth-line.length)));
+
+    //     return isRoot ? result.join("\n") : result;
+    // }
+
+    function printTreeVert(node, isRoot = true, values = []) {
+        const nullChar = "[]";
+        if (!node) return { treeLines: [], values };
+
+        const leftResult = printTreeVert(node.left, false, values);
+        const rightResult = printTreeVert(node.right, false, values);
+
+        const leftSubtree = leftResult.treeLines;
+        const rightSubtree = rightResult.treeLines;
+
+        const hasLeft = leftSubtree.length > 0;
+        const hasRight = rightSubtree.length > 0;
+
+        const selfValue = `${node.id}.${node.timestep}:${node.value ? node.value : nullChar}`;
+        values.push(selfValue);  // Add selfValue to the array
+
+        // spacing for subtrees
+        const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
+        const indentRight = (hasLeft ? "|" : " ") + "_".repeat(Math.max(selfValue.length, leftWidth));
+
+        const result = [];
+        result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth) - selfValue.length + 1) + rightSubtree[0] : ""}`);
+        rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
+        leftSubtree.forEach(line => result.push(line + " ".repeat(leftWidth - line.length)));
+
+        return isRoot ? { treeLines: result.join("\n"), values } : { treeLines: result, values };
     }
     
     console.log("-".repeat(10));
@@ -281,16 +290,21 @@
     console.log(transpileToC(source).join(NEWLINE));
 
     let tree = buildTree(source);
+    const { treeLines, values } = printTreeVert(tree);
+    console.log("Tree visualization:");
+    console.log(treeLines);
+    console.log("All node values:");
+    console.log(values);
     const { csv: linksCsv, valuesList: labels } = getTreeCSV(tree);
 
-    console.log("Links CSV: " + linksCsv);
-    console.log("Labels: " + labels);
+    // console.log("Links CSV: " + linksCsv);
+    // console.log("Labels: " + labels);
 
     const links = d3.csvParse(linksCsv);
-    console.log("Parsed links: " + links);
+    // console.log("Parsed links: " + links);
 
     // drawHierarchy(links, labels);
-    drawTimeline(links);
+    drawTimeline(links, values);
 
 </script>
 </body>
