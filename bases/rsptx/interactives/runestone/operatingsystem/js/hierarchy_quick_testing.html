@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+<script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+
+<div id="hierarchy_graph" style="text-align: center;"></div>
+
+<script>
+
+    function drawTimeline(links) {
+        pass;
+    }
+
+    function getHierarchyAttr(links, labels) {
+        nodeDef = "";
+        edgeDef = "";
+
+        // console.log("Labels: " + labels);
+        // console.log("Links: " + links);
+        for (let i = 0; i < labels.length; i++) {
+            let [ID, val] = labels[i].split(':');
+            console.log("Val: ", val);
+            let prints = val.trim().slice(1,-1).split(',').join('');
+            console.log("Prints: " + prints);
+            // nodeDef.push(`${ID} [label="${prints}"];`);
+            nodeDef += (`${ID} [label="${prints}"];`);
+        }
+
+        links.forEach(e => {
+            const c = e.child;
+            const p = e.parent;
+
+            if (p) { edgeDef += (`${p} -> ${c};`); }
+        });
+
+        console.log("Node def: " + nodeDef);
+        console.log("Edge def: " + edgeDef);
+
+        return [nodeDef, edgeDef];
+    }
+
+    function drawHierarchy(links, labels) {
+
+        var digraphString = (
+            'digraph {' + 
+            'bgcolor = "transparent";' + 
+            'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
+            'edge [color=black, penwidth=2.0];'
+        );
+
+        const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
+
+        digraphString += nodeDef;
+        digraphString += edgeDef;
+
+        digraphString += "}";
+
+        console.log(digraphString);
+
+        d3.select("#hierarchy_graph").graphviz()
+            .renderDot(digraphString);
+    }
+
+    class ForkNode {
+        constructor(id = 0, timestep = 0, value = "", left = null, right = null) {
+            this.id = id;
+            this.timestep = timestep;
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+    }
+
+    function parseForkArgs(code, forkIndex) {
+        let balance = 1;
+        let topLevelComma = null; // position of first top-level comma
+        let [start, end] = [forkIndex + 2, forkIndex + 2]; // after 'f('
+        while (end < code.length) {
+            if (code[end] === '(') balance++;
+            if (code[end] === ')') balance--;
+            if (balance === 0) break; // found closing bracket
+            if (balance === 1 && code[end] === ',') topLevelComma ??= end; // only assigns top comma once
+            end++;
+        }
+
+        if (!topLevelComma) return [code.substring(start, end), '', end + 1];
+        return [
+            code.substring(start, topLevelComma),
+            code.substring(topLevelComma + 1, end),
+            end + 1 // next index
+        ];
+    }
+
+    function buildTree(code, id = 0, time = 0, childCt = 0) {
+        code = code.trim();
+        if (code.length === 0) return null;
+
+        let forkIndex = code.indexOf('f(');
+        if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
+        let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
+
+        leftCode += code.substring(end).trim(); // remaining code
+        rightCode += code.substring(end).trim(); // remaining code
+
+        childCt += rightCode?1:0;
+        const leftNode = buildTree(leftCode, id, time+1, childCt);
+        const rightNode = buildTree(rightCode, (id*10)+childCt-(id?1:0), 0);
+        return new ForkNode(
+            id,
+            time,
+            // code.substring(0, forkIndex).trim() || "@",
+            code.substring(0, forkIndex).trim() || "@",
+            leftNode,
+            rightNode
+        );
+    }
+
+    const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
+
+    function getTreeArr(root, parentVal = "", result = new Set(), valuesMap = new Map()) {
+        if (!root) return { treeSet: result, valuesMap };
+
+        // Add the parent-child entry to the set if IDs are different
+        const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
+        if (root.id.toString() !== parentVal) {
+            result.add(entry);
+        }
+        // result.add(entry);
+
+        // Aggregate values by ID in a Map
+        if (valuesMap.has(root.id)) {
+            valuesMap.get(root.id).push(root.value);
+        } else {
+            valuesMap.set(root.id, [root.value]);
+        }
+
+        // Recursive calls to traverse left and right children
+        getTreeArr(root.left, `${root.id}`, result, valuesMap);
+        getTreeArr(root.right, `${root.id}`, result, valuesMap);
+
+        return { treeSet: result, valuesMap };
+    }
+
+    function getTreeCSV(root) {
+        const { treeSet, valuesMap } = getTreeArr(root);
+        const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
+        console.log("tree set: " + treeSet);
+        const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}:[${values.map(value => value)}]`);
+        return { csv: csvString, valuesList: valuesArray };
+    }
+
+    const source = "f(,f(a,)b)cf(d,)";
+    let tree = buildTree(source);
+    const { csv: linksCsv, valuesList: labels } = getTreeCSV(tree);
+
+    console.log(linksCsv);
+    console.log(labels);
+
+    const links = d3.csvParse(linksCsv);
+    console.log(links);
+
+    drawHierarchy(links, labels);
+    // drawTimeline(links);
+
+</script>
+</body>
