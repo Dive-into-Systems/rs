@@ -9,7 +9,96 @@
 <div id="timeline_graph" style="text-align: center;"></div>
 
 <script>
-    
+
+    function drawTimeline(links) {
+        var digraphString = (
+            'digraph G {' + 
+            'bgcolor=transparent;' + 
+            'node [shape=box, color=black, style=filled, fillcolor=white];' +
+            'edge [color=black, penwidth=2.0];' +
+            'splines=ortho;'
+        );
+
+        // const [nodeDef, edgeDef] = getHierarchyAttr(links, labels);
+
+        // digraphString += 'A -> B';
+        // digraphString += edgeDef;
+        // digraphString += (
+        //     '"TL 1 event 1" [group=TL1];' + 
+        //     '"TL 1 event 2" [group=TL1];' + 
+        //     '"TL 1 event 3" [group=TL1];' + 
+        //     '"TL 2 event 1" [group=TL2];' +
+        //     '"TL 3 event 1" [group=TL3];' +
+        //     '"TL 1 event 1" -> "TL 1 event 2" [color=red];' +
+        //     '"TL 1 event 2" -> "TL 1 event 3" [color=red];' +
+        //     '"TL 2 event 1" -> "TL 1 event 1";' +
+        //     '"TL 3 event 1" -> "TL 1 event 1";'
+        // );
+        digraphString += (
+            'subgraph cluster_0 {' +
+            'style=filled;' +
+            'color=lightgrey;' +
+            'node [style=filled,color=white];' +
+            'a0 -> a1 -> a2 -> a3;' +
+            'label = "process #1";' +
+            '}' +
+
+            'subgraph cluster_1 {' +
+            'node [style=filled];' +
+            'b0 -> b1 -> b2 -> b3;' +
+            'label = "process #2";' +
+            'color=blue' +
+            '}' +
+
+            'start -> a0;' +
+            'start -> b0;' +
+            'a1 -> b3;' +
+            'b2 -> a3;' +
+            'a3 -> a0;' +
+            'a3 -> end;' +
+            'b3 -> end;' +
+
+            'start [shape=Mdiamond];' +
+            'end [shape=Msquare];'
+        );
+
+
+        digraphString += "}";
+
+        console.log(digraphString);
+
+        d3.select("#timeline_graph").graphviz()
+            .renderDot(digraphString);
+    }
+
+    function getHierarchyAttr(links, labels) {
+        nodeDef = "";
+        edgeDef = "";
+
+        // console.log("Labels: " + labels);
+        // console.log("Links: " + links);
+        for (let i = 0; i < labels.length; i++) {
+            let [ID, val] = labels[i].split(':');
+            console.log("Val: ", val);
+            let prints = val.trim().slice(1,-1).split(',').join('');
+            console.log("Prints: " + prints);
+            // nodeDef.push(`${ID} [label="${prints}"];`);
+            nodeDef += (`${ID} [label="${prints}"];`);
+        }
+
+        links.forEach(e => {
+            const c = e.child;
+            const p = e.parent;
+
+            if (p) { edgeDef += (`${p} -> ${c};`); }
+        });
+
+        console.log("Node def: " + nodeDef);
+        console.log("Edge def: " + edgeDef);
+
+        return [nodeDef, edgeDef];
+    }
+
     function drawHierarchy(links, labels) {
 
         var digraphString = (
@@ -33,13 +122,59 @@
     }
 
     class ForkNode {
-        constructor(id = 0, timestep = 0, value = "", left = null, right = null) {
+        constructor(id = 0, timestep = 0, value = "_", left = null, right = null) {
             this.id = id;
             this.timestep = timestep;
             this.value = value;
             this.left = left;
             this.right = right;
         }
+    }
+    const INDENT_SPC = 4;
+    const DASH = "─";
+    const BAR = "|";
+    const SPC = " ";
+    const NEWLINE = "\n";
+    let nodeCounter = 1;
+
+    function transpileToC(code, indent = 0, activeProcesses = ["0"]) {
+        let result = [];
+        let ptr = 0;
+        let nextF;
+        let leftCode, rightCode;
+
+        function addLine(line) {
+            result.push(`${SPC.repeat(indent)}${line}`);
+        }
+
+        while (ptr < code.length) {
+            nextF = code.indexOf('f(', ptr);
+            if (nextF === -1 || nextF > ptr) {
+                // print plain text until 'f(' or end of string
+                let end = nextF === -1 ? code.length : nextF;
+                let text = code.substring(ptr, end);
+                for (let i = 0; i < text.length; i++) {
+                    addLine(`printf("${text[i]}");`);
+                }
+                ptr = end;
+            }
+
+            if (nextF !== -1 && ptr === nextF) {
+                [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
+                if (!leftCode && !rightCode) addLine("fork();");
+                if (leftCode) {
+                    addLine("if (fork()) {");
+                    result = result.concat(transpileToC(leftCode, indent + INDENT_SPC));
+                    addLine(rightCode ? "} else {" : "}");
+                }
+                if (rightCode) {
+                    if (!leftCode) addLine("if (fork() == 0) {");
+                    result = result.concat(transpileToC(rightCode, indent + INDENT_SPC));
+                    addLine("}");
+                }
+            }
+        }
+        return result;
     }
 
     function parseForkArgs(code, forkIndex) {
@@ -64,17 +199,36 @@
 
     function buildTree(code, id = 0, time = 0, childCt = 0) {
         code = code.trim();
-        if (code.length === 0) return null;
+        if (code.length === 0) {
+            return new ForkNode(
+                id,
+                time,
+                "",
+                null, null
+            );
+        }
 
+        const exitIndex = code.indexOf("x");
         let forkIndex = code.indexOf('f(');
-        if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
+        let hasFork = true;
+        if (forkIndex === -1) {
+            hasFork = false;
+            forkIndex = code.length; // no fork, plain print node
+        }
+
+        if (exitIndex!==-1 && exitIndex < forkIndex) {
+            forkIndex = exitIndex+1;
+            code = code.substring(0, exitIndex+1); // capture exit char
+        }
         // return new ForkNode(id, time, code);
         let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
         leftCode += code.substring(end).trim(); // remaining code
         rightCode += code.substring(end).trim(); // remaining code
-        childCt += rightCode?1:0;
-        const leftNode = buildTree(leftCode, id, time+1, childCt);
-        const rightNode = buildTree(rightCode, (id*10)+childCt-(id?1:0), 0);
+        // childCt += rightCode?1:0;
+        childCt += (hasFork)?1:0;
+        console.log(code, hasFork);
+        const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
+        const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
         return new ForkNode(
             id,
             time,
@@ -90,8 +244,9 @@
         if (!root) return { treeSet: result, valuesMap };
 
         // Add the parent-child entry to the set if IDs are different
-        const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
-        if (root.id.toString() !== parentVal) {
+        // const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
+        const entry = `${root.id},${parentVal}`;  // Always include parent ID, even if it's an empty string
+        if (root.id.toString() !== parentVal.toString()) {
             result.add(entry);
         }
 
@@ -112,21 +267,30 @@
     function getTreeCSV(root) {
         const { treeSet, valuesMap } = getTreeArr(root);
         const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
-        const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}: [${values.join(",")}]`);
+
+        console.log("Tree set: ");
+        treeSet.forEach(item => console.log(item));
+
+        const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}:[${values.map(value => value)}]`);
         return { csv: csvString, valuesList: valuesArray };
     }
+    
+    console.log("-".repeat(10));
 
-    const source = "af(bf(,)f(c,d),)";
+    const source = "f(,f(a,)b)cf(d,)";
+    console.log(transpileToC(source).join(NEWLINE));
+
     let tree = buildTree(source);
-    // const linksCvs = "child,parent\n0\n0.1@a\n0.2@b\n";
     const { csv: linksCsv, valuesList: labels } = getTreeCSV(tree);
 
-    console.log(linksCsv);
-    const links = d3.csvParse(linksCsv);
-    console.log(links);
+    console.log("Links CSV: " + linksCsv);
+    console.log("Labels: " + labels);
 
-    drawHierarchy(links, labels);
-    // drawTimeline(links);
+    const links = d3.csvParse(linksCsv);
+    console.log("Parsed links: " + links);
+
+    // drawHierarchy(links, labels);
+    drawTimeline(links);
 
 </script>
 </body>
