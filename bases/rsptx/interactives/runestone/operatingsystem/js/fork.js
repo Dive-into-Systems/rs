@@ -7,8 +7,8 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
-import * as forking from "./fork_algorithm.js";
-import * as drawing from "./draw.js";
+import * as forking from "../algorithms/build.js";
+import * as drawing from "../algorithms/draw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -252,7 +252,7 @@ export default class Fork extends RunestoneBase {
         $(this.hierarchyTreeDiv).css("display", "none");
         $(this.hierarchyTreeDiv).addClass("tree-div");
         this.containerDiv.append(this.hierarchyTreeDiv);
-
+        
         // Create a timeline div
         this.timelineDiv = $("<div>").attr("id", "timeline_graph");
         $(this.timelineDiv).css("display", "none");
@@ -263,15 +263,10 @@ export default class Fork extends RunestoneBase {
     updateFeedbackDiv() {
         $(this.feedbackDiv).css("display", "block");
 
-        var feedback_html = this.feedback_msg;
-        // set the background color of feedback divid
-        if (this.correct === true) {
-            $(this.feedbackDiv).attr("class", "alert alert-info");
-        } else {
-            $(this.feedbackDiv).attr("class", "alert alert-danger");
-        }
+        if (this.correct === true) { $(this.feedbackDiv).attr("class", "alert alert-info"); }
+        else { $(this.feedbackDiv).attr("class", "alert alert-danger"); }
         
-        this.feedbackDiv.html(feedback_html);
+        this.feedbackDiv.html(this.feedback_msg);
         
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
