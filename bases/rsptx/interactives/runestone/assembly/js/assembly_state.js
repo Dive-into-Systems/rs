@@ -1,6 +1,6 @@
 // assembly_state.js
 // *********
-// This file contains the JS for the Runestone Assembly State component. It was created By Arys Aikyn, Tony Cao 06/03/2024
+// This file contains the JS for the Runestone Assembly State component. It was created by Arys Aikyn, Tony Cao 06/03/2024
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
@@ -11,9 +11,9 @@ import { validLetter } from "jexcel";
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
-const num_instructions = 5;
+const num_instructions = 3;
 const num_registers = 5;
-const num_addresses = 5;
+const num_addresses = 7;
 
 // ASMState constructor
 export default class ASMState_EXCERCISE extends RunestoneBase {
@@ -23,9 +23,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
-
-        this.currentStep = 0; // Track the current instruction step
-
         this.createAssemblyStateElement();
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
@@ -57,54 +54,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderButtons();
     }
 
-    generateNewQuestion() {
-        console.log("Generating new question...");
-        this.initialState = this.generator.generateRandomInitialState(
-            num_instructions,
-            num_registers,
-            num_addresses,
-            [this.arith_checked, this.stack_checked, this.memo_checked]
-        );
-        console.log("Initial state:", this.initialState);
-        this.allStates = this.generator.executeInstructions(this.initialState);
-        console.log("All states:", this.allStates);
-        this.currentStep = 0;
-    }
-
-    // set default parameters
-    setDefaultParams() {
-        this.architecture = "X86_64"; // Default architecture
-    }
-
-    // load customized parameters
-    setCustomizedParams() {
-        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
-        if (currentOptions["architecture"] !== undefined) {
-            this.architecture = currentOptions["architecture"];
-        }
-
-        switch (this.architecture) {
-            case "X86_32":
-                this.generator = new X86_32_OPS();
-                break;
-            case "X86_64":
-                this.generator = new X86_64_OPS();
-                break;
-            case "ARM64":
-                this.generator = new ARM64_OPS();
-                break;
-            default:
-                throw new Error("Invalid architecture option");
-        }
-    }
-
     renderHeader() {
         this.header = $("<div>").html(
             "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions. " +
             "For each instruction provided, describe how it alters the values in registers or memory. " +
             "Start with the initial state provided below, and sequentially apply each instruction, updating the state as you go.<br><br>"
         );
-        this.headerDiv = $("<div>").append(this.header); // .addClass("header-box"); ??
+        this.headerDiv = $("<div>").append(this.header);
         this.containerDiv.append(this.headerDiv);
     }
 
@@ -116,7 +72,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         ];
 
         const customizationDiv = $("<div>").addClass("customization-container");
-
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
         instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
 
@@ -175,105 +130,18 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(customizationDiv);
     }
 
-
-    renderButtons() {
-        const buttonContainer = $("<div>").addClass("button-container");
-
-        const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
-        const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
-        const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
-
-        buttonContainer.append(resetButton).append(tryAnotherButton).append(checkAnswerButton);
-        this.containerDiv.append(buttonContainer);
-    }
-
-    resetValues() {
-        this.containerDiv.find("input[type='text']").val("");
-        this.containerDiv.find('.feedback-container').remove();
-    }
-
-    tryAnother() {
-        console.log("Trying another question");
-        // Clear the current state and re-render the component
-        this.generateNewQuestion();
-        this.containerDiv.find('.instruction-container').remove();
-        this.containerDiv.find('.tables-container').remove();
-        this.containerDiv.find('.button-container').remove();
-        this.containerDiv.find('.feedback-container').remove();
-        this.renderInstructionsList(this.initialState[0]);
-        this.renderTables();
-        this.renderButtons();
-    }
-
-    validateAnswers(userRegisters, userMemory, step) {
-        console.log(`Validating answers for step ${step}`);
-        const expectedState = this.allStates[step];
-        let isCorrect = true;
-
-        console.log("Expected state for Registers:", expectedState.registers);
-        console.log("Expected state for Memory:", expectedState.memory);
-
-        // Validate registers
-        for (let reg of expectedState.registers) {
-            if (userRegisters[reg.register] === undefined || userRegisters[reg.register].toLowerCase() !== reg.value.toLowerCase()) {
-                console.log(`Mismatch in register ${reg.register}. Expected: ${reg.value}, Got: ${userRegisters[reg.register]}`);
-                isCorrect = false;
-                break;
-            }
-        }
-
-        // Validate memory
-        if (isCorrect) {
-            for (let mem of expectedState.memory) {
-                if (userMemory[mem.address] === undefined || userMemory[mem.address].toLowerCase() !== mem.value.toLowerCase()) {
-                    console.log(`Mismatch in memory address ${mem.address}. Expected: ${mem.value}, Got: ${userMemory[mem.address]}`);
-                    isCorrect = false;
-                    break;
-                }
-            }
-        }
-
-        console.log(`Validation result: ${isCorrect ? 'Correct' : 'Incorrect'}`);
-        return isCorrect;
-    }
-
-    checkAnswer() {
-        console.log("Checking answers for step: ", this.currentStep);
-        // Retrieve user's input values
-        const registerInputs = this.containerDiv.find('.register-table tbody tr');
-        const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
-
-        let userRegisters = {};
-        registerInputs.each((index, row) => {
-            const reg = $(row).find('td').eq(0).text();
-            const userValue = $(row).find('input').val();
-            userRegisters[reg] = userValue;
-        });
-
-        let userMemory = {};
-        memoryInputs.each((index, row) => {
-            const address = $(row).find('td').eq(0).text();
-            const userValue = $(row).find('input').val();
-            userMemory[address] = userValue;
-        });
-        console.log("user inputs for Registers")
-        console.log(userRegisters)
-        console.log("user inputs for Memory")
-        console.log(userMemory)
-        const isCorrect = this.validateAnswers(userRegisters, userMemory, this.currentStep);
-
-        // Provide feedback
-        this.renderFeedback(isCorrect);
-
-        if (isCorrect) {
-            this.currentStep++;
-            if (this.currentStep >= this.initialState[0].length) {
-                this.renderFinalFeedback();
-            } else {
-                // Optionally reset the input fields for the next step
-                this.resetValues();
-            }
-        }
+    generateNewQuestion() {
+        console.log("Generating new question...");
+        this.initialState = this.generator.generateRandomInitialState(
+            num_instructions,
+            num_registers,
+            num_addresses,
+            [this.arith_checked, this.stack_checked, this.memo_checked]
+        );
+        console.log("Initial state:", this.initialState);
+        this.allStates = this.generator.executeInstructions(this.initialState);
+        console.log("All states:", this.allStates);
+        this.currentInstruction = 1;
     }
 
     renderInstructionsList(instructions) {
@@ -282,9 +150,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         const instructionList = $("<ol>");
         instructions.forEach((inst, index) => {
-            const listItem = $("<li>").text(inst);
+            const listItem = $("<li>")
+                .text(inst)
+                .addClass("instruction-item")
+                .attr("data-index", index);
+            if (index !== 0) {
+                listItem.addClass("disabled");
+            }
             instructionList.append(listItem);
         });
+
+        instructionList.children("li:first").addClass("current");
 
         instructionDiv.append(instructionList);
         this.containerDiv.append(instructionDiv);
@@ -301,10 +177,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const registersTable = $("<table>").addClass("register-table");
         registersWrapper.append($("<h3>").text("Registers"));
 
-        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Initial Value"), $("<th>").text("Post Instruction Value")));
+        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Current Value"), $("<th>").text("Post Instruction Value")));
         const registersTableBody = $("<tbody>");
 
-        registers.forEach(({register, value}) => {
+        registers.forEach(({ register, value }) => {
             const displayValue = value || "0"; // Use the register's value or default to "0" if undefined
             registersTableBody.append($("<tr>").append(
                 $("<td>").text(register),
@@ -321,7 +197,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const memoryTable = $("<table>").addClass("memory-table");
         memoryWrapper.append($("<h3>").text("Memory:"));
 
-        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Initial Value"), $("<th>").text("Post Instruction Value")));
+        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Current Value"), $("<th>").text("Post Instruction Value")));
         const memoryTableBody = $("<tbody>");
 
         addresses.forEach(addr => {
@@ -335,6 +211,23 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(tablesContainer);
     }
 
+    renderButtons() {
+        const buttonContainer = $("<div>").addClass("button-container");
+
+        const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
+        const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
+        this.checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer()).prop("disabled", true);
+
+        buttonContainer.append(resetButton).append(tryAnotherButton).append(this.checkAnswerButton);
+        this.containerDiv.append(buttonContainer);
+
+        // Enable "Check Answer" button when all fields are filled
+        this.containerDiv.on("input", "input[type='text']", () => {
+            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val() !== "");
+            this.checkAnswerButton.prop("disabled", !allFilled);
+        });
+    }
+
     renderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
         if (feedbackDiv.length === 0) {
@@ -343,7 +236,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         }
         feedbackDiv.empty();
 
-        const feedbackMessage = isCorrect ? "Correct! Well done." : "Incorrect. Please try again.";
+        const feedbackMessage = isCorrect ?
+            `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
+            "Incorrect. Please try again.";
         feedbackDiv.append("<br>");
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', isCorrect ? 'green' : 'red'));
     }
@@ -359,6 +254,190 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const feedbackMessage = "All instructions completed! Well done.";
         feedbackDiv.append("<br>");
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', 'blue'));
+    }
+
+    /*=====================================
+    ====   Supporting and Utility Functions   ====
+    =========================================*/
+
+    setDefaultParams() {
+        this.architecture = "X86_64"; // Default architecture
+    }
+
+    setCustomizedParams() {
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["architecture"] !== undefined) {
+            this.architecture = currentOptions["architecture"];
+        }
+
+        switch (this.architecture) {
+            case "X86_32":
+                this.generator = new X86_32_OPS();
+                break;
+            case "X86_64":
+                this.generator = new X86_64_OPS();
+                break;
+            case "ARM64":
+                this.generator = new ARM64_OPS();
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
+    }
+
+    resetValues() {
+        this.containerDiv.find("input[type='text']").val("");
+        this.containerDiv.find('.feedback-container').remove();
+    }
+
+    tryAnother() {
+        // Clear the current state and re-render the component
+        this.generateNewQuestion();
+        this.containerDiv.find('.instruction-container').remove();
+        this.containerDiv.find('.tables-container').remove();
+        this.containerDiv.find('.button-container').remove();
+        this.containerDiv.find('.feedback-container').remove();
+        this.renderInstructionsList(this.initialState[0]);
+        this.renderTables();
+        this.renderButtons();
+    }
+
+    validateAnswers(userRegisters, userMemory, step) {
+        const expectedState = this.allStates[step];
+        let isCorrect = true;
+
+        for (let reg of expectedState.registers) {
+            console.log(userRegisters[reg.register], reg.value);
+            if (userRegisters[reg.register] != reg.value) {
+                isCorrect = false;
+                break;
+            }
+        }
+
+        if (isCorrect) {
+            for (let mem of expectedState.memory) {
+                console.log(userMemory[mem.address], mem.value);
+                if (userMemory[mem.address] != mem.value) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+        }
+
+        return isCorrect;
+    }
+
+    checkAnswer() {
+        console.log("Checking answers for instruction: ", this.currentInstruction);
+        const [userRegisters, userMemory] = this.gatherInput(this.allStates[this.currentInstruction]);
+
+        const isCorrect = this.validateAnswers(userRegisters, userMemory, this.currentInstruction);
+        this.updateTableColors(isCorrect, userRegisters, userMemory);
+        this.renderFeedback(isCorrect);
+
+        if (isCorrect) {
+            this.currentInstruction++;
+            if (this.currentInstruction >= this.initialState[0].length) {
+                this.renderFinalFeedback();
+            } else {
+                this.moveToNextInstruction();
+            }
+        }
+    }
+
+    gatherInput(currentState) {
+        const registerInputs = this.containerDiv.find('.register-table tbody tr');
+        const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
+
+        let userRegisters = {};
+        let userMemory = {};
+
+        registerInputs.each((index, row) => {
+            const reg = $(row).find('td').eq(0).text();
+            let userValue = $(row).find('input').val().trim();
+
+            // If input is empty or just whitespace, use the current state's value
+            if (userValue === "") {
+                const currentRegister = currentState.registers.find(r => r.register === reg);
+                userValue = currentRegister ? currentRegister.value : "";
+            }
+
+            userRegisters[reg] = userValue;
+        });
+
+        memoryInputs.each((index, row) => {
+            const address = $(row).find('td').eq(0).text();
+            let userValue = $(row).find('input').val().trim();
+
+            // If input is empty or just whitespace, use the current state's value
+            if (userValue === "") {
+                const currentMemory = currentState.memory.find(m => m.address === address);
+                userValue = currentMemory ? currentMemory.value : "";
+            }
+
+            userMemory[address] = userValue;
+        });
+
+        return [userRegisters, userMemory];
+    }
+
+    updateTableColors(isCorrect, userRegisters, userMemory) {
+        const expectedState = this.allStates[this.currentInstruction];
+        const previousState = this.currentInstruction > 0 ? this.allStates[this.currentInstruction - 1] : this.initialState[1];
+
+        // Update register colors
+        for (let reg of expectedState.registers) {
+            const row = this.containerDiv.find(`.register-table tr:contains('${reg.register}')`);
+            const input = row.find('input');
+            const previousValue = previousState.registers.find(r => r.register === reg.register).value;
+            const hasChanged = userRegisters[reg.register] !== previousValue;
+
+            if (hasChanged) {
+                const isRegCorrect = userRegisters[reg.register] == reg.value;
+                this.blinkElement(input, isRegCorrect);
+            } else {
+                input.css('background-color', '');
+            }
+        }
+
+        // Update memory colors
+        for (let mem of expectedState.memory) {
+            const row = this.containerDiv.find(`.memory-table tr:contains('${mem.address}')`);
+            const input = row.find('input');
+            const previousValue = previousState.memory.find(m => m.address === mem.address).value;
+            const hasChanged = userMemory[mem.address] !== previousValue;
+
+            if (hasChanged) {
+                const isMemCorrect = userMemory[mem.address] == mem.value;
+                this.blinkElement(input, isMemCorrect);
+            } else {
+                input.css('background-color', '');
+            }
+        }
+    }
+
+    blinkElement(element, isCorrect) {
+        const color = isCorrect ? 'lightgreen' : 'lightcoral';
+        let count = 0;
+        const intervalId = setInterval(() => {
+            element.css('background-color', count % 2 === 0 ? color : '');
+            count++;
+            if (count === 2) {
+                clearInterval(intervalId);
+                element.css('background-color', '');
+            }
+        }, 500);  // Change color every 200ms
+    }
+
+    moveToNextInstruction() {
+        this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
+        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction - 1}"]`).removeClass('disabled').addClass('current');
+        this.resetInputFields();
+        this.checkAnswerButton.prop("disabled", true);
+    }
+
+    resetInputFields() {
+        this.containerDiv.find("input[type='text']").val("").css('background-color', '');
     }
 }
 

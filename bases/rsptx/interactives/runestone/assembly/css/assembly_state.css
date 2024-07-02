@@ -38,7 +38,7 @@ th {
 }
 
 .table-wrapper {
-    flex: 1 1 45%; 
+    flex: 1 1 45%;
     margin: 10px;
 }
 
@@ -59,11 +59,44 @@ body {
 }
 
 .feedback-container {
-    background-color: #FFFDD0; 
+    background-color: #FFFDD0;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     margin-top: 10px;
+}
+
+.instruction-item {
+    padding: 5px;
+    margin: 2px 0;
+    border-radius: 3px;
+    list-style-type: none;
+}
+
+.instruction-item.current {
+    background-color: #e6f3ff;
+    font-weight: bold;
+    list-style-type: "➔ ";
+}
+
+.instruction-item.disabled {
+    color: #999;
+    background-color: #f0f0f0;
+}
+
+input[type='text'] {
+    transition: background-color 0.3s ease;
+}
+
+.button-container button {
+    margin-right: 10px;
+}
+
+.feedback-container {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f8f8f8;
 }
 
 

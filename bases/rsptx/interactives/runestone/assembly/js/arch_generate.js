@@ -191,7 +191,8 @@ class ArchInstructions {
         // Ensure all initial values are sufficiently large
         this.ensureLargeInitialValues(selected_addresses, selected_regular_registers);
 
-        return [selected_instructions, selected_addresses, [...selected_regular_registers, ...selected_stack_registers]];
+        // reversed the selected_address for accurate representation of the stack
+        return [selected_instructions, selected_addresses.reverse(), [...selected_regular_registers, ...selected_stack_registers]];
     }
 
 
@@ -251,7 +252,7 @@ class ArchInstructions {
         // Beautify instructions to be added
         reg1 = "%" + reg1.register;
         reg2 = "%" + reg2.register;
-        let memAddr = `${memItem.location}(%${stack_registers[0].register})`;
+        let memAddr = `${memItem.location}(%${stack_registers[1].register})`;
         let prefix = this.architecture === 'ARM64' ? '#' : '$';
         literal = `${prefix}${literal}`;
 
@@ -313,13 +314,14 @@ class ArchInstructions {
             selected_regular_registers.push({ register: randomRegister, value: randomValue, type: "normal" });
         }
 
-        for (let i = 0; i < registers_stack.length; i++) {
-            const randomStackRegister = registers_stack[i];
-            selected_stack_registers.push({ register: randomStackRegister, value: selected_addresses[0].address, type: "memory" });
-        }
+        // assume that the first stack register is base, so its value is the base
+        // and that the second is the actual stack pointer, so its value is where its top has two empty space and bottom also
+        selected_stack_registers.push({ register: registers_stack[1], value: selected_addresses[selected_addresses.length - 3].address, type: "memory" });
+        selected_stack_registers.push({ register: registers_stack[0], value: selected_addresses[0].address, type: "memory" });
+
 
         return { selected_regular_registers, selected_stack_registers };
-    }
+    } 
 
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         let selected_instructions = [];
@@ -383,8 +385,14 @@ class ArchInstructions {
     }
 
     executeInstructions(input) {
-        const [instructions, memory, registers] = input;
-        const states = [];
+        const [instructions, initialMemory, initialRegisters] = input;
+        let memory = JSON.parse(JSON.stringify(initialMemory));
+        let registers = JSON.parse(JSON.stringify(initialRegisters));
+        const states = [{
+            step: 0,
+            registers: JSON.parse(JSON.stringify(registers)),
+            memory: JSON.parse(JSON.stringify(memory))
+        }];
 
         instructions.forEach((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
@@ -394,23 +402,9 @@ class ArchInstructions {
             }
 
             const { op, args } = parsed;
-
-            switch (op) {
-                case 'mov':
-                case 'movl':
-                case 'mvn':
-                case 'add':
-                case 'sub':
-                    this.executeArithmeticOrMove(op, args, registers, memory);
-                    break;
-                // Add more cases for other operations
-                default:
-                    console.warn(`Unsupported operation: ${op}`);
-                    break;
-            }
-
-            // Save the current state
+            this.executeInstruction(op, args, registers, memory);
             states.push({
+                instruction: instruction,
                 step: step + 1,
                 registers: JSON.parse(JSON.stringify(registers)),
                 memory: JSON.parse(JSON.stringify(memory))
@@ -420,7 +414,7 @@ class ArchInstructions {
         return states;
     }
 
-    executeArithmeticOrMove(op, args, registers, memory) {
+    executeInstruction(op, args, registers, memory) {
         const [src, dest] = args;
         const srcValue = this.getValue(src, registers, memory);
         const destValue = this.getValue(dest, registers, memory);
@@ -442,6 +436,10 @@ class ArchInstructions {
             case 'sub':
                 result = this.calculate(op, destValue, srcValue);
                 break;
+            case 'push':
+                break;
+            case 'pop':
+                break;
         }
 
         this.setValue(dest, result, registers, memory);
@@ -451,7 +449,7 @@ class ArchInstructions {
         if (operand.startsWith('%')) {
             // Register
             const reg = registers.find(r => `%${r.register}` === operand);
-            return parseInt(reg.value, 16);
+            return reg.value
         } else if (operand.startsWith('$')) {
             // Immediate value
             return parseInt(operand.slice(1), 10);
@@ -459,8 +457,8 @@ class ArchInstructions {
             // Memory address
             const address = this.getMemoryAddress(operand, registers, memory);
             const mem = memory.find(m => m.address === address);
-            if (mem && /^0x[0-9a-fA-F]+$/i.test(mem.value)) {
-                return parseInt(mem.value, 16);
+            if (mem && /^[0-9]+$/.test(mem.value)) {
+                return mem.value
             } else {
                 return 0; // Return 0 or any other default value in case of invalid hex
             }
@@ -474,7 +472,6 @@ class ArchInstructions {
         } else {
             const address = this.getMemoryAddress(operand, registers, memory);
             const memIndex = memory.findIndex(m => m.address === address);
-            console.log(address, memIndex);
             memory[memIndex].value = value;
         }
     }
