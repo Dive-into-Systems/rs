@@ -41,17 +41,36 @@ export function parseForkArgs(code, forkIndex) {
 
 export function buildTree(code, id = 0, time = 0, childCt = 0) {
     code = code.trim();
-    if (code.length === 0) return null;
+    if (code.length === 0) {
+        return new ForkNode(
+            id,
+            time,
+            "",
+            null, null
+        );
+    }
 
+    const exitIndex = code.indexOf("x");
     let forkIndex = code.indexOf('f(');
-    if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
-    // return new ForkNode(id, time, code); 
+    let hasFork = true;
+    if (forkIndex === -1) {
+        hasFork = false;
+        forkIndex = code.length; // no fork, plain print node
+    }
+
+    if (exitIndex!==-1 && exitIndex < forkIndex) {
+        forkIndex = exitIndex+1;
+        code = code.substring(0, exitIndex+1); // capture exit char
+    }
+    // return new ForkNode(id, time, code);
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
     leftCode += code.substring(end).trim(); // remaining code
     rightCode += code.substring(end).trim(); // remaining code
-    childCt +=rightCode?1:0;
-    const leftNode = buildTree(leftCode, id, time+1, childCt);
-    const rightNode = buildTree(rightCode, id*10+childCt, 0);
+    // childCt += rightCode?1:0;
+    childCt += (hasFork)?1:0;
+    console.log(code, hasFork);
+    const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
+    const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
     return new ForkNode(
         id,
         time,
@@ -114,6 +133,7 @@ export function getAnswer(node) {
     }
     return map;
 }
+
 // function printTree (node, prefix = "", isRight = true) {
 //     if (!node) return "";
 //     let result = "";
@@ -206,7 +226,7 @@ function randInsert(mainStr, insertStr, anySlot = false) {
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, printContent) {
+export function genRandSourceCode(numForks, numPrints, hasExit, hasElse, hasLoop) {
     let code = "";
 
     // Generate forking locations
