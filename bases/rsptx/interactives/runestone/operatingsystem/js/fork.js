@@ -153,8 +153,11 @@ export default class Fork extends RunestoneBase {
     }
 
     genPromptsNAnswer() {
-        // TODO: make sure not to generate the same code consecutively in easy mode
+        this.prev = this.source || null;
         this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        while (this.source === this.prev) {
+            this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        }
         // console.log(this.source);
         this.cCode = forking.transpileToC(this.source);
         // console.log(this.cCode);
@@ -183,7 +186,6 @@ export default class Fork extends RunestoneBase {
             this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
         });
-
 
         /* Check answer button */
         this.checkAnswerButton = document.createElement("button");
