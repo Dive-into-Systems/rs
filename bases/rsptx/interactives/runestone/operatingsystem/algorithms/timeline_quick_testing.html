@@ -11,65 +11,58 @@
 <script>
 
     function connectNodes(values) {
-        var mainGraphEdges = [];
-        var subgraphEdges = []; // should be an array of links
 
+        let edges = [];
         for (let i = 0; i < values.length; i++) {
             const [IDtime, print] = values[i].split(':');
             const [ID, timestep] = IDtime.split('.');
-            console.log("Prints:", print, "ID:", ID, "Timestep:", timestep);
-            
-            
-            // mainGraphEdges[ID].push(values); // same ID should be linked in main graph
-            // subgraphEdges
+            if (print !== "[]") {
+                if (!edges[ID]) {
+                    edges[ID] = [];
+                }
+                edges[ID].push(print);
+            }
         }
+        return edges;
     }
 
-    function getSubgraph(i) {
-        var subgraphString = (
+    function getSubgraph(edges, i) {
+        let subgraphString = (
             `subgraph cluster_${i} {` +
-                // `style=filled;` +
-                `color=white;` +
-                `node [color=black, style=filled, fillcolor=white];`
-                // `label = "p_${i}";`
+            `style=filled;` +
+            `color=lightgrey;` +
+            `node [style=filled,color=white];`
         );
 
-        if (i == 0) { subgraphString += `a0 -> a1 -> a2 -> a3;`; }
-        else { subgraphString += `b0 -> b1 -> b2 -> b3;`; }
+        for (let e of edges) {
+            subgraphString += `${e} -> a;`;
+        }
 
-        subgraphString += '}';
-        // console.log(subgraphString);
+        subgraphString = subgraphString.slice(0, -4); // Remove the last ' -> ' 
+        subgraphString += '};';
+
         return subgraphString;
     }
 
     function drawTimeline(links, values) {
 
-        var digraphString = (
-            'digraph G {' + 
-            'bgcolor=transparent;' + 
-            'node [shape=box, color=black, style=filled, fillcolor=white];' +
-            'edge [color=black, penwidth=2.0];' + 
-            'rankdir=LR;'
-            
-        );
-        
-        connectNodes(values);
+        const edges = connectNodes(values);
 
-        for (let i = 0; i < 2; i++) {
-            digraphString += getSubgraph(i);
+        let digraphString = (
+            'digraph G {' +
+            'bgcolor=transparent;' +
+            'node [shape=box, color=black, style=filled, fillcolor=white];' +
+            'edge [color=black, penwidth=2.0];' +
+            'rankdir=LR;' +
+            'splines=ortho;'
+        );
+
+        for (let i = 0; i < edges.length; i++) {
+            digraphString += getSubgraph(edges, i);
         }
 
-        digraphString += (
-            'a1 -> b3;' +
-            'b2 -> a3;' +
-            'a3 -> end;' +
-            'b3 -> end;' +
-
-            'end [shape=Msquare];'
-        );
-
-
-        digraphString += "}";
+        digraphString += 'end [shape=Msquare];';
+        digraphString += '}';
 
         console.log(digraphString);
 
