@@ -85,13 +85,12 @@ export default class Fork extends RunestoneBase {
         this.updateParams();
         this.genPromptsNAnswer();
 
-        // Create prompt section
-        // ***STRUCTURE***: this.codeDiv  | this.rightDiv
+        // Create prompt section: ***STRUCTURE*** this.codeDiv | this.rightDiv
         this.promptDiv = $("<div>").addClass("input-div");
         
         // Create C-code section
         this.codeDiv = $("<div>").addClass("code-div-inline");
-        this.codeDiv.html(this.cCode);
+        $(this.codeDiv).html(this.cCode);
 
         // Create question section
         this.rightDiv = $("<div>").addClass("right-div-inline");
@@ -103,7 +102,7 @@ export default class Fork extends RunestoneBase {
             this.inputBox.addClass("form-control input-box");
             this.subQuestionDiv.append(this.subPrompt);
             this.subQuestionDiv.append(this.inputBox);
-            this.rightDiv.append(this.subQuestionDiv);
+            $(this.rightDiv).append(this.subQuestionDiv);
         }
 
         // copy the original elements to the container holding what the user will see.
@@ -115,63 +114,61 @@ export default class Fork extends RunestoneBase {
         // ***div STRUCTURE***:
         this.statementDiv.append(this.instruction, this.label, this.modeMenu);
         this.containerDiv.append(this.statementDiv, this.promptDiv);
-        this.promptDiv.append(this.codeDiv, this.rightDiv);
+        $(this.promptDiv).append($(this.codeDiv), this.rightDiv);
     }
 
     updateParams() {
-        console.log(this.modeMenu.val());
+        // console.log(this.modeMenu.val());
         switch (this.modeMenu.val()) {
             case "Easy":
                 this.numForks = 2;
                 this.numPrints = this.pick([2, 3]);
-                this.exit = false;
-                this.else = false;
-                this.loop = false;
+                this.hasNest = false;
+                this.hasExit = false;
+                this.hasElse = false;
+                this.hasLoop = false;
                 break;
             case "Medium":
-                this.numForks = this.pick([2, 3]);
+                this.numForks = this.pick([3, 4]);
                 this.numPrints = this.pick([3, 4]);
-                this.exits = false;
-                this.else = true;
-                this.loop = false;
+                this.hasNest = true;
+                this.hasExit = true;
+                this.hasElse = true;
+                this.hasLoop = false;
                 break;
             case "Hard":
                 this.numForks = this.pick([3, 4]);
                 this.numPrints = this.pick([4, 5]);
-                this.exit = true;
-                this.else = true;
-                this.loop = true;
+                this.hasNest = true;
+                this.hasExit = true;
+                this.hasElse = true;
+                this.hasLoop = true;
                 break;
         }
-        console.log(this.numForks, this.numPrints, this.exit, this.else, this.loop); 
+        console.log("In menu:", this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop); 
     }
 
     pick(myList) { // randomly pick one item in list
-        const randIdx = Math.floor(Math.random() * (myList.length));
-        return myList[randIdx];
+        return myList[Math.floor(Math.random() * (myList.length))];
     }
 
     genPromptsNAnswer() {
-
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.exit, this.else, this.loop);
-        console.log(this.source);
+        // TODO: make sure not to generate the same code consecutively in easy mode
+        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        // console.log(this.source);
         this.cCode = forking.transpileToC(this.source);
-        console.log(this.cCode);
+        // console.log(this.cCode);
         this.root = forking.buildTree(this.source);
-        console.log(this.root);
-        // this.csvTree = forking.getTreeCSV(this.root);
-        // console.log(this.csvTree);
-        // this.labels = forking.get
-        // { csv: this.csvTree, valuesList: this.labels } = forking.getTreeCSV(this.root);
+        // console.log(this.root);
         const { csv, valuesList } = forking.getTreeCSV(this.root);
         this.csvTree = csv;
         this.labels = valuesList;
         this.answerMap = forking.getAnswer(this.root);
-        // const { csv: this.csvTree, valuesList: this.labels } = getTreeCSV(this.root);
     }
 
     initForkButtons() {
-        $(this.containerDiv).append("<br>");
+        // this.containerDiv.append(document.createElement('br'));
+        this.containerDiv.append($('<br>'));
 
         /* Ask me another button */
         this.generateButton = document.createElement("button");
@@ -255,8 +252,9 @@ export default class Fork extends RunestoneBase {
         // create and render all input fields in question group
         this.genPromptsNAnswer();
         // update c code
-        this.codeDiv.html(this.cCode);
+        $(this.codeDiv).html(this.cCode);
         // $(this.rightDiv).css("display", "block");
+        $(this.rightDiv).html("");
         for (var i = 0; i < this.numPrints; i++) {
             this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i);
             this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
@@ -265,7 +263,7 @@ export default class Fork extends RunestoneBase {
             this.inputBox.addClass("form-control input-box");
             this.subQuestionDiv.append(this.subPrompt);
             this.subQuestionDiv.append(this.inputBox);
-            this.rightDiv.append(this.subQuestionDiv);
+            $(this.rightDiv).append(this.subQuestionDiv);
         }
     }
 
@@ -275,6 +273,7 @@ export default class Fork extends RunestoneBase {
 
         for (let i = 0; i < this.numPrints; i++) {
             let currAnswer = $("#" + this.divid + "_input_" + i).val();
+            console.log("current answer:", currAnswer, "correct answer:", this.answerMap[this.printContent[i]]);
             if (currAnswer !== this.answerMap[this.printContent[i]]) {
                 this.correct = false;
                 if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
@@ -329,7 +328,7 @@ export default class Fork extends RunestoneBase {
         if (this.correct === true) { $(this.feedbackDiv).attr("class", "alert alert-info"); }
         else { $(this.feedbackDiv).attr("class", "alert alert-danger"); }
         
-        this.feedbackDiv.html(this.feedback_msg);
+        $(this.feedbackDiv).html(this.feedback_msg);
         
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
