@@ -95,6 +95,7 @@ class ArchInstructions {
             arith ? this.arithBinary.mainWeight : 0,
             bit ? this.bitLogic.mainWeight : 0,
             bit ? this.bitShift.mainWeight : 0,
+            bit ? this.stackOps.mainWeight : 0, //stack
         ];
         let index = weightedPickId(fam_weights);
         return this._makePrompt(index);
@@ -109,6 +110,7 @@ class ArchInstructions {
             case 3: family = this.arithBinary; break;
             case 4: family = this.bitLogic; break;
             case 5: family = this.bitShift; break;
+            case 6: family = this.stackOps; break; 
             default: throw new Error("Invalid operation index");
         }
         const op = unifPickItem(family.instructions);
@@ -197,27 +199,39 @@ class ArchInstructions {
 
 
     generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
-
-        const formats = [
+        const generalFormats = [
             '{op} {reg1}, {reg2}',
             '{op} {reg2}, {reg1}',
             '{op} {reg1}, {memAddr}',
             '{op} {reg2}, {memAddr}',
-
+    
             '{op} {literal}, {reg1}',
             '{op} {literal}, {reg2}',
             '{op} {literal}, {memAddr}',
             '{op} {literal}, {memAddr}',
-
+    
             '{op} {memAddr}, {reg2}',
             '{op} {memAddr}, {reg1}',
         ];
-
-        // adjusting instruction types based off selection
+    
+        const stackFormats = [
+            '{op} {reg}', // formats for push/pop
+            '{op} {literal}' // formats for push with immediate value
+        ];
+    
         let operations = [];
-        selection[0] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => { operations.push(instruction) });
-        selection[2] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => { operations.push(instruction) });
-
+        if (selection[0]) arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => { operations.push(instruction) });
+        if (selection[1]) arch_data[this.architecture]["archOps"].instructions.forEach((instruction) => { operations.push(instruction) });
+        if (selection[2]) arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => { operations.push(instruction) });
+    
+        // Determine the appropriate formats based on the selected operations
+        let formats;
+        if (selection[1] && operations.some(op => ['push', 'pop'].includes(op))) {
+            formats = stackFormats;
+        } else {
+            formats = generalFormats;
+        }
+    
         // Pick a random operation and format
         const op = unifPickItem(operations);
         let format = unifPickItem(formats);
@@ -229,7 +243,7 @@ class ArchInstructions {
         }
         let offset = unifPickItem(offsets);
         let literal = Math.floor(Math.random() * 8) * 8;
-
+    
         // Adjust the format for offset-related instructions
         if (format.includes('offset')) {
             if (format.includes('memAddr')) {
@@ -248,25 +262,32 @@ class ArchInstructions {
                 offset = offset <= maxOffset ? offset : maxOffset;
             }
         }
-
+    
         // Beautify instructions to be added
         reg1 = "%" + reg1.register;
         reg2 = "%" + reg2.register;
         let memAddr = `${memItem.location}(%${stack_registers[1].register})`;
         let prefix = this.architecture === 'ARM64' ? '#' : '$';
         literal = `${prefix}${literal}`;
-
-        return format
-            .replace(/\+0\b/g, '')
-            .replace(/{op}/g, op)
-            .replace(/{memAddr}/g, memAddr)
-            .replace(/{offset}/g, offset)
-            .replace(/{reg1}/g, reg1)
-            .replace(/{reg2}/g, reg2)
-            .replace(/{literal}/g, literal);
+    
+        // Conditionally replace placeholders based on the operation type
+        if (['push', 'pop'].includes(op)) {
+            return format
+                .replace(/{op}/g, op)
+                .replace(/{reg}/g, reg1)
+                .replace(/{literal}/g, literal);
+        } else {
+            return format
+                .replace(/\+0\b/g, '')
+                .replace(/{op}/g, op)
+                .replace(/{memAddr}/g, memAddr)
+                .replace(/{offset}/g, offset)
+                .replace(/{reg1}/g, reg1)
+                .replace(/{reg2}/g, reg2)
+                .replace(/{literal}/g, literal);
+        }
     }
-
-
+    
 
     // helper functions
 
@@ -385,6 +406,8 @@ class ArchInstructions {
     }
 
     executeInstructions(input) {
+
+        console.log("bp1")
         const [instructions, initialMemory, initialRegisters] = input;
         let memory = JSON.parse(JSON.stringify(initialMemory));
         let registers = JSON.parse(JSON.stringify(initialRegisters));
@@ -394,15 +417,20 @@ class ArchInstructions {
             memory: JSON.parse(JSON.stringify(memory))
         }];
 
+        console.log("bp2")
         instructions.forEach((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
             if (!parsed) {
+                console.log("invali instructions")
                 console.error(`Invalid instruction format: ${instruction}`);
+                
                 return;
             }
 
+            console.log("bp3")
             const { op, args } = parsed;
             this.executeInstruction(op, args, registers, memory);
+            console.log("bp4")
             states.push({
                 instruction: instruction,
                 step: step + 1,
@@ -413,43 +441,82 @@ class ArchInstructions {
 
         return states;
     }
-
+    
     executeInstruction(op, args, registers, memory) {
-        const [src, dest] = args;
-        const srcValue = this.getValue(src, registers, memory);
-        const destValue = this.getValue(dest, registers, memory);
-
-        let result;
+        let src, dest, srcValue, destValue;
+    
         switch (op) {
-            case 'mov':
-                result = srcValue;
-                break;
-            case 'movl':
-                result = srcValue;
-                break;
-            case 'mvn':
-                result = srcValue;
-                break;
-            case 'add':
-                result = this.calculate(op, destValue, srcValue);
-                break;
-            case 'sub':
-                result = this.calculate(op, destValue, srcValue);
-                break;
             case 'push':
+                [src] = args;
+                srcValue = this.getValue(src, registers, memory);
+                this.pushToStack(src, registers, memory, srcValue);
                 break;
             case 'pop':
+                [, dest] = args;
+                this.popFromStack(dest, registers, memory);
+                break;
+            default:
+                [src, dest] = args;
+                srcValue = this.getValue(src, registers, memory);
+                destValue = this.getValue(dest, registers, memory);
+    
+                let result;
+                switch (op) {
+                    case 'mov':
+                    case 'movl':
+                    case 'mvn':
+                        result = srcValue;
+                        break;
+                    case 'add':
+                    case 'sub':
+                        result = this.calculate(op, destValue, srcValue);
+                        break;
+                    default:
+                        console.error(`Unsupported operation: ${op}`);
+                        return;
+                }
+    
+                this.setValue(dest, result, registers, memory);
                 break;
         }
-
-        this.setValue(dest, result, registers, memory);
     }
-
+    
+    pushToStack(src, registers, memory, srcValue) {
+        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
+        const spValue = parseInt(spReg.value, 16);
+    
+        // Push to stack and update stack pointer
+        memory.push({ address: `0x${(spValue - 8).toString(16).toUpperCase()}`, value: srcValue });
+        spReg.value = `0x${(spValue - 8).toString(16).toUpperCase()}`;
+    }
+    
+    popFromStack(dest, registers, memory) {
+        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
+        const spValue = parseInt(spReg.value, 16);
+        const memIndex = memory.findIndex(m => m.address === `0x${spValue.toString(16).toUpperCase()}`);
+    
+        // Pop from stack and update stack pointer
+        if (memIndex !== -1) {
+            const poppedValue = memory[memIndex].value;
+            memory.splice(memIndex, 1);
+            this.setValue(dest, poppedValue, registers, memory);
+            spReg.value = `0x${(spValue + 8).toString(16).toUpperCase()}`;
+        }
+    }
+    
     getValue(operand, registers, memory) {
+        console.log("operand");
+        console.log(operand);
+    
+        if (!operand) {
+            console.error("Undefined operand encountered");
+            return 0; // Default value for undefined operand
+        }
+    
         if (operand.startsWith('%')) {
             // Register
             const reg = registers.find(r => `%${r.register}` === operand);
-            return reg.value
+            return reg ? reg.value : 0; // Return 0 if the register is not found
         } else if (operand.startsWith('$')) {
             // Immediate value
             return parseInt(operand.slice(1), 10);
@@ -458,7 +525,7 @@ class ArchInstructions {
             const address = this.getMemoryAddress(operand, registers, memory);
             const mem = memory.find(m => m.address === address);
             if (mem && /^[0-9]+$/.test(mem.value)) {
-                return mem.value
+                return mem.value;
             } else {
                 return 0; // Return 0 or any other default value in case of invalid hex
             }

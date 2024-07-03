@@ -213,21 +213,21 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
-
+    
         const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
         const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
         this.checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer()).prop("disabled", true);
-
+    
         buttonContainer.append(resetButton).append(tryAnotherButton).append(this.checkAnswerButton);
         this.containerDiv.append(buttonContainer);
-
-        // Enable "Check Answer" button when all fields are filled
+    
+        // Enable "Check Answer" button when any field is filled
         this.containerDiv.on("input", "input[type='text']", () => {
-            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val() !== "");
+            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val().trim() !== "");
             this.checkAnswerButton.prop("disabled", !allFilled);
         });
     }
-
+    
     renderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
         if (feedbackDiv.length === 0) {
@@ -337,7 +337,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         if (isCorrect) {
             this.currentInstruction++;
-            if (this.currentInstruction >= this.initialState[0].length) {
+            if (this.currentInstruction > this.initialState[0].length) {
                 this.renderFinalFeedback();
             } else {
                 this.moveToNextInstruction();
