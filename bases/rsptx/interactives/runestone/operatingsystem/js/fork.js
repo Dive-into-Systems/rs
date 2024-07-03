@@ -52,12 +52,11 @@ export default class Fork extends RunestoneBase {
     }
 
     initParams() {
-        this.numForks = 3;
-        this.numPrints = 4;
         this.printContent = [];
-        for (var i = 0; i < this.numPrints; i++) {
+        for (var i = 0; i < 10; i++) {
             this.printContent.push(String.fromCharCode((i + 97)));
         }
+        this.modes = ["Easy", "Medium", "Hard"];
     }
 
     initForkInputField() {
@@ -69,6 +68,21 @@ export default class Fork extends RunestoneBase {
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
+        this.label = $("<label>").addClass("fork-inline").html("Select a mode:&ensp;");
+        this.modeMenu = $("<select>").addClass("mode form-control fork-inline");
+        this.modes.forEach(e => {
+            let option = $("<option>").val(e).text(e);
+            if (option.val() === "Easy") { option.attr("selected",true); }
+            $(this.modeMenu).append(option);
+        });
+        
+        $(this.modeMenu).on("change", () => {
+            this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
+            this.updateParams();
+            this.updatePrompts();
+        });
+
+        this.updateParams();
         this.genPromptsNAnswer();
 
         // Create prompt section
@@ -99,14 +113,47 @@ export default class Fork extends RunestoneBase {
         // this.scriptSelector(this.containerDiv).remove();
 
         // ***div STRUCTURE***:
-        this.statementDiv.append(this.instruction);
+        this.statementDiv.append(this.instruction, this.label, this.modeMenu);
         this.containerDiv.append(this.statementDiv, this.promptDiv);
         this.promptDiv.append(this.codeDiv, this.rightDiv);
     }
 
+    updateParams() {
+        console.log(this.modeMenu.val());
+        switch (this.modeMenu.val()) {
+            case "Easy":
+                this.numForks = 2;
+                this.numPrints = this.pick([2, 3]);
+                this.exit = false;
+                this.else = false;
+                this.loop = false;
+                break;
+            case "Medium":
+                this.numForks = this.pick([2, 3]);
+                this.numPrints = this.pick([3, 4]);
+                this.exits = false;
+                this.else = true;
+                this.loop = false;
+                break;
+            case "Hard":
+                this.numForks = this.pick([3, 4]);
+                this.numPrints = this.pick([4, 5]);
+                this.exit = true;
+                this.else = true;
+                this.loop = true;
+                break;
+        }
+        console.log(this.numForks, this.numPrints, this.exit, this.else, this.loop); 
+    }
+
+    pick(myList) { // randomly pick one item in list
+        const randIdx = Math.floor(Math.random() * (myList.length));
+        return myList[randIdx];
+    }
+
     genPromptsNAnswer() {
 
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.printContent);
+        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.exit, this.else, this.loop);
         console.log(this.source);
         this.cCode = forking.transpileToC(this.source);
         console.log(this.cCode);
@@ -124,6 +171,7 @@ export default class Fork extends RunestoneBase {
     }
 
     initForkButtons() {
+        $(this.containerDiv).append("<br>");
 
         /* Ask me another button */
         this.generateButton = document.createElement("button");
@@ -197,6 +245,7 @@ export default class Fork extends RunestoneBase {
         $('input').val("");
 
         // clear feedback field
+        $(this.rightDiv).html("");
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none");
         $(this.timelineDiv).css("display", "none");
@@ -207,6 +256,17 @@ export default class Fork extends RunestoneBase {
         this.genPromptsNAnswer();
         // update c code
         this.codeDiv.html(this.cCode);
+        // $(this.rightDiv).css("display", "block");
+        for (var i = 0; i < this.numPrints; i++) {
+            this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i);
+            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
+            this.inputBox = $("<input>").attr('placeholder','Enter your answer here');
+            this.inputBox.attr("id", this.divid + "_input_" + i);
+            this.inputBox.addClass("form-control input-box");
+            this.subQuestionDiv.append(this.subPrompt);
+            this.subQuestionDiv.append(this.inputBox);
+            this.rightDiv.append(this.subQuestionDiv);
+        }
     }
 
     checkCurrentAnswer() {
@@ -230,13 +290,16 @@ export default class Fork extends RunestoneBase {
         $(this.hierarchyTreeDiv).css("display", "block");
         $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
     }
+
     hideProcessHierarchy() {
         $(this.hierarchyTreeDiv).css("display", "none");
     }
+
     showTimeline() {
         $(this.timelineDiv).css("display", "block");
         $(this.timelineDiv).html(drawing.drawTimeline(this.csvTree));
     }
+
     hideTimeline() {
         $(this.timelineDiv).css("display", "none");
     }

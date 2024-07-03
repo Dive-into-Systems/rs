@@ -226,7 +226,7 @@ function randInsert(mainStr, insertStr, anySlot = false) {
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, printContent) {
+export function genRandSourceCode(numForks, numPrints, hasExit, hasElse, hasLoop) {
     let code = "";
 
     // Generate forking locations
