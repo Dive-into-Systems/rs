@@ -1,18 +1,11 @@
 // arch_generate.js
-// *********
-// This file contains the JS for the Runestone Assembly State component. It was created By Arys Aikyn, Tony Cao 06/03/2024
+// This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Tony Cao 06/03/2024
 "use strict";
-
 
 import { off } from 'codemirror';
 import arch_data from './arch_data.json';
-const MAX_NUM = arch_data.MAX_NUM;
-const BIT_ODDS_X86_64 = arch_data.BIT_ODDS_X86_64;
 
-const MSG_OK = arch_data.MSG_OK;
-const MSG_BAD_DEST = arch_data.MSG_BAD_DEST;
-const MSG_BAD_SRC = arch_data.MSG_BAD_SRC;
-const MSG_CT = arch_data.MSG_CT;
+const { MAX_NUM, BIT_ODDS_X86_64, MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT } = arch_data;
 
 function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0] / (2 ** 32);
@@ -20,71 +13,41 @@ function randomFloat32() {
 
 function weightedPickId(odds) {
     const total = odds.reduce((sum, a) => sum + a, 0);
-    let seed = 0;
-    while (seed === 0) {
-        seed = randomFloat32() * total;
-    } // not possible to pick 0 weights events
-    let sum = 0;
-
-    for (let i = 0; i < odds.length; i++) {
-        sum += odds[i];
-        if (odds[i] != 0 && seed < sum) {
-            return i;
-        }
-    }
-    return -1; // BAD
+    let seed = randomFloat32() * total;
+    return odds.findIndex((odds, i) => (seed -= odds) < 0);
 }
 
-// Selects a random index from an array.
 function unifPickId(arr) {
     return Math.floor(randomFloat32() * arr.length);
 }
 
-// Combines multiple arrays and picks a random item from the combined array.
 function unifPickItem(...items) {
     const combinedArray = items.flat();
-
-    if (combinedArray.length === 0) {
-        throw new Error("No arrays provided or all provided arrays are empty.");
-    }
-
+    if (!combinedArray.length) throw new Error("No arrays provided or all are empty.");
     return combinedArray[unifPickId(combinedArray)];
 }
 
-// main weights doesn't have to add up to 100, bad_ct and bad_type not mut exclusive
 class InstructionsFamily {
     constructor(mainWeight, insArr, oddsArr, errorArr) {
-        this.mainWeight = mainWeight;
-        this.instructions = insArr;
-        this.errorsOdds = oddsArr;
-        this.errors = errorArr;
+        Object.assign(this, { mainWeight, instructions: insArr, errorsOdds: oddsArr, errors: errorArr });
     }
 }
 
 class ArchInstructions {
     constructor(config) {
-        if (!config) {
-            throw new Error("Config data required");
-        }
+        if (!config) throw new Error("Config data required");
 
-        let instructionKeys = ['memOps', 'archOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'];
-        instructionKeys.forEach(key => {
-            if (config[key]) {
-                this[key] = new InstructionsFamily(
-                    config[key].mainWeight,
-                    config[key].instructions,
-                    config[key].errorsOdds,
-                    config[key].errors
-                );
-            } else {
-                throw new Error(`Missing configuration for ${key}`);
-            }
+        ['memOps', 'archOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'].forEach(key => {
+            if (!config[key]) throw new Error(`Missing configuration for ${key}`);
+            this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
         });
 
-        this.architecture = config.name;
-        this.offsets = config.offsets;
-        this.registers_32 = config.registers_32;
-        this.registers_64 = config.registers_64;
+        Object.assign(this, {
+            architecture: config.name,
+            offsets: config.offsets,
+            registers_32: config.registers_32,
+            registers_64: config.registers_64
+        });
     }
 
     generate_question(mem_arch, arith, bit) {
@@ -96,46 +59,16 @@ class ArchInstructions {
             bit ? this.bitLogic.mainWeight : 0,
             bit ? this.bitShift.mainWeight : 0,
         ];
-        let index = weightedPickId(fam_weights);
-        return this._makePrompt(index);
+        return this._makePrompt(weightedPickId(fam_weights));
     }
 
     _makePrompt(index) {
-        let family;
-        switch (index) {
-            case 0: family = this.memOps; break;
-            case 1: family = this.archOps; break;
-            case 2: family = this.arithUnary; break;
-            case 3: family = this.arithBinary; break;
-            case 4: family = this.bitLogic; break;
-            case 5: family = this.bitShift; break;
-            default: throw new Error("Invalid operation index");
-        }
+        const family = [this.memOps, this.archOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift][index];
         const op = unifPickItem(family.instructions);
         const q_type = weightedPickId(family.errorsOdds);
-        let expr = "";
-        let feedback = "";
-        switch (q_type) {
-            case 0:
-                expr = family.errors.ok;
-                feedback = MSG_OK;
-                break;
-            case 1:
-                expr = family.errors.bad_dest;
-                feedback = MSG_BAD_DEST;
-                break;
-            case 2:
-                expr = family.errors.bad_src;
-                feedback = MSG_BAD_SRC;
-                break;
-            case 3:
-                expr = family.errors.bad_ct;
-                feedback = MSG_CT;
-                break;
-            default: throw new Error("Invalid operation index");
-        }
-        const is32 = this._is_32();
-        const prompt = `${op} ${this._evalPrompt(expr, is32)}`;
+        const expr = [family.errors.ok, family.errors.bad_dest, family.errors.bad_src, family.errors.bad_ct][q_type];
+        const feedback = [MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT][q_type];
+        const prompt = `${op} ${this._evalPrompt(expr, this._is_32())}`;
 
         return [prompt, q_type, feedback];
     }
@@ -148,116 +81,71 @@ class ArchInstructions {
         const reg = this._getTrueReg(is32);
         const mem = this._getTrueMem(is32);
         const lit = this._getTrueLit(is32);
-        switch (char) {
-            case 'r': return reg;
-            case 'm': return mem;
-            case 'l': return lit;
-            case 'a': return unifPickItem(reg, mem, lit);
-            default: throw new Error(`Unexpected char: ${char}`);
-        }
+        return { r: reg, m: mem, l: lit, a: unifPickItem(reg, mem, lit) }[char] || (() => { throw new Error(`Unexpected char: ${char}`) })();
     }
 
-    // solve nested expressions
     _solveNest(expression, is32) {
         while (expression.includes('(')) {
-            expression = expression.replace(/\(([^()]+)\)/g, (match, subExpression) => this._solveNest(subExpression, is32));
+            expression = expression.replace(/\(([^()]+)\)/g, (_, subExpression) => this._solveNest(subExpression, is32));
         }
         return expression;
     }
 
-    // recursively expressions
     _evalPrompt(expression, is32) {
-        const evalPrompt = (expr) => this._evalPrompt(expr, is32);
-
         let cloneExpr = this._solveNest(expression.replace(/\s+/g, ''), is32);
-        if (cloneExpr.includes('-')) {
-            return cloneExpr.split('-').map(evalPrompt).join(", ");
-        }
-        if (cloneExpr.includes('/')) {
-            const options = cloneExpr.split('/');
-            return this._evalPrompt(unifPickItem(options), is32);
-        }
-        const solveChar = (char) => this._solveChar(char, is32);
-        return cloneExpr.split('').map(solveChar).join(", ");
+        return cloneExpr.includes('-')
+            ? cloneExpr.split('-').map(expr => this._evalPrompt(expr, is32)).join(", ")
+            : cloneExpr.includes('/')
+                ? this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32)
+                : cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
     }
 
-    // important functions
+    // for assembly_state
 
     generateRandomInitialState(num_instructions, num_registers, num_addresses, selection) {
         const selected_addresses = this.generateAddresses(num_addresses);
         const { selected_regular_registers, selected_stack_registers } = this.selectRegisters(num_registers, selected_addresses);
         const selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
-
-        // Ensure all initial values are sufficiently large
-        this.ensureLargeInitialValues(selected_addresses, selected_regular_registers);
-
-        // reversed the selected_address for accurate representation of the stack
         return [selected_instructions, selected_addresses.reverse(), [...selected_regular_registers, ...selected_stack_registers]];
     }
 
-
     generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
-
         const formats = [
-            '{op} {reg1}, {reg2}',
-            '{op} {reg2}, {reg1}',
-            '{op} {reg1}, {memAddr}',
-            '{op} {reg2}, {memAddr}',
-
-            '{op} {literal}, {reg1}',
-            '{op} {literal}, {reg2}',
-            '{op} {literal}, {memAddr}',
-            '{op} {literal}, {memAddr}',
-
-            '{op} {memAddr}, {reg2}',
-            '{op} {memAddr}, {reg1}',
+            '{op} {reg1}, {reg2}', '{op} {reg2}, {reg1}', '{op} {reg1}, {memAddr}', '{op} {reg2}, {memAddr}',
+            '{op} {literal}, {reg1}', '{op} {literal}, {reg2}', '{op} {literal}, {memAddr}', '{op} {literal}, {memAddr}',
+            '{op} {memAddr}, {reg2}', '{op} {memAddr}, {reg1}'
         ];
 
-        // adjusting instruction types based off selection
-        let operations = [];
-        selection[0] && arch_data[this.architecture]["arithBinary"].instructions.forEach((instruction) => { operations.push(instruction) });
-        selection[2] && arch_data[this.architecture]["memOps"].instructions.forEach((instruction) => { operations.push(instruction) });
+        const operations = [
+            ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+            ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
+        ];
 
-        // Pick a random operation and format
         const op = unifPickItem(operations);
         let format = unifPickItem(formats);
         let reg1 = unifPickItem(regular_registers);
         let reg2 = unifPickItem(regular_registers);
         let memItem = unifPickItem(memory);
-        while (stack_registers.find(r => r.value == memItem.address)) {
+        while (stack_registers.some(r => r.value == memItem.address)) {
             memItem = unifPickItem(memory);
         }
         let offset = unifPickItem(offsets);
         let literal = Math.floor(Math.random() * 8) * 8;
 
-        // Adjust the format for offset-related instructions
         if (format.includes('offset')) {
-            if (format.includes('memAddr')) {
-                const maxOffset =
-                    Math.max(...memory.map(item =>
-                        parseInt(item.address, 16))) - parseInt(memItem.address, 16);
-                offset = offset <= maxOffset ? offset : maxOffset;
-            } else if (format.includes('reg')) {
-                const maxOffset =
-                    Math.max(...regular_registers.map(item =>
-                        parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-                while (isNaN(maxOffset)) {
-                    maxOffset =
-                        Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-                }
-                offset = offset <= maxOffset ? offset : maxOffset;
-            }
+            const maxOffset = format.includes('memAddr')
+                ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+            offset = Math.min(offset, maxOffset);
         }
 
-        // Beautify instructions to be added
-        reg1 = "%" + reg1.register;
-        reg2 = "%" + reg2.register;
-        let memAddr = `${memItem.location}(%${stack_registers[1].register})`;
-        let prefix = this.architecture === 'ARM64' ? '#' : '$';
+        reg1 = `%${reg1.register}`;
+        reg2 = `%${reg2.register}`;
+        const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
+        const prefix = this.architecture === 'ARM64' ? '#' : '$';
         literal = `${prefix}${literal}`;
 
-        return format
-            .replace(/\+0\b/g, '')
+        return format.replace(/\+0\b/g, '')
             .replace(/{op}/g, op)
             .replace(/{memAddr}/g, memAddr)
             .replace(/{offset}/g, offset)
@@ -266,93 +154,109 @@ class ArchInstructions {
             .replace(/{literal}/g, literal);
     }
 
-
-
-    // helper functions
-
-    ensureLargeInitialValues(addresses, registers) {
-        const minValue = 1; // Minimum value
-        const maxValue = 15; // Maximum value
-        addresses.forEach(addr => {
-            // Ensure the address value is between 1 and 15
-            addr.value = Math.max(addr.value, minValue + Math.floor(Math.random() * (maxValue - minValue + 1)));
-        });
-        registers.forEach(reg => {
-            // Ensure the register value is between 1 and 15 for normal registers
-            if (reg.type === "normal") {
-                reg.value = Math.max(reg.value, minValue + Math.floor(Math.random() * (maxValue - minValue + 1)));
-            }
-        });
-    }
-
     generateAddresses(num_addresses) {
-        let selected_addresses = [];
-        let increment = this.architecture == "X86_32" ? 4 : 8;
+        const increment = this.architecture == "X86_32" ? 4 : 8;
         const minAddress = 0x000;
         const maxAddress = 0xFFF;
         const baseAddress = Math.floor(Math.random() * ((maxAddress - minAddress) / increment + 1)) * increment + minAddress;
-
-        for (let i = 0; i < num_addresses; i++) {
-            let address = baseAddress - (i * increment);
-            let hexAddress = "0x" + address.toString(16).padStart(3, '0').toUpperCase();
-            let decimalValue = Math.floor(Math.random() * 11) + 5;
-            selected_addresses.push({ address: hexAddress, location: i != 0 ? `-${i * increment}` : "", value: decimalValue });
-        }
-
-        return selected_addresses;
+        return Array.from({ length: num_addresses }, (_, i) => {
+            const address = baseAddress - (i * increment);
+            return {
+                address: `0x${address.toString(16).padStart(3, '0').toUpperCase()}`,
+                location: i ? `-${i * increment}` : "",
+                value: (Math.floor(Math.random() * 11) + 5).toString()
+            };
+        });
     }
 
     selectRegisters(num_registers, selected_addresses) {
-        let registers_regular = arch_data[this.architecture]['registers_regular'];
-        let registers_stack = arch_data[this.architecture]['registers_stack'];
-        const selected_regular_registers = [];
-        const selected_stack_registers = [];
-
-        for (let i = 0; i < (num_registers - registers_stack.length); i++) {
-            const randomRegister = registers_regular[i];
-            const randomValue = Math.floor(Math.random() * 11) + 5;
-            selected_regular_registers.push({ register: randomRegister, value: randomValue, type: "normal" });
-        }
-
-        // assume that the first stack register is base, so its value is the base
-        // and that the second is the actual stack pointer, so its value is where its top has two empty space and bottom also
-        selected_stack_registers.push({ register: registers_stack[1], value: selected_addresses[selected_addresses.length - 3].address, type: "memory" });
-        selected_stack_registers.push({ register: registers_stack[0], value: selected_addresses[0].address, type: "memory" });
-
-
-        return { selected_regular_registers, selected_stack_registers };
-    } 
+        const registers_regular = arch_data[this.architecture]['registers_regular'];
+        const registers_stack = arch_data[this.architecture]['registers_stack'];
+        const selected_regular_registers = Array.from({ length: num_registers - registers_stack.length }, (_, i) => ({
+            register: registers_regular[i],
+            value: (Math.floor(Math.random() * 11) + 5).toString(),
+            type: "normal"
+        }));
+        return {
+            selected_regular_registers,
+            selected_stack_registers: [
+                { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 3].address, type: "memory" },
+                { register: registers_stack[0], value: selected_addresses[0].address, type: "memory" }
+            ]
+        };
+    }
 
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         let selected_instructions = [];
-        let offsets = arch_data[this.architecture]['offsets'];
-
-        for (let i = 0; i < num_instructions; i++) {
-            let instruction;
-            do {
-                instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
-            } while (this.wouldResultInNegative(instruction, [...selected_regular_registers, ...selected_stack_registers], selected_addresses));
-            selected_instructions.push(instruction);
+        const offsets = arch_data[this.architecture]['offsets'];
+        for (let attempts = 0; attempts < 100; attempts++) {
+            selected_instructions = [];
+            let simState = this.initializeSimulationState(selected_regular_registers, selected_stack_registers, selected_addresses);
+            for (let i = 0; i < num_instructions; i++) {
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
+                selected_instructions.push(instruction);
+            }
+            if (!this.simulateInstructions(selected_instructions, simState)){
+                continue;
+            };
+            if (selected_instructions.length === num_instructions) return selected_instructions;
         }
-
+        console.warn("Failed to generate instructions without negative values after 100 attempts.");
         return selected_instructions;
     }
 
-    wouldResultInNegative(instruction, registers, memory) {
-        // Simulate the instruction and check if it would result in a negative value
-        const parsed = this.parseInstruction(instruction);
-        if (!parsed) return false;
-
-        const { op, args } = parsed;
-        if (op === 'sub') {
-            const [src, dest] = args;
-            const srcValue = this.getValue(src, registers, memory);
-            const destValue = this.getValue(dest, registers, memory);
-            return destValue < srcValue;
+    initializeSimulationState(regular_registers, stack_registers, addresses) {
+        const state = {};
+        for (const { register, value } of regular_registers) {
+            state[register] = value;
         }
-        return false;
+        for (const { register, value } of stack_registers) {
+            state[register] = value;
+        }
+        for (const { address, value } of addresses) {
+            state[address] = value;
+        }
+
+        return state;
     }
 
+
+    simulateInstructions(instructions, state) {
+        for (let i = 0; i < instructions.length; i++) {
+            const instruction = instructions[i];
+            const parsed = this.parseInstruction(instruction);
+            if (!parsed) return false; // Return false if can't parse
+
+            const { op, args } = parsed;
+            const [src, dest] = args;
+
+            let srcValue = this.getSimValue(src, state);
+            let destValue = this.getSimValue(dest, state);
+
+            switch (op) {
+                case 'mov':
+                case 'movl':
+                case 'mvn':
+                    state[dest] = srcValue;
+                    break;
+                case 'add':
+                    state[dest] = destValue + srcValue;
+                    break;
+                case 'sub':
+                    if (destValue - srcValue < 0) return false;
+                    state[dest] = destValue - srcValue;
+                    break;
+            }
+        }
+        return true; // Return true if all instructions are successfully simulated
+    }
+
+
+    getSimValue(operand, state) {
+        if (operand.startsWith('%')) return state[operand.slice(1)];
+        if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
+        return state[this.getMemoryAddress(operand, Object.entries(state).map(([register, value]) => ({register, value})), state)];
+    }
 
     parseInstruction(instruction) {
         const regex = /(\w+)\s+(.+)/;
@@ -360,170 +264,69 @@ class ArchInstructions {
         if (!match) return null;
 
         const [, op, argsString] = match;
+        const argRegex = /(?:\$|#)?-?(?:0x[\da-fA-F]+|\d+)(?:\([^)]+\))?|\([^)]+\)|%?\w+/g;
+        const parsedArgs = (argsString.match(argRegex) || []).map(arg => /^[a-z]{3}$/.test(arg.trim()) ? `%${arg.trim()}` : /^\d+$/.test(arg.trim()) ? `$${arg.trim()}` : arg.trim());
 
-        // Updated regex to handle memory references with parentheses
-        const argRegex =
-            /(?:\$|#)?-?(?:0x[\da-fA-F]+|\d+)(?:\([^)]+\))?|\([^)]+\)|%?\w+/g;
-        const parsedArgs = argsString.match(argRegex) || [];
-
-        // Process each argument
-        const processedArgs = parsedArgs.map(arg => {
-            arg = arg.trim();
-            // If it's a 3-letter register name without %
-            if (/^[a-z]{3}$/.test(arg)) {
-                return '%' + arg;
-            }
-            // If it's a number without $ or #, and not part of a
-            // memory reference, add $
-            if (/^\d+$/.test(arg)) {
-                return '$' + arg;
-            }
-            return arg;
-        });
-
-        return { op, args: processedArgs };
+        return { op, args: parsedArgs };
     }
 
     executeInstructions(input) {
         const [instructions, initialMemory, initialRegisters] = input;
-        let memory = JSON.parse(JSON.stringify(initialMemory));
-        let registers = JSON.parse(JSON.stringify(initialRegisters));
-        const states = [{
-            step: 0,
-            registers: JSON.parse(JSON.stringify(registers)),
-            memory: JSON.parse(JSON.stringify(memory))
-        }];
-
-        instructions.forEach((instruction, step) => {
+        const memory = JSON.parse(JSON.stringify(initialMemory));
+        const registers = JSON.parse(JSON.stringify(initialRegisters));
+        return instructions.map((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
-            if (!parsed) {
-                console.error(`Invalid instruction format: ${instruction}`);
-                return;
-            }
-
-            const { op, args } = parsed;
-            this.executeInstruction(op, args, registers, memory);
-            states.push({
-                instruction: instruction,
-                step: step + 1,
-                registers: JSON.parse(JSON.stringify(registers)),
-                memory: JSON.parse(JSON.stringify(memory))
-            });
+            if (parsed) this.executeInstruction(parsed.op, parsed.args, registers, memory);
+            return { instruction, step: step + 1, registers: JSON.parse(JSON.stringify(registers)), memory: JSON.parse(JSON.stringify(memory)) };
         });
-
-        return states;
     }
 
     executeInstruction(op, args, registers, memory) {
         const [src, dest] = args;
         const srcValue = this.getValue(src, registers, memory);
         const destValue = this.getValue(dest, registers, memory);
-
-        let result;
-        switch (op) {
-            case 'mov':
-                result = srcValue;
-                break;
-            case 'movl':
-                result = srcValue;
-                break;
-            case 'mvn':
-                result = srcValue;
-                break;
-            case 'add':
-                result = this.calculate(op, destValue, srcValue);
-                break;
-            case 'sub':
-                result = this.calculate(op, destValue, srcValue);
-                break;
-            case 'push':
-                break;
-            case 'pop':
-                break;
-        }
+        const result = op === 'mov' || op === 'movl' || op === 'mvn' ? srcValue : this.calculate(op, destValue, srcValue);
 
         this.setValue(dest, result, registers, memory);
     }
 
     getValue(operand, registers, memory) {
-        if (operand.startsWith('%')) {
-            // Register
-            const reg = registers.find(r => `%${r.register}` === operand);
-            return reg.value
-        } else if (operand.startsWith('$')) {
-            // Immediate value
-            return parseInt(operand.slice(1), 10);
-        } else {
-            // Memory address
-            const address = this.getMemoryAddress(operand, registers, memory);
-            const mem = memory.find(m => m.address === address);
-            if (mem && /^[0-9]+$/.test(mem.value)) {
-                return mem.value
-            } else {
-                return 0; // Return 0 or any other default value in case of invalid hex
-            }
-        }
+        if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value;
+        if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
+        const mem = memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory));
+        return mem && /^[0-9]+$/.test(mem.value) ? mem.value : 0;
     }
 
     setValue(operand, value, registers, memory) {
         if (operand.startsWith('%')) {
-            const regIndex = registers.findIndex(r => `%${r.register}` === operand);
-            registers[regIndex].value = value;
+            registers.find(r => `%${r.register}` === operand).value = value;
         } else {
-            const address = this.getMemoryAddress(operand, registers, memory);
-            const memIndex = memory.findIndex(m => m.address === address);
-            memory[memIndex].value = value;
+            memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
         }
     }
 
     getMemoryAddress(operand, registers, memory) {
-        // Updated regex to handle cases with and without offset
         const regex = /(?:(-?0x[0-9a-fA-F]+|-?\d+))?\(%([^)]+)\)/;
         const match = operand.match(regex);
-
         if (match) {
             let [, offset, reg] = match;
             const baseRegister = registers.find(r => r.register === reg);
-            if (!baseRegister) {
-                console.error(`Register ${reg} not found`);
-                return operand;
-            }
+            if (!baseRegister) return operand;
 
-            const baseMemAddress = baseRegister.value;
-            let address = parseInt(baseMemAddress, 16);
+            let address = parseInt(baseRegister.value, 16);
+            if (offset) address += parseInt(offset, offset.startsWith('0x') || offset.startsWith('-0x') ? 16 : 10);
 
-            // Handle offset if it exists
-            if (offset) {
-                if (offset.startsWith('0x') || offset.startsWith('-0x')) {
-                    offset = parseInt(offset, 16);
-                } else {
-                    offset = parseInt(offset, 10);
-                }
-                address += offset;
-            }
-
-            return "0x" + address.toString(16).toUpperCase().padStart(3, '0');
+            return `0x${address.toString(16).toUpperCase().padStart(3, '0')}`;
         }
         return operand;
     }
 
     calculate(op, destValue, srcValue) {
-        switch (op) {
-            case 'add':
-                return destValue + srcValue;
-            case 'sub':
-                return destValue - srcValue;
-            default:
-                throw new Error(`Unsupported operation: ${op}`);
-        }
+        const numDestValue = Number(destValue);
+        const numSrcValue = Number(srcValue);
+        return op === 'add' ? numDestValue + numSrcValue : numDestValue - numSrcValue;
     }
-};
-
-
-
-
-
-
+}
 
 export class ARM64_OPS extends ArchInstructions {
     constructor() {
@@ -539,28 +342,25 @@ export class ARM64_OPS extends ArchInstructions {
     }
 
     _getTrueMem(is32) {
-        const a = `[${this._getTrueReg(is32)}]`;
-        const b = `[${this._getTrueReg(is32)}, ${unifPickItem(this._getTrueOffset(), this._getTrueReg(is32))}]`;
-        return unifPickItem(a, b);
+        const reg = this._getTrueReg(is32);
+        return unifPickItem(`[${reg}]`, `[${reg}, ${unifPickItem(this._getTrueOffset(), reg)}]`);
     }
+
     _getTrueLit(is32) {
         return `#${Math.floor(randomFloat32() * 63)}`;
     }
 }
 
-export class X86_BASE extends ArchInstructions {
-    constructor(config) {
-        super(config);
-    }
-
+class X86_BASE extends ArchInstructions {
     _getTrueReg(is32) {
         return `%${unifPickItem(is32 ? this.registers_32 : this.registers_64)}`;
     }
+
     _getTrueMem(is32) {
-        const a = `(${this._getTrueReg(is32)})`;
-        const b = `${this._getTrueOffset(is32)}${a}`;
-        return unifPickItem(a, b);
+        const reg = this._getTrueReg(is32);
+        return unifPickItem(`(${reg})`, `${this._getTrueOffset(is32)}${reg}`);
     }
+
     _getTrueLit(is32) {
         return `\$${Math.floor(randomFloat32() * MAX_NUM)}`;
     }
@@ -575,9 +375,5 @@ export class X86_32_OPS extends X86_BASE {
 export class X86_64_OPS extends X86_BASE {
     constructor() { super(arch_data.X86_64); }
 
-    _is_32() { return (weightedPickId(BIT_ODDS_X86_64) == 0); }
+    _is_32() { return weightedPickId(BIT_ODDS_X86_64) == 0; }
 }
-
-
-
-

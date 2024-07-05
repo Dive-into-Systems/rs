@@ -48,10 +48,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.renderCustomizations();
-        this.generateNewQuestion();
-        this.renderInstructionsList(this.initialState[0]);
-        this.renderTables();
-        this.renderButtons();
+        this.tryAnother(); // for regeneration, could be used for intialization too
     }
 
     renderHeader() {
@@ -131,22 +128,20 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     generateNewQuestion() {
-        console.log("Generating new question...");
         this.initialState = this.generator.generateRandomInitialState(
             num_instructions,
             num_registers,
             num_addresses,
             [this.arith_checked, this.stack_checked, this.memo_checked]
         );
-        console.log("Initial state:", this.initialState);
         this.allStates = this.generator.executeInstructions(this.initialState);
-        console.log("All states:", this.allStates);
-        this.currentInstruction = 1;
+        console.log(this.allStates);
+        this.currentInstruction = 0;
     }
 
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
-        instructionDiv.append($("<h3>").text("The Instructions"));
+        instructionDiv.append($("<h3>").text("The Instructions:"));
 
         const instructionList = $("<ol>");
         instructions.forEach((inst, index) => {
@@ -167,48 +162,116 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     renderTables() {
-        console.log("Rendering tables...");
         const [instructions, addresses, registers] = this.initialState;
 
         const tablesContainer = $("<div>").addClass("tables-container");
 
         // Registers table
         const registersWrapper = $("<div>").addClass("table-wrapper");
+        registersWrapper.append($("<h3>").text("Registers:"));
         const registersTable = $("<table>").addClass("register-table");
-        registersWrapper.append($("<h3>").text("Registers"));
-
-        const registersTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Register"), $("<th>").text("Current Value"), $("<th>").text("Post Instruction Value")));
+        const registersTableHead = $("<thead>").append($("<tr>").append(
+            $("<th>").text("Regiterster"),
+            $("<th>").text("Current Value"),
+            $("<th>").text("Post Instruction Value")
+        ));
         const registersTableBody = $("<tbody>");
 
         registers.forEach(({ register, value }) => {
-            const displayValue = value || "0"; // Use the register's value or default to "0" if undefined
-            registersTableBody.append($("<tr>").append(
+            const displayValue = value || "0";
+            const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
                 $("<td>").append($("<input>").attr("type", "text"))
-            ));
+            );
+            registersTableBody.append(row);
         });
 
-        registersTable.append(registersTableHead).append(registersTableBody);
+        registersTable.append(registersTableHead, registersTableBody);
         registersWrapper.append(registersTable);
 
         // Memory changes table
         const memoryWrapper = $("<div>").addClass("table-wrapper");
-        const memoryTable = $("<table>").addClass("memory-table");
         memoryWrapper.append($("<h3>").text("Memory:"));
-
-        const memoryTableHead = $("<thead>").append($("<tr>").append($("<th>").text("Address"), $("<th>").text("Current Value"), $("<th>").text("Post Instruction Value")));
+        const memoryTable = $("<table>").addClass("memory-table");
+        const memoryTableHead = $("<thead>").append($("<tr>").append(
+            $("<th>").text("Address"),
+            $("<th>").text("Current Value"),
+            $("<th>").text("Post Instruction Value")
+        ));
         const memoryTableBody = $("<tbody>");
 
         addresses.forEach(addr => {
-            memoryTableBody.append($("<tr>").append($("<td>").text(addr.address), $("<td>").text(addr.value), $("<td>").append($("<input>").attr("type", "text"))));
+            const row = $("<tr>").append(
+                $("<td>").text(addr.address),
+                $("<td>").text(addr.value),
+                $("<td>").append($("<input>").attr("type", "text"))
+            );
+            memoryTableBody.append(row);
         });
 
-        memoryTable.append(memoryTableHead).append(memoryTableBody);
+        memoryTable.append(memoryTableHead, memoryTableBody);
         memoryWrapper.append(memoryTable);
 
-        tablesContainer.append(registersWrapper).append(memoryWrapper);
+        tablesContainer.append(registersWrapper, memoryWrapper);
         this.containerDiv.append(tablesContainer);
+    }
+
+    repopulateInitialTables() {
+        const [ instructions, addresses, registers ] = this.initialState;
+
+        const registersTableBody = $(".register-table tbody");
+        const memoryTableBody = $(".memory-table tbody");
+
+        registersTableBody.empty();
+        memoryTableBody.empty();
+
+        registers.forEach(({ register, value }) => {
+            const displayValue = value || "0";
+            const row = $("<tr>").append(
+                $("<td>").text(register),
+                $("<td>").text(displayValue),
+                $("<td>").append($("<input>").attr("type", "text").val(""))
+            );
+            registersTableBody.append(row);
+        });
+
+        addresses.forEach(addr => {
+            const row = $("<tr>").append(
+                $("<td>").text(addr.address),
+                $("<td>").text(addr.value),
+                $("<td>").append($("<input>").attr("type", "text").val(""))
+            );
+            memoryTableBody.append(row);
+        });
+    }
+
+    repopulateTables() {
+        const currentState = this.allStates[this.currentInstruction - 1]
+
+        // Repopulate Registers table
+        const registersTableBody = this.containerDiv.find('.register-table tbody');
+        registersTableBody.empty();
+        currentState.registers.forEach(({ register, value }) => {
+            const row = $("<tr>").append(
+                $("<td>").text(register),
+                $("<td>").text(value),
+                $("<td>").append($("<input>").attr("type", "text").val(""))
+            );
+            registersTableBody.append(row);
+        });
+
+        // Repopulate Memory table
+        const memoryTableBody = this.containerDiv.find('.memory-table tbody');
+        memoryTableBody.empty();
+        currentState.memory.forEach(addr => {
+            const row = $("<tr>").append(
+                $("<td>").text(addr.address),
+                $("<td>").text(addr.value),
+                $("<td>").append($("<input>").attr("type", "text").val(""))
+            );
+            memoryTableBody.append(row);
+        });
     }
 
     renderButtons() {
@@ -228,7 +291,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         });
     }
 
-    renderFeedback(isCorrect) {
+    renderFeedback(){
+        let feedbackDiv = $("<div>").addClass("feedback-container");
+        this.containerDiv.append(feedbackDiv);
+    }
+
+    reRenderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
         if (feedbackDiv.length === 0) {
             feedbackDiv = $("<div>").addClass("feedback-container");
@@ -252,7 +320,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         feedbackDiv.empty();
 
         const feedbackMessage = "All instructions completed! Well done.";
-        feedbackDiv.append("<br>");
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', 'blue'));
     }
 
@@ -287,7 +354,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     resetValues() {
         this.containerDiv.find("input[type='text']").val("");
-        this.containerDiv.find('.feedback-container').remove();
+        this.containerDiv.find('.feedback-container').empty();
+        this.currentInstruction = 0
+        this.moveToInitialInstruction();
     }
 
     tryAnother() {
@@ -297,9 +366,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find('.tables-container').remove();
         this.containerDiv.find('.button-container').remove();
         this.containerDiv.find('.feedback-container').remove();
+
+        // rerender
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
         this.renderButtons();
+        this.renderFeedback();
     }
 
     validateAnswers(userRegisters, userMemory, step) {
@@ -307,7 +379,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         let isCorrect = true;
 
         for (let reg of expectedState.registers) {
-            console.log(userRegisters[reg.register], reg.value);
             if (userRegisters[reg.register] != reg.value) {
                 isCorrect = false;
                 break;
@@ -316,7 +387,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         if (isCorrect) {
             for (let mem of expectedState.memory) {
-                console.log(userMemory[mem.address], mem.value);
                 if (userMemory[mem.address] != mem.value) {
                     isCorrect = false;
                     break;
@@ -328,21 +398,21 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     checkAnswer() {
-        console.log("Checking answers for instruction: ", this.currentInstruction);
         const [userRegisters, userMemory] = this.gatherInput(this.allStates[this.currentInstruction]);
 
         const isCorrect = this.validateAnswers(userRegisters, userMemory, this.currentInstruction);
-        this.updateTableColors(isCorrect, userRegisters, userMemory);
-        this.renderFeedback(isCorrect);
 
         if (isCorrect) {
             this.currentInstruction++;
-            if (this.currentInstruction >= this.initialState[0].length) {
-                this.renderFinalFeedback();
-            } else {
-                this.moveToNextInstruction();
-            }
+            this.moveToNextInstruction();
         }
+
+        if (this.currentInstruction >= this.initialState[0].length) {
+            this.renderFinalFeedback();
+            return 0;
+        }
+
+        this.reRenderFeedback(isCorrect);
     }
 
     gatherInput(currentState) {
@@ -381,59 +451,20 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         return [userRegisters, userMemory];
     }
 
-    updateTableColors(isCorrect, userRegisters, userMemory) {
-        const expectedState = this.allStates[this.currentInstruction];
-        const previousState = this.currentInstruction > 0 ? this.allStates[this.currentInstruction - 1] : this.initialState[1];
-
-        // Update register colors
-        for (let reg of expectedState.registers) {
-            const row = this.containerDiv.find(`.register-table tr:contains('${reg.register}')`);
-            const input = row.find('input');
-            const previousValue = previousState.registers.find(r => r.register === reg.register).value;
-            const hasChanged = userRegisters[reg.register] !== previousValue;
-
-            if (hasChanged) {
-                const isRegCorrect = userRegisters[reg.register] == reg.value;
-                this.blinkElement(input, isRegCorrect);
-            } else {
-                input.css('background-color', '');
-            }
-        }
-
-        // Update memory colors
-        for (let mem of expectedState.memory) {
-            const row = this.containerDiv.find(`.memory-table tr:contains('${mem.address}')`);
-            const input = row.find('input');
-            const previousValue = previousState.memory.find(m => m.address === mem.address).value;
-            const hasChanged = userMemory[mem.address] !== previousValue;
-
-            if (hasChanged) {
-                const isMemCorrect = userMemory[mem.address] == mem.value;
-                this.blinkElement(input, isMemCorrect);
-            } else {
-                input.css('background-color', '');
-            }
-        }
-    }
-
-    blinkElement(element, isCorrect) {
-        const color = isCorrect ? 'lightgreen' : 'lightcoral';
-        let count = 0;
-        const intervalId = setInterval(() => {
-            element.css('background-color', count % 2 === 0 ? color : '');
-            count++;
-            if (count === 2) {
-                clearInterval(intervalId);
-                element.css('background-color', '');
-            }
-        }, 500);  // Change color every 200ms
-    }
-
     moveToNextInstruction() {
         this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
-        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction - 1}"]`).removeClass('disabled').addClass('current');
-        this.resetInputFields();
+        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
         this.checkAnswerButton.prop("disabled", true);
+        this.resetInputFields();
+        this.repopulateTables();
+    }
+
+    moveToInitialInstruction() {
+        this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
+        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
+        this.checkAnswerButton.prop("disabled", true);
+        this.resetInputFields();
+        this.repopulateInitialTables();
     }
 
     resetInputFields() {
