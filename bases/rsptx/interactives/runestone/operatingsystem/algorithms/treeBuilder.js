@@ -8,7 +8,7 @@ class ForkNode {
     }
 }
 const INDENT_SPC = 4;
-const DASH = "─";
+const DASH = "-";
 const BAR = "|";
 const SPC = " ";
 const NEWLINE = "\n";
@@ -83,17 +83,36 @@ function transpileToC(code, indent = 0, activeProcesses = ["0"]) {
 
 function buildTree(code, id = 0, time = 0, childCt = 0) {
     code = code.trim();
-    if (code.length === 0) return null;
+    if (code.length === 0) {
+        return new ForkNode(
+            id,
+            time,
+            "",
+            null, null
+        );
+    }
 
+    const exitIndex = code.indexOf("x");
     let forkIndex = code.indexOf('f(');
-    if (forkIndex === -1) forkIndex = code.length; // no fork, plain print node
+    let hasFork = true;
+    if (forkIndex === -1) {
+        hasFork = false;
+        forkIndex = code.length; // no fork, plain print node
+    }
+
+    if (exitIndex!==-1 && exitIndex < forkIndex) {
+        forkIndex = exitIndex+1;
+        code = code.substring(0, exitIndex+1); // capture exit char
+    }
     // return new ForkNode(id, time, code);
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
     leftCode += code.substring(end).trim(); // remaining code
     rightCode += code.substring(end).trim(); // remaining code
-    childCt += rightCode?1:0;
-    const leftNode = buildTree(leftCode, id, time+1, childCt);
-    const rightNode = buildTree(rightCode, (id*10)+childCt-(id?1:0), 0);
+    // childCt += rightCode?1:0;
+    childCt += (hasFork)?1:0;
+    // console.log(code, hasFork);
+    const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
+    const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
     return new ForkNode(
         id,
         time,
@@ -260,7 +279,8 @@ function genRandSourceCode(numForks, numPrints) {
 // }
 
 function main() {
-    let code = genRandSourceCode(4,4);
+    // let code = genRandSourceCode(4,4);
+    let code = "f(,f(a,)b)cf(d,)";
     // code = "f()af(,b)cf(f(,)f(,)f(,f(d,)),)";
     console.log(code);
     console.log("-".repeat(10));
