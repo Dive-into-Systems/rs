@@ -1,324 +1,63 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
+
 <body>
+    <svg width="1000" height="600"></svg>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+    const INDENT_SPC = 4;
+    const DASH = "-";
+    const BAR = "|";
+    const SPC = " ";
+    const NEWLINE = "\n";
+    let nodeCounter = 1;
 
-<script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
-<script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+    function getItemsCoordinates(ids, times, valuesMap) {
+        var idToX = {};
+        var timeToY = {};
+        const spacingX = 100;
+        const spacingY = 50;
 
-<div id="timeline_graph" style="text-align: center;"></div>
+        ids.forEach((id, idx) => { idToX[id] = idx * spacingX; });
+        times.forEach((t, idx) => { timeToY[t] = idx * spacingY; });
 
-<script>
+        let coordinates = valuesMap.map(item => ({
+            id: item.id,
+            time: item.time,
+            content: item.content,
+            x: idToX[item.id],
+            y: timeToY[item.time]
+        }));
 
-    // function getEventsAttr() {
-    //     return;
-    // }
-    // function connectNodes(values) {
-
-    //     let edges = [];
-    //     for (let i = 0; i < values.length; i++) {
-    //         const [IDtime, print] = values[i].split(':');
-    //         const [ID, timestep] = IDtime.split('.');
-    //         if (print !== "[]") {
-    //             if (!edges[ID]) {
-    //                 edges[ID] = [];
-    //             }
-    //             edges[ID].push(print);
-    //         }
-    //     }
-    //     return edges;
-    // }
-
-    // function getSubgraph(edges, i) {
-    //     let subgraphString = (
-    //         `subgraph cluster_${i} {` +
-    //         `style=filled;` +
-    //         `color=lightgrey;` +
-    //         `node [style=filled,color=white];`
-    //     );
-
-    //     for (let e of edges) {
-    //         subgraphString += `${e} -> a;`;
-    //     }
-
-    //     subgraphString = subgraphString.slice(0, -4); // Remove the last ' -> ' 
-    //     subgraphString += '};';
-
-    //     return subgraphString;
-    // }
-
-    // function drawTimeline(links, values) {
-
-    //     const edges = connectNodes(values);
-
-    //     let digraphString = (
-    //         'digraph G {' +
-    //         'bgcolor=transparent;' +
-    //         'node [shape=box, color=black, style=filled, fillcolor=white];' +
-    //         'edge [color=black, penwidth=2.0];' +
-    //         'rankdir=LR;' +
-    //         'splines=ortho;'
-    //     );
-
-    //     for (let i = 0; i < edges.length; i++) {
-    //         digraphString += getSubgraph(edges, i);
-    //     }
-
-    //     digraphString += 'end [shape=Msquare];';
-    //     digraphString += '}';
-
-    //     console.log(digraphString);
-
-    //     d3.select("#timeline_graph").graphviz()
-    //         .renderDot(digraphString);
-    // }
-
-    // class ForkNode {
-    //     constructor(id = 0, timestep = 0, value = "_", left = null, right = null) {
-    //         this.id = id;
-    //         this.timestep = timestep;
-    //         this.value = value;
-    //         this.left = left;
-    //         this.right = right;
-    //     }
-    // }
-    // const INDENT_SPC = 4;
-    // const DASH = "─";
-    // const BAR = "|";
-    // const SPC = " ";
-    // const NEWLINE = "\n";
-    // let nodeCounter = 1;
-
-    // function transpileToC(code, indent = 0, activeProcesses = ["0"]) {
-    //     let result = [];
-    //     let ptr = 0;
-    //     let nextF;
-    //     let leftCode, rightCode;
-
-    //     function addLine(line) {
-    //         result.push(`${SPC.repeat(indent)}${line}`);
-    //     }
-
-    //     while (ptr < code.length) {
-    //         nextF = code.indexOf('f(', ptr);
-    //         if (nextF === -1 || nextF > ptr) {
-    //             // print plain text until 'f(' or end of string
-    //             let end = nextF === -1 ? code.length : nextF;
-    //             let text = code.substring(ptr, end);
-    //             for (let i = 0; i < text.length; i++) {
-    //                 addLine(`printf("${text[i]}");`);
-    //             }
-    //             ptr = end;
-    //         }
-
-    //         if (nextF !== -1 && ptr === nextF) {
-    //             [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-    //             if (!leftCode && !rightCode) addLine("fork();");
-    //             if (leftCode) {
-    //                 addLine("if (fork()) {");
-    //                 result = result.concat(transpileToC(leftCode, indent + INDENT_SPC));
-    //                 addLine(rightCode ? "} else {" : "}");
-    //             }
-    //             if (rightCode) {
-    //                 if (!leftCode) addLine("if (fork() == 0) {");
-    //                 result = result.concat(transpileToC(rightCode, indent + INDENT_SPC));
-    //                 addLine("}");
-    //             }
-    //         }
-    //     }
-    //     return result;
-    // }
-
-    // function parseForkArgs(code, forkIndex) {
-    //     let balance = 1;
-    //     let topLevelComma = null; // position of first top-level comma
-    //     let [start, end] = [forkIndex + 2, forkIndex + 2]; // after 'f('
-    //     while (end < code.length) {
-    //         if (code[end] === '(') balance++;
-    //         if (code[end] === ')') balance--;
-    //         if (balance === 0) break; // found closing bracket
-    //         if (balance === 1 && code[end] === ',') topLevelComma ??= end; // only assigns top comma once
-    //         end++;
-    //     }
-
-    //     if (!topLevelComma) return [code.substring(start, end), '', end + 1];
-    //     return [
-    //         code.substring(start, topLevelComma),
-    //         code.substring(topLevelComma + 1, end),
-    //         end + 1 // next index
-    //     ];
-    // }
-
-    // function buildTree(code, id = 0, time = 0, childCt = 0) {
-    //     code = code.trim();
-    //     if (code.length === 0) {
-    //         return new ForkNode(
-    //             id,
-    //             time,
-    //             "",
-    //             null, null
-    //         );
-    //     }
-
-    //     const exitIndex = code.indexOf("x");
-    //     let forkIndex = code.indexOf('f(');
-    //     let hasFork = true;
-    //     if (forkIndex === -1) {
-    //         hasFork = false;
-    //         forkIndex = code.length; // no fork, plain print node
-    //     }
-
-    //     if (exitIndex!==-1 && exitIndex < forkIndex) {
-    //         forkIndex = exitIndex+1;
-    //         code = code.substring(0, exitIndex+1); // capture exit char
-    //     }
-    //     // return new ForkNode(id, time, code);
-    //     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
-    //     leftCode += code.substring(end).trim(); // remaining code
-    //     rightCode += code.substring(end).trim(); // remaining code
-    //     // childCt += rightCode?1:0;
-    //     childCt += (hasFork)?1:0;
-    //     console.log(code, hasFork);
-    //     const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
-    //     const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
-    //     return new ForkNode(
-    //         id,
-    //         time,
-    //         code.substring(0, forkIndex).trim() ?? "",
-    //         leftNode,
-    //         rightNode
-    //     );
-    // }
-
-    // const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
-
-    // function getTreeArr(root, parentVal = "", result = new Set(), valuesMap = new Map()) {
-    //     if (!root) return { treeSet: result, valuesMap };
-
-    //     // Add the parent-child entry to the set if IDs are different
-    //     // const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
-    //     const entry = `${root.id},${parentVal}`;  // Always include parent ID, even if it's an empty string
-    //     if (root.id.toString() !== parentVal.toString()) {
-    //         result.add(entry);
-    //     }
-
-    //     // Aggregate values by ID in a Map
-    //     if (valuesMap.has(root.id)) {
-    //         valuesMap.get(root.id).push(root.value);
-    //     } else {
-    //         valuesMap.set(root.id, [root.value]);
-    //     }
-
-    //     // Recursive calls to traverse left and right children
-    //     getTreeArr(root.left, `${root.id}`, result, valuesMap);
-    //     getTreeArr(root.right, `${root.id}`, result, valuesMap);
-
-    //     return { treeSet: result, valuesMap };
-    // }
-
-    // function getTreeCSV(root) {
-    //     const { treeSet, valuesMap } = getTreeArr(root);
-    //     const csvString = "child,parent\n" + Array.from(treeSet).join("\n");
-
-    //     const valuesArray = Array.from(valuesMap, ([id, values]) => `${id}:[${values.map(value => value)}]`);
-    //     return { csv: csvString, valuesList: valuesArray };
-    // }
-
-    // // function printTreeVert(node, isRoot = true, values = []) {
-    // // const nullChar = "[]";
-    // //     // if (!node) return [nullChar]; // show forked processes that does nothing
-    // //     if (!node) return [];
-    
-    // //     const leftSubtree = printTreeVert(node.left, false);
-    // //     const rightSubtree = printTreeVert(node.right, false);
-
-    // //     const hasLeft = leftSubtree.length > 0;
-    // //     const hasRight = rightSubtree.length > 0;
-    
-    // //     const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
-    // //     values.push(selfValue);
-        
-    // //     // spacing for subtrees
-    // //     const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
-    // // ;
-    // //     const indentRight = (hasLeft ? "|" : " ") + "_".repeat(Math.max(selfValue.length, leftWidth));
-    
-    // //     const result = [];
-    // //     result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
-    // //     rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
-    // //     // if (hasLeft) result.push(BAR);
-    // //     leftSubtree.forEach(line => result.push(line+SPC.repeat(leftWidth-line.length)));
-
-    // //     return isRoot ? result.join("\n") : result;
-    // // }
-
-    // function printTreeVert(node, isRoot = true, values = []) {
-    //     const nullChar = "[]";
-    //     if (!node) return { treeLines: [], values };
-
-    //     const leftResult = printTreeVert(node.left, false, values);
-    //     const rightResult = printTreeVert(node.right, false, values);
-
-    //     const leftSubtree = leftResult.treeLines;
-    //     const rightSubtree = rightResult.treeLines;
-
-    //     const hasLeft = leftSubtree.length > 0;
-    //     const hasRight = rightSubtree.length > 0;
-
-    //     const selfValue = `${node.id}.${node.timestep}:${node.value ? node.value : nullChar}`;
-    //     values.push(selfValue);  // Add selfValue to the array
-
-    //     // spacing for subtrees
-    //     const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
-    //     const indentRight = (hasLeft ? "|" : " ") + "_".repeat(Math.max(selfValue.length, leftWidth));
-
-    //     const result = [];
-    //     result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth) - selfValue.length + 1) + rightSubtree[0] : ""}`);
-    //     rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
-    //     leftSubtree.forEach(line => result.push(line + " ".repeat(leftWidth - line.length)));
-
-    //     return isRoot ? { treeLines: result.join("\n"), values } : { treeLines: result, values };
-    // }
-    
-    // console.log("-".repeat(10));
-
-    // const source = "f(,f(a,)b)cf(d,)";
-    // console.log(transpileToC(source).join(NEWLINE));
-
-    // let tree = buildTree(source);
-    // const { treeLines, values } = printTreeVert(tree);
-    // console.log("Tree visualization:");
-    // console.log(treeLines);
-    // console.log("All node values:");
-    // console.log(values);
-    // const { csv: linksCsv, valuesList: labels } = getTreeCSV(tree);
-
-    // // console.log("Links CSV: " + linksCsv);
-    // // console.log("Labels: " + labels);
-
-    // const links = d3.csvParse(linksCsv);
-    // // console.log("Parsed links: " + links);
-
-    // // drawHierarchy(links, labels);
-    // drawTimeline(links, values);
-
-
-    function getItemCoordinate(item) {
-        left_x = item.left;
-        top_y = item.parent.top + item.parent.height - item.top - item.height;
-        return {
-            left: left_x,
-            top: top_y,
-            right: left_x + item.width,
-            bottom: top_y + item.height,
-            mid_x: left_x + item.width / 2,
-            mid_y: top_y + item.height / 2,
-            width: item.width,
-            height: item.height
-        };
+        return coordinates;
     }
 
-    function getItemRelations(links) {
+    function getItemsRelations(values) {
+        let valuesMap = values.map(val => {
+            const [idTime, content] = val.split(':');
+            const [id, time] = idTime.split('.');
+            return { id, time, content };
+        });
+        return valuesMap;
+    }
+
+    function drawTimeline(values) {
+        // console.log("ID, time, prints:", getItemRelations(values));
+        const valuesMap = getItemsRelations(values);
+        let ids = new Set(valuesMap.map(items => items.id));
+        let times = new Set(valuesMap.map(items => items.time));
+        ids = Array.from(ids);
+        times = Array.from(times).sort();
+        console.log("IDs:", ids, "Times:", times);
+        const coords = getItemsCoordinates(ids, times, valuesMap);
+        console.log(coords);
+        var svg = d3.select("svg");
+        coords.forEach(item => {
+                svg.append("text")
+                .attr("x", item.x + 50)  // Adjusting position to fit within the SVG
+                .attr("y", item.y + 10)
+                .text(`${item.id}.${item.time}: ${item.content}`)
+                .attr("fill", "black");
+            });
         return;
     }
 
@@ -374,13 +113,132 @@
             .text("Time");
     }
 
-    function drawTimeline() {   
-        const links = '0,\n2,0\n1,0\n12,1\n11,1\n111,11';
-        const labels = '0:[,c,d],2:[],1:[,abc,d],12:[],11:[bc,d],111:[]';
+    class ForkNode {
+        constructor(id = 0, timestep = 0, value = "_", left = null, right = null) {
+            this.id = id;
+            this.timestep = timestep;
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+    }
+    function parseForkArgs(code, forkIndex) {
+        let balance = 1;
+        let topLevelComma = null; // position of first top-level comma
+        let [start, end] = [forkIndex + 2, forkIndex + 2]; // after 'f('
+        while (end < code.length) {
+            if (code[end] === '(') balance++;
+            if (code[end] === ')') balance--;
+            if (balance === 0) break; // found closing bracket
+            if (balance === 1 && code[end] === ',') topLevelComma ??= end; // only assigns top comma once
+            end++;
+        }
 
-        var svg = d3.select("svg");
-        initGraph(svg);
+        if (!topLevelComma) return [code.substring(start, end), '', end + 1];
+        return [
+            code.substring(start, topLevelComma),
+            code.substring(topLevelComma + 1, end),
+            end + 1 // next index
+        ];
+    }
+    function getTreeArr(root, parentVal = "", result = new Set(), valuesMap = new Map()) {
+        if (!root) return { treeSet: result, valuesMap };
+
+        // Add the parent-child entry to the set if IDs are different
+        // const entry = `${root.id}${parentVal ? ("," + parentVal) : ""}`;
+        const entry = `${root.id},${parentVal}`;  // Always include parent ID, even if it's an empty string
+        if (root.id.toString() !== parentVal.toString()) {
+            result.add(entry);
+        }
+
+        // Aggregate values by ID in a Map
+        if (valuesMap.has(root.id)) {
+            valuesMap.get(root.id).push(root.value);
+        } else {
+            valuesMap.set(root.id, [root.value]);
+        }
+
+        // Recursive calls to traverse left and right children
+        getTreeArr(root.left, `${root.id}`, result, valuesMap);
+        getTreeArr(root.right, `${root.id}`, result, valuesMap);
+
+        return { treeSet: result, valuesMap };
+    }
+    function buildTree(code, id = 0, time = 0, childCt = 0) {
+        code = code.trim();
+        if (code.length === 0) {
+            return new ForkNode(
+                id,
+                time,
+                "",
+                null, null
+            );
+        }
+
+        const exitIndex = code.indexOf("x");
+        let forkIndex = code.indexOf('f(');
+        let hasFork = true;
+        if (forkIndex === -1) {
+            hasFork = false;
+            forkIndex = code.length; // no fork, plain print node
+        }
+
+        if (exitIndex!==-1 && exitIndex < forkIndex) {
+            forkIndex = exitIndex+1;
+            code = code.substring(0, exitIndex+1); // capture exit char
+        }
+        // return new ForkNode(id, time, code);
+        let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
+        leftCode += code.substring(end).trim(); // remaining code
+        rightCode += code.substring(end).trim(); // remaining code
+        // childCt += rightCode?1:0;
+        childCt += (hasFork)?1:0;
+        console.log(code, hasFork);
+        const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
+        const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
+        return new ForkNode(
+            id,
+            time,
+            code.substring(0, forkIndex).trim() ?? "",
+            leftNode,
+            rightNode
+        );
+    }
+    function printTreeVert(node, isRoot = true, values = []) {
+        const nullChar = "[]";
+        if (!node) return { treeLines: [], values };
+
+        const leftResult = printTreeVert(node.left, false, values);
+        const rightResult = printTreeVert(node.right, false, values);
+
+        const leftSubtree = leftResult.treeLines;
+        const rightSubtree = rightResult.treeLines;
+
+        const hasLeft = leftSubtree.length > 0;
+        const hasRight = rightSubtree.length > 0;
+
+        const selfValue = `${node.id}.${node.timestep}:${node.value ? node.value : nullChar}`;
+        values.push(selfValue);  // Add selfValue to the array
+
+        // spacing for subtrees
+        const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
+        const indentRight = (hasLeft ? "|" : " ") + "_".repeat(Math.max(selfValue.length, leftWidth));
+
+        const result = [];
+        result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth) - selfValue.length + 1) + rightSubtree[0] : ""}`);
+        rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
+        leftSubtree.forEach(line => result.push(line + " ".repeat(leftWidth - line.length)));
+
+        return isRoot ? { treeLines: result.join("\n"), values } : { treeLines: result, values };
     }
 
-</script>
+    const source = "f(,f(a,)b)cf(d,)";
+    const tree = buildTree(source);
+    const { treeLines, values } = printTreeVert(tree);
+    console.log(values);
+
+    drawTimeline(values);
+    // initGraph(svg);
+
+    </script>
 </body>
