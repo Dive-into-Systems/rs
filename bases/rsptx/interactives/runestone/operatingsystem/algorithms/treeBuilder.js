@@ -121,32 +121,33 @@ function output(node) {
 //     return result;
 // }
 
-// function printTreeVert(node, isRoot = true) {
-//     const nullChar = "[]";
-//     // if (!node) return [nullChar]; // show forked processes that does nothing
-//     if (!node) return [];
+function printTreeVert(node, isRoot = true) {
+    const nullChar = "[]";
+    // if (!node) return [nullChar]; // show forked processes that does nothing
+    if (!node) return [];
    
-//     const leftSubtree = printTreeVert(node.left, false);
-//     const rightSubtree = printTreeVert(node.right, false);
+    const leftSubtree = printTreeVert(node.left, false);
+    const rightSubtree = printTreeVert(node.right, false);
 
-//     const hasLeft = leftSubtree.length > 0;
-//     const hasRight = rightSubtree.length > 0;
+    const hasLeft = leftSubtree.length > 0;
+    const hasRight = rightSubtree.length > 0;
    
-//     const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
+    const selfValue = (`${node.id}.${node.timestep}`)+ ":"+(node.value?node.value:nullChar);
    
-//     // spacing for subtrees
-//     const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
-// ;
-//     const indentRight = (hasLeft ? "|" : " ") + " ".repeat(Math.max(selfValue.length, leftWidth));
+    // spacing for subtrees
+    const leftWidth = leftSubtree.length > 0 ? Math.max(...leftSubtree.map(item => item.length)) : 0;
+;
+    const indentRight = (hasLeft ? "|" : " ") + " ".repeat(Math.max(selfValue.length, leftWidth));
    
-//     const result = [];
-//     result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
-//     rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
-//     // if (hasLeft) result.push(BAR);
-//     leftSubtree.forEach(line => result.push(line+SPC.repeat(leftWidth-line.length)));
+    const result = [];
+    result.push(`${selfValue}${hasRight ? DASH.repeat(Math.max(selfValue.length, leftWidth)-selfValue.length+1) + rightSubtree[0] : ""}`);
+    rightSubtree.slice(1).forEach(line => result.push(`${indentRight}${line}`));
+    // if (hasLeft) result.push(BAR);
+    leftSubtree.forEach(line => result.push(line+SPC.repeat(leftWidth-line.length)));
 
-//     return isRoot ? result.join("\n") : result;
-// }
+    console.log(isRoot ? result.join("\n") : result);
+    return isRoot ? result.join("\n") : result;
+}
 
 const formatNode = (node) => `${node.id}${node.timestep}${node.value}`;
 

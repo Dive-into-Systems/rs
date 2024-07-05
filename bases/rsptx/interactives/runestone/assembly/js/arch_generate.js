@@ -58,6 +58,7 @@ class ArchInstructions {
             arith ? this.arithBinary.mainWeight : 0,
             bit ? this.bitLogic.mainWeight : 0,
             bit ? this.bitShift.mainWeight : 0,
+            bit ? this.stackOps.mainWeight : 0, //stack
         ];
         return this._makePrompt(weightedPickId(fam_weights));
     }
@@ -131,7 +132,6 @@ class ArchInstructions {
         }
         let offset = unifPickItem(offsets);
         let literal = Math.floor(Math.random() * 8) * 8;
-
         if (format.includes('offset')) {
             const maxOffset = format.includes('memAddr')
                 ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
@@ -271,6 +271,8 @@ class ArchInstructions {
     }
 
     executeInstructions(input) {
+
+        console.log("bp1")
         const [instructions, initialMemory, initialRegisters] = input;
         const memory = JSON.parse(JSON.stringify(initialMemory));
         const registers = JSON.parse(JSON.stringify(initialRegisters));
@@ -288,6 +290,29 @@ class ArchInstructions {
         const result = op === 'mov' || op === 'movl' || op === 'mvn' ? srcValue : this.calculate(op, destValue, srcValue);
 
         this.setValue(dest, result, registers, memory);
+    }
+
+    pushToStack(src, registers, memory, srcValue) {
+        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
+        const spValue = parseInt(spReg.value, 16);
+
+        // Push to stack and update stack pointer
+        memory.push({ address: `0x${(spValue - 8).toString(16).toUpperCase()}`, value: srcValue });
+        spReg.value = `0x${(spValue - 8).toString(16).toUpperCase()}`;
+    }
+
+    popFromStack(dest, registers, memory) {
+        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
+        const spValue = parseInt(spReg.value, 16);
+        const memIndex = memory.findIndex(m => m.address === `0x${spValue.toString(16).toUpperCase()}`);
+
+        // Pop from stack and update stack pointer
+        if (memIndex !== -1) {
+            const poppedValue = memory[memIndex].value;
+            memory.splice(memIndex, 1);
+            this.setValue(dest, poppedValue, registers, memory);
+            spReg.value = `0x${(spValue + 8).toString(16).toUpperCase()}`;
+        }
     }
 
     getValue(operand, registers, memory) {

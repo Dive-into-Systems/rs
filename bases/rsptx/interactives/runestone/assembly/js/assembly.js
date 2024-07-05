@@ -4,6 +4,8 @@
 // This file contains the JS for the Runestone Assembly component. It was created By Arys Aikyn, Tony Cao 06/03/2024
 "use strict";
 
+//before
+
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "./assembly-i18n.en.js";
 import "../css/assembly.css";

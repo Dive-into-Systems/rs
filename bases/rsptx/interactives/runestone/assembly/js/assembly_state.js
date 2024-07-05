@@ -284,9 +284,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         buttonContainer.append(resetButton).append(tryAnotherButton).append(this.checkAnswerButton);
         this.containerDiv.append(buttonContainer);
 
-        // Enable "Check Answer" button when all fields are filled
+        // Enable "Check Answer" button when any field is filled
         this.containerDiv.on("input", "input[type='text']", () => {
-            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val() !== "");
+            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val().trim() !== "");
             this.checkAnswerButton.prop("disabled", !allFilled);
         });
     }
