@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <body>
-    <svg width="1000" height="600"></svg>
+    <svg width="700" height="400"></svg>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
     const INDENT_SPC = 4;
@@ -11,106 +11,118 @@
     const NEWLINE = "\n";
     let nodeCounter = 1;
 
-    function getItemsCoordinates(ids, times, valuesMap) {
-        var idToX = {};
-        var timeToY = {};
-        const spacingX = 100;
-        const spacingY = 50;
-
-        ids.forEach((id, idx) => { idToX[id] = idx * spacingX; });
-        times.forEach((t, idx) => { timeToY[t] = idx * spacingY; });
-
-        let coordinates = valuesMap.map(item => ({
-            id: item.id,
-            time: item.time,
-            content: item.content,
-            x: idToX[item.id],
-            y: timeToY[item.time]
-        }));
-
-        return coordinates;
+    class EventNode {
+        constructor(id, time, content, type) {
+            this.id = id;
+            this.time = time;
+            this.content = content;
+            this.type = type;  // "creation" or "fork"
+        }
     }
 
-    function getItemsRelations(values) {
+    function parseValuesToNodes(values) {
         let valuesMap = values.map(val => {
             const [idTime, content] = val.split(':');
             const [id, time] = idTime.split('.');
             return { id, time, content };
         });
-        return valuesMap;
-    }
-
-    function drawTimeline(values) {
-        // console.log("ID, time, prints:", getItemRelations(values));
-        const valuesMap = getItemsRelations(values);
+        
+        
         let ids = new Set(valuesMap.map(items => items.id));
         let times = new Set(valuesMap.map(items => items.time));
+
         ids = Array.from(ids);
         times = Array.from(times).sort();
         console.log("IDs:", ids, "Times:", times);
-        const coords = getItemsCoordinates(ids, times, valuesMap);
-        console.log(coords);
-        var svg = d3.select("svg");
-        coords.forEach(item => {
-                svg.append("text")
-                .attr("x", item.x + 50)  // Adjusting position to fit within the SVG
-                .attr("y", item.y + 10)
-                .text(`${item.id}.${item.time}: ${item.content}`)
-                .attr("fill", "black");
-            });
-        return;
+        
+        var idToX = {}, timeToY = {};
+        const spacingX = 100, spacingY = 50;
+
+        ids.forEach((id, idx) => { idToX[id] = idx * spacingX; });
+        times.forEach((t, idx) => { timeToY[t] = idx * spacingY; });
+
+        coords = valuesMap.map(item => ({
+            ...item,
+            x: idToX[item.id],
+            y: timeToY[item.time]
+        }));
     }
 
-    function initGraph(svg) {
+    function drawHorizontalLines() {
+        return;
+    }
+    
+    function drawVerticalLines(svg, coords, xscale, yscale) {
+
+        const groups = {};
+
+        coords.forEach(coord => {
+            if (!groups[coord.id]) {
+                groups[coord.id] = [];
+            }
+            groups[coord.id].push(coord);
+        });
+
+        // Draw vertical lines for each group
+        Object.keys(groups).forEach(id => {
+            const points = groups[id];
+            points.sort((a, b) => a.y - b.y);  // Ensure they are sorted by y coordinate
+            for (let i = 0; i < points.length - 1; i++) {
+                svg.append("line")
+                    .attr("x1", xscale(points[i].x))
+                    .attr("y1", yscale(points[i].y + 10))
+                    .attr("x2", xscale(points[i + 1].x))
+                    .attr("y2", yscale(points[i + 1].y - 10))
+                    .attr("stroke", "green")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowhead)");
+            }
+        });
+
+        coords.forEach(item => {
+            svg.append("text")
+               .attr("x", xscale(item.x))
+               .attr("y", yscale(item.y))
+               .text(`${item.id}.${item.time}: ${item.content}`)
+            //    .text("fork()")
+               .attr("fill", "black");
+        });
+    }
+    function defineGaggets(svg) {
+        svg.append("defs").append("marker")
+            .attr("id", "arrowhead")
+            .attr("viewBox", "-0 -5 10 10")
+            .attr("refX", 5)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "green");
+    }
+    
+    function makeGraph(svg, coords) {
+
+        defineGaggets(svg);
+
+        const anchor = 50;
         let width = +svg.attr("width");
         let height = +svg.attr("height");
 
-        var data = [10, 15, 20, 25, 40];
+        const maxX = d3.max(coords, d => d.x) + 100; // extra space for padding
+        const maxY = d3.max(coords, d => d.y) + 0;  // extra space for padding
 
-        // Define the scale and axis
-        var xscale = d3.scaleLinear().domain([0, d3.max(data)]).range([0, width - 100]);
-        var yscale = d3.scaleLinear().domain([0, d3.max(data)]).range([height / 1.5, 0]);
+        var xscale = d3.scaleLinear().domain([0, maxX]).range([anchor, width + anchor]);
+        var yscale = d3.scaleLinear().domain([0, maxY]).range([anchor, height - anchor]);
 
-        var x_axis = d3.axisBottom().scale(xscale);
-        var y_axis = d3.axisLeft().scale(yscale);
+        var x_axis = d3.axisBottom(xscale);
+        var y_axis = d3.axisLeft(yscale);
 
-        let gYAxis = svg.append("g").attr("transform", "translate(50, 10)").call(y_axis);
-        var xAxisTranslate = height / 1.5 + 10;
-        let gXAxis = svg.append("g").attr("transform", `translate(50, ${xAxisTranslate})`).call(x_axis);
+        svg.append("g").attr("transform", "translate(0," + (height - anchor) + ")").call(x_axis);
+        svg.append("g").attr("transform", "translate(50,0)").call(y_axis);
 
-        svg.append("marker")
-            .attr("id", "arrow")
-            .attr("viewBox", "0 0 10 10")
-            .attr("refX", "5")
-            .attr("refY", "5")
-            .attr("markerWidth", "6")
-            .attr("markerHeight", "6")
-            .attr("orient", "auto-start-reverse")
-            .append("path")
-            .attr("d", "M 0 0 L 10 5 L 0 10 z")
-            .attr("fill", "red");
-
-        // Get the bounding box of the x-axis group
-        let bbox = gYAxis.node().getBBox();
-        let lineY = bbox.y + bbox.height + 10;
-        svg.append("line")
-            .attr("x1", 50)
-            .attr("y1", lineY + 30)
-            .attr("x2", width - 50)
-            .attr("y2", lineY + 30)
-            .attr("stroke", "red")
-            .attr("stroke-width", 2)
-            .attr("marker-end", "url(#arrow)");
-
-        // Add "Time" label below the line
-        svg.append("text")
-            .attr("x", (width - 100) / 2 + 50)
-            .attr("y", lineY + 50)
-            .attr("fill", "red")
-            .style("text-anchor", "middle")
-            .style("font-family", "Arial")
-            .style("font-size", "14px")
-            .text("Time");
+        drawVerticalLines(svg, coords, xscale, yscale);
     }
 
     class ForkNode {
@@ -236,9 +248,16 @@
     const tree = buildTree(source);
     const { treeLines, values } = printTreeVert(tree);
     console.log(values);
-
-    drawTimeline(values);
-    // initGraph(svg);
+    const valuesMap = parseValuesToNodes(values);
+    // let ids = new Set(valuesMap.map(items => items.id));
+    // let times = new Set(valuesMap.map(items => items.time));
+    // ids = Array.from(ids);
+    // times = Array.from(times).sort();
+    // console.log("IDs:", ids, "Times:", times);
+    // const coords = getItemsCoordinates(ids, times, valuesMap);
+    console.log(coords);
+    var svg = d3.select("svg");
+    makeGraph(svg, coords);
 
     </script>
 </body>

@@ -13,10 +13,16 @@ const BAR = "|";
 const SPC = "&#8195;";
 const NEWLINE = "<br>";
 let nodeCounter = 1;
+const EXIT_CHAR = "x";
 
 export function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
     // return Math.random();
+}
+
+function getChildrenInfo(parentID, childCt, time) {
+    // left id, left ct, leftTime, right id, right ct, rightTime
+    return [parentID, childCt, time+1, parentID*10+childCt, 0, 0];
 }
 
 export function parseForkArgs(code, forkIndex) {
@@ -59,8 +65,8 @@ export function buildTree(code, id = 0, time = 0, childCt = 0) {
     }
 
     if (exitIndex!==-1 && exitIndex < forkIndex) {
-        forkIndex = exitIndex+1;
-        code = code.substring(0, exitIndex+1); // capture exit char
+        forkIndex = exitIndex;
+        code = code.substring(0, exitIndex); // capture exit char
     }
     // return new ForkNode(id, time, code);
     let [leftCode, rightCode, end] = parseForkArgs(code, forkIndex);
@@ -68,7 +74,7 @@ export function buildTree(code, id = 0, time = 0, childCt = 0) {
     rightCode += code.substring(end).trim(); // remaining code
     // childCt += rightCode?1:0;
     childCt += (hasFork)?1:0;
-    console.log(code, hasFork);
+    // console.log(code, hasFork);
     const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
     const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
     return new ForkNode(
@@ -80,43 +86,67 @@ export function buildTree(code, id = 0, time = 0, childCt = 0) {
     );
 }
 
-export function transpileToC(code, indent = 0) {
-    let result = "";
+function transpileToCHelper(code, id = 0, childCt = 0, time = 0, indent = 0, active = true) {
+    let result = [];
     let ptr = 0;
+    let liveProcesses = active?[id+"."+time]:[];
+    let nextF;
+    
+    
     let leftCode, rightCode;
-    let prefix = SPC.repeat(indent);
-    const lineC = (text) => {return(SPC.repeat(indent) + text + NEWLINE)};
-    while (ptr < code.length) {
-        if (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '(')) {
-            let start = ptr;
-            while (ptr < code.length && (code[ptr] !== 'f' || (ptr + 1 < code.length && code[ptr + 1] !== '('))) {
-                ptr++;
-            }
-            let text = code.substring(start, ptr).trim();
-            for (let i = 0; i < text.length; i++) {
-                result += lineC(`printf("${text[i]}");`);
-            }
-        }
+    let leftProc, rightProc;
+    let leftResult, rightResult;
+    let [leftID, leftCt, leftTime, rightID, rightCt, rightTime] = [0,0,0,0,0,0];
+    
+    function addLine(line, extraProc = []) {
+        [leftID, leftCt, leftTime, rightID, rightCt, rightTime] = getChildrenInfo(id, childCt, time);
+        // result.push(`${SPC.repeat(indent)}${line} // ${liveProcesses.join(' + ')} , ${extraProc.join(' + ')}`);
+        result.push(`${SPC.repeat(indent)}${line}`);
+    }
 
-        if (code[ptr] === 'f' && code[ptr + 1] === '(') {
-            [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-            if (!leftCode && !rightCode) {
-                result += lineC("fork();");
-                continue;
+    while (ptr < code.length) {
+        nextF = code.indexOf('f(', ptr);
+        if (nextF === -1 || nextF > ptr) {
+            let end = nextF === -1 ? code.length : nextF;
+            let text = code.substring(ptr, end);
+            for (let i = 0; i < text.length; i++) {
+                if (text[i] == EXIT_CHAR) {
+                    addLine(`exit();`);
+                    liveProcesses = [];
+                    active =false;
+                } else {
+                    addLine(`printf("${text[i]}");`);
+                }
             }
+            ptr = end;
+        }
+        
+        if (nextF !== -1 && ptr === nextF) {
+            childCt++;
+            time++;
+            [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
+            if (!leftCode && !rightCode) addLine("fork();");
             if (leftCode) {
-                result += lineC("if (fork()) {");
-                result += transpileToC(leftCode, indent + INDENT_SPC);
-                result += lineC((rightCode?"} else {":"}"));
+                [leftResult, leftProc] = transpileToCHelper(leftCode, leftID, leftCt, leftTime, indent + INDENT_SPC, active);
+                addLine("if (fork()) {");
+                if (leftCode && active) liveProcesses.concat(leftProc);
+                result = result.concat(leftResult);
+                addLine(rightCode ? "} else {" : "}");
             }
             if (rightCode) {
-                result += leftCode?"":lineC("if (fork()==0) {");
-                result += transpileToC(rightCode, indent + INDENT_SPC);
-                result += lineC("}");
+                [rightResult, rightProc] = transpileToCHelper(rightCode, rightID, rightCt, rightTime, indent + INDENT_SPC, active);
+                if (rightCode && active) liveProcesses.concat(rightProc);
+                if (!leftCode) addLine("if (fork() == 0) {");
+                result = result.concat(rightResult);
+                addLine("}");
             }
         }
     }
-    return result;
+    return [result, liveProcesses];
+}
+
+export function transpileToC(code, id = 0, childCt = 0, time = 0, indent = 0, active = true) {
+    return transpileToCHelper(code, id, childCt, time, indent, active)[0].join(NEWLINE);
 }
 
 function output(node) {
@@ -226,18 +256,45 @@ function randInsert(mainStr, insertStr, anySlot = false) {
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, hasExit, hasElse, hasLoop) {
+// export function genRandSourceCode(numForks, numPrints, hasExit, hasElse, hasLoop) {
+//     let code = "";
+
+//     // Generate forking locations
+//     for (let i = 0; i < numForks; i++) {
+//         code = randInsert(code, "f(,)");
+//     }
+    
+//     // Generate print statement locations
+//     for (let i = 0; i < numPrints; i++) {
+//         code = randInsert(code, "-");
+//     }
+//     // code  = "f(a,)f(f(f(,),b)f(f(,c)f(,),)f(,)f(df(,),),)"; // super insane mode, 59 leaves, 69 prints
+//     let i = 0;
+//     const replaceChar = () => {
+//         const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
+//         i++;
+//         return char;
+//     };
+//     return code.replace(/-/g, replaceChar);
+// }
+
+export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
+
+    // TODO: make sure exit is not the first few instructions (at least not prior the first fork)
     let code = "";
+    const fork = hasElse?"f(,)":"f()";
 
     // Generate forking locations
     for (let i = 0; i < numForks; i++) {
-        code = randInsert(code, "f(,)");
+        code = randInsert(code, fork, true);
     }
-    
+    if (!hasNest) code = fork.repeat(numForks);
     // Generate print statement locations
     for (let i = 0; i < numPrints; i++) {
         code = randInsert(code, "-");
     }
+   
+    code = randInsert(code, hasExit?EXIT_CHAR:"");
     // code  = "f(a,)f(f(f(,),b)f(f(,c)f(,),)f(,)f(df(,),),)"; // super insane mode, 59 leaves, 69 prints
     let i = 0;
     const replaceChar = () => {

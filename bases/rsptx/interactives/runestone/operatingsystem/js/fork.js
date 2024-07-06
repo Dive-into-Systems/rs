@@ -72,7 +72,7 @@ export default class Fork extends RunestoneBase {
         this.modeMenu = $("<select>").addClass("mode form-control fork-inline");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
-            if (option.val() === "Easy") { option.attr("selected",true); }
+            if (option.val() === "Easy") { option.attr("selected", true); }
             $(this.modeMenu).append(option);
         });
         
