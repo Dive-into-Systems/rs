@@ -1,5 +1,5 @@
 // arch_generate.js
-// This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Tony Cao 06/03/2024
+// This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Tony Cao,  Kuzivakwashe Mavera 06/03/2024
 "use strict";
 
 import { off } from 'codemirror';
@@ -7,32 +7,38 @@ import arch_data from './arch_data.json';
 
 const { MAX_NUM, BIT_ODDS_X86_64, MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT } = arch_data;
 
+// Generates a random 32-bit floating point number between 0 and 1
 function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0] / (2 ** 32);
 }
 
+// Selects an index from an array of odds (weights) using weighted random selection
 function weightedPickId(odds) {
     const total = odds.reduce((sum, a) => sum + a, 0);
     let seed = randomFloat32() * total;
     return odds.findIndex((odds, i) => (seed -= odds) < 0);
 }
 
+// Selects a random index from an array using uniform distribution
 function unifPickId(arr) {
     return Math.floor(randomFloat32() * arr.length);
 }
 
+// Selects a random item from one or more arrays using uniform distribution
 function unifPickItem(...items) {
     const combinedArray = items.flat();
     if (!combinedArray.length) throw new Error("No arrays provided or all are empty.");
     return combinedArray[unifPickId(combinedArray)];
 }
 
+// Represents a family of instructions with associated weights and error types
 class InstructionsFamily {
     constructor(mainWeight, insArr, oddsArr, errorArr) {
         Object.assign(this, { mainWeight, instructions: insArr, errorsOdds: oddsArr, errors: errorArr });
     }
 }
 
+// Represents the architecture-specific instruction set and generation logic
 class ArchInstructions {
     constructor(config) {
         if (!config) throw new Error("Config data required");
@@ -50,6 +56,7 @@ class ArchInstructions {
         });
     }
 
+    // Generates a question based on the specified instruction types
     generate_question(mem_arch, arith, bit) {
         const fam_weights = [
             mem_arch ? this.memOps.mainWeight : 0,
@@ -58,11 +65,11 @@ class ArchInstructions {
             arith ? this.arithBinary.mainWeight : 0,
             bit ? this.bitLogic.mainWeight : 0,
             bit ? this.bitShift.mainWeight : 0,
-            bit ? this.stackOps.mainWeight : 0, //stack
         ];
         return this._makePrompt(weightedPickId(fam_weights));
     }
 
+    // Creates a prompt for an instruction with potential errors
     _makePrompt(index) {
         const family = [this.memOps, this.archOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift][index];
         const op = unifPickItem(family.instructions);
@@ -74,10 +81,12 @@ class ArchInstructions {
         return [prompt, q_type, feedback];
     }
 
+    // Gets a random offset value based on the architecture
     _getTrueOffset(is32) {
         return unifPickItem(this.offsets);
     }
 
+    // Resolves a character to a register, memory address, or literal value
     _solveChar(char, is32) {
         const reg = this._getTrueReg(is32);
         const mem = this._getTrueMem(is32);
@@ -85,6 +94,7 @@ class ArchInstructions {
         return { r: reg, m: mem, l: lit, a: unifPickItem(reg, mem, lit) }[char] || (() => { throw new Error(`Unexpected char: ${char}`) })();
     }
 
+    // Recursively solves nested expressions in the instruction prompt
     _solveNest(expression, is32) {
         while (expression.includes('(')) {
             expression = expression.replace(/\(([^()]+)\)/g, (_, subExpression) => this._solveNest(subExpression, is32));
@@ -92,6 +102,7 @@ class ArchInstructions {
         return expression;
     }
 
+    // Evaluates and constructs the final instruction prompt
     _evalPrompt(expression, is32) {
         let cloneExpr = this._solveNest(expression.replace(/\s+/g, ''), is32);
         return cloneExpr.includes('-')
@@ -101,8 +112,7 @@ class ArchInstructions {
                 : cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
     }
 
-    // for assembly_state
-
+    // Generates a random initial state for the assembly simulation
     generateRandomInitialState(num_instructions, num_registers, num_addresses, selection) {
         const selected_addresses = this.generateAddresses(num_addresses);
         const { selected_regular_registers, selected_stack_registers } = this.selectRegisters(num_registers, selected_addresses);
@@ -110,6 +120,7 @@ class ArchInstructions {
         return [selected_instructions, selected_addresses.reverse(), [...selected_regular_registers, ...selected_stack_registers]];
     }
 
+    // Generates a complex instruction based on the given parameters
     generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
         const formats = [
             '{op} {reg1}, {reg2}', '{op} {reg2}, {reg1}', '{op} {reg1}, {memAddr}', '{op} {reg2}, {memAddr}',
@@ -129,7 +140,6 @@ class ArchInstructions {
 
         const op = unifPickItem(operations);
         let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
-        console.log(format);
         let reg1 = unifPickItem(regular_registers);
         let reg2 = unifPickItem(regular_registers);
         let memItem = unifPickItem(memory);
@@ -160,6 +170,7 @@ class ArchInstructions {
             .replace(/{literal}/g, literal);
     }
 
+    // Generates a list of memory addresses for the simulation
     generateAddresses(num_addresses) {
         const increment = this.architecture == "X86_32" ? 4 : 8;
         const minAddress = 0x000;
@@ -175,6 +186,7 @@ class ArchInstructions {
         });
     }
 
+    // Selects registers for the simulation state
     selectRegisters(num_registers, selected_addresses) {
         const registers_regular = arch_data[this.architecture]['registers_regular'];
         const registers_stack = arch_data[this.architecture]['registers_stack'];
@@ -192,6 +204,7 @@ class ArchInstructions {
         };
     }
 
+    // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         let selected_instructions = [];
         const offsets = arch_data[this.architecture]['offsets'];
@@ -211,6 +224,7 @@ class ArchInstructions {
         return selected_instructions;
     }
 
+    // Initializes the simulation state with register and memory values
     initializeSimulationState(regular_registers, stack_registers, addresses) {
         const state = {};
         for (const { register, value } of regular_registers) {
@@ -226,7 +240,7 @@ class ArchInstructions {
         return state;
     }
 
-
+    // Simulates the execution of instructions to ensure validity
     simulateInstructions(instructions, state) {
         for (let i = 0; i < instructions.length; i++) {
             const instruction = instructions[i];
@@ -235,8 +249,6 @@ class ArchInstructions {
 
             const { op, args } = parsed;
             const [src, dest] = args;
-
-            console.log(parsed, args);
 
             let srcValue = this.getSimValue(src, state);
             let destValue;
@@ -264,13 +276,14 @@ class ArchInstructions {
         return true; // Return true if all instructions are successfully simulated
     }
 
-
+    // Retrieves a value from the simulation state
     getSimValue(operand, state) {
         if (operand.startsWith('%')) return state[operand.slice(1)];
         if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
         return state[this.getMemoryAddress(operand, Object.entries(state).map(([register, value]) => ({register, value})), state)];
     }
 
+    // Parses an instruction string into its components
     parseInstruction(instruction) {
         const regex = /(\w+)\s+(.+)/;
         const match = instruction.match(regex);
@@ -283,9 +296,8 @@ class ArchInstructions {
         return { op, args: parsedArgs };
     }
 
+    // Executes a list of instructions and returns the state after each step
     executeInstructions(input) {
-
-        console.log("bp1")
         const [instructions, initialMemory, initialRegisters] = input;
         const memory = JSON.parse(JSON.stringify(initialMemory));
         const registers = JSON.parse(JSON.stringify(initialRegisters));
@@ -296,6 +308,7 @@ class ArchInstructions {
         });
     }
 
+    // Executes a single instruction and updates the state
     executeInstruction(op, args, registers, memory) {
 
         if (op === 'push'){
@@ -310,7 +323,7 @@ class ArchInstructions {
             const [dest] = args;
             this.popFromStack(dest, registers, memory);
 
-        } else { 
+        } else {
 
             const [src, dest] = args;
             const srcValue = this.getValue(src, registers, memory);
@@ -320,6 +333,7 @@ class ArchInstructions {
         }
     }
 
+    // Executes the push instruction
     pushToStack(value, registers, memory) {
 
         const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
@@ -330,13 +344,11 @@ class ArchInstructions {
         const rspMemory = memory.find(m => m.address === rspAddress);
         memory.find(m => m.location == (rspMemory.location - increment)).value = value;
 
-        console.log(memory);
-        console.log(rspMemory.location, rspMemory.location - increment);
-
         registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${rspMemory.location - increment}`).address;
 
     }
 
+    // Executes the pop instruction
     popFromStack(dest, registers, memory) {
         const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
         const rspAddress = this.getMemoryAddress(`(%${baseReg})`, registers, memory);
@@ -345,12 +357,10 @@ class ArchInstructions {
         this.setValue(dest, rspMemory.value, registers, memory);
         const increment = this.architecture == "X86_32" ? 4 : 8;
 
-        console.log(memory);
-        console.log(rspMemory.location, Number(rspMemory.location) + increment);
-
         registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${Number(rspMemory.location) + increment}`).address;
     }
 
+    // Acquire value from the given registers and memories
     getValue(operand, registers, memory) {
         if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value;
         if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
@@ -358,6 +368,7 @@ class ArchInstructions {
         return mem && /^[0-9]+$/.test(mem.value) ? mem.value : 0;
     }
 
+    // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
         if (operand.startsWith('%')) {
             registers.find(r => `%${r.register}` === operand).value = value;
@@ -366,6 +377,7 @@ class ArchInstructions {
         }
     }
 
+    // Acquire the proper memory address with the given operand such as -8(%rax)
     getMemoryAddress(operand, registers, memory) {
         const regex = /(?:(-?0x[0-9a-fA-F]+|-?\d+))?\(%([^)]+)\)/;
         const match = operand.match(regex);
@@ -382,6 +394,7 @@ class ArchInstructions {
         return operand;
     }
 
+    // Calculation of the value
     calculate(op, destValue, srcValue) {
         const numDestValue = Number(destValue);
         const numSrcValue = Number(srcValue);
