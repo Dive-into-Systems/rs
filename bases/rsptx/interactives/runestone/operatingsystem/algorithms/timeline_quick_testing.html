@@ -16,18 +16,10 @@
             this.id = id;
             this.time = time;
             this.content = content;
-            this.type = type;  // "creation" or "fork"
+            this.type = type;  // "create" or "fork" (will have "exit")
         }
     }
-
-    function parseValuesToNodes(values) {
-        let valuesMap = values.map(val => {
-            const [idTime, content] = val.split(':');
-            const [id, time] = idTime.split('.');
-            return { id, time, content };
-        });
-        
-        
+    function getNodesCoordinates(nodes) {
         let ids = new Set(valuesMap.map(items => items.id));
         let times = new Set(valuesMap.map(items => items.time));
 
@@ -46,6 +38,32 @@
             x: idToX[item.id],
             y: timeToY[item.time]
         }));
+        return coords;
+    }
+
+    function parseValuesToNodes(values) {
+        let valuesMap = values.map(val => {
+            const [id, time, content, fork] = val.split(':');
+            return { id, time, content, fork };
+        });
+        console.log("ValuesMap:", valuesMap);
+        
+        let seenIdTime = new Set();
+        let nodes = [];
+        console.log(valuesMap[0]); //prints {id: '0', time: '2', content: 'd', fork: 'false'}
+        valuesMap.forEach(e => {
+            if (! seenIdTime.has(`${e.id}.${e.time}`)) {
+                nodes.push(new EventNode(e.id, e.time, e.content, "create"));
+            } else {
+                seenIdTime.add(`${e.id}.${e.time}`);
+            }
+            if (e.fork === 'true') {
+                nodes.push(new EventNode(e.id, e.time, e.content, "fork"));
+            }
+        });
+        console.log(nodes);
+        
+        getNodesCoordinates(nodes);
     }
 
     function drawHorizontalLines() {
@@ -126,12 +144,13 @@
     }
 
     class ForkNode {
-        constructor(id = 0, timestep = 0, value = "_", left = null, right = null) {
+        constructor(id = 0, timestep = 0, value = "_", left = null, right = null, fork = fork) {
             this.id = id;
             this.timestep = timestep;
             this.value = value;
             this.left = left;
             this.right = right;
+            this.fork = fork;
         }
     }
     function parseForkArgs(code, forkIndex) {
@@ -183,7 +202,9 @@
                 id,
                 time,
                 "",
-                null, null
+                null,
+                null,
+                false
             );
         }
 
@@ -208,13 +229,24 @@
         console.log(code, hasFork);
         const leftNode = hasFork?buildTree(leftCode, id, time+1, childCt):null;
         const rightNode = hasFork?buildTree(rightCode, (id*10)+childCt, 0):null;
-        return new ForkNode(
+        const n = new ForkNode(
             id,
             time,
             code.substring(0, forkIndex).trim() ?? "",
             leftNode,
-            rightNode
+            rightNode,
+            hasFork
         );
+        console.log(n);
+        return n;
+        // return new ForkNode(
+        //     id,
+        //     time,
+        //     code.substring(0, forkIndex).trim() ?? "",
+        //     leftNode,
+        //     rightNode,
+        //     hasFork
+        // );
     }
     function printTreeVert(node, isRoot = true, values = []) {
         const nullChar = "[]";
@@ -229,7 +261,7 @@
         const hasLeft = leftSubtree.length > 0;
         const hasRight = rightSubtree.length > 0;
 
-        const selfValue = `${node.id}.${node.timestep}:${node.value ? node.value : nullChar}`;
+        const selfValue = `${node.id}:${node.timestep}:${node.value ? node.value : nullChar}:${node.fork}`;
         values.push(selfValue);  // Add selfValue to the array
 
         // spacing for subtrees
@@ -248,14 +280,15 @@
     const tree = buildTree(source);
     const { treeLines, values } = printTreeVert(tree);
     console.log(values);
-    const valuesMap = parseValuesToNodes(values);
+    const nodes = parseValuesToNodes(values);
+    // console.log("ValuesMap:", nodes);
+    // const coords = getNodesCoordinates(ids, times, valuesMap);
     // let ids = new Set(valuesMap.map(items => items.id));
     // let times = new Set(valuesMap.map(items => items.time));
     // ids = Array.from(ids);
     // times = Array.from(times).sort();
     // console.log("IDs:", ids, "Times:", times);
-    // const coords = getItemsCoordinates(ids, times, valuesMap);
-    console.log(coords);
+    // console.log("Coords:",coords);
     var svg = d3.select("svg");
     makeGraph(svg, coords);
 
