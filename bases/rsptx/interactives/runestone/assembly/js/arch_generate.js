@@ -117,13 +117,19 @@ class ArchInstructions {
             '{op} {memAddr}, {reg2}', '{op} {memAddr}, {reg1}'
         ];
 
+        const stackFormats = { "push": ['{op} {reg1}', '{op} {memAddr}', '{op} {literal}'],
+                                "pop": ['{op} {reg1}', '{op} {memAddr}']
+        };
+
         const operations = [
             ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+            ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
             ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
         ];
 
         const op = unifPickItem(operations);
-        let format = unifPickItem(formats);
+        let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
+        console.log(format);
         let reg1 = unifPickItem(regular_registers);
         let reg2 = unifPickItem(regular_registers);
         let memItem = unifPickItem(memory);
@@ -180,7 +186,7 @@ class ArchInstructions {
         return {
             selected_regular_registers,
             selected_stack_registers: [
-                { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 3].address, type: "memory" },
+                { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" },
                 { register: registers_stack[0], value: selected_addresses[0].address, type: "memory" }
             ]
         };
@@ -230,8 +236,15 @@ class ArchInstructions {
             const { op, args } = parsed;
             const [src, dest] = args;
 
+            console.log(parsed, args);
+
             let srcValue = this.getSimValue(src, state);
-            let destValue = this.getSimValue(dest, state);
+            let destValue;
+            try {
+                destValue = this.getSimValue(dest, state);
+            } catch(error) {
+                continue;
+            }
 
             switch (op) {
                 case 'mov':
@@ -284,35 +297,58 @@ class ArchInstructions {
     }
 
     executeInstruction(op, args, registers, memory) {
-        const [src, dest] = args;
-        const srcValue = this.getValue(src, registers, memory);
-        const destValue = this.getValue(dest, registers, memory);
-        const result = op === 'mov' || op === 'movl' || op === 'mvn' ? srcValue : this.calculate(op, destValue, srcValue);
 
-        this.setValue(dest, result, registers, memory);
+        if (op === 'push'){
+
+            const [src] = args;
+            const result = this.getValue(src, registers, memory);
+            this.pushToStack(result, registers, memory);
+
+
+        } else if ( op === 'pop'){
+
+            const [dest] = args;
+            this.popFromStack(dest, registers, memory);
+
+        } else { 
+
+            const [src, dest] = args;
+            const srcValue = this.getValue(src, registers, memory);
+            const destValue = this.getValue(dest, registers, memory);
+            const result = op === 'mov' || op === 'movl' || op === 'mvn' ? srcValue : this.calculate(op, destValue, srcValue);
+            this.setValue(dest, result, registers, memory);
+        }
     }
 
-    pushToStack(src, registers, memory, srcValue) {
-        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
-        const spValue = parseInt(spReg.value, 16);
+    pushToStack(value, registers, memory) {
 
-        // Push to stack and update stack pointer
-        memory.push({ address: `0x${(spValue - 8).toString(16).toUpperCase()}`, value: srcValue });
-        spReg.value = `0x${(spValue - 8).toString(16).toUpperCase()}`;
+        const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
+        const rspAddress = this.getMemoryAddress(`(%${baseReg})`, registers, memory);
+
+        const increment = this.architecture == "X86_32" ? 4 : 8;
+
+        const rspMemory = memory.find(m => m.address === rspAddress);
+        memory.find(m => m.location == (rspMemory.location - increment)).value = value;
+
+        console.log(memory);
+        console.log(rspMemory.location, rspMemory.location - increment);
+
+        registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${rspMemory.location - increment}`).address;
+
     }
 
     popFromStack(dest, registers, memory) {
-        const spReg = registers.find(r => r.register === 'rsp' || r.register === 'rbp');
-        const spValue = parseInt(spReg.value, 16);
-        const memIndex = memory.findIndex(m => m.address === `0x${spValue.toString(16).toUpperCase()}`);
+        const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
+        const rspAddress = this.getMemoryAddress(`(%${baseReg})`, registers, memory);
 
-        // Pop from stack and update stack pointer
-        if (memIndex !== -1) {
-            const poppedValue = memory[memIndex].value;
-            memory.splice(memIndex, 1);
-            this.setValue(dest, poppedValue, registers, memory);
-            spReg.value = `0x${(spValue + 8).toString(16).toUpperCase()}`;
-        }
+        const rspMemory = memory.find(m => m.address === rspAddress);
+        this.setValue(dest, rspMemory.value, registers, memory);
+        const increment = this.architecture == "X86_32" ? 4 : 8;
+
+        console.log(memory);
+        console.log(rspMemory.location, Number(rspMemory.location) + increment);
+
+        registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${Number(rspMemory.location) + increment}`).address;
     }
 
     getValue(operand, registers, memory) {

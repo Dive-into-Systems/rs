@@ -13,7 +13,7 @@ import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 const num_instructions = 3;
 const num_registers = 5;
-const num_addresses = 7;
+const num_addresses = 8;
 
 // ASMState constructor
 export default class ASMState_EXCERCISE extends RunestoneBase {
@@ -428,8 +428,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
             // If input is empty or just whitespace, use the current state's value
             if (userValue === "") {
-                const currentRegister = currentState.registers.find(r => r.register === reg);
-                userValue = currentRegister ? currentRegister.value : "";
+                userValue = $(row).find('td').eq(1).text();
             }
 
             userRegisters[reg] = userValue;
@@ -441,8 +440,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
             // If input is empty or just whitespace, use the current state's value
             if (userValue === "") {
-                const currentMemory = currentState.memory.find(m => m.address === address);
-                userValue = currentMemory ? currentMemory.value : "";
+                userValue = $(row).find('td').eq(1).text();
             }
 
             userMemory[address] = userValue;
