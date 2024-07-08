@@ -1,6 +1,6 @@
 // assembly_state.js
 // *********
-// This file contains the JS for the Runestone Assembly State component. It was created by Arys Aikyn, Tony Cao 06/03/2024
+// This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Kuzivakwashe Mavera 06/03/2024
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
@@ -38,6 +38,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
 
+    // Creates the main Assembly State exercise element
     createAssemblyStateElement() {
         this.setDefaultParams();
         this.setCustomizedParams();
@@ -51,6 +52,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.tryAnother(); // for regeneration, could be used for intialization too
     }
 
+    // Renders the header of the exercise
     renderHeader() {
         this.header = $("<div>").html(
             "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions. " +
@@ -61,6 +63,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(this.headerDiv);
     }
 
+    // Renders customization options for instruction types
     renderCustomizations() {
         const instructionTypes = [
             { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
@@ -127,6 +130,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(customizationDiv);
     }
 
+        // Generates a new question with random initial state and instructions
     generateNewQuestion() {
         this.initialState = this.generator.generateRandomInitialState(
             num_instructions,
@@ -135,10 +139,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             [this.arith_checked, this.stack_checked, this.memo_checked]
         );
         this.allStates = this.generator.executeInstructions(this.initialState);
-        console.log(this.allStates);
         this.currentInstruction = 0;
     }
 
+    // Renders the list of instructions for the exercise
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
         instructionDiv.append($("<h3>").text("The Instructions:"));
@@ -161,6 +165,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(instructionDiv);
     }
 
+    // Renders tables for registers and memory
     renderTables() {
         const [instructions, addresses, registers] = this.initialState;
 
@@ -217,6 +222,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(tablesContainer);
     }
 
+    // Repopulates the initial state of registers and memory tables
     repopulateInitialTables() {
         const [ instructions, addresses, registers ] = this.initialState;
 
@@ -246,6 +252,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         });
     }
 
+    // Repopulates tables with current state after an instruction
     repopulateTables() {
         const currentState = this.allStates[this.currentInstruction - 1]
 
@@ -274,6 +281,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         });
     }
 
+    // Repopulates tables with current state after an instruction
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
@@ -291,11 +299,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         });
     }
 
+    // Creates a container for feedback messages
     renderFeedback(){
         let feedbackDiv = $("<div>").addClass("feedback-container");
         this.containerDiv.append(feedbackDiv);
     }
 
+    // Updates the feedback message based on correctness
     reRenderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
         if (feedbackDiv.length === 0) {
@@ -311,6 +321,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', isCorrect ? 'green' : 'red'));
     }
 
+    // Displays final feedback when all instructions are completed
     renderFinalFeedback() {
         let feedbackDiv = this.containerDiv.find('.feedback-container');
         if (feedbackDiv.length === 0) {
@@ -327,10 +338,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     ====   Supporting and Utility Functions   ====
     =========================================*/
 
+    // Sets default parameters for the exercise
     setDefaultParams() {
         this.architecture = "X86_64"; // Default architecture
     }
 
+    // Sets customized parameters based on configuration
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
         if (currentOptions["architecture"] !== undefined) {
@@ -352,6 +365,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         }
     }
 
+    // Resets all input values and moves to initial instruction
     resetValues() {
         this.containerDiv.find("input[type='text']").val("");
         this.containerDiv.find('.feedback-container').empty();
@@ -359,6 +373,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.moveToInitialInstruction();
     }
 
+    // Generates new questions and re-renders the component
     tryAnother() {
         // Clear the current state and re-render the component
         this.generateNewQuestion();
@@ -374,6 +389,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderFeedback();
     }
 
+    // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory, step) {
         const expectedState = this.allStates[step];
         let isCorrect = true;
@@ -397,6 +413,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         return isCorrect;
     }
 
+    // Checks the user's answer and provides feedback
     checkAnswer() {
         const [userRegisters, userMemory] = this.gatherInput(this.allStates[this.currentInstruction]);
 
@@ -415,6 +432,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.reRenderFeedback(isCorrect);
     }
 
+    // Collects user input from register and memory tables
     gatherInput(currentState) {
         const registerInputs = this.containerDiv.find('.register-table tbody tr');
         const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
@@ -449,6 +467,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         return [userRegisters, userMemory];
     }
 
+    // Moves to the next instruction in the list
     moveToNextInstruction() {
         this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
         this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
@@ -457,6 +476,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.repopulateTables();
     }
 
+    // Moves back to the initial instruction
     moveToInitialInstruction() {
         this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
         this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
@@ -465,6 +485,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.repopulateInitialTables();
     }
 
+    // Resets all input fields
     resetInputFields() {
         this.containerDiv.find("input[type='text']").val("").css('background-color', '');
     }
