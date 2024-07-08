@@ -72,6 +72,7 @@ const module_map = {
     numberconversion: () => import("./runestone/numconv/js/numconv.js"),
     assembly_syntax: () => import("./runestone/assembly/js/assembly.js"),
     assembly_state: () => import("./runestone/assembly/js/assembly_state.js"),
+    assembly_flag: () => import("./runestone/assembly/js/assembly_flag.js"),
     binops: () => import("./runestone/numconv/js/binops.js"),
     bincalc: () => import("./runestone/numconv/js/bincalc.js"),
     cachetable: () => import("./runestone/cache/js/cachetable.js"),

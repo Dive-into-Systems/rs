@@ -74,6 +74,17 @@
                 "bad_ct" : "r-(r/l)"
             }
         },
+        "comparison": {
+            "mainWeight": 10,
+            "instructions": ["cmp", "tst"],
+            "errorsOdds": [25, 25, 25, 25],
+            "errors": {
+                "ok": "r-r",
+                "bad_operand": "r-m/m-r/m-m",
+                "no_effect": "r-i/i-r/i-i",
+                "undefined_behavior": "m-m"
+            }
+        },
         "offsets": ["#8", "#16", "#32"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
@@ -163,6 +174,17 @@
                 "bad_ct" : "a-a-r"
             }
         },
+        "comparison": {
+            "mainWeight": 10,
+            "instructions": ["cmp", "test"],
+            "errorsOdds": [25, 25, 25, 25],
+            "errors": {
+                "ok": "r-r",
+                "bad_operand": "r-m/m-r/m-m",
+                "no_effect": "r-i/i-r/i-i",
+                "undefined_behavior": "m-m"
+            }
+        },
         "offsets": ["0x4", "0x8", "0x12", "0x16"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
@@ -239,6 +261,17 @@
                 "bad_dest" : "a-l",
                 "bad_src" : "mm",
                 "bad_ct" : "a-a-r"
+            }
+        },
+        "comparison": {
+            "mainWeight": 10,
+            "instructions": ["cmp", "test"],
+            "errorsOdds": [25, 25, 25, 25],
+            "errors": {
+                "ok": "r-r",
+                "bad_operand": "r-m/m-r/m-m",
+                "no_effect": "r-i/i-r/i-i",
+                "undefined_behavior": "m-m"
             }
         },
         "offsets": ["0x8", "0x16", "0x16", "0x32"],
