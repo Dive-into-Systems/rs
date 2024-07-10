@@ -56,7 +56,7 @@ export default class Fork extends RunestoneBase {
         for (var i = 0; i < 10; i++) {
             this.printContent.push(String.fromCharCode((i + 97)));
         }
-        this.modes = ["Easy", "Medium", "Hard"];
+        this.modes = ["1", "2", "3"];
     }
 
     initForkInputField() {
@@ -68,14 +68,13 @@ export default class Fork extends RunestoneBase {
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        this.label = $("<label>").addClass("fork-inline").html("Select a mode:&ensp;");
+        this.label = $("<label>").addClass("fork-inline").html("Complexity level:&ensp;");
         this.modeMenu = $("<select>").addClass("mode form-control fork-inline");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
-            if (option.val() === "Easy") { option.attr("selected", true); }
+            if (option.val() === "1") { option.attr("selected", true); }
             $(this.modeMenu).append(option);
         });
-        
         $(this.modeMenu).on("change", () => {
             this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updateParams();
@@ -112,15 +111,15 @@ export default class Fork extends RunestoneBase {
         // this.scriptSelector(this.containerDiv).remove();
 
         // ***div STRUCTURE***:
-        this.statementDiv.append(this.instruction, this.label, this.modeMenu);
-        this.containerDiv.append(this.statementDiv, this.promptDiv);
-        $(this.promptDiv).append($(this.codeDiv), this.rightDiv);
+        this.statementDiv.append(this.instruction, this.label, $(this.modeMenu));
+        this.containerDiv.append(this.statementDiv, $(this.promptDiv));
+        $(this.promptDiv).append($(this.codeDiv), $(this.rightDiv));
     }
 
     updateParams() {
-        // console.log(this.modeMenu.val());
-        switch (this.modeMenu.val()) {
-            case "Easy":
+        // console.log($(this.modeMenu).val());
+        switch ($(this.modeMenu).val()) {
+            case "1":
                 this.numForks = 2;
                 this.numPrints = this.pick([2, 3]);
                 this.hasNest = false;
@@ -128,7 +127,7 @@ export default class Fork extends RunestoneBase {
                 this.hasElse = false;
                 this.hasLoop = false;
                 break;
-            case "Medium":
+            case "2":
                 this.numForks = this.pick([3, 4]);
                 this.numPrints = this.pick([3, 4]);
                 this.hasNest = true;
@@ -136,7 +135,7 @@ export default class Fork extends RunestoneBase {
                 this.hasElse = true;
                 this.hasLoop = false;
                 break;
-            case "Hard":
+            case "3":
                 this.numForks = this.pick([3, 4]);
                 this.numPrints = this.pick([4, 5]);
                 this.hasNest = true;
