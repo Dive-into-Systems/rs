@@ -129,95 +129,16 @@ class ArchInstructions {
         ];
 
         const stackFormats = { "push": ['{op} {reg1}', '{op} {memAddr}', '{op} {literal}'],
-            "pop": ['{op} {reg1}', '{op} {memAddr}']
+                                "pop": ['{op} {reg1}', '{op} {memAddr}']
         };
 
-            /*
-            let arithmetic;
-            let stack;
-            let mem;
-            let operations = [];
-            console.log("b1");
-            if (selection[0] && selection[1] && selection[2]){
-                arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
-                stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-                mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
+        const operations = [
+            ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+            ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+            ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
+        ];
 
-                operations.push(arithmetic);
-                operations.push(stack);
-                operations.push(mem);
-
-            } else {
-                console.log("operations");
-                console.log(operations);
-
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-            ];
-        }
-        console.log("b2");
-        op = unifPickItem(operations);
-            */
-
-        let arithmetic;
-        let stack;
-        let mem;
-        let operations = [];
-        let currentOpIndex = 0; // Counter to cycle through operations
-
-        if (selection[0] && selection[1] && selection[2]) {
-            arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
-            stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-            mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
-
-            function shuffleThreeElements(array) {
-                if (array.length !== 3) {
-                    throw new Error("The array must contain exactly 3 elements.");
-                }
-                
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            }
-            operations = shuffleThreeElements([arithmetic, stack, mem])
-
-        } else {
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-            ];
-        }
-
-        console.log("operations");
-        console.log(operations);
-    
-        const pickOperation = () => {
-            if (selection[0] && selection[1] && selection[2]) {
-                const op = operations[currentOpIndex];
-                currentOpIndex = (currentOpIndex + 1) % 3; // Cycle through 0, 1, 2
-                console.log(currentOpIndex)
-                console.log("")
-                return op;
-            } else {
-                return unifPickItem(operations);
-            }
-        };
-
-
-        const op = pickOperation();
-
-        let mySet = new Set();
-        mySet.add(op);
-
-
-        console.log("ops");
-        console.log(mySet);
-
+        const op = unifPickItem(operations);
         let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
         let reg1 = unifPickItem(regular_registers);
         let reg2 = unifPickItem(regular_registers);
@@ -531,3 +452,31 @@ export class X86_64_OPS extends X86_BASE {
     _is_32() { return weightedPickId(BIT_ODDS_X86_64) == 0; }
 }
 
+/*
+ let arithmetic;
+        let stack;
+        let mem;
+        let operations = [];
+        console.log("b1");
+        if (selection[0] && selection[1] && selection[2]){
+            arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
+            stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
+            mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
+
+            operations.push(arithmetic);
+            operations.push(stack);
+            operations.push(mem);
+
+        } else {
+            console.log("operations");
+            console.log(operations);
+
+        operations = [
+            ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+            ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+            ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
+        ];
+    }
+    console.log("b2");
+    op = unifPickItem(operations);
+ */

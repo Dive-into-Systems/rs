@@ -176,7 +176,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         registersWrapper.append($("<h3>").text("Registers:"));
         const registersTable = $("<table>").addClass("register-table");
         const registersTableHead = $("<thead>").append($("<tr>").append(
-            $("<th>").text("Regiterster"),
+            $("<th>").text("Register"),
             $("<th>").text("Current Value"),
             $("<th>").text("Post Instruction Value")
         ));
