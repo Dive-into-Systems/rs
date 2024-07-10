@@ -1,0 +1,88 @@
+/* assembly_flag.css */
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.header-box, .instruction-container, .registers-container, .flag-question, .feedback {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.instruction-container h3, .registers-container h3, .flag-question h3 {
+    margin-top: 0;
+    color: #007bff;
+}
+
+.registers-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.registers-container li {
+    margin-bottom: 5px;
+    font-family: monospace;
+}
+
+.flag-question label {
+    display: inline-block;
+    margin-right: 15px;
+    font-weight: bold;
+}
+
+.flag-question input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.button-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.button-container button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-container button:hover {
+    background-color: #0056b3;
+}
+
+.feedback {
+    background-color: #fffdd0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.feedback[style*="color: green"] {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.feedback[style*="color: red"] {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+@media (max-width: 768px) {
+    .button-container button {
+        width: 100%;
+        margin: 10px 0;
+    }
+}

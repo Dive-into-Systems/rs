@@ -1,5 +1,5 @@
 // arch_generate.js
-// This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Tony Cao,  Kuzivakwashe Mavera 06/03/2024
+// This file contains the JS for the Runestone Assembly Components. Created by Arys Aikyn, Tony Cao, Kuzivakwashe Mavera 06/03/2024
 "use strict";
 
 import { off } from 'codemirror';
@@ -56,6 +56,26 @@ class ArchInstructions {
         });
     }
 
+    /*
+    =====================================================================================
+    VALID INSTRUCTION COMPONENT
+    This section of the arch_generate.js file is dedicated to defining and managing the
+    valid instruction set for the assembly language components. It includes functionalities
+    for generating valid assembly instructions, handling instruction weights, and managing
+    error conditions associated with instruction generation.
+
+    Key Features:
+    - Generation of valid assembly instructions based on predefined weights and probabilities.
+    - Handling of different error conditions that can arise during the instruction generation process.
+    - Utilization of weighted and uniform selection mechanisms to simulate realistic instruction usage.
+
+    The Valid Instruction Component is crucial for creating a diverse and realistic set of
+    assembly instructions for educational simulations and exercises within the Runestone
+    interactive learning environment.
+
+    =====================================================================================
+    */
+
     // Generates a question based on the specified instruction types
     generate_question(mem_arch, arith, bit) {
         const fam_weights = [
@@ -111,6 +131,26 @@ class ArchInstructions {
                 ? this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32)
                 : cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
     }
+
+    /*
+    =====================================================================================
+    ASSEMBLY STATE COMPONENT
+    This part of the arch_generate.js file focuses on the representation and manipulation
+    of the assembly state, including registers and memory. It provides the infrastructure
+    for simulating the execution of assembly instructions and tracking changes in the
+    assembly state.
+
+    Key Features:
+    - Representation of the assembly state, including registers and memory.
+    - Functions for modifying the assembly state in response to instruction execution.
+    - Mechanisms for tracking and displaying changes in the state for educational purposes.
+
+    The Assembly State Component plays a fundamental role in simulating the execution of
+    assembly instructions and providing a dynamic learning experience by allowing users
+    to see the immediate effects of instructions on the assembly state.
+
+    =====================================================================================
+*/
 
     // Generates a random initial state for the assembly simulation
     generateRandomInitialState(num_instructions, num_registers, num_addresses, selection) {
@@ -479,6 +519,98 @@ class ArchInstructions {
         const numSrcValue = Number(srcValue);
         return op === 'add' ? numDestValue + numSrcValue : numDestValue - numSrcValue;
     }
+
+    /*
+    =====================================================================================
+    FLAG SETTING AND INSTRUCTION ANALYSIS COMPONENT
+    This section of the arch_generate.js file is dedicated to the generation and analysis
+    of assembly instructions with a focus on flag setting, particularly for the 'cmp' and
+    'test' instructions. It aims to educate users on how different instructions affect the
+    processor's flags within x86 and ARM architectures.
+
+    Key Features:
+    - Generation of 'cmp' and 'test' instructions and analysis of their impact on processor flags.
+    - Detailed comparison between x86 and ARM flag settings for equivalent operations, highlighting
+      differences in CF (Carry Flag) for x86 and C (Carry) for ARM, along with OF (Signed Overflow Flag),
+      ZF (Zero Flag), SF (Sign Flag) for x86, and Z (Zero), N (Negative), V (Signed Overflow) for ARM.
+    - Utilization of an assembly visualizer tool to test expressions and observe RFLAG values in real-time,
+      enhancing the learning experience by providing immediate visual feedback.
+
+    This component is crucial for deepening the understanding of assembly language programming,
+    particularly the nuanced behavior of flag settings across different architectures. It supports
+    interactive learning by allowing users to experiment with assembly instructions and see the
+    direct impact on processor flags.
+
+    =====================================================================================
+    */
+
+    // Generates a random initial state for the assembly simulation
+    generateRandomInitialFlag(num_instructions, num_registers) {
+        const selected_registers = this.selectFlagRegisters(num_registers);
+        const selected_instructions = this.generateFlagInstructions(num_instructions, selected_registers);
+        return [selected_instructions, selected_registers];
+    }
+
+    selectFlagRegisters(num_registers) {
+        const registers = arch_data[this.architecture]['registers_regular'];
+        return Array.from({ length: num_registers }, (_, i) => ({
+            register: registers[i],
+            value: (Math.floor(Math.random() * 11) + 5).toString(),
+        }));
+    }
+
+    generateFlagInstructions(num_instructions, registers) {
+        const instructions = [];
+        const operations = arch_data[this.architecture]["comparison"].instructions;
+        for (let i = 0; i < num_instructions; i++) {
+            const op = unifPickItem(operations);
+            const src = this.getRandomOperand(registers);
+            const dest = this.getRandomOperand(registers);
+            instructions.push(`${op} ${dest}, ${src}`);
+        }
+        return instructions;
+    }
+
+    getRandomOperand(registers) {
+        const reg = unifPickItem(registers);
+        return `%${reg.register}`;
+    }
+
+    analyzeFlagSettings(instruction, registers) {
+        const [op, operands] = instruction.split(' ');
+        const [dest, src] = operands.split(',').map(o => o.trim());
+
+        const destVal = this.getFlagValue(dest, registers);
+        const srcVal = this.getFlagValue(src, registers);
+
+        let cf = false, of = false, zf = false, sf = false;
+
+        if (op === 'cmp') {
+            const result = destVal - srcVal;
+            cf = (destVal < srcVal);
+            of = ((destVal ^ srcVal) & (destVal ^ result) & 0x80000000) !== 0;
+            zf = result === 0;
+            sf = (result & 0x80000000) !== 0;
+        } else if (op === 'test') {
+            const result = destVal & srcVal;
+            cf = false;
+            of = false;
+            zf = result === 0;
+            sf = (result & 0x80000000) !== 0;
+        }
+
+        return { cf, of, zf, sf };
+    }
+
+    getFlagValue(operand, registers) {
+        if (operand.startsWith('$')) {
+            return parseInt(operand.slice(1), 16);
+        } else {
+            const reg = registers.find(r => `%${r.register}` === operand);
+            return reg ? parseInt(reg.value, 16) : 0;
+        }
+    }
+
 }
 
 export class ARM64_OPS extends ArchInstructions {
