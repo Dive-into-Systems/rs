@@ -68,7 +68,7 @@ export default class Fork extends RunestoneBase {
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        this.label = $("<label>").addClass("fork-inline").html("Complexity level:&ensp;");
+        this.label = $("<label>").addClass("fork-inline").html("Select a complexity level:&ensp;");
         this.modeMenu = $("<select>").addClass("mode form-control fork-inline");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
@@ -228,12 +228,32 @@ export default class Fork extends RunestoneBase {
             else { this.hideTimeline(); }
         });
 
+        this.helpButton = document.createElement("button");
+        this.helpButton.textContent = $.i18n("msg_fork_show_help");
+        $(this.helpButton).attr({
+            class: "btn",
+            name: "help",
+            type: "button",
+            id: this.divid + "help",
+        });
+        this.helpButton.addEventListener("click", () => {
+            if ($(this.helpDiv).css('display') == 'none') {
+                this.showHelp();
+                this.helpButton.textContent = $.i18n("msg_fork_show_help");
+            }
+            else {
+                this.hideHelp();
+                this.helpButton.textContent = $.i18n("msg_fork_hide_help");
+            }
+        });
+
         this.buttonsDiv = $("<div>");
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
         this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
+        this.buttonsDiv.append(this.helpButton);
 
         this.containerDiv.append(this.buttonsDiv);
     }
@@ -247,6 +267,7 @@ export default class Fork extends RunestoneBase {
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none");
         $(this.timelineDiv).css("display", "none");
+        $(this.helpDiv).css("display", "none");
     }
 
     updatePrompts(){
@@ -321,6 +342,12 @@ export default class Fork extends RunestoneBase {
         $(this.timelineDiv).css("display", "none");
         $(this.timelineDiv).addClass("tree-div");
         this.containerDiv.append(this.timelineDiv);
+
+        // Create a help div
+        this.helpDiv = $("<div>").attr("id", "help");
+        $(this.helpDiv).css("display", "none");
+        $(this.helpDiv).addClass("help-div");
+        this.containerDiv.append(this.helpDiv);
     }
 
     updateFeedbackDiv() {
@@ -335,6 +362,18 @@ export default class Fork extends RunestoneBase {
             this.queueMathJax(document.body);
         }
     }
+    showHelp() {
+        $(this.helpDiv).css("display", "block");
+        $(this.helpDiv).html(
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates the output the process should print.<br>" +
+            "<strong>Execution Timeline Graph:</strong> Dotted lines represent the concurrent execution of two processes.<br>" +
+            "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems."
+        );        
+    }
+    hideHelp() {
+        $(this.helpDiv).css("display", "none");
+    }
+
 
     /*===================================
     === Checking/loading from storage ===

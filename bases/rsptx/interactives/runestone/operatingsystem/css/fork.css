@@ -27,6 +27,12 @@
   top: 0;
 }
 
+.help-div {
+  font-family: "Gill Sans", sans-serif !important;
+  font-size: small;
+  padding: 8px;
+}
+
 .input-div {
   height: auto;
   overflow-y: auto;
