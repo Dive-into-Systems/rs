@@ -11,7 +11,7 @@ import { validLetter } from "jexcel";
 
 export var ASMFlagList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 const num_instructions = 3;
-const num_registers = 5;
+const num_registers = 2;
 
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 
@@ -47,7 +47,7 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
     renderHeader() {
         this.header = $("<div>").html(
             "Explore the effects of 'cmp' and 'test' instructions on processor flags within x86 architecture. " +
-            "Observe the CF (Carry Flag), OF (Signed Overflow Flag), ZF (Zero Flag), and SF (Sign Flag). "
+            "Observe the CF (Carry Flag), OF (Signed Overflow Flag), ZF (Zero Flag), and SF (Sign Flag). <br><br>"
         );
         this.containerDiv.append($("<div>").append(this.header));
     }
@@ -62,36 +62,39 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
 
         this.containerDiv.empty();
         this.renderHeader();
-        this.renderInstruction(instruction[0]);
-        this.renderRegisters(registers);
+        this.renderInstructionAndRegisters(instruction[0], registers);
         this.renderFlagQuestion(flags);
         this.renderButtons();
     }
 
-    renderInstruction(instruction) {
+    renderInstructionAndRegisters(instruction, registers) {
+        const combinedDiv = $("<div>").addClass("combined-container");
+
+        // Render instruction
         const instructionDiv = $("<div>").addClass("instruction-container");
         instructionDiv.append($("<h3>").text("Instruction:"));
         instructionDiv.append($("<p>").text(instruction));
-        this.containerDiv.append(instructionDiv);
-    }
+        combinedDiv.append(instructionDiv);
 
-    renderRegisters(registers) {
+        // Render registers
         const registersDiv = $("<div>").addClass("registers-container");
         registersDiv.append($("<h3>").text("Registers:"));
         const registersList = $("<ul>");
         registers.forEach(reg => {
-            registersList.append($("<li>").text(`${reg.register}: 0x${reg.value}`));
+            registersList.append($("<li>").text(`${reg.register}: ${reg.value} = ${reg.two}`));
         });
         registersDiv.append(registersList);
-        this.containerDiv.append(registersDiv);
+        combinedDiv.append(registersDiv);
+
+        // Append combined div to container
+        this.containerDiv.append(combinedDiv);
     }
 
     renderFlagQuestion(correctFlags) {
         const questionDiv = $("<div>").addClass("flag-question");
         questionDiv.append($("<h3>").text("Which flags are set after this instruction?"));
 
-        const flagNames = ['CF', 'OF', 'ZF', 'SF'];
-        flagNames.forEach(flag => {
+        this.flagNames.forEach(flag => {
             const checkbox = $("<input>").attr({
                 type: "checkbox",
                 id: `${this.divid}_${flag}`,
@@ -144,6 +147,8 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
 
     setDefaultParams() {
         this.architecture = "X86_64";
+        this.generator = new X86_32_OPS();
+        this.flagNames = ["CF", "OF", "ZF", "SF"]
     }
 
     setCustomizedParams() {
@@ -155,12 +160,15 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         switch (this.architecture) {
             case "X86_32":
                 this.generator = new X86_32_OPS();
+                this.flagNames = ["CF", "OF", "ZF", "SF"]
                 break;
             case "X86_64":
                 this.generator = new X86_64_OPS();
+                this.flagNames = ["CF", "OF", "ZF", "SF"]
                 break;
             case "ARM64":
                 this.generator = new ARM64_OPS();
+                this.flagNames = ["C", "V", "Z", "N"]
                 break;
             default:
                 throw new Error("Invalid architecture option");

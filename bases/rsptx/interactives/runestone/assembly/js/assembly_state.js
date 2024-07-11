@@ -65,69 +65,131 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Renders customization options for instruction types
     renderCustomizations() {
-        const instructionTypes = [
-            { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
-            { label: 'Stack Operations', value: 'stackoperation', defaultChecked: false },
-            { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false }
-        ];
 
-        const customizationDiv = $("<div>").addClass("customization-container");
-        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-        instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
-
-        // Initialize checkbox states
-        this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
-        this.stack_checked = instructionTypes.find(family => family.value === 'stackoperation').defaultChecked;
-        this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
-
-        instructionTypes.forEach(family => {
-            let checkbox = $("<input>").attr({
-                type: "checkbox",
-                id: family.value,
-                value: family.value,
-                checked: family.defaultChecked
+        if (this.architecture === "ARM64"){
+            const instructionTypes = [
+                { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
+                { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
+            ];
+    
+            const customizationDiv = $("<div>").addClass("customization-container");
+            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
+            instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
+    
+            // Initialize checkbox states
+            this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
+            this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
+    
+            instructionTypes.forEach(family => {
+                let checkbox = $("<input>").attr({
+                    type: "checkbox",
+                    id: family.value,
+                    value: family.value,
+                    checked: family.defaultChecked
+                });
+    
+                checkbox.on("change", (event) => {
+                    // Store the current state of checkboxes
+                    const prevArithChecked = this.arith_checked;
+                    const prevMemoChecked = this.memo_checked;
+    
+                    // Update the states based on the checkbox change
+                    switch (event.target.id) {
+                        case "arithmetic":
+                            this.arith_checked = event.target.checked;
+                            break;
+                        case "memorymanipulation":
+                            this.memo_checked = event.target.checked;
+                            break;
+                    }
+    
+                    // Ensure at least one checkbox is always selected
+                    if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
+                        event.preventDefault();
+                        // Restore the previous states
+                        this.arith_checked = prevArithChecked;
+                        this.memo_checked = prevMemoChecked;
+    
+                        // Restore the checkbox's checked state
+                        $(event.target).prop('checked', !event.target.checked);
+                    }
+                });
+    
+                const label = $("<label>").attr("for", family.value).text(family.label);
+                instructionTypeDiv.append(checkbox).append(label).append(" ");
             });
+            instructionTypeDiv.append("<br>");
+            customizationDiv.append(instructionTypeDiv);
+            this.containerDiv.append(customizationDiv);
+    
 
-            checkbox.on("change", (event) => {
-                // Store the current state of checkboxes
-                const prevArithChecked = this.arith_checked;
-                const prevStackChecked = this.stack_checked;
-                const prevMemoChecked = this.memo_checked;
-
-                // Update the states based on the checkbox change
-                switch (event.target.id) {
-                    case "arithmetic":
-                        this.arith_checked = event.target.checked;
-                        break;
-                    case "stackoperation":
-                        this.stack_checked = event.target.checked;
-                        break;
-                    case "memorymanipulation":
-                        this.memo_checked = event.target.checked;
-                        break;
-                }
-
-                // Ensure at least one checkbox is always selected
-                if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
-                    event.preventDefault();
-                    // Restore the previous states
-                    this.arith_checked = prevArithChecked;
-                    this.stack_checked = prevStackChecked;
-                    this.memo_checked = prevMemoChecked;
-
-                    // Restore the checkbox's checked state
-                    $(event.target).prop('checked', !event.target.checked);
-                }
+        } else {
+            
+            const instructionTypes = [
+                { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
+                { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
+                { label: 'Stack Operations', value: 'stackoperation', defaultChecked: false }
+            ];
+    
+            const customizationDiv = $("<div>").addClass("customization-container");
+            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
+            instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
+    
+            // Initialize checkbox states
+            this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
+            this.stack_checked = instructionTypes.find(family => family.value === 'stackoperation').defaultChecked;
+            this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
+    
+            instructionTypes.forEach(family => {
+                let checkbox = $("<input>").attr({
+                    type: "checkbox",
+                    id: family.value,
+                    value: family.value,
+                    checked: family.defaultChecked
+                });
+    
+                checkbox.on("change", (event) => {
+                    // Store the current state of checkboxes
+                    const prevArithChecked = this.arith_checked;
+                    const prevStackChecked = this.stack_checked;
+                    const prevMemoChecked = this.memo_checked;
+    
+                    // Update the states based on the checkbox change
+                    switch (event.target.id) {
+                        case "arithmetic":
+                            this.arith_checked = event.target.checked;
+                            break;
+                        case "stackoperation":
+                            this.stack_checked = event.target.checked;
+                            break;
+                        case "memorymanipulation":
+                            this.memo_checked = event.target.checked;
+                            break;
+                    }
+    
+                    // Ensure at least one checkbox is always selected
+                    if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
+                        event.preventDefault();
+                        // Restore the previous states
+                        this.arith_checked = prevArithChecked;
+                        this.stack_checked = prevStackChecked;
+                        this.memo_checked = prevMemoChecked;
+    
+                        // Restore the checkbox's checked state
+                        $(event.target).prop('checked', !event.target.checked);
+                    }
+                });
+    
+                const label = $("<label>").attr("for", family.value).text(family.label);
+                instructionTypeDiv.append(checkbox).append(label).append(" ");
             });
-
-            const label = $("<label>").attr("for", family.value).text(family.label);
-            instructionTypeDiv.append(checkbox).append(label).append(" ");
-        });
-
-        instructionTypeDiv.append("<br>");
-        customizationDiv.append(instructionTypeDiv);
-
-        this.containerDiv.append(customizationDiv);
+            instructionTypeDiv.append("<br>");
+            customizationDiv.append(instructionTypeDiv);
+            this.containerDiv.append(customizationDiv);
+    
+        }
+       
+       
     }
 
         // Generates a new question with random initial state and instructions
@@ -176,7 +238,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         registersWrapper.append($("<h3>").text("Registers:"));
         const registersTable = $("<table>").addClass("register-table");
         const registersTableHead = $("<thead>").append($("<tr>").append(
-            $("<th>").text("Regiterster"),
+            $("<th>").text("Register"),
             $("<th>").text("Current Value"),
             $("<th>").text("Post Instruction Value")
         ));
