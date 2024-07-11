@@ -60,8 +60,8 @@ You can use the keyword `binops` to refer to this tool in a `.ptx` file. (An exa
 ## Tunable parameters
 
 - `num_bits`: An integer that controls the length of numbers generated in the prompt. (default: 4)
-- `fromOpt`: A list of bitwise operators among which the user can select. We currently support `AND`, `OR`, `XOR`, `NOT`, `Left Shift`, `Right Shift (Arithmetic)`, `Right Shift (Logical)`. You can choose a sub-array from them.
-- `toOpt`: A list that contains different numbers of bits the numbers in the prompt can be. We currently support `4`, `6`, `8`. You can only choose one of them.
+- `fromOpt`: A list of bitwise operators among which the user can select. We currently support `AND`, `OR`, `XOR`, `NOT`, `Left Shift`, `Right Shift (Arithmetic)`, `Right Shift (Logical)`. You can only choose a sub-array from them.
+- `toOpt`: A list that contains different numbers of bits the numbers in the prompt can be. We currently support `4`, `6`, `8`. You can choose integers other than the three listed.
 
 ## Usage example
 
