@@ -6,6 +6,8 @@ The Fork problem can randomly generate a block of C-code with calls to `fork()`,
 
 We need some support from the D3.js library (already added to dependencies), so make sure to run `npm install` again if you're using an older version of the node modules.
 
+You can use the keyword `fork` to refer to this tool in a `.ptx` file. (An example is provided below).
+
 ## Tunable parameters
 
 There are two places where you can adjust how this component behaves. 
@@ -40,16 +42,16 @@ Please note that if you do not define `complexityLevel`, you will **have to defi
 ```html
 <div class="ptx-runestone-container">
   <div class="runestone">
+    <!--the 'fork' keyword below is what you need to refer to the tool-->
     <div data-component="fork" data-question_label="1" id="test_fork"></div>
   </div> <!--runestone-->
 </div> <!--ptx-runestone-container-->
 ```
 
-You don't have to have the `<script>` section, like this example. It will generate the default complexity level menu and options from which users can choose.
+You don't have to have the `<script>` section, like in this example. It will generate the default complexity level menu and options from which users can choose.
 
 ### A more colorful example
 
-Making these changes in `<script>` generates you a question that contains 2 forks, 3 or 4 prints, with `else` block(s), call(s) to `exit()`, and for-loop structure.
 ```html
 <div class="ptx-runestone-container">
   <div class="runestone">
@@ -66,3 +68,5 @@ Making these changes in `<script>` generates you a question that contains 2 fork
   </div> <!--runestone-->
 </div> <!--ptx-runestone-container-->
 ```
+
+Making these changes in `<script>` generates you a question that contains 2 forks, 3 or 4 prints, with `else` block(s), call(s) to `exit()`, and for-loop structure.

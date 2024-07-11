@@ -121,12 +121,12 @@ export default class Fork extends RunestoneBase {
     }
 
     genPromptsNAnswer() {
-        const mode = this.modeMenu.val();
-
+        const mode = this.modeMenu.val().toString();
+        console.log("mode is", mode);
         if (mode === "2") {
             this.numForks = this.pick([3, 4]);
             this.numPrints = this.pick([3, 4]);
-            // this.hasNest = true;
+            this.hasNest = true;
             this.hasExit = true;
             this.hasElse = true;
             this.hasLoop = false;
@@ -134,7 +134,7 @@ export default class Fork extends RunestoneBase {
         else if (mode == "3") {
             this.numForks = this.pick([3, 4]);
             this.numPrints = this.pick([4, 5]);
-            // this.hasNest = true;
+            this.hasNest = true;
             this.hasExit = true;
             this.hasElse = true;
             this.hasLoop = true;
@@ -142,26 +142,28 @@ export default class Fork extends RunestoneBase {
         else {
             this.numForks = 2;
             this.numPrints = this.pick([2, 3]);
-            // this.hasNest = false;
+            this.hasNest = false;
             this.hasExit = false;
             this.hasElse = false;
             this.hasLoop = false;
         }
+        console.log("Should have params:", "#forks", this.numForks, "#prints", this.numPrints, "nest", this.hasNest, "exit", this.hasExit, "else", this.hasElse, "loop", this.hasLoop);
 
-        var prev = this.source || null;
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasExit, this.hasElse, this.hasLoop);
-        while (this.source === prev) {
-            this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasExit, this.hasElse, this.hasLoop);
-        }
-        // console.log(this.source);
-        this.cCode = forking.transpileToC(this.source);
-        console.log(this.cCode);
-        this.root = forking.buildTree(this.source);
+        // var prev = this.source || null;
+        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        // while (this.source == prev) {
+        //     this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        // }
+
+        console.log("Whyyyyy", this.source);
+        [this.root, this.cCode] = forking.buildAndTranspile(this.source);
+        // console.log(this.cCode);
         // console.log(this.root);
         const { csv, valuesList } = forking.getTreeCSV(this.root);
         this.csvTree = csv;
         this.labels = valuesList;
         this.answerMap = forking.getAnswer(this.root);
+        console.log(this.answerMap);
     }
 
     initForkButtons() {
@@ -248,7 +250,7 @@ export default class Fork extends RunestoneBase {
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
-        this.buttonsDiv.append(this.revealTimelineButton);
+        // this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
         this.buttonsDiv.append(this.helpButton);
 
@@ -291,9 +293,9 @@ export default class Fork extends RunestoneBase {
         this.correct = true; // init answer first as true, only update when incorrect choice occurs
 
         for (let i = 0; i < this.numPrints; i++) {
-            let currAnswer = $("#" + this.divid + "_input_" + i).val();
+            let currAnswer = $("#" + this.divid + "_input_" + i).val().toString();
             console.log("current answer:", currAnswer, "correct answer:", this.answerMap[this.printContent[i]]);
-            if (currAnswer !== this.answerMap[this.printContent[i]]) {
+            if (currAnswer !== this.answerMap[this.printContent[i]].toString()) {
                 this.correct = false;
                 if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
                 else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
@@ -362,7 +364,7 @@ export default class Fork extends RunestoneBase {
     showHelp() {
         $(this.helpDiv).css("display", "block");
         $(this.helpDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates the output the process should print.<br>" +
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints. <strong>'X'</strong> indicates that the process exits there, and any of its child shows how the hierarchy would have looked like if the parent were to not exit.<br>" +
             "<strong>Execution Timeline Graph:</strong> Dotted lines represent the concurrent execution of two processes.<br>" +
             "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems."
         );        

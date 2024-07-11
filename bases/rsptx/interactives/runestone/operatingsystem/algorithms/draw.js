@@ -58,11 +58,6 @@ export function drawHierarchy(linksCsv, labels) {
         .renderDot(digraphString);
 }
 
-
-function getTimelineAttr() {
-    pass;
-}
-
 export function drawTimeline(linksCsv) {
 
     const links = csvParse(linksCsv);

@@ -249,7 +249,7 @@ function randInsert(mainStr, insertStr, anySlot = false) {
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
-function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
+export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
 
     // TODO: make sure exit is not the first few instructions (at least not prior the first fork)
     let code = "";
@@ -279,10 +279,6 @@ function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLo
 function buildAndTranspile(code) {
     tree = new ForkNode();
     codeC = tree.pushCode(code).join(NEWLINE);
-    // tree = new ForkNode(id = 0, childCt = 0, active = true, value = "", left = new ForkNode(0,1), right = null);
-    // codeC = tree.left.pushCode(code).join(NEWLINE);
-    // tree = new ForkNode(0, 1);
-    // let codeC = tree.pushCode(code);
     return [tree, codeC]
 }
 
