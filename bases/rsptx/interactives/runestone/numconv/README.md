@@ -49,3 +49,51 @@ Notice: Currently only works in ```.html```. It hasn't implemented in ```.rst```
     </div>
 </section>
 ```
+
+# bincalc
+This tool is a specialized binary calculator. It allows users to do bitwise operations on 6-bit binary numbers (configurable) and to see the result.
+
+## How to get it built
+
+You can use the keyword `bincalc` to refer to this tool in a `.ptx` file. (An example is provided below).
+
+## Tunable parameters
+
+- `numBits`: (int) It controls the length of both binary numbers generated. (default: 6)
+- `operatorList`: We currently support `AND (&)`, `OR (|)`, `XOR (^)`, `NOT (~)`, `Left shift (<<)`, `Logical right shift (>>)`, `Arithmetic right shift (>>)`. You can choose a sub-array from them. (default listed above)
+- `bitShiftList`: In the shift operations, we can choose how many bits to shift by. Please keep in mind that this list should contain values reasonable with respect to your chosen `numBits`. (default: `[1, 2, 3, 4, 5]`)
+
+## Usage example
+
+### A basic example
+
+```html
+<div class="ptx-runestone-container">
+  <div class="runestone">
+    <!--the 'bincalc' keyword below is what you need to refer to the tool-->
+    <div data-component="bincalc" data-question_label="1" id="binary_calculator"></div>
+  </div> <!--runestone-->
+</div> <!--ptx-runestone-container-->
+```
+
+You don't have to have the `<script>` section, like in this example. It will generate the question with all the tunable parameters in their default values.
+
+### A more colorful example
+
+```html
+<div class="ptx-runestone-container">
+  <div class="runestone">
+    <div data-component="bincalc" data-question_label="1" id="binary_calculator"></div>
+    <script type="application/json">
+      {
+        "numBits": 8,
+        "operatorList": [`Left shift (<<)`, `Logical right shift (>>)`, `Arithmetic right shift (>>)`],
+        "bitShiftList": [2, 3, 4]
+      }
+    </script>
+  </div> <!--runestone-->
+</div> <!--ptx-runestone-container-->
+```
+
+Making these changes in `<script>` allows you to generate one 8-bit binary number, with `Left shift (<<)`, `Logical right shift (>>)`, and `Arithmetic right shift (>>)` appearing as allowed operations in the menu, where you can explore the results by shifting the binary number by 2, 3, or 4.
+
