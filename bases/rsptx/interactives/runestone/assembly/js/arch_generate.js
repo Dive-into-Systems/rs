@@ -473,11 +473,15 @@ class ArchInstructions {
     }
 
     selectFlagRegisters(num_registers) {
-        const registers = arch_data[this.architecture]['registers_regular'];
-        return Array.from({ length: num_registers }, (_, i) => ({
-            register: registers[i],
-            value: (Math.floor(Math.random() * 11) + 5).toString(),
-        }));
+        const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
+        return Array.from({ length: num_registers }, (_, i) => {
+            const value = Math.floor(Math.random() * 255) - 127;
+            return {
+                register: registers[i],
+                value: value.toString(),
+                two: ((value < 0 ? (256 + value) : value).toString(2).padStart(8, '0'))
+            };
+        });
     }
 
     generateFlagInstructions(num_instructions, registers) {
@@ -485,8 +489,11 @@ class ArchInstructions {
         const operations = arch_data[this.architecture]["comparison"].instructions;
         for (let i = 0; i < num_instructions; i++) {
             const op = unifPickItem(operations);
-            const src = this.getRandomOperand(registers);
-            const dest = this.getRandomOperand(registers);
+            let src = this.getRandomOperand(registers);
+            let dest = this.getRandomOperand(registers);
+            while (src === dest) {
+                src = this.getRandomOperand(registers);
+            }
             instructions.push(`${op} ${dest}, ${src}`);
         }
         return instructions;
@@ -494,41 +501,56 @@ class ArchInstructions {
 
     getRandomOperand(registers) {
         const reg = unifPickItem(registers);
-        return `%${reg.register}`;
+        return this.architecture === 'ARM64' ? `${reg.register}` : `%${reg.register}`;
     }
 
     analyzeFlagSettings(instruction, registers) {
-        const [op, operands] = instruction.split(' ');
-        const [dest, src] = operands.split(',').map(o => o.trim());
+        const parsedInstruction = this.parseInstruction(instruction);
+        if (!parsedInstruction) {
+            console.error('Failed to parse instruction:', instruction);
+            return;
+        }
+
+        const { op, args } = parsedInstruction;
+        const [src, dest] = args;
 
         const destVal = this.getFlagValue(dest, registers);
         const srcVal = this.getFlagValue(src, registers);
 
-        let cf = false, of = false, zf = false, sf = false;
+        let carryFlag = false, overflowFlag = false, zeroFlag = false, signFlag = false;
+
+        const result = (destVal - srcVal) & 0xFF;
 
         if (op === 'cmp') {
-            const result = destVal - srcVal;
-            cf = (destVal < srcVal);
-            of = ((destVal ^ srcVal) & (destVal ^ result) & 0x80000000) !== 0;
-            zf = result === 0;
-            sf = (result & 0x80000000) !== 0;
-        } else if (op === 'test') {
-            const result = destVal & srcVal;
-            cf = false;
-            of = false;
-            zf = result === 0;
-            sf = (result & 0x80000000) !== 0;
+            carryFlag = (destVal < srcVal);
+            overflowFlag = (((destVal ^ srcVal) & (destVal ^ result)) & 0x80) !== 0;
+            zeroFlag = result === 0;
+            signFlag = (result & 0x80) !== 0;
+        } else if (op === 'test' || op === 'tst') {
+            carryFlag = false;
+            overflowFlag = false;
+            zeroFlag = result === 0;
+            signFlag = (result & 0x80) !== 0;
         }
 
-        return { cf, of, zf, sf };
+        console.log(`Instruction: ${instruction}`);
+        console.log(`Destination Value: ${destVal}`);
+        console.log(`Source Value: ${srcVal}`);
+        console.log(`Carry Flag: ${carryFlag}`);
+        console.log(`Overflow Flag: ${overflowFlag}`);
+        console.log(`Zero Flag: ${zeroFlag}`);
+        console.log(`Sign Flag: ${signFlag}`);
+
+        return { carryFlag, overflowFlag, zeroFlag, signFlag };
     }
 
     getFlagValue(operand, registers) {
-        if (operand.startsWith('$')) {
+        console.log(operand);
+        if (operand.startsWith('$') || operand.startsWith('#')) {
             return parseInt(operand.slice(1), 16);
         } else {
             const reg = registers.find(r => `%${r.register}` === operand);
-            return reg ? parseInt(reg.value, 16) : 0;
+            return reg ? reg.value : 0;
         }
     }
 
@@ -564,7 +586,7 @@ class X86_BASE extends ArchInstructions {
 
     _getTrueMem(is32) {
         const reg = this._getTrueReg(is32);
-        return unifPickItem(`(${reg})`, `${this._getTrueOffset(is32)}${reg}`);
+        return unifPickItem(`(${reg})`, `${this._getTrueOffset(is32)}(${reg})`);
     }
 
     _getTrueLit(is32) {

@@ -5,6 +5,8 @@ body {
     color: #333;
     margin: 0;
     padding: 0;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 .header-box, .instruction-container, .registers-container, .flag-question, .feedback {
@@ -16,9 +18,16 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.instruction-container {
+    flex-grow: 1;
+}
+
 .instruction-container h3, .registers-container h3, .flag-question h3 {
     margin-top: 0;
-    color: #007bff;
+}
+
+.registers-container {
+    flex-grow: 3;
 }
 
 .registers-container ul {
@@ -50,7 +59,7 @@ body {
     margin: 0 10px;
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #007bff;
+    background-color: #5cb85c;
     color: white;
     border: none;
     border-radius: 5px;
@@ -59,7 +68,7 @@ body {
 }
 
 .button-container button:hover {
-    background-color: #0056b3;
+    background-color: #4cae4c;
 }
 
 .feedback {
@@ -85,4 +94,8 @@ body {
         width: 100%;
         margin: 10px 0;
     }
+}
+
+.combined-container {
+    display: flex;
 }
