@@ -172,121 +172,147 @@ class ArchInstructions {
             "pop": ['{op} {reg1}', '{op} {memAddr}']
         };
 
-            /*
-            let arithmetic;
-            let stack;
-            let mem;
-            let operations = [];
-            console.log("b1");
-            if (selection[0] && selection[1] && selection[2]){
-                arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
-                stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-                mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
-
-                operations.push(arithmetic);
-                operations.push(stack);
-                operations.push(mem);
-
-            } else {
-                console.log("operations");
-                console.log(operations);
-
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-            ];
-        }
-        console.log("b2");
-        op = unifPickItem(operations);
-            */
-
-        let arithmetic;
-        let stack;
-        let mem;
-        let operations = [];
-        let currentOpIndex = 0; // Counter to cycle through operations
-
-        if (selection[0] && selection[1] && selection[2]) {
-            arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
-            stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-            mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
-
-            function shuffleThreeElements(array) {
-                if (array.length !== 3) {
-                    throw new Error("The array must contain exactly 3 elements.");
-                }
-                
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            }
-            operations = shuffleThreeElements([arithmetic, stack, mem])
-
-        } else {
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-            ];
-        }
-
-        console.log("operations");
-        console.log(operations);
-    
-        const pickOperation = () => {
-            if (selection[0] && selection[1] && selection[2]) {
-                const op = operations[currentOpIndex];
-                currentOpIndex = (currentOpIndex + 1) % 3; // Cycle through 0, 1, 2
-                console.log(currentOpIndex)
-                console.log("")
-                return op;
-            } else {
-                return unifPickItem(operations);
-            }
+        const ARMformats = {
+            "add" : ['{op} {reg1}, {reg2}, {reg1}', '{op} {reg3}, {reg2}, {reg1}', '{op} {reg1}, {reg1}, {literal}'],
+            "sub" : ['{op} {reg1}, {reg2}, {reg1}', '{op} {reg3}, {reg2}, {reg1}', '{op} {reg1}, {reg1}, {literal}'],
+            "ldr" : ['{op} {reg1}, [{reg2}, {literal}]'],
+            "str" : ['{op} {reg1}, [{reg2}, {literal}]']
         };
 
+        if (this.architecture === 'ARM64'){
+                    
+                    let operations = [];
+                    operations = [
+                        ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+                        ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+                    ];
+        
+                    const op = unifPickItem(operations);
 
-        const op = pickOperation();
+                    let format = (op === 'add' || op === 'sub' || op === 'ldr' || op === 'str') ? unifPickItem(ARMformats[op]) : "";
+                    let reg1 = unifPickItem(regular_registers);
+                    let reg2 = unifPickItem(regular_registers);
+                    let reg3 = unifPickItem(regular_registers);
+                    let memItem = unifPickItem(memory);
+                    while (stack_registers.some(r => r.value == memItem.address)) {
+                        memItem = unifPickItem(memory);
+                    }
+                    let offset = unifPickItem(offsets);
+                    let literal = Math.floor(Math.random() * 8) * 8;
+                    if (format.includes('offset')) {
+                        const maxOffset = format.includes('memAddr')
+                            ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                            : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                        offset = Math.min(offset, maxOffset);
+                    }
 
-        let mySet = new Set();
-        mySet.add(op);
+                    reg1 = `${reg1.register}`;
+                    reg2 = `${reg2.register}`;
+                    reg3 = `${reg3.register}`;
+                    const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
+                    const prefix = this.architecture === 'ARM64' ? '#' : '$';
+                    literal = `${prefix}${literal}`;
 
+                    console.log("format to be observed");
+                    console.log(format.replace(/\+0\b/g, '')
+                        .replace(/{op}/g, op)
+                        .replace(/{memAddr}/g, memAddr)
+                        .replace(/{offset}/g, offset)
+                        .replace(/{reg1}/g, reg1)
+                        .replace(/{reg2}/g, reg2)
+                        .replace(/{reg3}/g, reg3)
+                        .replace(/{literal}/g, literal));
 
-        console.log("ops");
-        console.log(mySet);
+                    
+                    return format.replace(/\+0\b/g, '')
+                        .replace(/{op}/g, op)
+                        .replace(/{memAddr}/g, memAddr)
+                        .replace(/{offset}/g, offset)
+                        .replace(/{reg1}/g, reg1)
+                        .replace(/{reg3}/g, reg3)
+                        .replace(/{reg2}/g, reg2)
+                        .replace(/{literal}/g, literal);
+            } else { 
 
-        let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
-        let reg1 = unifPickItem(regular_registers);
-        let reg2 = unifPickItem(regular_registers);
-        let memItem = unifPickItem(memory);
-        while (stack_registers.some(r => r.value == memItem.address)) {
-            memItem = unifPickItem(memory);
-        }
-        let offset = unifPickItem(offsets);
-        let literal = Math.floor(Math.random() * 8) * 8;
-        if (format.includes('offset')) {
-            const maxOffset = format.includes('memAddr')
-                ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
-                : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-            offset = Math.min(offset, maxOffset);
-        }
+         
+                let arithmetic;
+                let stack;
+                let mem;
+                let operations = [];
+                let currentOpIndex = 0;
 
-        reg1 = `%${reg1.register}`;
-        reg2 = `%${reg2.register}`;
-        const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
-        const prefix = this.architecture === 'ARM64' ? '#' : '$';
-        literal = `${prefix}${literal}`;
+                if (selection[0] && selection[1] && selection[2]) {
+                    arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
+                    stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
+                    mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
 
-        return format.replace(/\+0\b/g, '')
-            .replace(/{op}/g, op)
-            .replace(/{memAddr}/g, memAddr)
-            .replace(/{offset}/g, offset)
-            .replace(/{reg1}/g, reg1)
-            .replace(/{reg2}/g, reg2)
-            .replace(/{literal}/g, literal);
+                    function shuffleThreeElements(array) {
+                        if (array.length !== 3) {
+                            throw new Error("The array must contain exactly 3 elements.");
+                        }
+                        
+                        for (let i = array.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [array[i], array[j]] = [array[j], array[i]];
+                        }
+                        return array;
+                    }
+                    operations = shuffleThreeElements([arithmetic, stack, mem])
+
+                } else {
+                
+                    operations = [
+                        ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+                        ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+                        ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
+                    ];
+                }
+            
+                const pickOperation = () => {
+                    if (selection[0] && selection[1] && selection[2]) {
+                        const op = operations[currentOpIndex];
+                        currentOpIndex = (currentOpIndex + 1) % 3; 
+                        return op;
+                    } else {
+                        return unifPickItem(operations);
+                    }
+                };
+
+                const op = pickOperation();
+                let mySet = new Set();
+                mySet.add(op);
+
+                let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
+                let reg1 = unifPickItem(regular_registers);
+                let reg2 = unifPickItem(regular_registers);
+                let memItem = unifPickItem(memory);
+                while (stack_registers.some(r => r.value == memItem.address)) {
+                    memItem = unifPickItem(memory);
+                }
+                let offset = unifPickItem(offsets);
+                let literal = Math.floor(Math.random() * 8) * 8;
+                if (format.includes('offset')) {
+                    const maxOffset = format.includes('memAddr')
+                        ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                        : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                    offset = Math.min(offset, maxOffset);
+                }
+
+                reg1 = `%${reg1.register}`;
+                reg2 = `%${reg2.register}`;
+                const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
+                const prefix = this.architecture === 'ARM64' ? '#' : '$';
+                literal = `${prefix}${literal}`;
+
+                
+                return format.replace(/\+0\b/g, '')
+                    .replace(/{op}/g, op)
+                    .replace(/{memAddr}/g, memAddr)
+                    .replace(/{offset}/g, offset)
+                    .replace(/{reg1}/g, reg1)
+                    .replace(/{reg2}/g, reg2)
+                    .replace(/{literal}/g, literal);
+                }
     }
 
     // Generates a list of memory addresses for the simulation
@@ -322,7 +348,7 @@ class ArchInstructions {
             ]
         };
     }
-
+   
     // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         let selected_instructions = [];
@@ -442,12 +468,20 @@ class ArchInstructions {
             const [dest] = args;
             this.popFromStack(dest, registers, memory);
 
-        } else {
+        } else  if (this.architecture != 'ARM6'){
 
             const [src, dest] = args;
             const srcValue = this.getValue(src, registers, memory);
             const destValue = this.getValue(dest, registers, memory);
             const result = op === 'mov' || op === 'movl' || op === 'mvn' ? srcValue : this.calculate(op, destValue, srcValue);
+            this.setValue(dest, result, registers, memory);
+
+        } else {
+
+            const [dest, src1, src2] = args;
+            const srcValue1 = this.getValue(src1, registers, memory);
+            const srcValue2 = this.getValue(src2, registers, memory);
+            const result = op === 'ldr' || op === 'str' ? srcValue1 : this.calculate(op, srcValue1, srcValue2); //placeholder for ldr and str
             this.setValue(dest, result, registers, memory);
         }
     }
@@ -482,15 +516,20 @@ class ArchInstructions {
     // Acquire value from the given registers and memories
     getValue(operand, registers, memory) {
         if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value;
-        if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
+        if (operand.startsWith('$') || operand.startsWith('#')) return parseInt(operand.slice(1), 10);
+        if (operand.startsWith('X')) return registers.find(r => `${r.register}` === operand).value;
         const mem = memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory));
         return mem && /^[0-9]+$/.test(mem.value) ? mem.value : 0;
     }
 
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
+        console.log("operand");
+        console.log(operand);
         if (operand.startsWith('%')) {
             registers.find(r => `%${r.register}` === operand).value = value;
+        } else if (operand.startsWith('X')) {
+                registers.find(r => `${r.register}` === operand).value = value;
         } else {
             memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
         }
