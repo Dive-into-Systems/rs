@@ -53,6 +53,7 @@ export default class Fork extends RunestoneBase {
 
     initParams() {
         this.printContent = [];
+        this.source = "";
         for (var i = 0; i < 10; i++) {
             this.printContent.push(String.fromCharCode((i + 97)));
         }
@@ -122,47 +123,44 @@ export default class Fork extends RunestoneBase {
 
     genPromptsNAnswer() {
         const mode = this.modeMenu.val().toString();
-        console.log("mode is", mode);
-        if (mode === "2") {
-            this.numForks = this.pick([3, 4]);
-            this.numPrints = this.pick([3, 4]);
-            this.hasNest = true;
-            this.hasExit = true;
-            this.hasElse = true;
-            this.hasLoop = false;
+        var prev = this.source || "";
+        // console.log("mode is", mode);
+        while (this.source == prev) {
+            if (mode === "2") {
+                this.numForks = 3;
+                this.numPrints = this.pick([3, 4]);
+                this.hasNest = true;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            else if (mode == "3") {
+                this.numForks = 4;
+                this.numPrints = 4;
+                this.hasNest = true;
+                this.hasExit = true;
+                this.hasElse = true;
+                this.hasLoop = true;
+            }
+            else {
+                this.numForks = 2;
+                this.numPrints = this.pick([2, 3]);
+                this.hasNest = false;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            
+            this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         }
-        else if (mode == "3") {
-            this.numForks = this.pick([3, 4]);
-            this.numPrints = this.pick([4, 5]);
-            this.hasNest = true;
-            this.hasExit = true;
-            this.hasElse = true;
-            this.hasLoop = true;
-        }
-        else {
-            this.numForks = 2;
-            this.numPrints = this.pick([2, 3]);
-            this.hasNest = false;
-            this.hasExit = false;
-            this.hasElse = false;
-            this.hasLoop = false;
-        }
-        console.log("Should have params:", "#forks", this.numForks, "#prints", this.numPrints, "nest", this.hasNest, "exit", this.hasExit, "else", this.hasElse, "loop", this.hasLoop);
-
-        // var prev = this.source || null;
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        // while (this.source == prev) {
-        //     this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        // }
-
-        console.log("Whyyyyy", this.source);
+        
+        // console.log("Should have params:", "#forks", this.numForks, "#prints", this.numPrints, "nest", this.hasNest, "exit", this.hasExit, "else", this.hasElse, "loop", this.hasLoop);
         [this.root, this.cCode] = forking.buildAndTranspile(this.source);
-        // console.log(this.cCode);
-        // console.log(this.root);
+        console.log(forking.printTreeVert(this.root));
         const { csv, valuesList } = forking.getTreeCSV(this.root);
         this.csvTree = csv;
         this.labels = valuesList;
-        this.answerMap = forking.getAnswer(this.root);
+        this.answerMap = forking.getAnswer(this.root, this.numPrints);
         console.log(this.answerMap);
     }
 

@@ -1,8 +1,9 @@
 
 const INDENT_SPC = 2;
 const DASH = "─";
-const BAR = "|";
+// const BAR = "|";
 const SPC = "&#8195;";
+const SPC1 = " ";
 const NEWLINE = "<br>";
 const EXIT_CHAR = "x";
 const nullChar = "\\";
@@ -59,7 +60,25 @@ class ForkNode {
         }
     }
 
+    exit() {
+        if (!this.active) return;
+        
+        if (this.right) this.right.exit(); // you have a child, it also exit
+        if (this.left) { // "future" self, exit
+            this.left.exit();
+        }
+        else {
+            // this.print("X");
+            this.active = false;
+        }
+    }
+
+
     fork(leftCode, rightCode, indent) {
+        if (!this.active) {
+            // let temp = 
+            return (new ForkNode()).fork(leftCode,rightCode, indent);
+        }
         // you have a child, it also forks
         if (this.right) {
             this.right.fork(leftCode, rightCode, indent);
@@ -76,19 +95,6 @@ class ForkNode {
         }
         return [leftResult, rightResult];
     }
-    
-    exit() {
-        if (!this.active) return;
-        if (this.right) this.right.exit(); // you have a child, it also exit
-        if (this.left) { // "future" self, exit
-            this.left.exit();
-        }
-        if (!this.left && !this.right) {
-            this.print("X");
-            this.active = false;
-        }
-    }
-
     
     pushCode(code, indent = 0) {
         let result = [];
@@ -112,7 +118,7 @@ class ForkNode {
             if (code[ptr] == EXIT_CHAR) {
                 addLine(`exit();`);
                 this.exit();
-                // break;
+                // break
             }
             if (code[ptr] == "F") {
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
@@ -153,9 +159,16 @@ function output(node) {
     return node.value + output(node.left) + output(node.right);
 }
 
-export function getAnswer(node) {
+export function getAnswer(node, numPrints) {
+    
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    let map = {}
+    for (let i = 0; (i < numPrints) && (i < 26); i++) {
+        map[alphabet[i]] = 0;
+    }
+    
+    
     let answer = output(node);
-    let map = {};
     for (let i = 0; i < answer.length; i++) {
         if (answer[i] in map) { map[answer[i]] += 1; }
         else { map[answer[i]] = 1; }
@@ -164,7 +177,7 @@ export function getAnswer(node) {
 }
 
 const formatNode = (node) => `${node.id}.${node.childCt}`+ ":"+(node.value?node.value:nullChar);
-function printTreeVert(node, isRoot = true) {
+export function printTreeVert(node, isRoot = true) {
     const nullChar = "\\";
     // if (!node) return [nullChar]; // show forked processes that does nothing
     if (!node) return [];
@@ -187,7 +200,7 @@ function printTreeVert(node, isRoot = true) {
     
     result.push(`${selfValue}${hasLeft ? DASH.repeat(Math.max(selfValue.length, rightWidth)-selfValue.length+1) + leftSubtree[0] : ""}`);
     leftSubtree.slice(1).forEach(line => result.push(`${indentLeft}${line}`));
-    rightSubtree.forEach(line => result.push(line+SPC.repeat(rightWidth-line.length)));
+    rightSubtree.forEach(line => result.push(line+SPC1.repeat(rightWidth-line.length)));
 
     return isRoot ? result.join("\n") : result;
 }
