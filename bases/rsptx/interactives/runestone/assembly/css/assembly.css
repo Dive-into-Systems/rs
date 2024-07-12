@@ -24,7 +24,7 @@ input[type="radio"] {
 
 button[disabled] {
  background-color: WhiteSmoke;
- color: #606060; 
+ color: #606060;
 }
 
 .disabled-code {
@@ -77,19 +77,25 @@ button[disabled] {
 }
 
 .feedbackCorrect {
-  background-color: lightgreen;
   border: 1px solid transparent;
   padding-left: 3px;
   padding-right: 3px;
   border-radius: 4px;
 }
 
+.feedbackCorrect>span {
+  background-color: lightgreen;
+}
+
 .feedbackError{
-  background-color: var(--dangerAlerts);
   padding-left: 3px;
   padding-right: 3px;
   border: 1px solid transparent;
   border-radius: 4px;
+}
+
+.feedbackError>span {
+  background-color: var(--dangerAlerts);
 }
 
 .centerplease {

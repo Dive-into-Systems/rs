@@ -170,51 +170,41 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
         this.textNodes = []; // create a reference to all current textNodes for future update
         this.inputNodes = []; // create slots for inputs for future updates
-        var textNode = null;
 
         this.genPromptsNAnswer();
 
         // create and render all input fields in question group
         for (let i = 0; i < this.num_q_in_group; i++) {
-            //creation of new div
-            this.newDiv = $("<div>").attr("id", this.divid + "div" + i);
-
-            //create a first line node to contain the first line of elements, easy for spacing
-            this.firstLine = $("<div>");
-            this.firstLine.css({
+            // create a prompt item node to contain the letter and the prompt
+            this.mainFirstLine = $("<div>").css({
                 display: "flex",
-                "justify-content": "space-between",
-            });
-
-            //create a propmpt item node to contain the letter and the prompt
-            this.propmtItem = $("<div>");
-            this.propmtItem.css({
-                display: "flex",
+                "justify-content": "space-around",
             });
 
             // create the prompt
-            textNode = $(document.createElement("code")).text(
+            const textNode = $(document.createElement("code")).text(
                 this.promptList[i],
             );
             textNode.css({ "font-size": "large", height: "25px" });
             this.textNodes.push(textNode);
 
-            // create the feedback
-            var feedbackDiv = $("<span>")
-                .attr("id", this.divid + "feedback" + i)
-                .addClass("feedback")
-                .css({ width: "300px", "text-wrap": "pretty" });
+            // start appending the letter, the prompt, the feedback for the first line
+            this.mainFirstLine.append(String.fromCharCode(i + 97) + ". ");
+            this.mainFirstLine.append(textNode);
 
-            // start appending the letter, the propmpt, the feedback for the first line
-            this.propmtItem.append(String.fromCharCode(i + 97) + ". ");
-            this.propmtItem.append(textNode);
-            this.firstLine.append(this.propmtItem);
-            this.firstLine.append(feedbackDiv);
-            this.newDiv.append(this.firstLine);
+            this.mainSecondLine = $("<div>").css({
+                display: "flex",
+                "align-items": "center",
+            });
+
+            // create a div to hold the radio buttons
+            this.buttonsDiv = $("<div>").css({
+                display: "flex",
+            });
 
             // create and render valid/invalid answer fields
             this.radioButtons = [];
-            var btnYes = $("<input>")
+            const btnYes = $("<input>")
                 .attr({
                     type: "radio",
                     value: true,
@@ -228,12 +218,12 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                     $(this).next("label").removeClass("highlightRight");
                 })
                 .addClass("centerplease");
-            var lblYes = $("<label>")
+            const lblYes = $("<label>")
                 .attr("for", "Yes" + i)
                 .text("VALID");
 
             // Add a label and radio button for the "Invalid" answer option
-            var btnNo = $("<input>")
+            const btnNo = $("<input>")
                 .attr({
                     type: "radio",
                     value: false,
@@ -247,17 +237,16 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                     $(this).next("label").removeClass("highlightRight");
                 })
                 .addClass("centerplease");
-            var lblNo = $("<label>")
+            const lblNo = $("<label>")
                 .attr("for", "No" + i)
                 .text("INVALID");
 
             // Append the radio buttons and labels to the question div
-            this.newDiv.append(lblYes);
-            this.newDiv.append(btnYes);
-            this.newDiv.append(lblNo);
-            this.newDiv.append(btnNo);
+            this.buttonsDiv.append(lblYes);
+            this.buttonsDiv.append(btnYes);
+            this.buttonsDiv.append(lblNo);
+            this.buttonsDiv.append(btnNo);
 
-            // this.radioButtons.push([btnYes, btnNo]);
             this.submitButton = $("<button>")
                 .text($.i18n("msg_asm_check_me")) // Using the localized string for the button text
                 .attr({
@@ -274,7 +263,34 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 )
                 .addClass("button-check checkingbutton");
 
-            this.newDiv.append(this.submitButton);
+            this.mainSecondLine.append(this.buttonsDiv);
+            this.mainSecondLine.append(this.submitButton);
+
+            // append the first and second line to the main div
+            this.main = $("<div>").css({
+                display: "flex",
+                "flex-direction": "column",
+                "align-items": "flex-start",
+            });
+
+            this.main.append(this.mainFirstLine);
+            this.main.append(this.mainSecondLine);
+
+            // create the feedback
+            const feedbackDiv = $("<span>")
+                .attr("id", this.divid + "feedback" + i)
+                .addClass("feedback")
+                .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
+
+            // creation of new div
+            this.newDiv = $("<div>").attr("id", this.divid + "div" + i);
+            this.newDiv.css({
+                display: "flex",
+                "justify-content": "space-between",
+            });
+            this.newDiv.append(this.main);
+            this.newDiv.append(feedbackDiv);
+
             this.inputBox.append(this.newDiv);
             this.inputNodes.push([btnYes, btnNo]);
         }
