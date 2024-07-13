@@ -41,7 +41,7 @@ export function drawHierarchy(linksCsv, labels) {
     var digraphString = (
         'digraph {' + 
         'bgcolor = "transparent";' + 
-        'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
+        'node [shape=circle, color="#5986ba", style=filled, fillcolor="#c6d9f1", fixedsize=true, width=1];' +
         'edge [color=black, penwidth=2.0];'
     );
 
@@ -66,7 +66,7 @@ export function drawTimeline(linksCsv) {
     var digraphString = (
         'digraph {' + 
         'bgcolor = "transparent";' + 
-        'node [shape=circle, color=black, style=filled, fillcolor=lightblue, fixedsize=true, width=0.7];' +
+        'node [shape=circle, color="#5986ba", style=filled, fillcolor="#c6d9f1", fixedsize=true, width=1];' +
         'edge [color=black, penwidth=2.0];'
     );
 
