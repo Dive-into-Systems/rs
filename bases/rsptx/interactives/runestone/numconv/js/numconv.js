@@ -16,13 +16,16 @@ export var NCList = {}; // Object containing all instances of NC that aren't a c
 export default class NC extends RunestoneBase {
     constructor(opts) {
         super(opts);
-        var orig = opts.orig; // entire <p> element
+        var orig = opts.orig;
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
         this.correct = null;
-        // default number of bits = 8
         this.num_bits = 8;
+
+        // Fields for logging data
+        this.componentId = 1;
+        this.questionId = 1;
         
         this.createNCElement();
         this.generateButton.click();
@@ -33,7 +36,7 @@ export default class NC extends RunestoneBase {
             Prism.highlightAllUnder(this.containerDiv);
         }
 
-        this.contWrong = 0;
+        this.countWrong = 0;
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -248,6 +251,7 @@ export default class NC extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
+                this.logData(3);
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.clearAnswer();
@@ -449,10 +453,10 @@ export default class NC extends RunestoneBase {
             this.correct = false;
         } else if ( input_value != this.target_num_string ) {
             this.feedback_msg = ($.i18n("msg_NC_incorrect"));
-            this.contWrong ++;
+            this.countWrong ++;
             this.correct = false;
 
-            if (this.contWrong >= 3) {
+            if (this.countWrong >= 3) {
                 if (this.menuNode1.value == "decimal-signed" || this.menuNode2.value == "decimal-signed") {
                     this.feedback_msg += ("\n" + $.i18n("msg_hint_sign"));
                 } else if (this.menuNode1.value == "decimal-unsigned" || this.menuNode2.value == "decimal-unsigned") {
@@ -468,33 +472,36 @@ export default class NC extends RunestoneBase {
         } else {
             this.feedback_msg = ($.i18n("msg_NC_correct"));
             this.correct = true;
-            this.contWrong = 0;
+            this.countWrong = 0;
         }
+
+        // Log data
+        this.correct === true ? this.logData(1) : this.logData(2);
     }
 
     // log the answer and other info to the server (in the future)
-    async logCurrentAnswer(sid) {
-        let answer = JSON.stringify(this.inputNode.value);
-        // Save the answer locally.
-        this.setLocalStorage({
-            answer: answer,
-            timestamp: new Date(),
-        });
-        let data = {
-            event: "numconv",
-            act: answer || "",
-            answer: answer || "",
-            correct: this.correct ? "T" : "F",
-            div_id: this.divid,
-        };
-        if (typeof sid !== "undefined") {
-            data.sid = sid;
-            feedback = false;
-        }
-        // render the feedback
-        this.renderFeedback();
-        return data;
-    }
+    // async logCurrentAnswer(sid) {
+    //     let answer = JSON.stringify(this.inputNode.value);
+    //     // Save the answer locally.
+    //     this.setLocalStorage({
+    //         answer: answer,
+    //         timestamp: new Date(),
+    //     });
+    //     let data = {
+    //         event: "numconv",
+    //         act: answer || "",
+    //         answer: answer || "",
+    //         correct: this.correct ? "T" : "F",
+    //         div_id: this.divid,
+    //     };
+    //     if (typeof sid !== "undefined") {
+    //         data.sid = sid;
+    //         feedback = false;
+    //     }
+    //     // render the feedback
+    //     this.renderFeedback();
+    //     return data;
+    // }
 
     /*===================================
     === Checking/loading from storage ===
@@ -537,6 +544,41 @@ export default class NC extends RunestoneBase {
             this.queueMathJax(document.body);
         }
     }
+
+    /*
+        Action ID 0: Page with question is loaded.
+        Action ID 1: User selects check answer with a correct answer.
+        Action ID 2: User selects check answer with an incorrect answer.
+        Action ID 3: User selects "ask me another".
+        Action ID 4: User asks for a hint = null (we don't have a hint for this one).
+        Action ID 8: User enters incorrect answer for over three times.
+    */
+    logData(actionId) {
+        let base = (
+            componentId = this.componentId,
+            questionId = this.questionId,
+            timestamp = new Date().format("dd/MM/yyyy hh:mm TT"),
+            actionId = actionId
+        );
+        console.log(base);
+        let extension = (
+            systems = `${this.menuNode1.value}->${this.menuNode2.value}`,
+            answer = this.inputNode.value.toLowerCase()
+        );
+        console.log(extension);
+        fetch('http://127.0.0.1:5000/numconv', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({info : info}),
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch((error) => {
+            console.error('Error in logging data:', error);
+        });
+    }
 }
 
 /*=================================
@@ -553,6 +595,7 @@ $(document).on("runestone:login-complete", function () {
             // If this element exists within a timed component, don't render it here
             try {
                 NCList[this.id] = new NC(opts);
+                this.logData(0); // log action if component loaded successfully
             } catch (err) {
                 console.log(
                     `Error rendering Number Conversion Problem ${this.id}
