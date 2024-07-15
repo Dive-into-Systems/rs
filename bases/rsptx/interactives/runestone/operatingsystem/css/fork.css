@@ -2,8 +2,25 @@
   pointer-events: none;
 }
 
+.mode-exp {
+  cursor: pointer;
+  color: #c7254e;
+}
+
+.tooltip-inner {
+  padding: 10px !important;
+  max-width: 300px !important;
+  text-align: left !important;
+  white-space: pre-wrap !important;
+  font-size: 14px !important;
+}
+
+.mode-exp:hover {
+  text-decoration: underline;
+}
+
 .fork-inline {
-  font-weight: 500 !important;
+  font-weight: normal !important;
   display: inline-block !important;
 }
 
@@ -43,9 +60,12 @@
 }
 
 .tree-div {
+  flex: 1;
   border-width: 1px;
   border-radius: 5px;
-  padding: 5px;
+  background-color:white;
+  border: 1px solid #ccc;
+  padding: 15px;
   margin-top: 10px;
   justify-content: center;
   pointer-events: none;

@@ -53,6 +53,7 @@ export default class Fork extends RunestoneBase {
 
     initParams() {
         this.printContent = [];
+        this.source = "";
         for (var i = 0; i < 10; i++) {
             this.printContent.push(String.fromCharCode((i + 97)));
         }
@@ -63,13 +64,21 @@ export default class Fork extends RunestoneBase {
         // Create instructions
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
-            "For the code snippet shown below (assume  that all the calls to <code>fork()</code> succeed), " + 
-            "answer how many letters the process prints out with <code>printf()</code>."
+            "This question intends to guide you through understanding parent-child relationships between processes." +
+            "For the code snippet shown below (assuming all calls to <code>fork()</code> succeed), " + 
+            "answer <strong>how many times</strong> each letters are printed out with <code>printf()</code>.<br><br>"
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        this.label = $("<label>").addClass("fork-inline").html("Select a complexity level:&ensp;");
-        this.modeMenu = $("<select>").addClass("mode form-control fork-inline");
+        this.label = $("<label>").addClass("fork-inline mode-exp").html("Configure a mode:&ensp;").tooltip({
+            placement: "right", 
+            html: true, 
+            title: 
+                "<strong>Mode 1</strong> generates a small number of processes with if structures.<br>" + 
+                "<strong>Mode 2</strong> generates multiple processes with if-else structures and nested conditions.<br>" +
+                "<strong>Mode 3</strong> generates more processes, everything in mode 2 and introduces exits."
+        });
+        this.modeMenu = $("<select>").addClass("form-control fork-inline mode");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
             if (option.val() === "1") { option.attr("selected", true); }
@@ -121,47 +130,46 @@ export default class Fork extends RunestoneBase {
     }
 
     genPromptsNAnswer() {
-        const mode = this.modeMenu.val();
-
-        if (mode === "2") {
-            this.numForks = this.pick([3, 4]);
-            this.numPrints = this.pick([3, 4]);
-            // this.hasNest = true;
-            this.hasExit = true;
-            this.hasElse = true;
-            this.hasLoop = false;
+        const mode = this.modeMenu.val().toString();
+        var prev = this.source || "";
+        // console.log("mode is", mode);
+        while (this.source == prev) {
+            if (mode === "2") {
+                this.numForks = 3;
+                this.numPrints = this.pick([3, 4]);
+                this.hasNest = true;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            else if (mode == "3") {
+                this.numForks = 4;
+                this.numPrints = 4;
+                this.hasNest = true;
+                this.hasExit = true;
+                this.hasElse = true;
+                this.hasLoop = true;
+            }
+            else {
+                this.numForks = 2;
+                this.numPrints = this.pick([2, 3]);
+                this.hasNest = false;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            
+            this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         }
-        else if (mode == "3") {
-            this.numForks = this.pick([3, 4]);
-            this.numPrints = this.pick([4, 5]);
-            // this.hasNest = true;
-            this.hasExit = true;
-            this.hasElse = true;
-            this.hasLoop = true;
-        }
-        else {
-            this.numForks = 2;
-            this.numPrints = this.pick([2, 3]);
-            // this.hasNest = false;
-            this.hasExit = false;
-            this.hasElse = false;
-            this.hasLoop = false;
-        }
-
-        var prev = this.source || null;
-        this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasExit, this.hasElse, this.hasLoop);
-        while (this.source === prev) {
-            this.source = forking.genRandSourceCode(this.numForks, this.numPrints, this.hasExit, this.hasElse, this.hasLoop);
-        }
-        // console.log(this.source);
-        this.cCode = forking.transpileToC(this.source);
-        console.log(this.cCode);
-        this.root = forking.buildTree(this.source);
-        // console.log(this.root);
+        
+        // console.log("Should have params:", "#forks", this.numForks, "#prints", this.numPrints, "nest", this.hasNest, "exit", this.hasExit, "else", this.hasElse, "loop", this.hasLoop);
+        [this.root, this.cCode] = forking.buildAndTranspile(this.source);
+        console.log(forking.printTreeVert(this.root));
         const { csv, valuesList } = forking.getTreeCSV(this.root);
         this.csvTree = csv;
         this.labels = valuesList;
-        this.answerMap = forking.getAnswer(this.root);
+        this.answerMap = forking.getAnswer(this.root, this.numPrints);
+        console.log(this.answerMap);
     }
 
     initForkButtons() {
@@ -179,7 +187,6 @@ export default class Fork extends RunestoneBase {
         });
         this.generateButton.addEventListener("click", () => {
             this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
-            // this.genPromptsNAnswer();
             this.updatePrompts();
         });
 
@@ -225,32 +232,12 @@ export default class Fork extends RunestoneBase {
             else { this.hideTimeline(); }
         });
 
-        this.helpButton = document.createElement("button");
-        this.helpButton.textContent = $.i18n("msg_fork_show_help");
-        $(this.helpButton).attr({
-            class: "btn",
-            name: "help",
-            type: "button",
-            id: this.divid + "help",
-        });
-        this.helpButton.addEventListener("click", () => {
-            if ($(this.helpDiv).css('display') == 'none') {
-                this.showHelp();
-                this.helpButton.textContent = $.i18n("msg_fork_hide_help");
-            }
-            else {
-                this.hideHelp();
-                this.helpButton.textContent = $.i18n("msg_fork_show_help");
-            }
-        });
-
         this.buttonsDiv = $("<div>");
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
-        this.buttonsDiv.append(this.revealTimelineButton);
+        // this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
-        this.buttonsDiv.append(this.helpButton);
 
         this.containerDiv.append(this.buttonsDiv);
     }
@@ -262,9 +249,8 @@ export default class Fork extends RunestoneBase {
         // clear feedback field
         this.rightDiv.html("");
         $(this.feedbackDiv).css("display", "none");
-        $(this.hierarchyTreeDiv).css("display", "none");
+        $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none");
-        $(this.helpDiv).css("display", "none");
     }
 
     updatePrompts(){
@@ -284,6 +270,7 @@ export default class Fork extends RunestoneBase {
             this.subQuestionDiv.append(this.inputBox);
             this.rightDiv.append(this.subQuestionDiv);
         }
+        this.hierarchyTreeDiv.empty();
     }
 
     checkCurrentAnswer() {
@@ -291,9 +278,9 @@ export default class Fork extends RunestoneBase {
         this.correct = true; // init answer first as true, only update when incorrect choice occurs
 
         for (let i = 0; i < this.numPrints; i++) {
-            let currAnswer = $("#" + this.divid + "_input_" + i).val();
+            let currAnswer = $("#" + this.divid + "_input_" + i).val().toString();
             console.log("current answer:", currAnswer, "correct answer:", this.answerMap[this.printContent[i]]);
-            if (currAnswer !== this.answerMap[this.printContent[i]]) {
+            if (currAnswer !== this.answerMap[this.printContent[i]].toString()) {
                 this.correct = false;
                 if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
                 else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
@@ -306,10 +293,16 @@ export default class Fork extends RunestoneBase {
     showProcessHierarchy() {
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
         $(this.hierarchyTreeDiv).css("display", "block");
+        $(this.hierarchyTreeDiv).append(
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
+            "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems.<br><br>"
+        );
         $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
     }
 
     hideProcessHierarchy() {
+        $(this.hierarchyTreeDiv).html("");
+        $(this.hierarchyTreeDiv).empty();
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
@@ -341,10 +334,10 @@ export default class Fork extends RunestoneBase {
         this.containerDiv.append(this.timelineDiv);
 
         // Create a help div
-        this.helpDiv = $("<div>").attr("id", "help");
-        $(this.helpDiv).css("display", "none");
-        $(this.helpDiv).addClass("help-div");
-        this.containerDiv.append(this.helpDiv);
+        // this.helpDiv = $("<div>").attr("id", "help");
+        // $(this.helpDiv).css("display", "none");
+        // $(this.helpDiv).addClass("help-div");
+        // this.containerDiv.append(this.helpDiv);
     }
 
     updateFeedbackDiv() {
@@ -359,17 +352,17 @@ export default class Fork extends RunestoneBase {
             this.queueMathJax(document.body);
         }
     }
-    showHelp() {
-        $(this.helpDiv).css("display", "block");
-        $(this.helpDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates the output the process should print.<br>" +
-            "<strong>Execution Timeline Graph:</strong> Dotted lines represent the concurrent execution of two processes.<br>" +
-            "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems."
-        );        
-    }
-    hideHelp() {
-        $(this.helpDiv).css("display", "none");
-    }
+    // showHelp() {
+    //     $(this.helpDiv).css("display", "block");
+    //     $(this.helpDiv).html(
+    //         "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" +
+    //         "<strong>Execution Timeline Graph:</strong> Dotted lines represent the concurrent execution of two processes.<br>" +
+    //         "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems."
+    //     );        
+    // }
+    // hideHelp() {
+    //     $(this.helpDiv).css("display", "none");
+    // }
 
 
     /*===================================
