@@ -506,28 +506,27 @@ export default class NC extends RunestoneBase {
     logData(actionId) {
         let now = new Date();
         let base = {
+            timestamp: now.toString(),
             componentId : this.componentId,
             questionId : this.questionId,
-            timestamp: now.toISOString(),
-            actionId : actionId
+            actionId : actionId, 
         };
         console.log(base);
+        
         let extension = {
             systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
-            answer : this.inputNode.value.toLowerCase()
+            userAnswer : this.inputNode.value.toLowerCase()
         };
         console.log(extension);
 
-        console.log(JSON.stringify(base));
-
-        const url = 'http://127.0.0.1:5000/numconv';
+        const url = 'http://127.0.0.1:5000/binaryconversion';
 
         fetch (url, {
             method: 'POST',
-            mode: 'no-cors',
             body: JSON.stringify(base),
             headers: {
-                "Content-type": "application/json; charset=UTF-8"
+                "Content-type": "application/json; charset=UTF-8",
+                "Access-Control-Allow-Origin" : "*"
             }
         })
         .then(response => {
