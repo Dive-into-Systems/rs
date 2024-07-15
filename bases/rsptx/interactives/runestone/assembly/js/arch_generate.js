@@ -589,11 +589,19 @@ class ArchInstructions {
     selectFlagRegisters(num_registers) {
         const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
         return Array.from({ length: num_registers }, (_, i) => {
-            const value = Math.floor(Math.random() * 255) - 127;
+            let value;
+            if (Math.random() < 0.3) {  // 30% chance of zero or near-zero
+                value = Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? 1 : -1);
+            } else {
+                // Generate a random number between -128 and 127 (signed 8-bit integer range)
+                value = Math.floor(Math.random() * 256) - 128;
+            }
+            const hexValue = (value & 0xFF).toString(16).toUpperCase().padStart(2, '0');
             return {
                 register: registers[i],
                 value: value.toString(),
-                two: ((value < 0 ? (256 + value) : value).toString(2).padStart(8, '0'))
+                hex: `0x${hexValue}`,
+                binary: `0b${(value & 0xFF).toString(2).padStart(8, '0')}`
             };
         });
     }
@@ -603,10 +611,16 @@ class ArchInstructions {
         const operations = arch_data[this.architecture]["comparison"].instructions;
         for (let i = 0; i < num_instructions; i++) {
             const op = unifPickItem(operations);
-            let src = this.getRandomOperand(registers);
-            let dest = this.getRandomOperand(registers);
-            while (src === dest) {
+            let src, dest;
+            if (Math.random() < 0.3) {  // 30% chance of same source and destination
                 src = this.getRandomOperand(registers);
+                dest = src;
+            } else {
+                src = this.getRandomOperand(registers);
+                dest = this.getRandomOperand(registers);
+                while (src === dest) {
+                    dest = this.getRandomOperand(registers);
+                }
             }
             instructions.push(`${op} ${dest}, ${src}`);
         }
@@ -628,23 +642,41 @@ class ArchInstructions {
         const { op, args } = parsedInstruction;
         const [src, dest] = args;
 
-        const destVal = this.getFlagValue(dest, registers);
-        const srcVal = this.getFlagValue(src, registers);
+        const destVal = parseInt(this.getFlagValue(dest, registers));
+        const srcVal = parseInt(this.getFlagValue(src, registers));
 
         let carryFlag = false, overflowFlag = false, zeroFlag = false, signFlag = false;
 
-        const result = (destVal - srcVal) & 0xFF;
+        // Get binary representations
+        const destValBinary = (destVal & 0xFF).toString(2).padStart(8, '0');
+        const srcValBinary = (srcVal & 0xFF).toString(2).padStart(8, '0');
 
+        // Calculate the result for cmp and test instructions
+        const cmpResult = destVal - srcVal;
+        const testResult = destVal & srcVal;
+
+        console.log(
+            `Instruction: ${instruction}\n`,
+            `Operation: ${op}\n`,
+            `Source: ${src} (${srcVal})\n`,
+            `Destination: ${dest} (${destVal})\n`,
+            `Dest Binary: ${destValBinary}\n`,
+            `Src Binary: ${srcValBinary}\n`,
+            `Cmp Result: ${cmpResult}\n`,
+            `Test Result: ${testResult}`
+        );
+
+        // Set flags according to the operation
         if (op === 'cmp') {
-            carryFlag = (destVal < srcVal);
-            overflowFlag = (((destVal ^ srcVal) & (destVal ^ result)) & 0x80) !== 0;
-            zeroFlag = result === 0;
-            signFlag = (result & 0x80) !== 0;
+            carryFlag = (destVal & 0xFF) < (srcVal & 0xFF); // Unsigned comparison for carry
+            overflowFlag = ((destVal ^ srcVal) & (destVal ^ cmpResult) & 0x80) !== 0;
+            zeroFlag = (cmpResult & 0xFF) === 0;
+            signFlag = (cmpResult & 0x80) !== 0;
         } else if (op === 'test' || op === 'tst') {
             carryFlag = false;
             overflowFlag = false;
-            zeroFlag = result === 0;
-            signFlag = (result & 0x80) !== 0;
+            zeroFlag = testResult === 0;
+            signFlag = (testResult & 0x80) !== 0;
         }
 
         return { carryFlag, overflowFlag, zeroFlag, signFlag };
