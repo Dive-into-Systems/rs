@@ -64,20 +64,23 @@ export default class Fork extends RunestoneBase {
         // Create instructions
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.instruction = $("<div>").html(
-            "This question intends to guide you through understanding parent-child relationships between processes." +
+            "This question intends to guide you through understanding parent-child relationships between processes. " +
             "For the code snippet shown below (assuming all calls to <code>fork()</code> succeed), " + 
-            "answer <strong>how many times</strong> each letters are printed out with <code>printf()</code>.<br><br>"
+            "answer <strong>how many times</strong> each letters are printed with <code>printf()</code>.<br><br>"
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        this.label = $("<label>").addClass("fork-inline mode-exp").html("Configure a mode:&ensp;").tooltip({
-            placement: "right", 
-            html: true, 
-            title: 
-                "<strong>Mode 1</strong> generates a small number of processes with if structures.<br>" + 
-                "<strong>Mode 2</strong> generates multiple processes with if-else structures and nested conditions.<br>" +
-                "<strong>Mode 3</strong> generates more processes, everything in mode 2 and introduces exits."
-        });
+        this.label = $("<label>")
+            .addClass("fork-inline mode-exp")
+            .html("<span class='underline-on-hover'>Configure a mode</span>:&ensp;")
+            .tooltip({
+                placement: "right", 
+                html: true, 
+                title: 
+                    "<strong>Mode 1</strong> generates a small number of processes with if structures.<br>" + 
+                    "<strong>Mode 2</strong> generates multiple processes with if-else structures and nested conditions.<br>" +
+                    "<strong>Mode 3</strong> has everything in mode 2 and introduces exits."
+            });
         this.modeMenu = $("<select>").addClass("form-control fork-inline mode");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
