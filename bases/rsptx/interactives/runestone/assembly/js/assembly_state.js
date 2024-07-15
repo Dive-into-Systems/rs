@@ -55,9 +55,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the header of the exercise
     renderHeader() {
         this.header = $("<div>").html(
-            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions. " +
-            "For each instruction provided, describe how it alters the values in registers or memory. " +
-            "Start with the initial state provided below, and sequentially apply each instruction, updating the state as you go.<br><br>"
+            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions." +  
+            "For each instruction, describe how it changes register or memory values." + "Start with the initial state and update the state sequentially as you apply each instruction.<br><br>"
         );
         this.headerDiv = $("<div>").append(this.header);
         this.containerDiv.append(this.headerDiv);
@@ -124,17 +123,40 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     
 
         } else {
-            
+
             const instructionTypes = [
                 { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
                 { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
                 { label: 'Stack Operations', value: 'stackoperation', defaultChecked: false }
             ];
-    
-            const customizationDiv = $("<div>").addClass("customization-container");
-            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-            instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
-    
+            
+            const customizationDiv = $("<div>").addClass("customization-container").css({
+                'border': '2px solid #ccc',  // Thicker grey border for the outer container
+                'padding': '8px',  // Small padding to create space between borders
+                'margin-bottom': '20px',
+                'background-color': '#f9f9f9',
+                'border-radius': '10px',  // Rounded corners for a softer look
+                'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
+                'width': '100%'  // Make the outer container full width
+            });
+            
+            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types").css({
+                'padding': '15px',  // Padding for the inner container
+                'background-color': '#e9ecef',
+                'border-radius': '10px',
+                'border': '2px solid #bbb',  // Inner border
+                'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
+                'width': '100%'  // Full width for inner container
+            });
+            
+            instructionTypeDiv.append($("<h3>").text("Configure Your Question Type").css({
+                'color': '#333',  // Dark grey color for the title
+                'margin-bottom': '10px'
+            }));
+            instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt.").css({
+                'margin-bottom': '10px'
+            }));
+                
             // Initialize checkbox states
             this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
             this.stack_checked = instructionTypes.find(family => family.value === 'stackoperation').defaultChecked;
@@ -180,7 +202,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                     }
                 });
     
-                const label = $("<label>").attr("for", family.value).text(family.label);
+                //const label = $("<label>").attr("for", family.value).text(family.label);
+                const label = $("<label>").attr("for", family.value).text(family.label).css({
+                    'margin-right': '10px'
+                });
                 instructionTypeDiv.append(checkbox).append(label).append(" ");
             });
             instructionTypeDiv.append("<br>");
@@ -454,10 +479,16 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory, step) {
         const expectedState = this.allStates[step];
+        console.log(" Expected values");
+        console.log(expectedState);
+
+        console.log(" input regs ");
+        console.log(userRegisters);
         let isCorrect = true;
 
         for (let reg of expectedState.registers) {
             if (userRegisters[reg.register] != reg.value) {
+                console.log("input: " + userRegisters[reg.register] + " expected: " + reg.value);
                 isCorrect = false;
                 break;
             }
@@ -466,6 +497,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         if (isCorrect) {
             for (let mem of expectedState.memory) {
                 if (userMemory[mem.address] != mem.value) {
+                    console.log("inputMem: " + userMemory[mem.address] + "expectedMem: " + mem.value);
                     isCorrect = false;
                     break;
                 }

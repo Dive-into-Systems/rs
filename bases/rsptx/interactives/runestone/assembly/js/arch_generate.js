@@ -468,7 +468,7 @@ class ArchInstructions {
             const [dest] = args;
             this.popFromStack(dest, registers, memory);
 
-        } else  if (this.architecture != 'ARM6'){
+        } else  if (this.architecture != 'ARM64'){
 
             const [src, dest] = args;
             const srcValue = this.getValue(src, registers, memory);
@@ -479,6 +479,7 @@ class ArchInstructions {
         } else {
 
             const [dest, src1, src2] = args;
+            console.log("args: " + args);
             const srcValue1 = this.getValue(src1, registers, memory);
             const srcValue2 = this.getValue(src2, registers, memory);
             const result = op === 'ldr' || op === 'str' ? srcValue1 : this.calculate(op, srcValue1, srcValue2); //placeholder for ldr and str
@@ -524,12 +525,15 @@ class ArchInstructions {
 
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
+      
         console.log("operand");
         console.log(operand);
         if (operand.startsWith('%')) {
             registers.find(r => `%${r.register}` === operand).value = value;
         } else if (operand.startsWith('X')) {
                 registers.find(r => `${r.register}` === operand).value = value;
+                console.log("value");
+                console.log(value);
         } else {
             memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
         }
@@ -651,13 +655,13 @@ class ArchInstructions {
             signFlag = (result & 0x80) !== 0;
         }
 
-        console.log(`Instruction: ${instruction}`);
-        console.log(`Destination Value: ${destVal}`);
-        console.log(`Source Value: ${srcVal}`);
-        console.log(`Carry Flag: ${carryFlag}`);
-        console.log(`Overflow Flag: ${overflowFlag}`);
-        console.log(`Zero Flag: ${zeroFlag}`);
-        console.log(`Sign Flag: ${signFlag}`);
+        // console.log(`Instruction: ${instruction}`);
+        // console.log(`Destination Value: ${destVal}`);
+        // console.log(`Source Value: ${srcVal}`);
+        // console.log(`Carry Flag: ${carryFlag}`);
+        // console.log(`Overflow Flag: ${overflowFlag}`);
+        // console.log(`Zero Flag: ${zeroFlag}`);
+        // console.log(`Sign Flag: ${signFlag}`);
 
         return { carryFlag, overflowFlag, zeroFlag, signFlag };
     }
