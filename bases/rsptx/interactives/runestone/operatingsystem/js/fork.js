@@ -66,16 +66,18 @@ export default class Fork extends RunestoneBase {
         this.instruction = $("<div>").html(
             "This question intends to guide you through understanding parent-child relationships between processes." +
             "For the code snippet shown below (assuming all calls to <code>fork()</code> succeed), " + 
-            "answer <strong>how many times</strong> each letters are printed out with <code>printf()</code>.<br><br><br>"
+            "answer <strong>how many times</strong> each letters are printed out with <code>printf()</code>.<br><br>"
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
-        this.label = $("<label>").addClass("fork-inline mode-exp").html("<u>Configure a mode</u>:&ensp;");
-        this.tooltip = $("<div>").addClass("fork-inline tooltip").html(
-            "<strong>Mode 1</strong> generates a few processes and if conditions.<br>" + 
-            "<strong>Mode 2</strong> generates multiple processes with if-else structures and nested conditions.<br>" +
-            "<strong>Mode 3</strong> generates more processes and introduces loops and exits."
-        );
+        this.label = $("<label>").addClass("fork-inline mode-exp").html("Configure a mode:&ensp;").tooltip({
+            placement: "right", 
+            html: true, 
+            title: 
+                "<strong>Mode 1</strong> generates a small number of processes with if structures.<br>" + 
+                "<strong>Mode 2</strong> generates multiple processes with if-else structures and nested conditions.<br>" +
+                "<strong>Mode 3</strong> generates more processes, everything in mode 2 and introduces exits."
+        });
         this.modeMenu = $("<select>").addClass("form-control fork-inline mode");
         this.modes.forEach(e => {
             let option = $("<option>").val(e).text(e);
@@ -87,7 +89,6 @@ export default class Fork extends RunestoneBase {
             // this.updateParams();
             this.updatePrompts();
         });
-        this.label.append(this.modeMenu, this.tooltip);
 
         // this.updateParams();
         this.genPromptsNAnswer();
@@ -232,32 +233,12 @@ export default class Fork extends RunestoneBase {
             else { this.hideTimeline(); }
         });
 
-        // this.helpButton = document.createElement("button");
-        // this.helpButton.textContent = $.i18n("msg_fork_show_help");
-        // $(this.helpButton).attr({
-        //     class: "btn",
-        //     name: "help",
-        //     type: "button",
-        //     id: this.divid + "help",
-        // });
-        // this.helpButton.addEventListener("click", () => {
-        //     if ($(this.helpDiv).css('display') == 'none') {
-        //         this.showHelp();
-        //         this.helpButton.textContent = $.i18n("msg_fork_hide_help");
-        //     }
-        //     else {
-        //         this.hideHelp();
-        //         this.helpButton.textContent = $.i18n("msg_fork_show_help");
-        //     }
-        // });
-
         this.buttonsDiv = $("<div>");
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
         // this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
-        // this.buttonsDiv.append(this.helpButton);
 
         this.containerDiv.append(this.buttonsDiv);
     }
@@ -321,6 +302,7 @@ export default class Fork extends RunestoneBase {
     }
 
     hideProcessHierarchy() {
+        $(this.hierarchyTreeDiv).html("");
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
