@@ -10,7 +10,7 @@ import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
 export var ASMFlagList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
-const num_instructions = 3;
+const num_instructions = 1;
 const num_registers = 2;
 
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
@@ -60,6 +60,9 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         const [instruction, registers] = this.generator.generateRandomInitialFlag(num_instructions, num_registers);
         const flags = this.generator.analyzeFlagSettings(instruction[0], registers);
 
+        console.log(instruction, registers)
+        console.log(flags)
+
         this.containerDiv.empty();
         this.renderHeader();
         this.renderInstructionAndRegisters(instruction[0], registers);
@@ -81,7 +84,7 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         registersDiv.append($("<h3>").text("Registers:"));
         const registersList = $("<ul>");
         registers.forEach(reg => {
-            registersList.append($("<li>").text(`${reg.register}: ${reg.value} = ${reg.two}`));
+            registersList.append($("<li>").text(`${reg.register}: ${reg.hex} = ${reg.binary} = ${reg.value}`));
         });
         registersDiv.append(registersList);
         combinedDiv.append(registersDiv);
@@ -118,10 +121,10 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
 
     checkAnswer() {
         const userAnswers = {
-            cf: $(`#${this.divid}_CF`).is(":checked"),
-            of: $(`#${this.divid}_OF`).is(":checked"),
-            zf: $(`#${this.divid}_ZF`).is(":checked"),
-            sf: $(`#${this.divid}_SF`).is(":checked")
+            carryFlag: $(`#${this.divid}_CF`).is(":checked"),
+            overflowFlag: $(`#${this.divid}_OF`).is(":checked"),
+            zeroFlag: $(`#${this.divid}_ZF`).is(":checked"),
+            signFlag: $(`#${this.divid}_SF`).is(":checked")
         };
 
         let isCorrect = true;

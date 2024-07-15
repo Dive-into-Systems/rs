@@ -64,157 +64,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Renders customization options for instruction types
     renderCustomizations() {
-
-        if (this.architecture === "ARM64"){
-            const instructionTypes = [
-                { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
-                { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
-            ];
-    
-            const customizationDiv = $("<div>").addClass("customization-container");
-            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-            instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
-    
-            // Initialize checkbox states
-            this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
-            this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
-    
-            instructionTypes.forEach(family => {
-                let checkbox = $("<input>").attr({
-                    type: "checkbox",
-                    id: family.value,
-                    value: family.value,
-                    checked: family.defaultChecked
-                });
-    
-                checkbox.on("change", (event) => {
-                    // Store the current state of checkboxes
-                    const prevArithChecked = this.arith_checked;
-                    const prevMemoChecked = this.memo_checked;
-    
-                    // Update the states based on the checkbox change
-                    switch (event.target.id) {
-                        case "arithmetic":
-                            this.arith_checked = event.target.checked;
-                            break;
-                        case "memorymanipulation":
-                            this.memo_checked = event.target.checked;
-                            break;
-                    }
-    
-                    // Ensure at least one checkbox is always selected
-                    if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
-                        event.preventDefault();
-                        // Restore the previous states
-                        this.arith_checked = prevArithChecked;
-                        this.memo_checked = prevMemoChecked;
-    
-                        // Restore the checkbox's checked state
-                        $(event.target).prop('checked', !event.target.checked);
-                    }
-                });
-    
-                const label = $("<label>").attr("for", family.value).text(family.label);
-                instructionTypeDiv.append(checkbox).append(label).append(" ");
-            });
-            instructionTypeDiv.append("<br>");
-            customizationDiv.append(instructionTypeDiv);
-            this.containerDiv.append(customizationDiv);
-    
-
-        } else {
-
-            const instructionTypes = [
-                { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
-                { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
-                { label: 'Stack Operations', value: 'stackoperation', defaultChecked: false }
-            ];
-            
-            const customizationDiv = $("<div>").addClass("customization-container").css({
-                'border': '2px solid #ccc',  // Thicker grey border for the outer container
-                'padding': '8px',  // Small padding to create space between borders
-                'margin-bottom': '20px',
-                'background-color': '#f9f9f9',
-                'border-radius': '10px',  // Rounded corners for a softer look
-                'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
-                'width': '100%'  // Make the outer container full width
-            });
-            
-            const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types").css({
-                'padding': '15px',  // Padding for the inner container
-                'background-color': '#e9ecef',
-                'border-radius': '10px',
-                'border': '2px solid #bbb',  // Inner border
-                'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
-                'width': '100%'  // Full width for inner container
-            });
-            
-            instructionTypeDiv.append($("<h3>").text("Configure Your Question Type").css({
-                'color': '#333',  // Dark grey color for the title
-                'margin-bottom': '10px'
-            }));
-            instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt.").css({
-                'margin-bottom': '10px'
-            }));
-                
-            // Initialize checkbox states
-            this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
-            this.stack_checked = instructionTypes.find(family => family.value === 'stackoperation').defaultChecked;
-            this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
-    
-            instructionTypes.forEach(family => {
-                let checkbox = $("<input>").attr({
-                    type: "checkbox",
-                    id: family.value,
-                    value: family.value,
-                    checked: family.defaultChecked
-                });
-    
-                checkbox.on("change", (event) => {
-                    // Store the current state of checkboxes
-                    const prevArithChecked = this.arith_checked;
-                    const prevStackChecked = this.stack_checked;
-                    const prevMemoChecked = this.memo_checked;
-    
-                    // Update the states based on the checkbox change
-                    switch (event.target.id) {
-                        case "arithmetic":
-                            this.arith_checked = event.target.checked;
-                            break;
-                        case "stackoperation":
-                            this.stack_checked = event.target.checked;
-                            break;
-                        case "memorymanipulation":
-                            this.memo_checked = event.target.checked;
-                            break;
-                    }
-    
-                    // Ensure at least one checkbox is always selected
-                    if (!this.arith_checked && !this.stack_checked && !this.memo_checked) {
-                        event.preventDefault();
-                        // Restore the previous states
-                        this.arith_checked = prevArithChecked;
-                        this.stack_checked = prevStackChecked;
-                        this.memo_checked = prevMemoChecked;
-    
-                        // Restore the checkbox's checked state
-                        $(event.target).prop('checked', !event.target.checked);
-                    }
-                });
-    
-                //const label = $("<label>").attr("for", family.value).text(family.label);
-                const label = $("<label>").attr("for", family.value).text(family.label).css({
-                    'margin-right': '10px'
-                });
-                instructionTypeDiv.append(checkbox).append(label).append(" ");
-            });
-            instructionTypeDiv.append("<br>");
-            customizationDiv.append(instructionTypeDiv);
-            this.containerDiv.append(customizationDiv);
-    
-        }
-       
-       
+          
         const instructionTypes = [
             { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
             { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
@@ -225,9 +75,34 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation', defaultChecked: false });
         }
 
-        const customizationDiv = $("<div>").addClass("customization-container");
-        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
-        instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
+        const customizationDiv = $("<div>").addClass("customization-container").css({
+            'border': '2px solid #ccc',  // Thicker grey border for the outer container
+            'padding': '15px',  // Padding for better spacing
+            'margin-bottom': '20px',
+            'background-color': '#f9f9f9',
+            'border-radius': '10px',  // Rounded corners for a softer look
+            'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
+            'width': '100%'  // Make the outer container full width
+        });
+        
+        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types").css({
+            'padding': '10px',  // Slightly less padding for the inner container
+            'background-color': '#e9ecef',
+            'border-radius': '10px',
+            'border': '2px solid #ccc',  // Match outer border for consistency
+            'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
+            'width': '99%',  // Slightly smaller width for the inner container
+            'margin': 'auto'  // Center the inner container
+        });
+        
+        instructionTypeDiv.append($("<h3>").text("Configure Your Question Type").css({
+            'color': '#333',  // Dark grey color for the title
+            'margin-bottom': '10px'
+        }));
+        instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt.").css({
+            'margin-bottom': '10px'
+        }));
+       
 
         // Initialize checkbox states
         this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
@@ -292,7 +167,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             [this.arith_checked, this.stack_checked, this.memo_checked]
         );
         this.allStates = this.generator.executeInstructions(this.initialState);
-        console.log(this.allStates);
         this.currentInstruction = 0;
     }
 
