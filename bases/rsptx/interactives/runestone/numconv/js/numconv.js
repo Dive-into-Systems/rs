@@ -21,9 +21,12 @@ export default class NC extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.correct = null;
-        // default number of bits = 8
         this.num_bits = 8;
         
+        // Fields for logging data
+        this.componentId = 1;
+        this.questionId = 1;
+
         this.createNCElement();
         this.generateButton.click();
         this.caption = "Number Conversion";
@@ -202,7 +205,8 @@ export default class NC extends RunestoneBase {
         ba.attr("class", "form form-control selectwidthauto");
         ba.attr("aria-label", "input area");
         this.blankArray = ba.toArray();
-        // Set the style of coded
+        // Set the style of code
+        $(this.containerDiv).find("code").attr("class","tex2jax_ignore");
         // When a blank is changed mark this component as interacted with.
         // And set a class on the component in case we want to render components that have been used
         // differently
@@ -221,7 +225,7 @@ export default class NC extends RunestoneBase {
         this.submitButton.textContent = $.i18n("msg_NC_check_me");
         $(this.submitButton).attr({
             class: "btn btn-success",
-            name: "do answer",
+            name: "answer",
             type: "button",
         });
         // check the answer when the conversion is valid
@@ -248,6 +252,7 @@ export default class NC extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
+                this.logData(3);
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.clearAnswer();
@@ -470,6 +475,8 @@ export default class NC extends RunestoneBase {
             this.correct = true;
             this.contWrong = 0;
         }
+        // Log data 
+        if (this.correct === true) { this.logData(1); } else { this.logData(2); }
     }
 
     // log the answer and other info to the server (in the future)
@@ -494,6 +501,44 @@ export default class NC extends RunestoneBase {
         // render the feedback
         this.renderFeedback();
         return data;
+    }
+
+    logData(actionId) {
+        let now = new Date();
+        let base = {
+            componentId : this.componentId,
+            questionId : this.questionId,
+            timestamp: now.toISOString(),
+            actionId : actionId
+        };
+        console.log(base);
+        let extension = {
+            systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
+            answer : this.inputNode.value.toLowerCase()
+        };
+        console.log(extension);
+
+        console.log(JSON.stringify(base));
+
+        const url = 'http://127.0.0.1:5000/numconv';
+
+        fetch (url, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(base),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        .then(response => {
+            console.log(response.status);
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(json => console.log(json))
+        .catch(error => console.error('Error during fetch:', error));
     }
 
     /*===================================
