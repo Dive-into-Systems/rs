@@ -187,7 +187,6 @@ export default class Fork extends RunestoneBase {
         });
         this.generateButton.addEventListener("click", () => {
             this.clearInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
-            // this.genPromptsNAnswer();
             this.updatePrompts();
         });
 
@@ -250,9 +249,8 @@ export default class Fork extends RunestoneBase {
         // clear feedback field
         this.rightDiv.html("");
         $(this.feedbackDiv).css("display", "none");
-        $(this.hierarchyTreeDiv).css("display", "none");
+        $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none");
-        // $(this.helpDiv).css("display", "none");
     }
 
     updatePrompts(){
@@ -272,6 +270,7 @@ export default class Fork extends RunestoneBase {
             this.subQuestionDiv.append(this.inputBox);
             this.rightDiv.append(this.subQuestionDiv);
         }
+        this.hierarchyTreeDiv.empty();
     }
 
     checkCurrentAnswer() {
@@ -294,15 +293,16 @@ export default class Fork extends RunestoneBase {
     showProcessHierarchy() {
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
         $(this.hierarchyTreeDiv).css("display", "block");
-        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
         $(this.hierarchyTreeDiv).append(
             "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
             "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems.<br><br>"
         );
+        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
     }
 
     hideProcessHierarchy() {
         $(this.hierarchyTreeDiv).html("");
+        $(this.hierarchyTreeDiv).empty();
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
