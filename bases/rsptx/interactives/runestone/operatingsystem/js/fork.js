@@ -66,7 +66,7 @@ export default class Fork extends RunestoneBase {
         this.instruction = $("<div>").html(
             "This question intends to guide you through understanding parent-child relationships between processes. " +
             "For the code snippet shown below (assuming all calls to <code>fork()</code> succeed), " + 
-            "answer <strong>how many times</strong> each letters are printed with <code>printf()</code>.<br><br>"
+            "answer <strong>how many times</strong> each letter is printed with <code>printf()</code>.<br><br>"
         );
         this.statementDiv = $("<div>").addClass("statement-box");
 
@@ -296,11 +296,12 @@ export default class Fork extends RunestoneBase {
     showProcessHierarchy() {
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
         $(this.hierarchyTreeDiv).css("display", "block");
-        $(this.hierarchyTreeDiv).append(
+        
+        $(this.hierarchyTreeDiv).html(
             "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
-            "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in Dive into Systems.<br><br>"
+            "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>.<br><br>"
         );
-        $(this.hierarchyTreeDiv).html(drawing.drawHierarchy(this.csvTree, this.labels));
+        $(this.hierarchyTreeDiv).append(drawing.drawHierarchy(this.csvTree, this.labels));
     }
 
     hideProcessHierarchy() {
