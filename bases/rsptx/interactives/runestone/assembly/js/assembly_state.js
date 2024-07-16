@@ -167,7 +167,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             [this.arith_checked, this.stack_checked, this.memo_checked]
         );
         this.allStates = this.generator.executeInstructions(this.initialState);
-        console.log(this.allStates);
         this.currentInstruction = 0;
     }
 
