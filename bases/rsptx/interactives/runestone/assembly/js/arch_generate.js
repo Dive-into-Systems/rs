@@ -2,19 +2,10 @@
 // This file contains the JS for the Runestone Assembly Components. Created by Arys Aikyn, Tony Cao, Kuzivakwashe Mavera 06/03/2024
 "use strict";
 
-import {
-    off
-} from 'codemirror';
+import { off } from 'codemirror';
 import arch_data from './arch_data.json';
 
-const {
-    MAX_NUM,
-    BIT_ODDS_X86_64,
-    MSG_OK,
-    MSG_BAD_DEST,
-    MSG_BAD_SRC,
-    MSG_CT
-} = arch_data;
+const { MAX_NUM, BIT_ODDS_X86_64, MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT } = arch_data;
 
 // Generates a random 32-bit floating point number between 0 and 1
 function randomFloat32() {
@@ -43,12 +34,7 @@ function unifPickItem(...items) {
 // Represents a family of instructions with associated weights and error types
 class InstructionsFamily {
     constructor(mainWeight, insArr, oddsArr, errorArr) {
-        Object.assign(this, {
-            mainWeight,
-            instructions: insArr,
-            errorsOdds: oddsArr,
-            errors: errorArr
-        });
+        Object.assign(this, { mainWeight, instructions: insArr, errorsOdds: oddsArr, errors: errorArr });
     }
 }
 
@@ -176,16 +162,13 @@ class ArchInstructions {
     // Generates a random initial state for the assembly simulation
     generateRandomInitialState(num_instructions, num_registers, num_addresses, selection) {
         const selected_addresses = this.generateAddresses(num_addresses);
-        const {
-            selected_regular_registers,
-            selected_stack_registers
-        } = this.selectRegisters(num_registers, selected_addresses);
+        const { selected_regular_registers, selected_stack_registers } = this.selectRegisters(num_registers, selected_addresses);
         const selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
         return [selected_instructions, selected_addresses.reverse(), [...selected_regular_registers, ...selected_stack_registers]];
     }
 
     // Generates a complex instruction based on the given parameters
-    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
+    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection, instruction_num) {
         const formats = [
             '{op} {reg1}, {reg2}', '{op} {reg2}, {reg1}', '{op} {reg1}, {memAddr}', '{op} {reg2}, {memAddr}',
             '{op} {literal}, {reg1}', '{op} {literal}, {reg2}', '{op} {literal}, {memAddr}', '{op} {literal}, {memAddr}',
@@ -225,29 +208,18 @@ class ArchInstructions {
             let offset = unifPickItem(offsets);
             let literal = Math.floor(Math.random() * 8) * 8;
             if (format.includes('offset')) {
-                const maxOffset = format.includes('memAddr') ?
-                    Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16) :
-                    Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                const maxOffset = format.includes('memAddr')
+                    ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                    : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
                 offset = Math.min(offset, maxOffset);
             }
 
             reg1 = `${reg1.register}`;
             reg2 = `${reg2.register}`;
             reg3 = `${reg3.register}`;
-            const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
+            const memAddr = `${memItem.location}(%${stack_registers[0].register})`;
             const prefix = this.architecture === 'ARM64' ? '#' : '$';
             literal = `${prefix}${literal}`;
-
-            console.log("format to be observed");
-            console.log(format.replace(/\+0\b/g, '')
-                .replace(/{op}/g, op)
-                .replace(/{memAddr}/g, memAddr)
-                .replace(/{offset}/g, offset)
-                .replace(/{reg1}/g, reg1)
-                .replace(/{reg2}/g, reg2)
-                .replace(/{reg3}/g, reg3)
-                .replace(/{literal}/g, literal));
-
 
             return format.replace(/\+0\b/g, '')
                 .replace(/{op}/g, op)
@@ -257,56 +229,22 @@ class ArchInstructions {
                 .replace(/{reg3}/g, reg3)
                 .replace(/{reg2}/g, reg2)
                 .replace(/{literal}/g, literal);
+
         } else {
 
-
-            let arithmetic;
-            let stack;
-            let mem;
-            let operations = [];
-            let currentOpIndex = 0;
-
-            if (selection[0] && selection[1] && selection[2]) {
-                arithmetic = unifPickItem(arch_data[this.architecture]["arithBinary"].instructions);
-                stack = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-                mem = unifPickItem(arch_data[this.architecture]["memOps"].instructions);
-
-                function shuffleThreeElements(array) {
-                    if (array.length !== 3) {
-                        throw new Error("The array must contain exactly 3 elements.");
-                    }
-
-                    for (let i = array.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [array[i], array[j]] = [array[j], array[i]];
-                    }
-                    return array;
-                }
-                operations = shuffleThreeElements([arithmetic, stack, mem])
-
+            let operations = [
+                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+                ...selection[2] ? arch_data[this.architecture]["archOps"].instructions : [],
+                ...selection[1] ? arch_data[this.architecture]["memOps"].instructions : []
+            ];
+            
+            let op;
+            if (selection[2] && instruction_num == 2){
+                 op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
             } else {
-
-                operations = [
-                    ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                    ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                    ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-                ];
+                 op = unifPickItem(operations);
             }
-
-            const pickOperation = () => {
-                if (selection[0] && selection[1] && selection[2]) {
-                    const op = operations[currentOpIndex];
-                    currentOpIndex = (currentOpIndex + 1) % 3;
-                    return op;
-                } else {
-                    return unifPickItem(operations);
-                }
-            };
-
-            const op = pickOperation();
-            let mySet = new Set();
-            mySet.add(op);
-
+            
             let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
             let reg1 = unifPickItem(regular_registers);
             let reg2 = unifPickItem(regular_registers);
@@ -317,9 +255,9 @@ class ArchInstructions {
             let offset = unifPickItem(offsets);
             let literal = Math.floor(Math.random() * 8) * 8;
             if (format.includes('offset')) {
-                const maxOffset = format.includes('memAddr') ?
-                    Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16) :
-                    Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+                const maxOffset = format.includes('memAddr')
+                    ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                    : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
                 offset = Math.min(offset, maxOffset);
             }
 
@@ -328,7 +266,6 @@ class ArchInstructions {
             const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
             const prefix = this.architecture === 'ARM64' ? '#' : '$';
             literal = `${prefix}${literal}`;
-
 
             return format.replace(/\+0\b/g, '')
                 .replace(/{op}/g, op)
@@ -346,9 +283,7 @@ class ArchInstructions {
         const minAddress = 0x000;
         const maxAddress = 0xFFF;
         const baseAddress = Math.floor(Math.random() * ((maxAddress - minAddress) / increment + 1)) * increment + minAddress;
-        return Array.from({
-            length: num_addresses
-        }, (_, i) => {
+        return Array.from({ length: num_addresses }, (_, i) => {
             const address = baseAddress - (i * increment);
             return {
                 address: `0x${address.toString(16).padStart(3, '0').toUpperCase()}`,
@@ -362,27 +297,25 @@ class ArchInstructions {
     selectRegisters(num_registers, selected_addresses) {
         const registers_regular = arch_data[this.architecture]['registers_regular'];
         const registers_stack = arch_data[this.architecture]['registers_stack'];
-        const selected_regular_registers = Array.from({
-            length: num_registers - registers_stack.length
-        }, (_, i) => ({
+        const selected_regular_registers = Array.from({ length: num_registers - registers_stack.length }, (_, i) => ({
             register: registers_regular[i],
             value: (Math.floor(Math.random() * 11) + 5).toString(),
             type: "normal"
         }));
-        return {
-            selected_regular_registers,
-            selected_stack_registers: [{
-                register: registers_stack[1],
-                value: selected_addresses[selected_addresses.length - 4].address,
-                type: "memory"
-            },
-            {
-                register: registers_stack[0],
-                value: selected_addresses[0].address,
-                type: "memory"
-            }
-            ]
-        };
+
+        let selected_stack_registers;
+
+        if (this.architecture == "ARM64"){
+             selected_stack_registers = [{register: registers_stack[0], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" }];
+        } else {
+            selected_stack_registers = [
+                { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" },
+                { register: registers_stack[0], value: selected_addresses[0].address, type: "memory" }
+            ];
+        }
+
+
+        return {selected_regular_registers, selected_stack_registers};
     }
 
     // Generates a list of instructions for the simulation
@@ -393,13 +326,15 @@ class ArchInstructions {
             selected_instructions = [];
             let simState = this.initializeSimulationState(selected_regular_registers, selected_stack_registers, selected_addresses);
             for (let i = 0; i < num_instructions; i++) {
-                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
+                let instruction_num = i+1
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, instruction_num);
                 selected_instructions.push(instruction);
             }
             if (!this.simulateInstructions(selected_instructions, simState)) {
                 continue;
-            };
-            if (selected_instructions.length === num_instructions) return selected_instructions;
+            }
+            if (selected_instructions.length === num_instructions) {
+            return selected_instructions};
         }
         console.warn("Failed to generate instructions without negative values after 100 attempts.");
         return selected_instructions;
@@ -408,22 +343,13 @@ class ArchInstructions {
     // Initializes the simulation state with register and memory values
     initializeSimulationState(regular_registers, stack_registers, addresses) {
         const state = {};
-        for (const {
-            register,
-            value
-        } of regular_registers) {
+        for (const { register, value } of regular_registers) {
             state[register] = value;
         }
-        for (const {
-            register,
-            value
-        } of stack_registers) {
+        for (const { register, value } of stack_registers) {
             state[register] = value;
         }
-        for (const {
-            address,
-            value
-        } of addresses) {
+        for (const { address, value } of addresses) {
             state[address] = value;
         }
 
@@ -437,10 +363,7 @@ class ArchInstructions {
             const parsed = this.parseInstruction(instruction);
             if (!parsed) return false; // Return false if can't parse
 
-            const {
-                op,
-                args
-            } = parsed;
+            const { op, args } = parsed;
             const [src, dest] = args;
 
             let srcValue = this.getSimValue(src, state);
@@ -473,10 +396,7 @@ class ArchInstructions {
     getSimValue(operand, state) {
         if (operand.startsWith('%')) return state[operand.slice(1)];
         if (operand.startsWith('$')) return parseInt(operand.slice(1), 10);
-        return state[this.getMemoryAddress(operand, Object.entries(state).map(([register, value]) => ({
-            register,
-            value
-        })), state)];
+        return state[this.getMemoryAddress(operand, Object.entries(state).map(([register, value]) => ({ register, value })), state)];
     }
 
     // Parses an instruction string into its components
@@ -489,10 +409,7 @@ class ArchInstructions {
         const argRegex = /(?:\$|#)?-?(?:0x[\da-fA-F]+|\d+)(?:\([^)]+\))?|\([^)]+\)|%?\w+/g;
         const parsedArgs = (argsString.match(argRegex) || []).map(arg => /^[a-z]{3}$/.test(arg.trim()) ? `%${arg.trim()}` : /^\d+$/.test(arg.trim()) ? `$${arg.trim()}` : arg.trim());
 
-        return {
-            op,
-            args: parsedArgs
-        };
+        return { op, args: parsedArgs };
     }
 
     // Executes a list of instructions and returns the state after each step
@@ -503,12 +420,7 @@ class ArchInstructions {
         return instructions.map((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
             if (parsed) this.executeInstruction(parsed.op, parsed.args, registers, memory);
-            return {
-                instruction,
-                step: step + 1,
-                registers: JSON.parse(JSON.stringify(registers)),
-                memory: JSON.parse(JSON.stringify(memory))
-            };
+            return { instruction, step: step + 1, registers: JSON.parse(JSON.stringify(registers)), memory: JSON.parse(JSON.stringify(memory)) };
         });
     }
 
@@ -621,20 +533,24 @@ class ArchInstructions {
 
     /*
     =====================================================================================
-    ASSEMBLY FLAG COMPONENT
-    This part of the arch_generate.js file focuses on the representation and manipulation
-    of the processor flags within the x86 architecture. It provides the infrastructure
-    for simulating the execution of 'cmp' and 'test' instructions and tracking changes in
-    the processor flags.
+    FLAG SETTING AND INSTRUCTION ANALYSIS COMPONENT
+    This section of the arch_generate.js file is dedicated to the generation and analysis
+    of assembly instructions with a focus on flag setting, particularly for the 'cmp' and
+    'test' instructions. It aims to educate users on how different instructions affect the
+    processor's flags within x86 and ARM architectures.
 
     Key Features:
-    - Representation of the processor flags, including CF, OF, ZF, and SF.
-    - Functions for modifying the processor flags in response to instruction execution.
-    - Mechanisms for tracking and displaying changes in the flags for educational purposes.
+    - Generation of 'cmp' and 'test' instructions and analysis of their impact on processor flags.
+    - Detailed comparison between x86 and ARM flag settings for equivalent operations, highlighting
+    differences in CF (Carry Flag) for x86 and C (Carry) for ARM, along with OF (Signed Overflow Flag),
+    ZF (Zero Flag), SF (Sign Flag) for x86, and Z (Zero), N (Negative), V (Signed Overflow) for ARM.
+    - Utilization of an assembly visualizer tool to test expressions and observe RFLAG values in real-time,
+    enhancing the learning experience by providing immediate visual feedback.
 
-    The Assembly Flag Component plays a fundamental role in simulating the execution of
-    'cmp' and 'test' instructions and providing a dynamic learning experience by allowing
-    users to observe the effects of these instructions on the processor flags.
+    This component is crucial for deepening the understanding of assembly language programming,
+    particularly the nuanced behavior of flag settings across different architectures. It supports
+    interactive learning by allowing users to experiment with assembly instructions and see the
+    direct impact on processor flags.
 
     =====================================================================================
     */
@@ -647,25 +563,13 @@ class ArchInstructions {
     }
 
     selectFlagRegisters(num_registers) {
-        // using the first two regular instructions
-        const registers = arch_data[this.architecture]['registers_regular'].slice(0, num_registers);
-        return Array.from({
-            length: num_registers
-        }, (_, i) => {
-            let value;
-            if (Math.random() < 0.3) { // 30% chance of zero or near-zero
-                value = Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? 1 : -1);
-            } else {
-                // Generate a random number with one hex digit
-                value = Math.floor(Math.random() * 16) - 8;
-            }
-            const hexValue = value < 0 ? (value >>> 0).toString(16).toUpperCase().padStart(8, 'F') : value.toString(16).toUpperCase().padStart(8, '0');
-            const binaryValue = hexValue.split('').map(c => parseInt(c, 16).toString(2).padStart(4, '0')).join('');
+        const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
+        return Array.from({ length: num_registers }, (_, i) => {
+            const value = Math.floor(Math.random() * 255) - 127;
             return {
                 register: registers[i],
                 value: value.toString(),
-                hex: `0x${hexValue}`,
-                binary: `0b${binaryValue}`
+                two: ((value < 0 ? (256 + value) : value).toString(2).padStart(8, '0'))
             };
         });
     }
@@ -675,16 +579,10 @@ class ArchInstructions {
         const operations = arch_data[this.architecture]["comparison"].instructions;
         for (let i = 0; i < num_instructions; i++) {
             const op = unifPickItem(operations);
-            let src, dest;
-            if (Math.random() < 0.3) { // 30% chance of same source and destination
+            let src = this.getRandomOperand(registers);
+            let dest = this.getRandomOperand(registers);
+            while (src === dest) {
                 src = this.getRandomOperand(registers);
-                dest = src;
-            } else {
-                src = this.getRandomOperand(registers);
-                dest = this.getRandomOperand(registers);
-                while (src === dest) {
-                    dest = this.getRandomOperand(registers);
-                }
             }
             instructions.push(`${op} ${dest}, ${src}`);
         }
@@ -703,19 +601,13 @@ class ArchInstructions {
             return;
         }
 
-        const {
-            op,
-            args
-        } = parsedInstruction;
+        const { op, args } = parsedInstruction;
         const [src, dest] = args;
 
         const destVal = this.getFlagValue(dest, registers);
         const srcVal = this.getFlagValue(src, registers);
 
-        let carryFlag = false,
-            overflowFlag = false,
-            zeroFlag = false,
-            signFlag = false;
+        let carryFlag = false, overflowFlag = false, zeroFlag = false, signFlag = false;
 
         const cmpResult = (destVal - srcVal);
         const testResult = (destVal & srcVal);
@@ -754,12 +646,7 @@ class ArchInstructions {
         console.log(`Zero Flag: ${zeroFlag}`);
         console.log(`Sign Flag: ${signFlag}`);
 
-        return {
-            carryFlag,
-            overflowFlag,
-            zeroFlag,
-            signFlag
-        };
+        return { carryFlag, overflowFlag, zeroFlag, signFlag };
     }
 
     getFlagValue(operand, registers) {
@@ -812,21 +699,13 @@ class X86_BASE extends ArchInstructions {
 }
 
 export class X86_32_OPS extends X86_BASE {
-    constructor() {
-        super(arch_data.X86_32);
-    }
+    constructor() { super(arch_data.X86_32); }
 
-    _is_32() {
-        return true;
-    }
+    _is_32() { return true; }
 }
 
 export class X86_64_OPS extends X86_BASE {
-    constructor() {
-        super(arch_data.X86_64);
-    }
+    constructor() { super(arch_data.X86_64); }
 
-    _is_32() {
-        return weightedPickId(BIT_ODDS_X86_64) == 0;
-    }
+    _is_32() { return weightedPickId(BIT_ODDS_X86_64) == 0; }
 }
