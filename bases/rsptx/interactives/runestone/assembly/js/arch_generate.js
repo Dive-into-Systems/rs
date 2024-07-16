@@ -130,7 +130,7 @@ class ArchInstructions {
             m: mem,
             l: lit,
             a: unifPickItem(reg, mem, lit)
-        } [char] || (() => {
+        }[char] || (() => {
             throw new Error(`Unexpected char: ${char}`)
         })();
     }
@@ -149,29 +149,29 @@ class ArchInstructions {
         return cloneExpr.includes('-') ?
             cloneExpr.split('-').map(expr => this._evalPrompt(expr, is32)).join(", ") :
             cloneExpr.includes('/') ?
-            this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32) :
-            cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
+                this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32) :
+                cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
     }
 
     /*
- =====================================================================================
- ASSEMBLY STATE COMPONENT
- This part of the arch_generate.js file focuses on the representation and manipulation
- of the assembly state, including registers and memory. It provides the infrastructure
- for simulating the execution of assembly instructions and tracking changes in the
- assembly state.
+    =====================================================================================
+    ASSEMBLY STATE COMPONENT
+    This part of the arch_generate.js file focuses on the representation and manipulation
+    of the assembly state, including registers and memory. It provides the infrastructure
+    for simulating the execution of assembly instructions and tracking changes in the
+    assembly state.
 
- Key Features:
- - Representation of the assembly state, including registers and memory.
- - Functions for modifying the assembly state in response to instruction execution.
- - Mechanisms for tracking and displaying changes in the state for educational purposes.
+    Key Features:
+    - Representation of the assembly state, including registers and memory.
+    - Functions for modifying the assembly state in response to instruction execution.
+    - Mechanisms for tracking and displaying changes in the state for educational purposes.
 
- The Assembly State Component plays a fundamental role in simulating the execution of
- assembly instructions and providing a dynamic learning experience by allowing users
- to see the immediate effects of instructions on the assembly state.
+    The Assembly State Component plays a fundamental role in simulating the execution of
+    assembly instructions and providing a dynamic learning experience by allowing users
+    to see the immediate effects of instructions on the assembly state.
 
- =====================================================================================
-*/
+    =====================================================================================
+    */
 
     // Generates a random initial state for the assembly simulation
     generateRandomInitialState(num_instructions, num_registers, num_addresses, selection) {
@@ -372,15 +372,15 @@ class ArchInstructions {
         return {
             selected_regular_registers,
             selected_stack_registers: [{
-                    register: registers_stack[1],
-                    value: selected_addresses[selected_addresses.length - 4].address,
-                    type: "memory"
-                },
-                {
-                    register: registers_stack[0],
-                    value: selected_addresses[0].address,
-                    type: "memory"
-                }
+                register: registers_stack[1],
+                value: selected_addresses[selected_addresses.length - 4].address,
+                type: "memory"
+            },
+            {
+                register: registers_stack[0],
+                value: selected_addresses[0].address,
+                type: "memory"
+            }
             ]
         };
     }
@@ -409,21 +409,21 @@ class ArchInstructions {
     initializeSimulationState(regular_registers, stack_registers, addresses) {
         const state = {};
         for (const {
-                register,
-                value
-            } of regular_registers) {
+            register,
+            value
+        } of regular_registers) {
             state[register] = value;
         }
         for (const {
-                register,
-                value
-            } of stack_registers) {
+            register,
+            value
+        } of stack_registers) {
             state[register] = value;
         }
         for (const {
-                address,
-                value
-            } of addresses) {
+            address,
+            value
+        } of addresses) {
             state[address] = value;
         }
 
@@ -538,7 +538,6 @@ class ArchInstructions {
         } else {
 
             const [dest, src1, src2] = args;
-            console.log("args: " + args);
             const srcValue1 = this.getValue(src1, registers, memory);
             const srcValue2 = this.getValue(src2, registers, memory);
             const result = op === 'ldr' || op === 'str' ? srcValue1 : this.calculate(op, srcValue1, srcValue2); //placeholder for ldr and str
@@ -585,14 +584,12 @@ class ArchInstructions {
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
 
-        console.log("operand");
-        console.log(operand);
+        console.log(`operand:${operand}`);
         if (operand.startsWith('%')) {
             registers.find(r => `%${r.register}` === operand).value = value;
         } else if (operand.startsWith('X')) {
             registers.find(r => `${r.register}` === operand).value = value;
-            console.log("value");
-            console.log(value);
+            console.log(`value:${value}`);
         } else {
             memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
         }
@@ -615,8 +612,43 @@ class ArchInstructions {
         return operand;
     }
 
+    // Calculation of the value
+    calculate(op, destValue, srcValue) {
+        const numDestValue = Number(destValue);
+        const numSrcValue = Number(srcValue);
+        return op === 'add' ? numDestValue + numSrcValue : numDestValue - numSrcValue;
+    }
+
+    /*
+    =====================================================================================
+    ASSEMBLY FLAG COMPONENT
+    This part of the arch_generate.js file focuses on the representation and manipulation
+    of the processor flags within the x86 architecture. It provides the infrastructure
+    for simulating the execution of 'cmp' and 'test' instructions and tracking changes in
+    the processor flags.
+
+    Key Features:
+    - Representation of the processor flags, including CF, OF, ZF, and SF.
+    - Functions for modifying the processor flags in response to instruction execution.
+    - Mechanisms for tracking and displaying changes in the flags for educational purposes.
+
+    The Assembly Flag Component plays a fundamental role in simulating the execution of
+    'cmp' and 'test' instructions and providing a dynamic learning experience by allowing
+    users to observe the effects of these instructions on the processor flags.
+
+    =====================================================================================
+    */
+
+    // Generates a random initial state for the assembly simulation
+    generateRandomInitialFlag(num_instructions, num_registers) {
+        const selected_registers = this.selectFlagRegisters(num_registers);
+        const selected_instructions = this.generateFlagInstructions(num_instructions, selected_registers);
+        return [selected_instructions, selected_registers];
+    }
+
     selectFlagRegisters(num_registers) {
-        const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
+        // using the first two regular instructions
+        const registers = arch_data[this.architecture]['registers_regular'].slice(0, num_registers);
         return Array.from({
             length: num_registers
         }, (_, i) => {
@@ -624,15 +656,16 @@ class ArchInstructions {
             if (Math.random() < 0.3) { // 30% chance of zero or near-zero
                 value = Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? 1 : -1);
             } else {
-                // Generate a random number between -128 and 127 (signed 8-bit integer range)
-                value = Math.floor(Math.random() * 256) - 128;
+                // Generate a random number with one hex digit
+                value = Math.floor(Math.random() * 16) - 8;
             }
-            const hexValue = (value & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+            const hexValue = value < 0 ? (value >>> 0).toString(16).toUpperCase().padStart(8, 'F') : value.toString(16).toUpperCase().padStart(8, '0');
+            const binaryValue = hexValue.split('').map(c => parseInt(c, 16).toString(2).padStart(4, '0')).join('');
             return {
                 register: registers[i],
                 value: value.toString(),
                 hex: `0x${hexValue}`,
-                binary: `0b${(value & 0xFF).toString(2).padStart(8, '0')}`
+                binary: `0b${binaryValue}`
             };
         });
     }
@@ -652,58 +685,6 @@ class ArchInstructions {
                 while (src === dest) {
                     dest = this.getRandomOperand(registers);
                 }
-            }
-            instructions.push(`${op} ${dest}, ${src}`);
-        }
-        return instructions;
-    }
-
-
-    // Calculation of the value
-    calculate(op, destValue, srcValue) {
-        const numDestValue = Number(destValue);
-        const numSrcValue = Number(srcValue);
-        return op === 'add' ? numDestValue + numSrcValue : numDestValue - numSrcValue;
-    }
-
-    //  Key Features:
-    //  - Generation of 'cmp' and 'test' instructions and analysis of their impact on processor flags.
-    //  - Detailed comparison between x86 and ARM flag settings for equivalent operations, highlighting
-    //  differences in CF (Carry Flag) for x86 and C (Carry) for ARM, along with OF (Signed Overflow Flag),
-    //  ZF (Zero Flag), SF (Sign Flag) for x86, and Z (Zero), N (Negative), V (Signed Overflow) for ARM.
-    //  - Utilization of an assembly visualizer tool to test expressions and observe RFLAG values in real-time,
-    //  enhancing the learning experience by providing immediate visual feedback.
-
-    // Generates a random initial state for the assembly simulation
-    generateRandomInitialFlag(num_instructions, num_registers) {
-        const selected_registers = this.selectFlagRegisters(num_registers);
-        const selected_instructions = this.generateFlagInstructions(num_instructions, selected_registers);
-        return [selected_instructions, selected_registers];
-    }
-
-    selectFlagRegisters(num_registers) {
-        const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
-        return Array.from({
-            length: num_registers
-        }, (_, i) => {
-            const value = Math.floor(Math.random() * 255) - 127;
-            return {
-                register: registers[i],
-                value: value.toString(),
-                two: ((value < 0 ? (256 + value) : value).toString(2).padStart(8, '0'))
-            };
-        });
-    }
-
-    generateFlagInstructions(num_instructions, registers) {
-        const instructions = [];
-        const operations = arch_data[this.architecture]["comparison"].instructions;
-        for (let i = 0; i < num_instructions; i++) {
-            const op = unifPickItem(operations);
-            let src = this.getRandomOperand(registers);
-            let dest = this.getRandomOperand(registers);
-            while (src === dest) {
-                src = this.getRandomOperand(registers);
             }
             instructions.push(`${op} ${dest}, ${src}`);
         }
@@ -736,27 +717,42 @@ class ArchInstructions {
             zeroFlag = false,
             signFlag = false;
 
-        const result = (destVal - srcVal) & 0xFF;
+        const cmpResult = (destVal - srcVal);
+        const testResult = (destVal & srcVal);
 
         if (op === 'cmp') {
-            carryFlag = (destVal < srcVal);
-            overflowFlag = (((destVal ^ srcVal) & (destVal ^ result)) & 0x80) !== 0;
-            zeroFlag = result === 0;
-            signFlag = (result & 0x80) !== 0;
+            // Carry flag for unsigned comparison
+            carryFlag = destVal < srcVal; // Convert to unsigned for comparison
+
+            // Overflow flag for signed comparison
+            overflowFlag = ((destVal < 0 && srcVal > 0 && cmpResult > 0) ||
+                            (destVal > 0 && srcVal < 0 && cmpResult < 0));
+
+            // Zero flag for zero result
+            zeroFlag = cmpResult === 0;
+
+            // Sign flag for negative result
+            signFlag = cmpResult < 0;
+
         } else if (op === 'test' || op === 'tst') {
+            // Carry and overflow flags not affected by the test instruction
             carryFlag = false;
             overflowFlag = false;
-            zeroFlag = result === 0;
-            signFlag = (result & 0x80) !== 0;
+
+            // Zero flag for zero result
+            zeroFlag = testResult === 0;
+
+            // Sign flag for negative result (most significant bit check)
+            signFlag = testResult < 0; // This works since testResult will be signed
         }
 
-        // console.log(`Instruction: ${instruction}`);
-        // console.log(`Destination Value: ${destVal}`);
-        // console.log(`Source Value: ${srcVal}`);
-        // console.log(`Carry Flag: ${carryFlag}`);
-        // console.log(`Overflow Flag: ${overflowFlag}`);
-        // console.log(`Zero Flag: ${zeroFlag}`);
-        // console.log(`Sign Flag: ${signFlag}`);
+        console.log(`Instruction: ${instruction}`);
+        console.log(`Destination Value: ${destVal}`);
+        console.log(`Source Value: ${srcVal}`);
+        console.log(`Carry Flag: ${carryFlag}`);
+        console.log(`Overflow Flag: ${overflowFlag}`);
+        console.log(`Zero Flag: ${zeroFlag}`);
+        console.log(`Sign Flag: ${signFlag}`);
 
         return {
             carryFlag,
@@ -767,7 +763,6 @@ class ArchInstructions {
     }
 
     getFlagValue(operand, registers) {
-        console.log(operand);
         if (operand.startsWith('$') || operand.startsWith('#')) {
             return parseInt(operand.slice(1), 16);
         } else {

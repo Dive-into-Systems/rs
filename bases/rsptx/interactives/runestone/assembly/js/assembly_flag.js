@@ -84,7 +84,9 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         registersDiv.append($("<h3>").text("Registers:"));
         const registersList = $("<ul>");
         registers.forEach(reg => {
-            registersList.append($("<li>").text(`${reg.register}: ${reg.hex} = ${reg.binary} = ${reg.value}`));
+            const hexString = reg.hex.toString().slice(0, 3) + '...' + reg.hex.toString().slice(-2, -1) + `<span style="background-color: yellow;">${reg.hex.toString().slice(-1)}</span>`;
+            const binaryString = reg.binary.toString().slice(0, 3) + '...' + reg.hex.toString().slice(-5, -4) + `<span style="background-color: yellow;">${reg.binary.toString().slice(-4)}</span>`;
+            registersList.append($("<li>").html(`${reg.register}: ${hexString} = ${binaryString} = ${reg.value}`));
         });
         registersDiv.append(registersList);
         combinedDiv.append(registersDiv);

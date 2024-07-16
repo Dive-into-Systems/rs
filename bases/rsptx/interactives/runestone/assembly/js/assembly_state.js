@@ -55,7 +55,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the header of the exercise
     renderHeader() {
         this.header = $("<div>").html(
-            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions." +  
+            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions." +
             "For each instruction, describe how it changes register or memory values." + "Start with the initial state and update the state sequentially as you apply each instruction.<br><br>"
         );
         this.headerDiv = $("<div>").append(this.header);
@@ -64,7 +64,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Renders customization options for instruction types
     renderCustomizations() {
-          
+
         const instructionTypes = [
             { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
             { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
@@ -84,7 +84,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
             'width': '100%'  // Make the outer container full width
         });
-        
+
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types").css({
             'padding': '10px',  // Slightly less padding for the inner container
             'background-color': '#e9ecef',
@@ -94,7 +94,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             'width': '99%',  // Slightly smaller width for the inner container
             'margin': 'auto'  // Center the inner container
         });
-        
+
         instructionTypeDiv.append($("<h3>").text("Configure Your Question Type").css({
             'color': '#333',  // Dark grey color for the title
             'margin-bottom': '10px'
@@ -102,7 +102,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt.").css({
             'margin-bottom': '10px'
         }));
-       
+
 
         // Initialize checkbox states
         this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
@@ -362,6 +362,21 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         feedbackDiv.append($("<p>").text(feedbackMessage).css('color', 'blue'));
     }
 
+    renderLinkButton() {
+        const registers = this.initialState[2].slice(0, 3);
+        const instructions = this.initialState[0];
+        const memoryValues = this.initialState[1].map(addr => addr.value).slice(3, 7);
+
+        const encodedInstructions = instructions.map(inst => encodeURIComponent(inst)).join('%0A');
+        const encodedRegisters = registers.map(reg => encodeURIComponent(reg.value)).join('/');
+        const encodedMemoryValues = memoryValues.map(value => encodeURIComponent(value)).join('/');
+
+        const link = `https://asm.diveintosystems.org/arithmetic/${this.architecture.toLowerCase()}/${encodedInstructions}/${encodedMemoryValues}/${encodedRegisters}`;
+
+        const linkButton = $("<a>").text("Visualizer").attr("href", link).attr("target", "_blank").attr("rel", "noopener noreferrer").addClass("link-button");
+        this.containerDiv.append(linkButton);
+    }
+
     /*=====================================
     ====   Supporting and Utility Functions   ====
     =========================================*/
@@ -409,12 +424,14 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find('.tables-container').remove();
         this.containerDiv.find('.button-container').remove();
         this.containerDiv.find('.feedback-container').remove();
+        this.containerDiv.find('.link-button').remove();
 
         // rerender
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
         this.renderButtons();
         this.renderFeedback();
+        this.renderLinkButton();
     }
 
     // Validates user answers against expected state
