@@ -234,12 +234,12 @@ class ArchInstructions {
 
             let operations = [
                 ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["memOps"].instructions : []
+                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
             ];
             
             let op;
-            if (selection[2] && instruction_num == 2){
+            if (selection[3] && instruction_num == 2){
                  op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
             } else {
                  op = unifPickItem(operations);
