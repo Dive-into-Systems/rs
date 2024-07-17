@@ -4,27 +4,31 @@
 // This file contains the JS for the Runestone numberconversion component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
 "use strict";
 
+
 import RunestoneBase from "../../common/js/runestonebase.js";
+import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
 import "../css/nc.css";
 import { Pass } from "codemirror";
-
 export var NCList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
 // NC constructor
 export default class NC extends RunestoneBase {
-    constructor(opts) {
+    constructor(opts, userId) {
         super(opts);
         var orig = opts.orig; // entire <p> element
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+        
+        // Default configuration settings
         this.correct = null;
         this.num_bits = 8;
         
         // Fields for logging data
         this.componentId = 1;
+        this.userId = userId;
         this.questionId = 1;
 
         this.createNCElement();
@@ -505,25 +509,22 @@ export default class NC extends RunestoneBase {
 
     logData(actionId) {
         let now = new Date();
-        let base = {
+        let data = {
             timestamp: now.toString(),
             componentId : this.componentId,
             questionId : this.questionId,
-            actionId : actionId, 
-        };
-        console.log(base);
-        
-        let extension = {
+            actionId : actionId,
+            userId : this.userId,
             systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
             userAnswer : this.inputNode.value.toLowerCase()
         };
-        console.log(extension);
+        console.log(data);
 
         const url = 'http://127.0.0.1:5000/binaryconversion';
 
         fetch (url, {
             method: 'POST',
-            body: JSON.stringify(base),
+            body: JSON.stringify(data),
             headers: {
                 "Content-type": "application/json; charset=UTF-8",
                 "Access-Control-Allow-Origin" : "*"
@@ -588,6 +589,7 @@ export default class NC extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
+    const userId = nanoid(20);
     $("[data-component=numberconversion]").each(function (index) {
         var opts = {
             orig: this,
@@ -596,7 +598,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                NCList[this.id] = new NC(opts);
+                NCList[this.id] = new NC(opts, userId);
             } catch (err) {
                 console.log(
                     `Error rendering Number Conversion Problem ${this.id}
