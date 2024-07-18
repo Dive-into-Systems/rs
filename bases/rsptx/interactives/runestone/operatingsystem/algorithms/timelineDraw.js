@@ -45,7 +45,7 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
     const data = tree.serialize();
     const width = tl_width - margin.right - margin.left;
     const height = tl_height - margin.top - margin.bottom;
-    const x_gap = (width) / (tree.timelineLen());
+    const x_gap = (width) / (tree.timelineLen()+1);
     const y_gap = (height) / (tree.timelineCt());
     
     let timelineSvg = d3.create("svg");
@@ -64,7 +64,7 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
     const links = timelineSvg.selectAll(".link-group")
         .data(root.links())
         .enter()
-        .append("g")
+    .append("g")
         .attr("class", "link-group")
         .on("mouseover", function(event, d) {
             event.stopPropagation();
@@ -87,39 +87,46 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
             }
         });
 
-    const ARROW_SIZE = 5;
-    const refX = 0;
-    const refY = 0;
-    const arrowPoints = [[0, 0], [ARROW_SIZE, ARROW_SIZE/2], [0, ARROW_SIZE]];
+    
+    links.append("path")
+        .attr("class", "link-hitbox")
+        .attr("d", function(d) {
+            return d3.linkHorizontal()({
+                source: [d.source.x, d.source.y],
+                target: [d.target.x, d.target.y]
+            });
+        });
+    
+
 
     links.append("path")
-        .attr("class", "link")
+        .attr("class", d => "link " + ((d.source.data.id === d.target.data.id) ? "concurrent" : "sequential"))
         .attr("d", function(d) {
             // Calculate the total distance and the cropped segments
             const dx = d.target.x - d.source.x;
             const dy = d.target.y - d.source.y;
             const length = Math.sqrt(dx * dx + dy * dy);
             const scale = (length - 10) / length; // total length minus 10 pixels
-
+    
             const startX = d.source.x + (dx * 5 / length);
             const startY = d.source.y + (dy * 5 / length);
             const endX = d.source.x + (dx * scale);
             const endY = d.source.y + (dy * scale);
-
+    
             return d3.linkHorizontal()({
                 source: [startX, startY],
                 target: [endX, endY]
             });
         })
-        .attr('marker-end', (d, i) => 'url(#arrow' + i + ')')
-        .style("stroke-dasharray", d => (d.source.data.id === d.target.data.id) ? "3,5" : "0");
-
+        .attr('marker-end', (d, i) => 'url(#arrow' + i + ')');
+    
+    const ARROW_SIZE = 6;
     links.each(function(d, i) {
         d3.select(this).append('marker')
             .attr('id', 'arrow' + i)  // Unique ID for each marker
             .attr('viewBox', [-ARROW_SIZE, -ARROW_SIZE, 3*ARROW_SIZE, 3*ARROW_SIZE])
-            .attr('refX', refX)
-            .attr('refY', refY)
+            .attr('refX', 0)
+            .attr('refY', 0)
             .attr('markerWidth', ARROW_SIZE)
             .attr('markerHeight', ARROW_SIZE)
             .attr('orient', 'auto-start-reverse')
@@ -133,7 +140,6 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
         .attr("x", d => (d.source.x + d.target.x) / 2)
         .attr("y", d => (d.source.y + d.target.y) / 2)
         .attr("dy", "-0.35em")
-        .style("text-anchor", "middle")
         .text(d => (d.target.data.childCt == 0)?"":d.source.data.value);
         // .text(function(d) { return (d.source.data.id == d.target.data.id)?"":(d.source.x+"|"+d.source.y+":")+d.source.data.value; });
 
@@ -143,10 +149,17 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
         .append('g')
         .attr('class', 'node')
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        
+    nodes.append('text')
+        .attr("dy", "-.4em")
+        .attr("x" , ".4em")
+        .style("text-anchor", "start")
+        // .text(function(d) { return nodeID(d)+":"+(d.x+"|"+d.y+":"+d.data.value )});
+        .text(function(d) { return (d.children && d.children[0].data.id == d.data.id)?"":d.data.value; });
 
     nodes.append('circle')
-        .attr('r', 12)
-        .attr('fill', 'none')
+        .attr('r', 15)
+        .attr('fill', 'transparent')
         .attr('pointer-events', 'all')
         .on("mouseover", function(event, d) {
             if (!locked) {
@@ -169,12 +182,6 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
         });
 
 
-    nodes.append('text')
-        .attr("dy", "-.4em")
-        .attr("x" , ".4em")
-        .style("text-anchor", "start")
-        // .text(function(d) { return nodeID(d)+":"+(d.x+"|"+d.y+":"+d.data.value )});
-        .text(function(d) { return (d.children && d.children[0].data.id == d.data.id)?"":d.data.value; });
 
     return $(timelineSvg.node());
 }

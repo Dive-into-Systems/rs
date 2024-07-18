@@ -14,24 +14,42 @@ body, html {
 }
 
 .node text {
+    /* font-family: 'Courier New', Courier, monospace; */
     font: 12px sans-serif;
 }
+
 
 .link-group {
     fill: steelblue;
     stroke: steelblue;
-    stroke-width: 3px;
+    stroke-width: 4px;
 }
 
 .link-group.active {
     fill: crimson;
     stroke: crimson;
-    stroke-width: 4px;
+    stroke-width: 5px;
 }
 
 .link-group text {
     fill: black;
     stroke: none;
     font: 12px sans-serif;
+    text-anchor: "middle";
+    /* font-family: 'Courier New', Courier, monospace; */
+}
+
+.link-hitbox {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 20px;
+}
+
+.link.concurrent {
+    stroke-dasharray: 4, 7;
+}
+
+.link.sequential {
+    stroke-dasharray: 0;
 }
 

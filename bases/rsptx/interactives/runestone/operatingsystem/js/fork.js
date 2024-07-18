@@ -169,9 +169,6 @@ export default class Fork extends RunestoneBase {
         // console.log("Should have params:", "#forks", this.numForks, "#prints", this.numPrints, "nest", this.hasNest, "exit", this.hasExit, "else", this.hasElse, "loop", this.hasLoop);
         [this.root, this.cCode] = forking.buildAndTranspile(this.source);
         console.log(forking.printTreeVert(this.root));
-        const { csv, valuesList } = forking.getTreeCSV(this.root);
-        this.csvTree = csv;
-        this.labels = valuesList;
         this.answerMap = forking.getAnswer(this.root, this.numPrints);
         console.log(this.answerMap);
     }
@@ -295,6 +292,7 @@ export default class Fork extends RunestoneBase {
     }
 
     showProcessHierarchy() {
+        this.hideTimeline();
         // $(this.hierarchyTreeDiv).html(drawing.drawHTree('child,parent\na,\nb,a\nc,a\nd,a\ne,b\nf,c\ng,c\nh,d\ni,h'));
         $(this.hierarchyTreeDiv).css("display", "block");
         
@@ -302,6 +300,9 @@ export default class Fork extends RunestoneBase {
             "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
             "For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>.<br><br>"
         );
+        const { csv, valuesList } = forking.getTreeCSV(this.root);
+        this.csvTree = csv;
+        this.labels = valuesList;
         $(this.hierarchyTreeDiv).append(drawing.drawHierarchy(this.csvTree, this.labels));
     }
 
@@ -312,8 +313,14 @@ export default class Fork extends RunestoneBase {
     }
 
     showTimeline() {
+        this.hideProcessHierarchy();
         $(this.timelineDiv).css("display", "block");
-        $(this.timelineDiv).html(timeline.drawTimeline(this.csvTree));
+        const [tl_width, tl_height, tl_margin] = [
+            650,
+            500,
+            {top: 20,bottom: 20,left: 20,right: 20,}
+        ] 
+        $(this.timelineDiv).html(timeline.drawTimeline(this.root, tl_width, tl_height, tl_margin));
     }
 
     hideTimeline() {

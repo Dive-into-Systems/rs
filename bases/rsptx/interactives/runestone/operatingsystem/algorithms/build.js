@@ -86,7 +86,6 @@ class ForkNode {
 
     fork(leftCode, rightCode, indent) {
         if (!this.active) {
-            // let temp = 
             return (new ForkNode()).fork(leftCode,rightCode, indent);
         }
         // you have a child, it also forks
