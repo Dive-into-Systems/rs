@@ -9,6 +9,7 @@ import "./fork-i18n.en.js";
 import "../css/fork.css";
 import * as forking from "../algorithms/build.js";
 import * as drawing from "../algorithms/draw.js";
+import * as timeline from "../algorithms/timelineDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -239,7 +240,7 @@ export default class Fork extends RunestoneBase {
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
-        // this.buttonsDiv.append(this.revealTimelineButton);
+        this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
 
         this.containerDiv.append(this.buttonsDiv);
@@ -312,7 +313,7 @@ export default class Fork extends RunestoneBase {
 
     showTimeline() {
         $(this.timelineDiv).css("display", "block");
-        $(this.timelineDiv).html(drawing.drawTimeline(this.csvTree));
+        $(this.timelineDiv).html(timeline.drawTimeline(this.csvTree));
     }
 
     hideTimeline() {

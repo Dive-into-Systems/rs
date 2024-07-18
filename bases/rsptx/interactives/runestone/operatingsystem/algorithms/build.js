@@ -48,6 +48,16 @@ class ForkNode {
         // left id, left ct, right id, right ct
         return [this.id, this.childCt+1, this.id*10+this.childCt+1, 0];
     }
+    
+    timelineLen() {
+        // whichever timeline is longer
+        return Math.max(this.left?(this.left.timelineLen()+1):0, this.right?(this.right.timelineLen()):0);
+    }
+    timelineCt() {
+        // add 1 timeline if we reach the end
+        return ( this.left?this.left.timelineCt():1 ) + ( this.right?this.right.timelineCt():0 );
+    }
+
 
 
     print(text) {

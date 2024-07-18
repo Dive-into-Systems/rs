@@ -1,4 +1,4 @@
-#hierarchy_graph #timeline_graph {
+#hierarchy_graph {
   pointer-events: none;
 }
 
@@ -68,7 +68,7 @@
   padding: 15px;
   margin-top: 10px;
   justify-content: center;
-  pointer-events: none;
+  /* pointer-events: none; */
 }
 
 .input-box {

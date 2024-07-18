@@ -1,0 +1,37 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#tree-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.node text {
+    font: 12px sans-serif;
+}
+
+.link-group {
+    fill: steelblue;
+    stroke: steelblue;
+    stroke-width: 3px;
+}
+
+.link-group.active {
+    fill: crimson;
+    stroke: crimson;
+    stroke-width: 4px;
+}
+
+.link-group text {
+    fill: black;
+    stroke: none;
+    font: 12px sans-serif;
+}
+
