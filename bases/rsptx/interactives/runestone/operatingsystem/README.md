@@ -17,8 +17,8 @@ There are two places where you can adjust how this component behaves.
 If the webpage successfully builds, you'll see that you can generate question from complexity level **1**, **2**, and **3**. Here's what they mean:
 
 - **Level 1**: 2 `fork()` calls, 2-3 `printf`, with `if` statements but not `else`.
-- **Level 2**: 3-4 `fork()` calls, 3-4 `printf`, with `if-else` statements and `exit`.
-- **Level 3**: 3-4 `fork()` calls, 3-4 `printf` with `for` loops and `exit`.
+- **Level 2**: 3 `fork()` calls, 3-4 `printf`, with `if-else` statements and `exit`.
+- **Level 3**: 4 `fork()` calls, 4 `printf` with `for` loops and `exit`.
 
 *Please note that the number of forks and prints is what will show up in the C code, **not** how many of these operations will actually be executed in execution.*
 
