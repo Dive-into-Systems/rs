@@ -187,94 +187,68 @@ class ArchInstructions {
             "str": ['{op} {reg1}, [{reg2}, {literal}]']
         };
 
+        let operations = [];
         if (this.architecture === 'ARM64') {
-
-            let operations = [];
             operations = [
                 ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+                ...selection[1] ? arch_data[this.architecture]["memOps"].instructions : [],
+                ...selection[2] ? arch_data[this.architecture]["archOps"].instructions : [],
             ];
-
-            const op = unifPickItem(operations);
-
-            let format = (op === 'add' || op === 'sub' || op === 'ldr' || op === 'str') ? unifPickItem(ARMformats[op]) : "";
-            let reg1 = unifPickItem(regular_registers);
-            let reg2 = unifPickItem(regular_registers);
-            let reg3 = unifPickItem(regular_registers);
-            let memItem = unifPickItem(memory);
-            while (stack_registers.some(r => r.value == memItem.address)) {
-                memItem = unifPickItem(memory);
-            }
-            let offset = unifPickItem(offsets);
-            let literal = Math.floor(Math.random() * 8) * 8;
-            if (format.includes('offset')) {
-                const maxOffset = format.includes('memAddr')
-                    ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
-                    : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-                offset = Math.min(offset, maxOffset);
-            }
-
-            reg1 = `${reg1.register}`;
-            reg2 = `${reg2.register}`;
-            reg3 = `${reg3.register}`;
-            const memAddr = `${memItem.location}(%${stack_registers[0].register})`;
-            const prefix = this.architecture === 'ARM64' ? '#' : '$';
-            literal = `${prefix}${literal}`;
-
-            return format.replace(/\+0\b/g, '')
-                .replace(/{op}/g, op)
-                .replace(/{memAddr}/g, memAddr)
-                .replace(/{offset}/g, offset)
-                .replace(/{reg1}/g, reg1)
-                .replace(/{reg3}/g, reg3)
-                .replace(/{reg2}/g, reg2)
-                .replace(/{literal}/g, literal);
-
         } else {
-
-            let operations = [
+            operations = [
                 ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
                 ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
                 ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
             ];
-            
-            let op;
-            if (selection[3] && instruction_num == 2){
-                 op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
-            } else {
-                 op = unifPickItem(operations);
-            }
-            
-            let format = (op === 'push' || op === 'pop') ? unifPickItem(stackFormats[op]) : unifPickItem(formats);
-            let reg1 = unifPickItem(regular_registers);
-            let reg2 = unifPickItem(regular_registers);
-            let memItem = unifPickItem(memory);
-            while (stack_registers.some(r => r.value == memItem.address)) {
-                memItem = unifPickItem(memory);
-            }
-            let offset = unifPickItem(offsets);
-            let literal = Math.floor(Math.random() * 8) * 8;
-            if (format.includes('offset')) {
-                const maxOffset = format.includes('memAddr')
-                    ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
-                    : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-                offset = Math.min(offset, maxOffset);
-            }
-
-            reg1 = `%${reg1.register}`;
-            reg2 = `%${reg2.register}`;
-            const memAddr = `${memItem.location}(%${stack_registers[1].register})`;
-            const prefix = this.architecture === 'ARM64' ? '#' : '$';
-            literal = `${prefix}${literal}`;
-
-            return format.replace(/\+0\b/g, '')
-                .replace(/{op}/g, op)
-                .replace(/{memAddr}/g, memAddr)
-                .replace(/{offset}/g, offset)
-                .replace(/{reg1}/g, reg1)
-                .replace(/{reg2}/g, reg2)
-                .replace(/{literal}/g, literal);
         }
+
+        let op;
+        if (selection[3] && instruction_num == 2){
+             op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
+        } else {
+             op = unifPickItem(operations);
+        }
+
+        let format;
+        if (this.architecture === 'ARM64' && (op === 'add' || op === 'sub' || op === 'ldr' || op === 'str')) {
+            format = unifPickItem(ARMformats[op]);
+        } else if (op === 'push' || op === 'pop') {
+            format = unifPickItem(stackFormats[op]);
+        } else {
+            format = unifPickItem(formats);
+        }
+
+        let reg1 = unifPickItem(regular_registers);
+        let reg2 = unifPickItem(regular_registers);
+        let reg3 = unifPickItem(regular_registers);
+        let memItem = unifPickItem(memory);
+        while (stack_registers.some(r => r.value == memItem.address)) {
+            memItem = unifPickItem(memory);
+        }
+        let offset = unifPickItem(offsets);
+        let literal = Math.floor(Math.random() * 8) * 8;
+        if (format.includes('offset')) {
+            const maxOffset = format.includes('memAddr')
+                ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+                : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+            offset = Math.min(offset, maxOffset);
+        }
+
+        reg1 = this.architecture === 'ARM64' ? `${reg1.register}` : `%${reg1.register}`;
+        reg2 = this.architecture === 'ARM64' ? `${reg2.register}` : `%${reg2.register}`;
+        reg3 = this.architecture === 'ARM64' ? `${reg3.register}` : '';
+        const memAddr = `${memItem.location}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
+        const prefix = this.architecture === 'ARM64' ? '#' : '$';
+        literal = `${prefix}${literal}`;
+
+        return format.replace(/\+0\b/g, '')
+            .replace(/{op}/g, op)
+            .replace(/{memAddr}/g, memAddr)
+            .replace(/{offset}/g, offset)
+            .replace(/{reg1}/g, reg1)
+            .replace(/{reg3}/g, reg3)
+            .replace(/{reg2}/g, reg2)
+            .replace(/{literal}/g, literal);
     }
 
     // Generates a list of memory addresses for the simulation
@@ -300,7 +274,7 @@ class ArchInstructions {
         const selected_regular_registers = Array.from({ length: num_registers - registers_stack.length }, (_, i) => ({
             register: registers_regular[i],
             value: (Math.floor(Math.random() * 11) + 5).toString(),
-            type: "normal"
+            type: "regular"
         }));
 
         let selected_stack_registers;
@@ -564,12 +538,22 @@ class ArchInstructions {
 
     selectFlagRegisters(num_registers) {
         const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
-        return Array.from({ length: num_registers }, (_, i) => {
-            const value = Math.floor(Math.random() * 255) - 127;
+        return Array.from({
+            length: num_registers
+        }, (_, i) => {
+            let value;
+            if (Math.random() < 0.3) { // 30% chance of zero or near-zero
+                value = Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? 1 : -1);
+            } else {
+                // Generate a random number between -128 and 127 (signed 8-bit integer range)
+                value = Math.floor(Math.random() * 256) - 128;
+            }
+            const hexValue = (value & 0xFF).toString(16).toUpperCase().padStart(2, '0');
             return {
                 register: registers[i],
                 value: value.toString(),
-                two: ((value < 0 ? (256 + value) : value).toString(2).padStart(8, '0'))
+                hex: `0x${hexValue}`,
+                binary: `0b${(value & 0xFF).toString(2).padStart(8, '0')}`
             };
         });
     }
@@ -579,10 +563,16 @@ class ArchInstructions {
         const operations = arch_data[this.architecture]["comparison"].instructions;
         for (let i = 0; i < num_instructions; i++) {
             const op = unifPickItem(operations);
-            let src = this.getRandomOperand(registers);
-            let dest = this.getRandomOperand(registers);
-            while (src === dest) {
+            let src, dest;
+            if (Math.random() < 0.3) { // 30% chance of same source and destination
                 src = this.getRandomOperand(registers);
+                dest = src;
+            } else {
+                src = this.getRandomOperand(registers);
+                dest = this.getRandomOperand(registers);
+                while (src === dest) {
+                    dest = this.getRandomOperand(registers);
+                }
             }
             instructions.push(`${op} ${dest}, ${src}`);
         }

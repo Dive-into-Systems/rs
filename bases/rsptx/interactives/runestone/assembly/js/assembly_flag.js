@@ -60,9 +60,6 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         const [instruction, registers] = this.generator.generateRandomInitialFlag(num_instructions, num_registers);
         const flags = this.generator.analyzeFlagSettings(instruction[0], registers);
 
-        console.log(instruction, registers)
-        console.log(flags)
-
         this.containerDiv.empty();
         this.renderHeader();
         this.renderInstructionAndRegisters(instruction[0], registers);

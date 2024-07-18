@@ -23,6 +23,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
+
+        this.arith_checked = true;
+        this.memo_checked = false;
+        this.stack_checked = false;
+
+        // Create the Assembly State exercise element
         this.createAssemblyStateElement();
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
@@ -48,92 +54,61 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // rendering the whole thing
         this.renderHeader();
-        this.renderCustomizations();
         this.tryAnother(); // for regeneration, could be used for intialization too
     }
 
     // Renders the header of the exercise
     renderHeader() {
-        this.header = $("<div>").html(
+        this.headerDiv = $("<div>").html(
             "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions." +
-            "For each instruction, describe how it changes register or memory values." + "Start with the initial state and update the state sequentially as you apply each instruction.<br><br>"
-        );
-        this.headerDiv = $("<div>").append(this.header);
+            "For each instruction, describe how it changes register or memory values." + " Start with the initial state and update the state sequentially as you apply each instruction."
+        ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
     }
 
     // Renders customization options for instruction types
     renderCustomizations() {
 
+        // Initialize the generator based on the architecture
         const instructionTypes = [
-            { label: 'Arithmetics', value: 'arithmetic', defaultChecked: true },
-            { label: 'Memory Manipulation', value: 'memorymanipulation', defaultChecked: false },
+            { label: 'Arithmetics', value: 'arithmetic'},
+            { label: 'Memory Manipulation', value: 'memorymanipulation'},
         ];
 
         // Only include Stack Operations if the architecture is not ARM64
         if (this.architecture !== 'ARM64') {
-            instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation', defaultChecked: false });
+            instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation'});
         }
 
-        const customizationDiv = $("<div>").addClass("customization-container").css({
-            'border': '2px solid #ccc',  // Thicker grey border for the outer container
-            'padding': '15px',  // Padding for better spacing
-            'margin-bottom': '20px',
-            'background-color': '#f9f9f9',
-            'border-radius': '10px',  // Rounded corners for a softer look
-            'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
-            'width': '100%'  // Make the outer container full width
-        });
+        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
 
-        const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types").css({
-            'padding': '10px',  // Slightly less padding for the inner container
-            'background-color': '#e9ecef',
-            'border-radius': '10px',
-            'border': '2px solid #ccc',  // Match outer border for consistency
-            'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow for depth
-            'width': '99%',  // Slightly smaller width for the inner container
-            'margin': 'auto'  // Center the inner container
-        });
-
-        instructionTypeDiv.append($("<h3>").text("Configure Your Question Type").css({
-            'color': '#333',  // Dark grey color for the title
-            'margin-bottom': '10px'
-        }));
-        instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt.").css({
-            'margin-bottom': '10px'
-        }));
-
-
-        // Initialize checkbox states
-        this.arith_checked = instructionTypes.find(family => family.value === 'arithmetic').defaultChecked;
-        this.stack_checked = this.architecture !== 'ARM64' ?
-        instructionTypes.find(family => family.value === 'stackoperation').defaultChecked : false;
-        this.memo_checked = instructionTypes.find(family => family.value === 'memorymanipulation').defaultChecked;
+        instructionTypeDiv.append($("<2>").text("Configure Your Question Type"));
+        instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt."));
 
         instructionTypes.forEach(family => {
             let checkbox = $("<input>").attr({
                 type: "checkbox",
                 id: family.value,
                 value: family.value,
-                checked: family.defaultChecked
+                checked: true
             });
 
             checkbox.on("change", (event) => {
                 // Store the current state of checkboxes
                 const prevArithChecked = this.arith_checked;
-                const prevStackChecked = this.stack_checked;
                 const prevMemoChecked = this.memo_checked;
+                const prevStackChecked = this.stack_checked;
 
                 // Update the states based on the checkbox change
                 switch (event.target.id) {
                     case "arithmetic":
                         this.arith_checked = event.target.checked;
                         break;
-                    case "stackoperation":
-                        this.stack_checked = event.target.checked;
-                        break;
                     case "memorymanipulation":
                         this.memo_checked = event.target.checked;
+                        break;
+                    case "stackoperation":
+                        this.stack_checked = event.target.checked;
                         break;
                 }
 
@@ -142,8 +117,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                     event.preventDefault();
                     // Restore the previous states
                     this.arith_checked = prevArithChecked;
-                    this.stack_checked = prevStackChecked;
                     this.memo_checked = prevMemoChecked;
+                    this.stack_checked = prevStackChecked;
 
                     // Restore the checkbox's checked state
                     $(event.target).prop('checked', !event.target.checked);
@@ -154,6 +129,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
         instructionTypeDiv.append("<br>");
+
+        const customizationDiv = $("<div>").addClass("customization-container")
         customizationDiv.append(instructionTypeDiv);
         this.containerDiv.append(customizationDiv);
     }
@@ -164,7 +141,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             num_instructions,
             num_registers,
             num_addresses,
-            [this.arith_checked, this.stack_checked, this.memo_checked]
+            [this.arith_checked, this.memo_checked, this.stack_checked]
         );
         this.allStates = this.generator.executeInstructions(this.initialState);
         this.currentInstruction = 0;
@@ -173,17 +150,28 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the list of instructions for the exercise
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
-        instructionDiv.append($("<h3>").text("The Instructions:"));
+        instructionDiv.append($("<h4>").text("The Instructions:").css(
+            "font-weight", "bold",
+            "font-size", "1.5em"
+        ));
 
         const instructionList = $("<ol>");
         instructions.forEach((inst, index) => {
             const listItem = $("<li>")
-                .text(inst)
-                .addClass("instruction-item")
-                .attr("data-index", index);
+            .addClass("instruction-item")
+            .attr("data-index", index);
             if (index !== 0) {
-                listItem.addClass("disabled");
+            listItem.addClass("disabled");
             }
+            const code = $("<code>").text(inst);
+            listItem.append(code);
+
+            const feedbackDiv = $("<div>")
+            .attr("id", "feedback" + index)
+            .addClass("feedback")
+            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
+            listItem.append(feedbackDiv);
+
             instructionList.append(listItem);
         });
 
@@ -197,43 +185,48 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderTables() {
         const [instructions, addresses, registers] = this.initialState;
 
-        const tablesContainer = $("<div>").addClass("tables-container");
-
-        // Registers table
-        const registersWrapper = $("<div>").addClass("table-wrapper");
-        registersWrapper.append($("<h3>").text("Registers:"));
-        const registersTable = $("<table>").addClass("register-table");
-        const registersTableHead = $("<thead>").append($("<tr>").append(
+        // Create table for general purpose registers
+        const regularRegistersTable = $("<table>").addClass("regular-register-table");
+        regularRegistersTable.append($("<caption>").text("General Purpose Registers:"));
+        const reguarRegistersTableHead = $("<thead>").append($("<tr>").append(
             $("<th>").text("Register"),
             $("<th>").text("Current Value"),
-            $("<th>").text("Post Instruction Value")
+            $("<th>").text("Updated Value")
         ));
-        const registersTableBody = $("<tbody>");
+        const regularRegistersTableBody = $("<tbody>");
+        regularRegistersTable.append(reguarRegistersTableHead, regularRegistersTableBody);
 
-        registers.forEach(({ register, value }) => {
+        // Create table for memory registers
+        const memoryRegistersTable = $("<table>").addClass("memory-register-table");
+        memoryRegistersTable.append($("<caption>").text("Memory Registers:"));
+        const memoryRegistersTableHead = $("<thead>").append($("<tr>").append(
+            $("<th>").text("Register"),
+            $("<th>").text("Current Value"),
+            $("<th>").text("Updated Value")
+        ));
+        const memoryRegistersTableBody = $("<tbody>");
+        memoryRegistersTable.append(memoryRegistersTableHead, memoryRegistersTableBody);
+
+        // Populate tables with register values
+        registers.forEach(({ register, value, type }) => {
             const displayValue = value || "0";
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
                 $("<td>").append($("<input>").attr("type", "text"))
             );
-            registersTableBody.append(row);
+            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
         });
 
-        registersTable.append(registersTableHead, registersTableBody);
-        registersWrapper.append(registersTable);
-
-        // Memory changes table
-        const memoryWrapper = $("<div>").addClass("table-wrapper");
-        memoryWrapper.append($("<h3>").text("Memory:"));
+        // Create table for memory addresses
         const memoryTable = $("<table>").addClass("memory-table");
+        memoryTable.append($("<caption>").text("Memory:"));
         const memoryTableHead = $("<thead>").append($("<tr>").append(
             $("<th>").text("Address"),
             $("<th>").text("Current Value"),
-            $("<th>").text("Post Instruction Value")
+            $("<th>").text("Updated Value")
         ));
         const memoryTableBody = $("<tbody>");
-
         addresses.forEach(addr => {
             const row = $("<tr>").append(
                 $("<td>").text(addr.address),
@@ -242,10 +235,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             );
             memoryTableBody.append(row);
         });
-
         memoryTable.append(memoryTableHead, memoryTableBody);
+
+        // Create wrapper divs for tables
+        const registersWrapper = $("<div>").addClass("table-wrapper");
+        registersWrapper.append(regularRegistersTable, memoryRegistersTable);
+
+        const memoryWrapper = $("<div>").addClass("table-wrapper");
         memoryWrapper.append(memoryTable);
 
+        // Create container div for tables
+        const tablesContainer = $("<div>").addClass("tables-container");
         tablesContainer.append(registersWrapper, memoryWrapper);
         this.containerDiv.append(tablesContainer);
     }
@@ -254,20 +254,22 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     repopulateInitialTables() {
         const [ instructions, addresses, registers ] = this.initialState;
 
-        const registersTableBody = $(".register-table tbody");
+        const regularRegistersTableBody = $(".regulat-register-table tbody");
+        const memoryRegistersTableBody = $(".memory-register-table tbody");
         const memoryTableBody = $(".memory-table tbody");
 
-        registersTableBody.empty();
+        regularRegistersTableBody.empty();
+        memoryRegistersTableBody.empty();
         memoryTableBody.empty();
 
-        registers.forEach(({ register, value }) => {
+        registers.forEach(({ register, value, type }) => {
             const displayValue = value || "0";
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
-                $("<td>").append($("<input>").attr("type", "text").val(""))
+                $("<td>").append($("<input>").attr("type", "text"))
             );
-            registersTableBody.append(row);
+            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
         });
 
         addresses.forEach(addr => {
@@ -285,15 +287,18 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const currentState = this.allStates[this.currentInstruction - 1]
 
         // Repopulate Registers table
-        const registersTableBody = this.containerDiv.find('.register-table tbody');
-        registersTableBody.empty();
-        currentState.registers.forEach(({ register, value }) => {
+        const regularRegistersTableBody = $(".regular-register-table tbody");
+        const memoryRegistersTableBody = $(".memory-register-table tbody");
+        regularRegistersTableBody.empty();
+        memoryRegistersTableBody.empty();
+        currentState.registers.forEach(({ register, value, type }) => {
+            const displayValue = value || "0";
             const row = $("<tr>").append(
                 $("<td>").text(register),
-                $("<td>").text(value),
-                $("<td>").append($("<input>").attr("type", "text").val(""))
+                $("<td>").text(displayValue),
+                $("<td>").append($("<input>").attr("type", "text"))
             );
-            registersTableBody.append(row);
+            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
         });
 
         // Repopulate Memory table
@@ -315,66 +320,46 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
         const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
-        this.checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer()).prop("disabled", true);
+        const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
+        const linkButton = $("<button>").text("Go to Dive Into Systems").on("click", () => this.goToLink());
 
-        buttonContainer.append(resetButton).append(tryAnotherButton).append(this.checkAnswerButton);
+        buttonContainer.append(resetButton, tryAnotherButton, checkAnswerButton, linkButton);
         this.containerDiv.append(buttonContainer);
-
-        // Enable "Check Answer" button when any field is filled
-        this.containerDiv.on("input", "input[type='text']", () => {
-            const allFilled = this.containerDiv.find("input[type='text']").toArray().some(input => $(input).val().trim() !== "");
-            this.checkAnswerButton.prop("disabled", !allFilled);
-        });
-    }
-
-    // Creates a container for feedback messages
-    renderFeedback(){
-        let feedbackDiv = $("<div>").addClass("feedback-container");
-        this.containerDiv.append(feedbackDiv);
     }
 
     // Updates the feedback message based on correctness
     reRenderFeedback(isCorrect) {
-        let feedbackDiv = this.containerDiv.find('.feedback-container');
-        if (feedbackDiv.length === 0) {
-            feedbackDiv = $("<div>").addClass("feedback-container");
-            this.containerDiv.append(feedbackDiv);
-        }
-        feedbackDiv.empty();
+        let feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
+        console.log("feedback" + this.currentInstruction)
 
         const feedbackMessage = isCorrect ?
-            `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
+            `Correct! Moving to instruction ${this.currentInstruction + 2}.` :
             "Incorrect. Please try again.";
-        feedbackDiv.append("<br>");
-        feedbackDiv.append($("<p>").text(feedbackMessage).css('color', isCorrect ? 'green' : 'red'));
-    }
-
-    // Displays final feedback when all instructions are completed
-    renderFinalFeedback() {
-        let feedbackDiv = this.containerDiv.find('.feedback-container');
-        if (feedbackDiv.length === 0) {
-            feedbackDiv = $("<div>").addClass("feedback-container");
-            this.containerDiv.append(feedbackDiv);
+        if(this.currentInstruction >= this.initialState[0].length) {
+            feedbackMessage = "You have completed the exercise!";
         }
-        feedbackDiv.empty();
-
-        const feedbackMessage = "All instructions completed! Well done.";
-        feedbackDiv.append($("<p>").text(feedbackMessage).css('color', 'blue'));
+        feedbackDiv.text(feedbackMessage).css('color', isCorrect ? 'green' : 'red');
     }
 
-    renderLinkButton() {
+    renderFinalFeedback() {
+        const feedbackDiv = this.containerDiv.find("[id^='feedback']");
+        feedbackDiv.text("Congratulations! Completed all instructions").css('color', 'blue');
+    }
+
+    goToLink() {
         const registers = this.initialState[2].slice(0, 3);
         const instructions = this.initialState[0];
         const memoryValues = this.initialState[1].map(addr => addr.value).slice(3, 7);
 
+        const encodedArchitecture = this.architecture == "ARM64" ? "ARM" : (this.architecture == "X86_32" ? "x86" : "x86_64");
         const encodedInstructions = instructions.map(inst => encodeURIComponent(inst)).join('%0A');
         const encodedRegisters = registers.map(reg => encodeURIComponent(reg.value)).join('/');
         const encodedMemoryValues = memoryValues.map(value => encodeURIComponent(value)).join('/');
 
-        const link = `https://asm.diveintosystems.org/arithmetic/${this.architecture.toLowerCase()}/${encodedInstructions}/${encodedMemoryValues}/${encodedRegisters}`;
+        const link = `https://asm.diveintosystems.org/arithmetic/${encodedArchitecture}/${encodedInstructions}/${encodedMemoryValues}/${encodedRegisters}`;
+        console.log(link);
 
-        const linkButton = $("<a>").text("Visualizer").attr("href", link).attr("target", "_blank").attr("rel", "noopener noreferrer").addClass("link-button");
-        this.containerDiv.append(linkButton);
+        return window.open(link);
     }
 
     /*=====================================
@@ -411,7 +396,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Resets all input values and moves to initial instruction
     resetValues() {
         this.containerDiv.find("input[type='text']").val("");
-        this.containerDiv.find('.feedback-container').empty();
+        this.containerDiv.find("[id^='feedback']").empty();
         this.currentInstruction = 0
         this.moveToInitialInstruction();
     }
@@ -423,7 +408,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find('.instruction-container').remove();
         this.containerDiv.find('.tables-container').remove();
         this.containerDiv.find('.button-container').remove();
-        this.containerDiv.find('.feedback-container').remove();
+        this.containerDiv.find("[id^='feedback']").remove();
         this.containerDiv.find('.link-button').remove();
 
         // rerender
@@ -431,7 +416,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderTables();
         this.renderButtons();
         this.renderFeedback();
-        this.renderLinkButton();
     }
 
     // Validates user answers against expected state
@@ -471,28 +455,42 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         const isCorrect = this.validateAnswers(userRegisters, userMemory, this.currentInstruction);
 
-        if (isCorrect) {
-            this.currentInstruction++;
-            this.moveToNextInstruction();
-        }
-
-        if (this.currentInstruction >= this.initialState[0].length) {
-            this.renderFinalFeedback();
-            return 0;
-        }
-
         this.reRenderFeedback(isCorrect);
+
+        if (isCorrect) {
+            if (this.currentInstruction + 1 >= this.initialState[0].length) {
+                // This was the last instruction
+                this.renderFinalFeedback();
+                this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
+            } else {
+                this.currentInstruction++;
+                this.moveToNextInstruction();
+            }
+        }
     }
 
     // Collects user input from register and memory tables
     gatherInput(currentState) {
-        const registerInputs = this.containerDiv.find('.register-table tbody tr');
+        const regularRegistersInputs = this.containerDiv.find('.regular-register-table tbody tr');
+        const memoryRegistersInputs = this.containerDiv.find('.memory-register-table tbody tr');
         const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
 
         let userRegisters = {};
         let userMemory = {};
 
-        registerInputs.each((index, row) => {
+        regularRegistersInputs.each((index, row) => {
+            const reg = $(row).find('td').eq(0).text();
+            let userValue = $(row).find('input').val().trim();
+
+            // If input is empty or just whitespace, use the current state's value
+            if (userValue === "") {
+                userValue = $(row).find('td').eq(1).text();
+            }
+
+            userRegisters[reg] = userValue;
+        });
+
+        memoryRegistersInputs.each((index, row) => {
             const reg = $(row).find('td').eq(0).text();
             let userValue = $(row).find('input').val().trim();
 
@@ -523,7 +521,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     moveToNextInstruction() {
         this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
         this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
-        this.checkAnswerButton.prop("disabled", true);
         this.resetInputFields();
         this.repopulateTables();
     }
@@ -532,7 +529,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     moveToInitialInstruction() {
         this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
         this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
-        this.checkAnswerButton.prop("disabled", true);
         this.resetInputFields();
         this.repopulateInitialTables();
     }
