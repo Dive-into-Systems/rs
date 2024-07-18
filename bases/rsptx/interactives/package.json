@@ -46,6 +46,7 @@
         "jexcel": "^3.9.1",
         "jquery-ui": "1.10.4",
         "micro-parsons": "https://github.com/amy21206/micro-parsons-element/releases/download/v0.1.4/micro-parsons-0.1.4.tgz",
+        "nanoid": "^3.3.7",
         "select2": "^4.1.0-rc.0",
         "sql.js": "1.5.0",
         "vega-embed": "3.14.0",
