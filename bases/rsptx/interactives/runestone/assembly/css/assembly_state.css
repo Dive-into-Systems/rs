@@ -76,28 +76,55 @@ th {
     margin-top: 10px;
 }
 
+ol {
+    counter-reset: instruction-counter;
+    list-style-type: none;
+    padding: 0;
+}
+
 .instruction-item {
-    padding: 10px;
     margin: 2px 0;
     border-radius: 3px;
-    list-style-type: none;
     transition:  0.3s ease;
     display: flex;
     justify-content: space-between;
 }
 
-.instruction-item.current {
-    color: white;
+.instruction-item::before {
+    counter-increment: instruction-counter;
+    content: counter(instruction-counter) ".";;
+    margin: 10px;
     font-weight: bold;
-    list-style-type: none;
+}
+
+.instruction-div {
+    padding: 10px;
+    margin: 2px 0;
+    border-radius: 3px;
+    transition:  0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.instruction-div.current {
+    background-color: #5cb85c;
+    font-weight: bold;
     position: relative;
 }
 
-.instruction-item.current::before {
-    content: "->";
-    position: absolute;
-    left: -20px;
-    color: black;
+.instruction-div.disabled {
+    color: #999;
+    background-color: #f0f0f0;
+}
+
+.instruction-div::marker {
+    display: block;
+}
+
+ol li {
+    list-style: decimal;
+    list-style-position: inside;
 }
 
 input[type='text'] {
@@ -138,10 +165,4 @@ caption {
     caption-side: top;
     text-align: left;
     font-weight: bold;
-}
-
-. {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
 }
