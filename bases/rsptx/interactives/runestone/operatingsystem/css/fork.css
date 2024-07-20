@@ -44,13 +44,17 @@
   top: 0;
 }
 
+span[data-block]:hover {
+  background-color: yellow;
+}
+
 .help-div {
   font-family: "Gill Sans", sans-serif !important;
   font-size: small;
   padding: 8px;
 }
 
-.input-div {
+.prompt-div {
   height: auto;
   overflow-y: auto;
   position: relative;
@@ -76,7 +80,7 @@
   margin-bottom: 5px !important;
 }
 
-.right-div-inline {
+.input-div-inline {
   display: inline-block;
   border-width: 1px;
   border-radius: 5px;

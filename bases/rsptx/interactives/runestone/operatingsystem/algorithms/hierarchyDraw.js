@@ -57,19 +57,3 @@ export function drawHierarchy(linksCsv, labels) {
     select("#hierarchy_graph").graphviz()
         .renderDot(digraphString);
 }
-
-export function drawTimeline(linksCsv) {
-
-    const links = csvParse(linksCsv);
-    console.log(links);
-
-    var digraphString = (
-        'digraph {' + 
-        'bgcolor = "transparent";' + 
-        'node [shape=circle, color="#5986ba", style=filled, fillcolor="#c6d9f1", fixedsize=true, width=1];' +
-        'edge [color=black, penwidth=2.0];'
-    );
-
-    // select("#timeline_graph").graphviz()
-    //     .renderDot(digraphString);
-}

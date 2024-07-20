@@ -43,7 +43,6 @@ class ForkNode {
         this.right = right;
     }
 
-    
     getChildrenInfo() {
         // left id, left ct, right id, right ct
         return [this.id, this.childCt+1, this.id*10+this.childCt+1, 0];
@@ -57,8 +56,6 @@ class ForkNode {
         // add 1 timeline if we reach the end
         return ( this.left?this.left.timelineCt():1 ) + ( this.right?this.right.timelineCt():0 );
     }
-
-
 
     print(text) {
         if (!this.active) return;
@@ -105,46 +102,63 @@ class ForkNode {
         return [leftResult, rightResult];
     }
     
-    pushCode(code, indent = 0) {
+    // pushCode(code, terminate, indent = 0) {
+    pushCode(code, terminate=Infinity, indent = 0) {
         let result = [];
         let ptr = 0;
         let leftCode, rightCode;
         let leftProc, rightProc;
         let leftResult, rightResult;
         let [leftID, leftCt, rightID, rightCt] = [0,0,0,0];
-        
-        function addLine(line, extraProc = []) {
-            // result.push(`${SPC.repeat(indent)}${line} // ${liveProcesses.join(' + ')} , ${extraProc.join(' + ')}`);
-            result.push(`${SPC.repeat(indent)}${line}`);
+        let blockCounter = 0;
+        let stack = [];
+
+        function addLine(line) {
+            let blockId = stack.length > 0 ? stack[stack.length - 1] : null;
+            // let prefix = (line.includes("{") || blockId) ? `<span data-block="${blockId}">` : '';
+            // let suffix = (line.includes("}") || blockId) ? `</span>` : '';
+            let prefix = blockId ? `<span data-block="${blockId}">` : '';
+            let suffix = blockId ? `</span>` : '';
+            // console.log(`${SPC.repeat(indent)}${prefix}${line}${suffix}`);
+            result.push(`${SPC.repeat(indent)}${prefix}${line}${suffix}`);
         }
 
+        let blockId;
         for (let ptr = 0; ptr < code.length; ptr++) {
             if (code[ptr]!= "F" && code[ptr]!= EXIT_CHAR) {
-                addLine(`printf("${code[ptr]}");`);
+                // blockId = ++blockCounter;
+                addLine(`printf("${code[ptr]}");`, stack.slice(-1)[0]);
                 this.print(code[ptr])
                 continue;
             }
             if (code[ptr] == EXIT_CHAR) {
-                addLine(`exit();`);
+                // blockId = ++blockCounter;
+                addLine(`exit();`, stack.slice(-1)[0]);
                 this.exit();
                 // break
             }
             if (code[ptr] == "F") {
+                blockId = ++blockCounter;
+                if (blockId > terminate) {
+                    break;
+                }
+                stack.push(blockId);
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
                 [leftResult, rightResult] = this.fork(leftCode, rightCode, indent + INDENT_SPC);
                 if (!leftCode && !rightCode) addLine("fork();");
                 if (leftCode) {
-                    addLine("if (fork()) {");
+                    addLine("if (fork()) {", blockId);
                     result = result.concat(leftResult);
-                    addLine(rightCode ? "} else {" : "}");
+                    addLine("}", blockId);
+                    if (rightCode) { addLine("else {", blockId); }
                 }
                 if (rightCode) {
-                    if (!leftCode) addLine("if (fork() == 0) {");
+                    if (!leftCode) addLine("if (fork() == 0) {", blockId);
                     result = result.concat(rightResult);
-                    addLine("}");
+                    addLine("}", blockId);
                 }
+                stack.pop();
             }
-            
         }
         return result;
     }
@@ -186,6 +200,7 @@ export function getAnswer(node, numPrints) {
 }
 
 const formatNode = (node) => `${node.id}.${node.childCt}`+ ":"+(node.value?node.value:nullChar);
+
 export function printTreeVert(node, isRoot = true) {
     const nullChar = "\\";
     // if (!node) return [nullChar]; // show forked processes that does nothing
@@ -205,7 +220,6 @@ export function printTreeVert(node, isRoot = true) {
     const indentLeft = (hasRight ? "|" : " ") + " ".repeat(Math.max(selfValue.length, rightWidth));
     
     const result = [];
-    
     
     result.push(`${selfValue}${hasLeft ? DASH.repeat(Math.max(selfValue.length, rightWidth)-selfValue.length+1) + leftSubtree[0] : ""}`);
     leftSubtree.slice(1).forEach(line => result.push(`${indentLeft}${line}`));
@@ -298,6 +312,13 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
-    let codeC = tree.pushCode(code).join(NEWLINE);
-    return [tree, codeC]
+    let codeC = tree.pushCode(code, Infinity).join(NEWLINE);
+    return [tree, codeC];
+}
+
+export function traceTree(code, terminate) {
+    let tree = new ForkNode();
+    // console.log("In tree builder, terminate is", terminate);
+    let codeC = tree.pushCode(code, terminate, 0).join(NEWLINE);
+    return tree;
 }
