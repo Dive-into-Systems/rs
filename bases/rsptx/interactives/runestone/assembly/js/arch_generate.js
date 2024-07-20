@@ -187,26 +187,17 @@ class ArchInstructions {
             "str": ['{op} {reg1}, [{reg2}, {literal}]']
         };
 
-        let operations = [];
-        if (this.architecture === 'ARM64') {
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["memOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["archOps"].instructions : [],
-            ];
-        } else {
-            operations = [
-                ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
-                ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
-                ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
-            ];
-        }
+        let operations = [
+            ...selection[0] ? arch_data[this.architecture]["arithBinary"].instructions : [],
+            ...selection[1] ? arch_data[this.architecture]["archOps"].instructions : [],
+            ...selection[2] ? arch_data[this.architecture]["memOps"].instructions : []
+        ];
 
         let op;
-        if (selection[3] && instruction_num == 2){
-             op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
+        if (selection[3] && instruction_num == 2) {
+            op = unifPickItem(arch_data[this.architecture]["archOps"].instructions);
         } else {
-             op = unifPickItem(operations);
+            op = unifPickItem(operations);
         }
 
         let format;
@@ -279,8 +270,8 @@ class ArchInstructions {
 
         let selected_stack_registers;
 
-        if (this.architecture == "ARM64"){
-             selected_stack_registers = [{register: registers_stack[0], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" }];
+        if (this.architecture == "ARM64") {
+            selected_stack_registers = [{ register: registers_stack[0], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" }];
         } else {
             selected_stack_registers = [
                 { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" },
@@ -289,7 +280,7 @@ class ArchInstructions {
         }
 
 
-        return {selected_regular_registers, selected_stack_registers};
+        return { selected_regular_registers, selected_stack_registers };
     }
 
     // Generates a list of instructions for the simulation
@@ -300,7 +291,7 @@ class ArchInstructions {
             selected_instructions = [];
             let simState = this.initializeSimulationState(selected_regular_registers, selected_stack_registers, selected_addresses);
             for (let i = 0; i < num_instructions; i++) {
-                let instruction_num = i+1
+                let instruction_num = i + 1
                 const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, instruction_num);
                 selected_instructions.push(instruction);
             }
@@ -308,7 +299,8 @@ class ArchInstructions {
                 continue;
             }
             if (selected_instructions.length === num_instructions) {
-            return selected_instructions};
+                return selected_instructions
+            };
         }
         console.warn("Failed to generate instructions without negative values after 100 attempts.");
         return selected_instructions;
@@ -608,7 +600,7 @@ class ArchInstructions {
 
             // Overflow flag for signed comparison
             overflowFlag = ((destVal < 0 && srcVal > 0 && cmpResult > 0) ||
-                            (destVal > 0 && srcVal < 0 && cmpResult < 0));
+                (destVal > 0 && srcVal < 0 && cmpResult < 0));
 
             // Zero flag for zero result
             zeroFlag = cmpResult === 0;

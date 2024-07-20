@@ -54,14 +54,15 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // rendering the whole thing
         this.renderHeader();
+        this.renderCustomizations();
         this.tryAnother(); // for regeneration, could be used for intialization too
     }
 
     // Renders the header of the exercise
     renderHeader() {
         this.headerDiv = $("<div>").html(
-            "Given the initial state of machine registers and memory, determine the effects of executing the following assembly instructions." +
-            "For each instruction, describe how it changes register or memory values." + " Start with the initial state and update the state sequentially as you apply each instruction."
+            "For the highlighted instruction, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
+            + "You do not need to enter values for registers or memory locations whose values do not change."
         ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
     }
@@ -71,18 +72,18 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // Initialize the generator based on the architecture
         const instructionTypes = [
-            { label: 'Arithmetics', value: 'arithmetic'},
-            { label: 'Memory Manipulation', value: 'memorymanipulation'},
+            { label: 'Arithmetics', value: 'arithmetic' },
+            { label: 'Memory Manipulation', value: 'memorymanipulation' },
         ];
 
         // Only include Stack Operations if the architecture is not ARM64
         if (this.architecture !== 'ARM64') {
-            instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation'});
+            instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation' });
         }
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
 
-        instructionTypeDiv.append($("<2>").text("Configure Your Question Type"));
+        instructionTypeDiv.append($("<h4>").text("Configure Your Question Type:"));
         instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt."));
 
         instructionTypes.forEach(family => {
@@ -135,7 +136,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.append(customizationDiv);
     }
 
-        // Generates a new question with random initial state and instructions
+    // Generates a new question with random initial state and instructions
     generateNewQuestion() {
         this.initialState = this.generator.generateRandomInitialState(
             num_instructions,
@@ -159,23 +160,24 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         instructions.forEach((inst, index) => {
             const listItem = $("<li>")
             .addClass("instruction-item")
-            .attr("data-index", index);
-            if (index !== 0) {
-            listItem.addClass("disabled");
-            }
-            const code = $("<code>").text(inst);
-            listItem.append(code);
+
+            const instructionDiv = $("<div>")
+            .addClass("instruction-div")
+            .attr("data-index", index)
+            .text(inst);
+            index !== 0 ? instructionDiv.addClass("disabled") : instructionDiv.addClass("current");
 
             const feedbackDiv = $("<div>")
-            .attr("id", "feedback" + index)
             .addClass("feedback")
+            .attr("id", "feedback" + index)
             .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
-            listItem.append(feedbackDiv);
+
+            listItem.append(instructionDiv, feedbackDiv);
 
             instructionList.append(listItem);
         });
 
-        instructionList.children("li:first").addClass("current");
+
 
         instructionDiv.append(instructionList);
         this.containerDiv.append(instructionDiv);
@@ -185,38 +187,26 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderTables() {
         const [instructions, addresses, registers] = this.initialState;
 
-        // Create table for general purpose registers
-        const regularRegistersTable = $("<table>").addClass("regular-register-table");
-        regularRegistersTable.append($("<caption>").text("General Purpose Registers:"));
-        const reguarRegistersTableHead = $("<thead>").append($("<tr>").append(
+        // Create table for registers
+        const registersTable = $("<table>").addClass("register-table");
+        registersTable.append($("<caption>").text("Registers:"));
+        const registersTableHead = $("<thead>").append($("<tr>").append(
             $("<th>").text("Register"),
             $("<th>").text("Current Value"),
-            $("<th>").text("Updated Value")
+            $("<th>").text("Post Instruction Value")
         ));
-        const regularRegistersTableBody = $("<tbody>");
-        regularRegistersTable.append(reguarRegistersTableHead, regularRegistersTableBody);
+        const registersTableBody = $("<tbody>");
 
-        // Create table for memory registers
-        const memoryRegistersTable = $("<table>").addClass("memory-register-table");
-        memoryRegistersTable.append($("<caption>").text("Memory Registers:"));
-        const memoryRegistersTableHead = $("<thead>").append($("<tr>").append(
-            $("<th>").text("Register"),
-            $("<th>").text("Current Value"),
-            $("<th>").text("Updated Value")
-        ));
-        const memoryRegistersTableBody = $("<tbody>");
-        memoryRegistersTable.append(memoryRegistersTableHead, memoryRegistersTableBody);
-
-        // Populate tables with register values
-        registers.forEach(({ register, value, type }) => {
+        registers.forEach(({ register, value }) => {
             const displayValue = value || "0";
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
                 $("<td>").append($("<input>").attr("type", "text"))
             );
-            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
+            registersTableBody.append(row);
         });
+        registersTable.append(registersTableHead, registersTableBody);
 
         // Create table for memory addresses
         const memoryTable = $("<table>").addClass("memory-table");
@@ -239,8 +229,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // Create wrapper divs for tables
         const registersWrapper = $("<div>").addClass("table-wrapper");
-        registersWrapper.append(regularRegistersTable, memoryRegistersTable);
-
+        registersWrapper.append(registersTable);
         const memoryWrapper = $("<div>").addClass("table-wrapper");
         memoryWrapper.append(memoryTable);
 
@@ -252,24 +241,23 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Repopulates the initial state of registers and memory tables
     repopulateInitialTables() {
-        const [ instructions, addresses, registers ] = this.initialState;
+        const [instructions, addresses, registers] = this.initialState;
 
-        const regularRegistersTableBody = $(".regulat-register-table tbody");
-        const memoryRegistersTableBody = $(".memory-register-table tbody");
+        // Clear the tables
+        const registersTableBody = $(".register-table tbody");
         const memoryTableBody = $(".memory-table tbody");
-
-        regularRegistersTableBody.empty();
-        memoryRegistersTableBody.empty();
+        registersTableBody.empty();
         memoryTableBody.empty();
 
-        registers.forEach(({ register, value, type }) => {
+        // Repopulate the tables
+        registers.forEach(({ register, value }) => {
             const displayValue = value || "0";
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
                 $("<td>").append($("<input>").attr("type", "text"))
             );
-            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
+            registersTableBody.append(row);
         });
 
         addresses.forEach(addr => {
@@ -286,11 +274,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     repopulateTables() {
         const currentState = this.allStates[this.currentInstruction - 1]
 
-        // Repopulate Registers table
-        const regularRegistersTableBody = $(".regular-register-table tbody");
+        // Clear the tables
+        const registersTableBody = $(".register-table tbody");
         const memoryRegistersTableBody = $(".memory-register-table tbody");
-        regularRegistersTableBody.empty();
+        registersTableBody.empty();
         memoryRegistersTableBody.empty();
+
+        // Repopulate Registers table
         currentState.registers.forEach(({ register, value, type }) => {
             const displayValue = value || "0";
             const row = $("<tr>").append(
@@ -298,7 +288,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 $("<td>").text(displayValue),
                 $("<td>").append($("<input>").attr("type", "text"))
             );
-            type === "regular" ? regularRegistersTableBody.append(row) : memoryRegistersTableBody.append(row);
+            registersTableBody.append(row);
         });
 
         // Repopulate Memory table
@@ -335,7 +325,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const feedbackMessage = isCorrect ?
             `Correct! Moving to instruction ${this.currentInstruction + 2}.` :
             "Incorrect. Please try again.";
-        if(this.currentInstruction >= this.initialState[0].length) {
+        if (this.currentInstruction >= this.initialState[0].length) {
             feedbackMessage = "You have completed the exercise!";
         }
         feedbackDiv.text(feedbackMessage).css('color', isCorrect ? 'green' : 'red');
@@ -471,26 +461,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Collects user input from register and memory tables
     gatherInput(currentState) {
-        const regularRegistersInputs = this.containerDiv.find('.regular-register-table tbody tr');
-        const memoryRegistersInputs = this.containerDiv.find('.memory-register-table tbody tr');
+        const registersInputs = this.containerDiv.find('.register-table tbody tr');
         const memoryInputs = this.containerDiv.find('.memory-table tbody tr');
 
         let userRegisters = {};
         let userMemory = {};
 
-        regularRegistersInputs.each((index, row) => {
-            const reg = $(row).find('td').eq(0).text();
-            let userValue = $(row).find('input').val().trim();
-
-            // If input is empty or just whitespace, use the current state's value
-            if (userValue === "") {
-                userValue = $(row).find('td').eq(1).text();
-            }
-
-            userRegisters[reg] = userValue;
-        });
-
-        memoryRegistersInputs.each((index, row) => {
+        registersInputs.each((index, row) => {
             const reg = $(row).find('td').eq(0).text();
             let userValue = $(row).find('input').val().trim();
 
@@ -519,16 +496,16 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Moves to the next instruction in the list
     moveToNextInstruction() {
-        this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
-        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
+        this.containerDiv.find('.instruction-div').removeClass('current').addClass('disabled');
+        this.containerDiv.find(`.instruction-div[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
         this.resetInputFields();
         this.repopulateTables();
     }
 
     // Moves back to the initial instruction
     moveToInitialInstruction() {
-        this.containerDiv.find('.instruction-item').removeClass('current').addClass('disabled');
-        this.containerDiv.find(`.instruction-item[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
+        this.containerDiv.find('.instruction-div').removeClass('current').addClass('disabled');
+        this.containerDiv.find(`.instruction-div[data-index="${this.currentInstruction}"]`).removeClass('disabled').addClass('current');
         this.resetInputFields();
         this.repopulateInitialTables();
     }
