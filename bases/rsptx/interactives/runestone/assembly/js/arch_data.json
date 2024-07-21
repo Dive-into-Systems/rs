@@ -1,78 +1,109 @@
 {
-    "MAX_NUM" : 63,
-    "BIT_ODDS_X86_64" : [0.25, 0.75],
-    "MSG_OK" : "This instruction is valid!",
-    "MSG_BAD_DEST" : "Invalid destination operand type.",
-    "MSG_BAD_SRC" : "Invalid source operands type combination.",
-    "MSG_CT" : "Invalid operands count.",
+    "MAX_NUM": 63,
+    "BIT_ODDS_X86_64": [0.25, 0.75],
+    "MSG_OK": "This instruction is valid!",
+    "MSG_BAD_DEST": "Invalid destination operand type.",
+    "MSG_BAD_SRC": "Invalid source operands type combination.",
+    "MSG_CT": "Invalid operands count.",
     "ARM64": {
         "name": "ARM64",
-        "bad_dest" : [0.40, 0.60],
+        "bad_dest": [0.40, 0.60],
         "memOps": {
             "mainWeight": 15,
             "instructions": ["mov", "mvn"],
-            "errorsOdds" : [40, 25, 25, 10],
-            "errors" : {
+            "errorsOdds": [40, 25, 25, 10],
+            "errors": {
                 "ok": "r-(l/r)",
-                "bad_dest" : "(l/m)-(r/l/m)",
-                "bad_src" : "r-m",
-                "bad_ct" : "r-r-r"
-            }
+                "bad_dest": "(l/m)-(r/l/m)",
+                "bad_src": "r-m",
+                "bad_ct": "r-r-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {reg1}, {literal}",
+                "{op} {reg1}, [{reg2}]",
+                "{op} {reg1}, [{reg2} + {literal}]",
+                "{op} {reg1}, [{reg2} - {literal}]"
+            ]
         },
         "archOps": {
             "mainWeight": 15,
             "instructions": ["ldr", "str"],
-            "errorsOdds" : [40, 25, 25, 10],
-            "errors" : {
+            "errorsOdds": [40, 25, 25, 10],
+            "errors": {
                 "ok": "r-m",
-                "bad_dest" : "(l/m)-(l/m)",
-                "bad_src" : "r-r",
-                "bad_ct" : "r-r-r"
-            }
+                "bad_dest": "(l/m)-(l/m)",
+                "bad_src": "r-r",
+                "bad_ct": "r-r-r"
+            },
+            "formats": [
+                "{op} {reg1}, [{reg2}, {literal}]",
+                "{op} {reg1}, [{reg2}]",
+                "{op} {reg1}, [{reg2}, {literal}]!",
+                "{op} {reg1}, [{reg2}], {literal}"
+            ]
         },
         "arithUnary": {
             "mainWeight": 20,
             "instructions": ["neg"],
-            "errorsOdds" : [40, 25, 20, 15],
-            "errors" : {
+            "errorsOdds": [40, 25, 20, 15],
+            "errors": {
                 "ok": "r-(r/l)",
-                "bad_dest" : "(m/l)-(r/l)",
-                "bad_src" : "r-m",
-                "bad_ct" : "r-(r/l)-(r/l)"
-            }
+                "bad_dest": "(m/l)-(r/l)",
+                "bad_src": "r-m",
+                "bad_ct": "r-(r/l)-(r/l)"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {literal}"
+            ]
         },
         "arithBinary": {
             "mainWeight": 25,
             "instructions": ["add", "sub"],
-            "errorsOdds" : [30, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [30, 20, 20, 20],
+            "errors": {
                 "ok": "r-(r/l)-(r/l)",
-                "bad_dest" : "m-(r/l)-(r/l)",
-                "bad_src" : "r-(ml/mr/lm/rm/mm)",
-                "bad_ct" : "r-(r/l)"
-            }
+                "bad_dest": "m-(r/l)-(r/l)",
+                "bad_src": "r-(ml/mr/lm/rm/mm)",
+                "bad_ct": "r-(r/l)"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}, {reg1}",
+                "{op} {reg3}, {reg2}, {reg1}",
+                "{op} {reg1}, {reg1}, {literal}"
+            ]
         },
         "bitLogic": {
             "mainWeight": 15,
             "instructions": ["and", "orr", "eor"],
-            "errorsOdds" : [30, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [30, 20, 20, 20],
+            "errors": {
                 "ok": "r-(r/l)-(r/l)",
-                "bad_dest" : "m-(r/l)-(r/l)",
-                "bad_src" : "r-(ml/mr/lm/rm/mm)",
-                "bad_ct" : "r-(r/l)"
-            }
+                "bad_dest": "m-(r/l)-(r/l)",
+                "bad_src": "r-(ml/mr/lm/rm/mm)",
+                "bad_ct": "r-(r/l)"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}, {reg3}",
+                "{op} {reg1}, {reg2}, {literal}"
+            ]
         },
         "bitShift": {
             "mainWeight": 15,
             "instructions": ["lsl", "lsr", "asr"],
-            "errorsOdds" : [30, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [30, 20, 20, 20],
+            "errors": {
                 "ok": "r-(r/l)-(r/l)",
-                "bad_dest" : "m-(r/l)-(r/l)",
-                "bad_src" : "r-(ml/mr/lm/rm/mm)",
-                "bad_ct" : "r-(r/l)"
-            }
+                "bad_dest": "m-(r/l)-(r/l)",
+                "bad_src": "r-(ml/mr/lm/rm/mm)",
+                "bad_ct": "r-(r/l)"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}, {reg3}",
+                "{op} {reg1}, {reg2}, {literal}"
+            ]
         },
         "comparison": {
             "mainWeight": 10,
@@ -83,7 +114,10 @@
                 "bad_operand": "r-m/m-r/m-m",
                 "no_effect": "r-i/i-r/i-i",
                 "undefined_behavior": "m-m"
-            }
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}"
+            ]
         },
         "offsets": ["#8", "#16", "#32"],
         "registers_32": [
@@ -98,81 +132,105 @@
             "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23",
             "X24", "X25", "X26", "X27", "X28", "X29", "X30", "XZR", "SP"
         ],
-
         "registers_stack": ["SP"],
         "registers_regular": ["X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7",
             "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15",
             "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23",
             "X24", "X25", "X26", "X27", "X28", "X29", "X30"]
-
     },
     "X86_32": {
         "name": "X86_32",
-        "memOps" : {
-            "mainWeight" : 15,
+        "memOps": {
+            "mainWeight": 15,
             "instructions": ["mov"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}",
+                "{op} {literal}, {memAddr}",
+                "{op} {literal}, {reg1}"
+            ]
         },
-        "archOps" : {
-            "mainWeight" : 15,
+        "archOps": {
+            "mainWeight": 15,
             "instructions": ["push", "pop"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "r",
-                "bad_dest" : "m/l",
-                "bad_src" : "m/l",
-                "bad_ct" : "a-a"
-            }
+                "bad_dest": "m/l",
+                "bad_src": "m/l",
+                "bad_ct": "a-a"
+            },
+            "formats": [
+                "{op} {reg1}",
+                "{op} {memAddr}"
+            ]
         },
-        "arithUnary" : {
-            "mainWeight" : 20,
+        "arithUnary": {
+            "mainWeight": 20,
             "instructions": ["neg", "not"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}"
+            ]
         },
-        "arithBinary" : {
-            "mainWeight" : 30,
+        "arithBinary": {
+            "mainWeight": 30,
             "instructions": ["add", "sub"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}"
+            ]
         },
         "bitLogic": {
             "mainWeight": 15,
             "instructions": ["and", "or", "xor"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}"
+            ]
         },
-        "bitShift" : {
-            "mainWeight" : 20,
+        "bitShift": {
+            "mainWeight": 20,
             "instructions": ["shl", "shr", "sar"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {literal}"
+            ]
         },
         "comparison": {
             "mainWeight": 10,
@@ -183,85 +241,115 @@
                 "bad_operand": "r-m/m-r/m-m",
                 "no_effect": "r-i/i-r/i-i",
                 "undefined_behavior": "m-m"
-            }
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}",
+                "{op} {reg1}, {literal}",
+                "{op} {memAddr}, {literal}"
+            ]
         },
         "offsets": ["0x4", "0x8", "0x12", "0x16"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
-
         "registers_stack": ["ebp", "esp"],
         "registers_regular": ["eax", "ebx", "ecx", "edx", "esi", "edi"]
-
     },
     "X86_64": {
         "name": "X86_64",
         "doubleMem_litDest": [0.60, 0.40],
-        "bad_dest" : [0.40, 0.60],
-        "memOps" : {
-            "mainWeight" : 15,
+        "bad_dest": [0.40, 0.60],
+        "memOps": {
+            "mainWeight": 15,
             "instructions": ["mov"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}",
+                "{op} {literal}, {memAddr}",
+                "{op} {literal}, {reg1}"
+            ]
         },
-        "archOps" : {
-            "mainWeight" : 15,
+        "archOps": {
+            "mainWeight": 15,
             "instructions": ["push", "pop"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "r",
-                "bad_dest" : "m/l",
-                "bad_src" : "m/l",
-                "bad_ct" : "a-a"
-            }
+                "bad_dest": "m/l",
+                "bad_src": "m/l",
+                "bad_ct": "a-a"
+            },
+            "formats": [
+                "{op} {reg1}"
+            ]
         },
-        "arithUnary" : {
-            "mainWeight" : 20,
+        "arithUnary": {
+            "mainWeight": 20,
             "instructions": ["neg", "not"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}"
+            ]
         },
-        "arithBinary" : {
-            "mainWeight" : 30,
+        "arithBinary": {
+            "mainWeight": 30,
             "instructions": ["add", "sub"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}"
+            ]
         },
         "bitLogic": {
             "mainWeight": 15,
             "instructions": ["and", "or", "xor"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}"
+            ]
         },
-        "bitShift" : {
-            "mainWeight" : 20,
+        "bitShift": {
+            "mainWeight": 20,
             "instructions": ["shl", "shr", "sar"],
-            "errorsOdds" : [40, 20, 20, 20],
-            "errors" : {
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
                 "ok": "mr/lr/rr/rm/lm",
-                "bad_dest" : "a-l",
-                "bad_src" : "mm",
-                "bad_ct" : "a-a-r"
-            }
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {literal}"
+            ]
         },
         "comparison": {
             "mainWeight": 10,
@@ -272,16 +360,22 @@
                 "bad_operand": "r-m/m-r/m-m",
                 "no_effect": "r-i/i-r/i-i",
                 "undefined_behavior": "m-m"
-            }
+            },
+            "formats": [
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, {memAddr}",
+                "{op} {memAddr}, {reg1}",
+                "{op} {reg1}, {literal}",
+                "{op} {memAddr}, {literal}"
+            ]
         },
         "offsets": ["0x8", "0x16", "0x16", "0x32"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi"],
         "registers_64": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"],
-
         "registers_stack": ["rbp", "rsp"],
         "registers_regular": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
-
     }
 }
