@@ -211,15 +211,46 @@ class ArchInstructions {
 
     // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
-        let selected_instructions = [];
         const offsets = arch_data[this.architecture]['offsets'];
-        selected_instructions = [];
-        for (let i = 0; i < num_instructions; i++) {
-            const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
-            selected_instructions.push(instruction);
+
+        for (let attempt = 0; attempt < 100; attempt++) {
+            let selected_instructions = [];
+
+            // Keep generating instructions until we have the required number
+            while (selected_instructions.length < num_instructions) {
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
+                if (!selected_instructions.includes(instruction)) {
+                    selected_instructions.push(instruction);
+                }
+            }
+
+            // Create a deep copy of the initial state
+            const initialState = {
+                instructions: [...selected_instructions],
+                registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
+                memory: JSON.parse(JSON.stringify(selected_addresses))
+            };
+
+            // Execute instructions and check for negative values
+            this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
+
+            if (!this.hasNegativeNumbers(this.states[this.states.length - 1])) {
+                // Valid set of instructions found
+                return selected_instructions;
+            }
+
+            // Reset states for the next attempt
+            this.states = [];
         }
-        this.executeInstructions([selected_instructions, [...selected_regular_registers, ...selected_stack_registers], selected_addresses]);
+
+        // If we couldn't generate a valid set of instructions after 100 attempts
+        console.warn("Could not generate instructions without negative values after 100 attempts");
         return selected_instructions;
+    }
+
+    hasNegativeNumbers(state) {
+        return state.registers.some(r => parseInt(r.value) < 0) ||
+               state.memory.some(m => parseInt(m.value) < 0);
     }
 
     // Generates a complex instruction format based on the given parameters
@@ -246,33 +277,28 @@ class ArchInstructions {
 
         let [formatType, format] = this.generateComplexInstructionFormat(selection);
 
-        // randomly select operation
-        let operations = [
-            ...(selection[0] ? arch_data[this.architecture][formatType].instructions : []),
-            ...(selection[1] ? arch_data[this.architecture][formatType].instructions : []),
-            ...(selection[2] ? arch_data[this.architecture][formatType].instructions : []),
-        ];
-        let op = unifPickItem(operations);
+        let op = unifPickItem(arch_data[this.architecture][formatType].instructions);
+
         // randomly select registers
-        let reg1 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `%${unifPickItem(regular_registers).register}`;
-        let reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `%${unifPickItem(regular_registers).register}`;
+        let reg1 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
+        let reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
         let reg3 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : '';
+        // randomly select offset
+        let offset = unifPickItem(offsets);
+        if (format.includes('offset')) {
+            const maxOffset = format.includes('memAddr')
+            ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+            : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+            offset = Math.min(offset, maxOffset).toString(16);
+        }
         // randomly select memory address
         let memItem = unifPickItem(memory);
         while (stack_registers.some(r => r.value == memItem.address)) {
             memItem = unifPickItem(memory);
         }
-        const memAddr = `${memItem.location}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
-        // randomly select offset
-        let offset = unifPickItem(offsets);
-        if (format.includes('offset')) {
-            const maxOffset = format.includes('memAddr')
-                ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
-                : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-            offset = Math.min(offset, maxOffset);
-        }
+        const memAddr = `${"-"+offset}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
         // randomly select literal
-        let literal = `${this.architecture === 'ARM64' ? '#' : '$'}${Math.floor(Math.random() * 8) * 8}`;
+        let literal = Math.floor(Math.random() * 8) * 8;
 
         return format.replace(/\+0\b/g, '')
             .replace(/{op}/g, op)
@@ -291,7 +317,6 @@ class ArchInstructions {
         const memory = JSON.parse(JSON.stringify(initialMemory));
         this.states = instructions.map((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
-            console.log(instruction)
             if (parsed) this.executeInstruction(parsed.op, parsed.args, registers, memory);
             return { instruction, step: step + 1, registers: JSON.parse(JSON.stringify(registers)), memory: JSON.parse(JSON.stringify(memory)).reverse() };
         });
@@ -380,7 +405,6 @@ class ArchInstructions {
             memory.find(m => m.location == (rspMemory.location - increment)).value = value;
             registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${rspMemory.location - increment}`).address;
         } else if (op === 'pop') {
-            value = this.getValue(`(${rspMemory.location})`, registers, memory);
             this.setValue(dest, rspMemory.value, registers, memory);
             registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${Number(rspMemory.location) + increment}`).address;
         }
@@ -399,8 +423,8 @@ class ArchInstructions {
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
         if (operand == undefined) return null;
-        if (operand.startsWith('%')) registers.find(r => `%${r.register}` === operand).value = value;
-        if (operand.startsWith('X')) registers.find(r => `${r.register}` === operand).value = value;
+        if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value = value;
+        if (operand.startsWith('X')) return registers.find(r => `${r.register}` === operand).value = value;
         else memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
     }
 
@@ -413,7 +437,7 @@ class ArchInstructions {
             const baseRegister = registers.find(r => r.register === reg);
             if (!baseRegister) return operand;
             let address = parseInt(baseRegister.value, 16);
-            if (offset) address += parseInt(offset, offset.startsWith('0x') || offset.startsWith('-0x') ? 16 : 10);
+            if (offset) address += parseInt(offset, 16);
             return `0x${address.toString(16).toUpperCase().padStart(3, '0')}`;
         }
         return operand;

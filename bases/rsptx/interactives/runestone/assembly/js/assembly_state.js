@@ -62,7 +62,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderHeader() {
         this.headerDiv = $("<div>").html(
             "For the highlighted instruction, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
-            + "You do not need to enter values for registers or memory locations whose values do not change."
+            + "You do not need to enter values for registers or memory locations whose values do not change.<br></br>"
         ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
     }
@@ -73,12 +73,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // Initialize the generator based on the architecture
         const instructionTypes = [
             { label: 'Memory Manipulation', value: 'memorymanipulation' },
+            { label: 'Stack Operations', value: 'stackoperation' }
         ];
-
-        // Only include Stack Operations if the architecture is not ARM64
-        if (this.architecture !== 'ARM64') {
-            instructionTypes.push({ label: 'Stack Operations', value: 'stackoperation' });
-        }
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
 
@@ -150,7 +146,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the list of instructions for the exercise
     renderInstructionsList(instructions) {
         const instructionDiv = $("<div>").addClass("instruction-container");
-        instructionDiv.append($("<h4>").text("The Instructions:").css(
+        instructionDiv.append($("<h4>").text("Assembly Code:").css(
             "font-weight", "bold",
             "font-size", "1.5em"
         ));
@@ -308,10 +304,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
-        const resetButton = $("<button>").text("Reset").on("click", () => this.resetValues());
-        const tryAnotherButton = $("<button>").text("Try Another Question").on("click", () => this.tryAnother());
-        const checkAnswerButton = $("<button>").text("Check Answer").on("click", () => this.checkAnswer());
-        const linkButton = $("<button>").text("Go to Dive Into Systems").on("click", () => this.goToLink());
+        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
+        const tryAnotherButton = $("<button>").text("Try Another Question").addClass("btn-success").on("click", () => this.tryAnother());
+        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
+        const linkButton = $("<button>").text("Go to Dive Into Systems").addClass("btn-success").on("click", () => this.goToLink());
 
         buttonContainer.append(resetButton, tryAnotherButton, checkAnswerButton, linkButton);
         this.containerDiv.append(buttonContainer);
@@ -320,8 +316,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Updates the feedback message based on correctness
     reRenderFeedback(isCorrect) {
         let feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
-        console.log("feedback" + (this.currentInstruction))
-
         let feedbackMessage = isCorrect ?
             `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
             "Incorrect. Please try again.";
@@ -418,6 +412,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             if (this.currentInstruction >= this.initialState[0].length) {
                 this.renderFinalFeedback();
                 this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
+                this.containerDiv.find(".instruction-div").removeClass("current").addClass("disabled");
             } else {
                 this.currentInstruction++;
                 this.moveToNextInstruction();
@@ -428,16 +423,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory) {
         const expectedState = this.allStates[this.currentInstruction];
-        console.log(" Expected values");
-        console.log(expectedState);
-
-        console.log(" input regs ");
-        console.log(userRegisters);
         let isCorrect = true;
 
         for (let reg of expectedState.registers) {
             if (userRegisters[reg.register] != reg.value) {
-                console.log("input: " + userRegisters[reg.register] + " expected: " + reg.value);
                 isCorrect = false;
                 break;
             }
@@ -446,7 +435,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         if (isCorrect) {
             for (let mem of expectedState.memory) {
                 if (userMemory[mem.address] != mem.value) {
-                    console.log("inputMem: " + userMemory[mem.address] + "expectedMem: " + mem.value);
                     isCorrect = false;
                     break;
                 }

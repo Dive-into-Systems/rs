@@ -20,11 +20,11 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {reg1}, {literal}",
                 "{op} {reg1}, [{reg2}]",
-                "{op} {reg1}, [{reg2} + {literal}]",
-                "{op} {reg1}, [{reg2} - {literal}]"
+                "{op} {reg1}, #{literal}",
+                "{op} {reg1}, [{reg2}, #{literal}]",
+                "{op} {reg1}, [{reg2}, #{literal}]!",
+                "{op} {reg1}, [{reg2}], #{literal}"
             ]
         },
         "archOps": {
@@ -38,10 +38,10 @@
                 "bad_ct": "r-r-r"
             },
             "formats": [
-                "{op} {reg1}, [{reg2}, {literal}]",
+                "{op} {reg1}, [{reg2}, #{literal}]",
                 "{op} {reg1}, [{reg2}]",
-                "{op} {reg1}, [{reg2}, {literal}]!",
-                "{op} {reg1}, [{reg2}], {literal}"
+                "{op} {reg1}, [{reg2}, #{literal}]!",
+                "{op} {reg1}, [{reg2}], #{literal}"
             ]
         },
         "arithUnary": {
@@ -56,7 +56,7 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {literal}"
+                "{op} {reg1}, #{literal}"
             ]
         },
         "arithBinary": {
@@ -70,9 +70,8 @@
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
-                "{op} {reg1}, {reg2}, {reg1}",
-                "{op} {reg3}, {reg2}, {reg1}",
-                "{op} {reg1}, {reg1}, {literal}"
+                "{op} {reg1}, {reg2}, {reg3}",
+                "{op} {reg1}, {reg2}, #{literal}"
             ]
         },
         "bitLogic": {
@@ -87,7 +86,7 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}, {reg3}",
-                "{op} {reg1}, {reg2}, {literal}"
+                "{op} {reg1}, {reg2}, #{literal}"
             ]
         },
         "bitShift": {
@@ -102,7 +101,7 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}, {reg3}",
-                "{op} {reg1}, {reg2}, {literal}"
+                "{op} {reg1}, {reg2}, #{literal}"
             ]
         },
         "comparison": {
@@ -116,10 +115,11 @@
                 "undefined_behavior": "m-m"
             },
             "formats": [
-                "{op} {reg1}, {reg2}"
+                "{op} {reg1}, {reg2}",
+                "{op} {reg1}, #{literal}"
             ]
         },
-        "offsets": ["#8", "#16", "#32"],
+        "offsets": ["#0x4", "#0x8", "#0x12", "#0x16", "#0x8", "#0x10", "#0x20"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
             "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15",
@@ -151,11 +151,11 @@
                 "bad_ct": "a"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}",
-                "{op} {literal}, {memAddr}",
-                "{op} {literal}, {reg1}"
+                "{op} %{reg1}, %{reg2}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} ${literal}, {memAddr}",
+                "{op} ${literal}, %{reg1}"
             ]
         },
         "archOps": {
@@ -169,7 +169,7 @@
                 "bad_ct": "a-a"
             },
             "formats": [
-                "{op} {reg1}",
+                "{op} %{reg1}",
                 "{op} {memAddr}"
             ]
         },
@@ -184,7 +184,7 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}"
+                "{op} %{reg1}"
             ]
         },
         "arithBinary": {
@@ -198,9 +198,11 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, {memAddr}"
             ]
         },
         "bitLogic": {
@@ -214,7 +216,10 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} ${literal}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}"
             ]
         },
         "bitShift": {
@@ -228,8 +233,8 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {literal}"
+                "{op} %cl, %{reg1}",
+                "{op} ${literal}, %{reg1}"
             ]
         },
         "comparison": {
@@ -243,14 +248,14 @@
                 "undefined_behavior": "m-m"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}",
-                "{op} {reg1}, {literal}",
-                "{op} {memAddr}, {literal}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, {memAddr}"
             ]
         },
-        "offsets": ["0x4", "0x8", "0x12", "0x16"],
+        "offsets": ["0x4", "0x8", "0xC", "0x10", "0x14", "0x18", "0x1C"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
         "registers_stack": ["ebp", "esp"],
@@ -271,11 +276,11 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}",
-                "{op} {literal}, {memAddr}",
-                "{op} {literal}, {reg1}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} ${literal}, {memAddr}",
+                "{op} ${literal}, %{reg1}"
             ]
         },
         "archOps": {
@@ -289,7 +294,8 @@
                 "bad_ct": "a-a"
             },
             "formats": [
-                "{op} {reg1}"
+                "{op} %{reg1}",
+                "{op} {memAddr}"
             ]
         },
         "arithUnary": {
@@ -303,7 +309,7 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}"
+                "{op} %{reg1}"
             ]
         },
         "arithBinary": {
@@ -317,9 +323,11 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, {memAddr}"
             ]
         },
         "bitLogic": {
@@ -333,7 +341,10 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} ${literal}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}"
             ]
         },
         "bitShift": {
@@ -347,8 +358,8 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {literal}"
+                "{op} %cl, %{reg1}",
+                "{op} ${literal}, %{reg1}"
             ]
         },
         "comparison": {
@@ -362,15 +373,14 @@
                 "undefined_behavior": "m-m"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, {memAddr}",
-                "{op} {memAddr}, {reg1}",
-                "{op} {reg1}, {literal}",
-                "{op} {memAddr}, {literal}"
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, {memAddr}"
             ]
         },
-        "offsets": ["0x8", "0x16", "0x16", "0x32"],
+        "offsets": ["0x8", "0x10", "0x18", "0x20", "0x28", "0x30", "0x38"],
         "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi"],
         "registers_64": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"],
