@@ -1,104 +1,105 @@
 .selectwidthauto {
-  width:auto !important;
-  display: inline-block !important;
-  margin: 5px;
+    width: auto !important;
+    display: inline-block !important;
+    margin: 5px;
 }
 
 input.input-validation-error {
- border: 1px solid #e80c4d;
+    border: 1px solid #e80c4d;
 }
 
 input {
- padding:5px;
- color:#222;
- font-family:corbel,sans-serif;
- font-size: 14px;
- margin: 10px;
+    padding: 5px;
+    color: #222;
+    font-family: corbel, sans-serif;
+    font-size: 14px;
+    margin: 10px;
 }
 
 input[type="radio"] {
- margin-top: -1px;
- margin-left: 2px;
- vertical-align: middle;
+    margin-top: -1px;
+    margin-left: 2px;
+    vertical-align: middle;
 }
 
 button[disabled] {
- background-color: WhiteSmoke;
- color: #606060;
+    background-color: WhiteSmoke;
+    color: #606060;
 }
 
 .disabled-code {
- background-color: #F0F0F0;
- color: #383838;
+    background-color: #f0f0f0;
+    color: #383838;
 }
 
 .highlightWrong {
- accent-color: brown;
+    accent-color: brown;
 }
 
 .highlightRight {
-  accent-color: green;
- }
+    accent-color: green;
+}
 
 .button-check.checkingbutton {
-  background-color: HoneyDew;
-  border-radius: 8px;
-  border-width: 0;
-  color: seagreen;
-  cursor: pointer;
-  display: inline-block;
-  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 20px;
-  list-style: none;
-  margin: 0;
-  padding: 5px 8px;
-  text-align: center;
-  transition: all 200ms;
-  vertical-align: baseline;
-  white-space: nowrap;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  position: relative;
-  left: 30px;
+    background-color: HoneyDew;
+    border-radius: 8px;
+    border-width: 0;
+    color: seagreen;
+    cursor: pointer;
+    display: inline-block;
+    font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial,
+        sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 5px 8px;
+    text-align: center;
+    transition: all 200ms;
+    vertical-align: baseline;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    position: relative;
+    left: 30px;
 }
 
 #containerDiv {
-  height: auto; /* Automatically adjust height */
-  max-height: 10000px; /* Maximum height limited to the viewport height */
-  padding: 10px; /* Add some padding for better appearance */
+    height: auto; /* Automatically adjust height */
+    max-height: 10000px; /* Maximum height limited to the viewport height */
+    padding: 10px; /* Add some padding for better appearance */
 }
 
 /* Optional: Specific styles for the question div to ensure they fit */
 .questionDiv {
-  margin-bottom: 10px; /* Add margin between questions */
+    margin-bottom: 10px; /* Add margin between questions */
 }
 
 .feedbackCorrect {
-  border: 1px solid transparent;
-  padding-left: 3px;
-  padding-right: 3px;
-  border-radius: 4px;
+    border: 1px solid transparent;
+    padding-left: 3px;
+    padding-right: 3px;
+    border-radius: 4px;
 }
 
-.feedbackCorrect>span {
-  background-color: lightgreen;
+.feedbackCorrect > span {
+    background-color: lightgreen;
 }
 
-.feedbackError{
-  padding-left: 3px;
-  padding-right: 3px;
-  border: 1px solid transparent;
-  border-radius: 4px;
+.feedbackError {
+    padding-left: 3px;
+    padding-right: 3px;
+    border: 1px solid transparent;
+    border-radius: 4px;
 }
 
-.feedbackError>span {
-  background-color: var(--dangerAlerts);
+.feedbackError > span {
+    background-color: var(--dangerAlerts);
 }
 
 .centerplease {
-  text-align: center;
-  vertical-align: baseline;
+    text-align: center;
+    vertical-align: baseline;
 }

@@ -197,40 +197,75 @@ class ArchInstructions {
 
         let selected_stack_registers;
 
-        if (this.architecture == "ARM64") {
-            selected_stack_registers = [{ register: registers_stack[0], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" }];
-        } else {
-            selected_stack_registers = [
+        selected_stack_registers = [
                 { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" },
                 { register: registers_stack[0], value: selected_addresses[0].address, type: "memory" }
             ];
-        }
 
         return { selected_regular_registers, selected_stack_registers };
     }
 
     // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
-        let selected_instructions = [];
         const offsets = arch_data[this.architecture]['offsets'];
-        selected_instructions = [];
-        for (let i = 0; i < num_instructions; i++) {
-            const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
-            selected_instructions.push(instruction);
+
+        for (let attempt = 0; attempt < 100; attempt++) {
+            let selected_instructions = [];
+
+            // Keep generating instructions until we have the required number
+            let instruction_num = 0 ;
+            while (selected_instructions.length < num_instructions) {
+                instruction_num++;
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, instruction_num);
+                if (!selected_instructions.includes(instruction)) {
+                    selected_instructions.push(instruction);
+                }
+            }
+
+            // Create a deep copy of the initial state
+            const initialState = {
+                instructions: [...selected_instructions],
+                registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
+                memory: JSON.parse(JSON.stringify(selected_addresses))
+            };
+
+            // Execute instructions and check for negative values
+            this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
+
+            // If no negative values were found, return the selected instructions
+            if (!this.states.some(state => this.hasNegativeNumbers(state))) {
+                return selected_instructions;
+            }
+
+            // Reset states for the next attempt
+            this.states = [];
         }
-        this.executeInstructions([selected_instructions, [...selected_regular_registers, ...selected_stack_registers], selected_addresses]);
+
+        // If we couldn't generate a valid set of instructions after 100 attempts
+        console.warn("Could not generate instructions without negative values after 100 attempts");
         return selected_instructions;
     }
 
+    hasNegativeNumbers(state) {
+        return state.registers.some(r => parseInt(r.value) < 0) ||
+               state.memory.some(m => parseInt(m.value) < 0);
+    }
+
     // Generates a complex instruction format based on the given parameters
-    generateComplexInstructionFormat(selection) {
+    generateComplexInstructionFormat(selection, instruction_num) {
         const archData = arch_data[this.architecture];
         let availableFormats = {}
 
         // Add formats based on the selected instruction types
+        
         if (selection[0]) availableFormats["arithBinary"] = archData["arithBinary"].formats;
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
+
+        if (selection[2] && instruction_num == 2){
+            availableFormats = {};
+            availableFormats["archOps"] = archData["archOps"].formats;
+        }
 
         // Select a random type from the available format types
         const formatType = unifPickItem(Object.keys(availableFormats));
@@ -242,37 +277,33 @@ class ArchInstructions {
     }
 
     // Generates a complex instruction based on the given parameters
-    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
+    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection,instruction_num) {
 
-        let [formatType, format] = this.generateComplexInstructionFormat(selection);
+        let [formatType, format] = this.generateComplexInstructionFormat(selection,instruction_num);
 
-        // randomly select operation
-        let operations = [
-            ...(selection[0] ? arch_data[this.architecture][formatType].instructions : []),
-            ...(selection[1] ? arch_data[this.architecture][formatType].instructions : []),
-            ...(selection[2] ? arch_data[this.architecture][formatType].instructions : []),
-        ];
-        let op = unifPickItem(operations);
+        
+        let op = unifPickItem(arch_data[this.architecture][formatType].instructions);
+
         // randomly select registers
-        let reg1 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `%${unifPickItem(regular_registers).register}`;
-        let reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `%${unifPickItem(regular_registers).register}`;
+        let reg1 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
+        let reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
         let reg3 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : '';
+        // randomly select offset
+        let offset = unifPickItem(offsets);
+        if (format.includes('offset')) {
+            const maxOffset = format.includes('memAddr')
+            ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
+            : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
+            offset = Math.min(offset, maxOffset).toString(16);
+        }
         // randomly select memory address
         let memItem = unifPickItem(memory);
         while (stack_registers.some(r => r.value == memItem.address)) {
             memItem = unifPickItem(memory);
         }
-        const memAddr = `${memItem.location}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
-        // randomly select offset
-        let offset = unifPickItem(offsets);
-        if (format.includes('offset')) {
-            const maxOffset = format.includes('memAddr')
-                ? Math.max(...memory.map(item => parseInt(item.address, 16))) - parseInt(memItem.address, 16)
-                : Math.max(...regular_registers.map(item => parseInt(item.value, 16))) - parseInt(memItem.address, 16);
-            offset = Math.min(offset, maxOffset);
-        }
+        const memAddr = `${"-"+offset}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
         // randomly select literal
-        let literal = `${this.architecture === 'ARM64' ? '#' : '$'}${Math.floor(Math.random() * 8) * 8}`;
+        let literal = Math.floor(Math.random() * 8);
 
         return format.replace(/\+0\b/g, '')
             .replace(/{op}/g, op)
@@ -340,7 +371,6 @@ class ArchInstructions {
         const srcValue2 = this.getValue(src2, registers, memory);
         switch (op) {
             case 'mov':
-            case 'movl':
             case 'mvn':
                 this.executeMemoryOperation(op, dest, src1, registers, memory);
                 break;
@@ -369,21 +399,52 @@ class ArchInstructions {
     }
 
     // Executes the push or pop instruction
-    executeStackOperation(op, dest, src, registers, memory) {
-        const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
-        const increment = this.architecture == "X86_32" ? 4 : 8;
-        const rspAddress = this.getMemoryAddress(`(%${baseReg})`, registers, memory);
-        const rspMemory = memory.find(m => m.address === rspAddress);
-        let value;
-        if (op === 'push') {
-            value = this.getValue(src, registers, memory);
-            memory.find(m => m.location == (rspMemory.location - increment)).value = value;
-            registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${rspMemory.location - increment}`).address;
-        } else if (op === 'pop') {
-            value = this.getValue(`(${rspMemory.location})`, registers, memory);
-            this.setValue(dest, rspMemory.value, registers, memory);
-            registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${Number(rspMemory.location) + increment}`).address;
+    executeStackOperation(op, dest, src, registers, memoryArray) {
+        const baseReg = this.architecture === "ARM64" ? "SP" : (this.architecture === "X86_32" ? 'esp' : 'rsp');
+        const increment = this.architecture === "ARM64" ? 8 : (this.architecture === "X86_32" ? 4 : 8);
+        const address = registers.find(r => r.register === baseReg).value;
+        const memoryLocation = memoryArray.find(m => m.address === address);
+
+        if (!memoryLocation) {
+            throw new Error(`Memory location not found at address: ${address}`);
         }
+
+        let value;
+
+        if (this.architecture === "ARM64") {
+            if (op === "ldr") {
+                this.setValue(dest, memoryLocation.value, registers, memoryArray);
+            } else if (op === "str") {
+                value = this.getValue(src, registers, memoryArray);
+                memoryLocation.value = value;
+            }
+        } else {
+            if (op === 'push') {
+                value = this.getValue(src, registers, memoryArray);
+                const newMemoryLocation = memoryArray.find(m => m.address === `0x${(parseInt(memoryLocation.address, 16) - increment).toString(16).toUpperCase()}`);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: 0x${(parseInt(memoryLocation.address, 16) - increment).toString(16).toUpperCase()}`);
+                }
+                newMemoryLocation.value = value;
+                this.updateStackPointer(registers, newMemoryLocation.address);
+            } else if (op === 'pop') {
+                this.setValue(dest, memoryLocation.value, registers, memoryArray);
+                const newMemoryLocation = memoryArray.find(m => m.address === `0x${(parseInt(memoryLocation.address, 16) + increment).toString(16).toUpperCase()}`);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: 0x${(parseInt(memoryLocation.address, 16) + increment).toString(16).toUpperCase()}`);
+                }
+                this.updateStackPointer(registers, newMemoryLocation.address);
+            }
+        }
+    }
+
+    // Updates the stack pointer register with the new address
+    updateStackPointer(registers, newAddress) {
+        const spRegister = registers.find(r => r.register.toLowerCase() === 'rsp' || r.register.toLowerCase() === 'esp' || r.register.toLowerCase() === 'sp');
+        if (!spRegister) {
+            throw new Error('Stack pointer register not found');
+        }
+        spRegister.value = newAddress;
     }
 
     // Acquire value from the given registers and memories
@@ -399,8 +460,8 @@ class ArchInstructions {
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
         if (operand == undefined) return null;
-        if (operand.startsWith('%')) registers.find(r => `%${r.register}` === operand).value = value;
-        if (operand.startsWith('X')) registers.find(r => `${r.register}` === operand).value = value;
+        if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value = value;
+        if (operand.startsWith('X')) return registers.find(r => `${r.register}` === operand).value = value;
         else memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory)).value = value;
     }
 
@@ -413,7 +474,7 @@ class ArchInstructions {
             const baseRegister = registers.find(r => r.register === reg);
             if (!baseRegister) return operand;
             let address = parseInt(baseRegister.value, 16);
-            if (offset) address += parseInt(offset, offset.startsWith('0x') || offset.startsWith('-0x') ? 16 : 10);
+            if (offset) address += parseInt(offset, 16);
             return `0x${address.toString(16).toUpperCase().padStart(3, '0')}`;
         }
         return operand;
