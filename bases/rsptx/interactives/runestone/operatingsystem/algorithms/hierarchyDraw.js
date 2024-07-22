@@ -15,15 +15,13 @@ function getHierarchyAttr(links, labels) {
     let parsedLabels = labels.map(label => {
         let [key, value] = label.split(":");
         return {
-            key: parseInt(key.trim()), // convert key to a number
-            value: value.trim() // keep value as string
+            key: parseInt(key.trim()),
+            value: value.trim()
         };
     });
     
-    // Step 2: Sort based on keys
     parsedLabels.sort((a, b) => a.key - b.key);
-    
-    // Step 3: Reconstruct the sorted array
+
     let sortedLabels = parsedLabels.map(label => `${label.key}: ${label.value}`);
 
     console.log("Sorted labels are", sortedLabels);
@@ -41,7 +39,6 @@ function getHierarchyAttr(links, labels) {
     console.log("Links are", links);
 
     const groupedByParent = links.reduce((acc, obj) => {
-        // Initialize the parent key with an empty array if it doesn't exist
         if (!acc[obj.parent]) {
             acc[obj.parent] = [];
         }
