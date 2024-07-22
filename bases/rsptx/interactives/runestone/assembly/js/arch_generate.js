@@ -197,14 +197,10 @@ class ArchInstructions {
 
         let selected_stack_registers;
 
-        if (this.architecture == "ARM64") {
-            selected_stack_registers = [{ register: registers_stack[0], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" }];
-        } else {
-            selected_stack_registers = [
+        selected_stack_registers = [
                 { register: registers_stack[1], value: selected_addresses[selected_addresses.length - 4].address, type: "memory" },
                 { register: registers_stack[0], value: selected_addresses[0].address, type: "memory" }
             ];
-        }
 
         return { selected_regular_registers, selected_stack_registers };
     }
@@ -217,8 +213,10 @@ class ArchInstructions {
             let selected_instructions = [];
 
             // Keep generating instructions until we have the required number
+            let instruction_num = 0 ;
             while (selected_instructions.length < num_instructions) {
-                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection);
+                instruction_num++;
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, instruction_num);
                 if (!selected_instructions.includes(instruction)) {
                     selected_instructions.push(instruction);
                 }
@@ -254,14 +252,20 @@ class ArchInstructions {
     }
 
     // Generates a complex instruction format based on the given parameters
-    generateComplexInstructionFormat(selection) {
+    generateComplexInstructionFormat(selection, instruction_num) {
         const archData = arch_data[this.architecture];
         let availableFormats = {}
 
         // Add formats based on the selected instruction types
+        
         if (selection[0]) availableFormats["arithBinary"] = archData["arithBinary"].formats;
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
+
+        if (selection[2] && instruction_num == 2){
+            availableFormats = {};
+            availableFormats["archOps"] = archData["archOps"].formats;
+        }
 
         // Select a random type from the available format types
         const formatType = unifPickItem(Object.keys(availableFormats));
@@ -273,10 +277,11 @@ class ArchInstructions {
     }
 
     // Generates a complex instruction based on the given parameters
-    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection) {
+    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection,instruction_num) {
 
-        let [formatType, format] = this.generateComplexInstructionFormat(selection);
+        let [formatType, format] = this.generateComplexInstructionFormat(selection,instruction_num);
 
+        
         let op = unifPickItem(arch_data[this.architecture][formatType].instructions);
 
         // randomly select registers

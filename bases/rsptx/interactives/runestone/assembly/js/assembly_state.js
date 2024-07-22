@@ -210,7 +210,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const memoryTableHead = $("<thead>").append($("<tr>").append(
             $("<th>").text("Address"),
             $("<th>").text("Current Value"),
-            $("<th>").text("Updated Value")
+            $("<th>").text("Post Instruction Value")
         ));
         const memoryTableBody = $("<tbody>");
         addresses.forEach(addr => {
@@ -319,9 +319,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         let feedbackMessage = isCorrect ?
             `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
             "Incorrect. Please try again.";
-        if (this.currentInstruction >= this.initialState[0].length) {
-            feedbackMessage = "You have completed the exercise!";
-        }
+        // if (this.currentInstruction >= this.initialState[0].length) {
+        //     feedbackMessage = "You have completed the exercise!";
+        // }
         feedbackDiv.text(feedbackMessage).css('color', isCorrect ? 'green' : 'red');
     }
 
