@@ -38,10 +38,8 @@
                 "bad_ct": "r-r-r"
             },
             "formats": [
-                "{op} {reg1}, [{reg2}, #{literal}]",
-                "{op} {reg1}, [{reg2}]",
-                "{op} {reg1}, [{reg2}, #{literal}]!",
-                "{op} {reg1}, [{reg2}], #{literal}"
+                "{op} {reg1}, [{reg3}]",
+                "{op} {reg2}, [{reg3}]"
             ]
         },
         "arithUnary": {
@@ -119,7 +117,7 @@
                 "{op} {reg1}, #{literal}"
             ]
         },
-        "offsets": ["#0x4", "#0x8", "#0x12", "#0x16", "#0x8", "#0x10", "#0x20"],
+        "offsets": ["#0x4", "#0x8", "#0x12", "#0x16"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
             "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15",
@@ -255,8 +253,8 @@
                 "{op} ${literal}, {memAddr}"
             ]
         },
-        "offsets": ["0x4", "0x8", "0xC", "0x10", "0x14", "0x18", "0x1C"],
-        "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
+        "offsets": ["0x4", "0x8", "0xC", "0x10"],
+        "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
         "registers_stack": ["ebp", "esp"],
         "registers_regular": ["eax", "ebx", "ecx", "edx", "esi", "edi"]
@@ -380,9 +378,9 @@
                 "{op} ${literal}, {memAddr}"
             ]
         },
-        "offsets": ["0x8", "0x10", "0x18", "0x20", "0x28", "0x30", "0x38"],
-        "registers_32": ["eax", "ebx", "ecx", "edx", "esi", "edi"],
-        "registers_64": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
+        "offsets": ["0x8", "0x10", "0x18", "0x20"],
+        "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi"],
+        "registers_64": ["rax", "rcx", "rdx", "rdx", "rsi", "rdi", "rbp", "rsp",
                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"],
         "registers_stack": ["rbp", "rsp"],
         "registers_regular": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi",

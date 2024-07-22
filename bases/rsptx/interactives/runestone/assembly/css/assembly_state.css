@@ -166,3 +166,7 @@ caption {
     text-align: left;
     font-weight: bold;
 }
+
+input:focus::placeholder {
+    color: transparent;
+}

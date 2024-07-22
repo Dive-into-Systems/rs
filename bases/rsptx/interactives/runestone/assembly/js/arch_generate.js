@@ -234,8 +234,8 @@ class ArchInstructions {
             // Execute instructions and check for negative values
             this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
 
-            if (!this.hasNegativeNumbers(this.states[this.states.length - 1])) {
-                // Valid set of instructions found
+            // If no negative values were found, return the selected instructions
+            if (!this.states.some(state => this.hasNegativeNumbers(state))) {
                 return selected_instructions;
             }
 
@@ -298,7 +298,7 @@ class ArchInstructions {
         }
         const memAddr = `${"-"+offset}(%${stack_registers[this.architecture === 'ARM64' ? 0 : 1].register})`;
         // randomly select literal
-        let literal = Math.floor(Math.random() * 8) * 8;
+        let literal = Math.floor(Math.random() * 8);
 
         return format.replace(/\+0\b/g, '')
             .replace(/{op}/g, op)
@@ -317,6 +317,7 @@ class ArchInstructions {
         const memory = JSON.parse(JSON.stringify(initialMemory));
         this.states = instructions.map((instruction, step) => {
             const parsed = this.parseInstruction(instruction);
+            console.log(instruction)
             if (parsed) this.executeInstruction(parsed.op, parsed.args, registers, memory);
             return { instruction, step: step + 1, registers: JSON.parse(JSON.stringify(registers)), memory: JSON.parse(JSON.stringify(memory)).reverse() };
         });
@@ -365,7 +366,6 @@ class ArchInstructions {
         const srcValue2 = this.getValue(src2, registers, memory);
         switch (op) {
             case 'mov':
-            case 'movl':
             case 'mvn':
                 this.executeMemoryOperation(op, dest, src1, registers, memory);
                 break;
@@ -394,20 +394,52 @@ class ArchInstructions {
     }
 
     // Executes the push or pop instruction
-    executeStackOperation(op, dest, src, registers, memory) {
-        const baseReg = this.architecture == "X86_32" ? 'esp' : 'rsp';
-        const increment = this.architecture == "X86_32" ? 4 : 8;
-        const rspAddress = this.getMemoryAddress(`(%${baseReg})`, registers, memory);
-        const rspMemory = memory.find(m => m.address === rspAddress);
-        let value;
-        if (op === 'push') {
-            value = this.getValue(src, registers, memory);
-            memory.find(m => m.location == (rspMemory.location - increment)).value = value;
-            registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${rspMemory.location - increment}`).address;
-        } else if (op === 'pop') {
-            this.setValue(dest, rspMemory.value, registers, memory);
-            registers.find(r => r.register === 'rsp').value = memory.find(m => m.location === `${Number(rspMemory.location) + increment}`).address;
+    executeStackOperation(op, dest, src, registers, memoryArray) {
+        const baseReg = this.architecture === "ARM64" ? "SP" : (this.architecture === "X86_32" ? 'esp' : 'rsp');
+        const increment = this.architecture === "ARM64" ? 8 : (this.architecture === "X86_32" ? 4 : 8);
+        const address = registers.find(r => r.register === baseReg).value;
+        const memoryLocation = memoryArray.find(m => m.address === address);
+
+        if (!memoryLocation) {
+            throw new Error(`Memory location not found at address: ${address}`);
         }
+
+        let value;
+
+        if (this.architecture === "ARM64") {
+            if (op === "ldr") {
+                this.setValue(dest, memoryLocation.value, registers, memoryArray);
+            } else if (op === "str") {
+                value = this.getValue(src, registers, memoryArray);
+                memoryLocation.value = value;
+            }
+        } else {
+            if (op === 'push') {
+                value = this.getValue(src, registers, memoryArray);
+                const newMemoryLocation = memoryArray.find(m => m.address === `0x${(parseInt(memoryLocation.address, 16) - increment).toString(16).toUpperCase()}`);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: 0x${(parseInt(memoryLocation.address, 16) - increment).toString(16).toUpperCase()}`);
+                }
+                newMemoryLocation.value = value;
+                this.updateStackPointer(registers, newMemoryLocation.address);
+            } else if (op === 'pop') {
+                this.setValue(dest, memoryLocation.value, registers, memoryArray);
+                const newMemoryLocation = memoryArray.find(m => m.address === `0x${(parseInt(memoryLocation.address, 16) + increment).toString(16).toUpperCase()}`);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: 0x${(parseInt(memoryLocation.address, 16) + increment).toString(16).toUpperCase()}`);
+                }
+                this.updateStackPointer(registers, newMemoryLocation.address);
+            }
+        }
+    }
+
+    // Updates the stack pointer register with the new address
+    updateStackPointer(registers, newAddress) {
+        const spRegister = registers.find(r => r.register.toLowerCase() === 'rsp' || r.register.toLowerCase() === 'esp' || r.register.toLowerCase() === 'sp');
+        if (!spRegister) {
+            throw new Error('Stack pointer register not found');
+        }
+        spRegister.value = newAddress;
     }
 
     // Acquire value from the given registers and memories
