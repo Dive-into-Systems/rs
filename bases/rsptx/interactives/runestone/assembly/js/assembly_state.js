@@ -198,7 +198,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
-                $("<td>").append($("<input>").attr("type", "text"))
+                $("<td>").append($("<input>").attr("type", "text").attr("placeholder", `${displayValue}`))
             );
             registersTableBody.append(row);
         });
@@ -217,7 +217,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(addr.address),
                 $("<td>").text(addr.value),
-                $("<td>").append($("<input>").attr("type", "text"))
+                $("<td>").append($("<input>").attr("type", "text").attr("placeholder", `${addr.value}`))
             );
             memoryTableBody.append(row);
         });
@@ -251,7 +251,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
-                $("<td>").append($("<input>").attr("type", "text"))
+                $("<td>").append($("<input>").attr("type", "text").attr("placeholder", `${displayValue}`))
             );
             registersTableBody.append(row);
         });
@@ -260,7 +260,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(addr.address),
                 $("<td>").text(addr.value),
-                $("<td>").append($("<input>").attr("type", "text").val(""))
+                $("<td>").append($("<input>").attr("type", "text").val("").attr("placeholder", `${addr.value}`))
             );
             memoryTableBody.append(row);
         });
@@ -282,7 +282,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(register),
                 $("<td>").text(displayValue),
-                $("<td>").append($("<input>").attr("type", "text"))
+                $("<td>").append($("<input>").attr("type", "text").attr("placeholder", `${displayValue}`))
             );
             registersTableBody.append(row);
         });
@@ -294,7 +294,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const row = $("<tr>").append(
                 $("<td>").text(addr.address),
                 $("<td>").text(addr.value),
-                $("<td>").append($("<input>").attr("type", "text").val(""))
+                $("<td>").append($("<input>").attr("type", "text").val("").attr("placeholder", `${addr.value}`))
             );
             memoryTableBody.append(row);
         });
@@ -304,12 +304,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
-        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
         const tryAnotherButton = $("<button>").text("Try Another Question").addClass("btn-success").on("click", () => this.tryAnother());
-        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
+        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
         const linkButton = $("<button>").text("Go to Dive Into Systems").addClass("btn-success").on("click", () => this.goToLink());
+        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
 
-        buttonContainer.append(resetButton, tryAnotherButton, checkAnswerButton, linkButton);
+        buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);
         this.containerDiv.append(buttonContainer);
     }
 
@@ -331,9 +331,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     }
 
     goToLink() {
-        const registers = this.initialState[2].slice(0, 3);
+        const registers = this.initialState[1].slice(0, 3);
         const instructions = this.initialState[0];
-        const memoryValues = this.initialState[1].map(addr => addr.value).slice(3, 7);
+        const memoryValues = this.initialState[2].map(addr => addr.value).slice(3, 7);
 
         const encodedArchitecture = this.architecture == "ARM64" ? "ARM" : (this.architecture == "X86_32" ? "x86" : "x86_64");
         const encodedInstructions = instructions.map(inst => encodeURIComponent(inst)).join('%0A');
