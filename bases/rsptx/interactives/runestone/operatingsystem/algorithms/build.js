@@ -80,84 +80,90 @@ class ForkNode {
         }
     }
 
-
-    fork(leftCode, rightCode, indent) {
+    fork(leftCode, rightCode, indent, terminate, blockId) {
+        // if (blockId > terminate) {
+        //     console.log("Terminating at blockId:", blockId);
+        //     return;
+        // }
+        console.log("In fork function, we are looking at blockId", blockId, "with leftCode", leftCode, "and rightCode", rightCode);
         if (!this.active) {
-            return (new ForkNode()).fork(leftCode,rightCode, indent);
+            return (new ForkNode()).fork(leftCode,rightCode, indent, terminate, blockId);
+        }
+
+        let leftResult, rightResult;
+
+        // if "future" self exist, that one executes instead
+        if (this.left) {
+            [leftResult, rightResult] = this.left.fork(leftCode, rightCode, indent, terminate, blockId);
+        }
+        else {
+            let [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
+            this.left = new ForkNode(leftID, leftCt);
+            leftResult = this.left.pushCode(leftCode, indent, terminate, blockId);
+            this.left.right = new ForkNode(rightID, rightCt);
+            rightResult = this.left.right.pushCode(rightCode, indent, terminate, blockId);
         }
         // you have a child, it also forks
         if (this.right) {
-            this.right.fork(leftCode, rightCode, indent);
+            this.right.fork(leftCode, rightCode, indent, terminate, blockId+1);
         }
-        let leftResult, rightResult;
-        if (this.left) { // if "future" self exist, that one executes instead
-            [leftResult, rightResult] = this.left.fork(leftCode, rightCode, indent);
-        } else {
-            let [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
-            this.left = new ForkNode(leftID, leftCt);
-            leftResult = this.left.pushCode(leftCode, indent);
-            this.left.right = new ForkNode(rightID, rightCt);
-            rightResult = this.left.right.pushCode(rightCode, indent);
-        }
-        return [leftResult, rightResult];
+        return [leftResult, rightResult, blockId];
     }
-    
-    // pushCode(code, terminate, indent = 0) {
-    pushCode(code, terminate=Infinity, indent = 0) {
-        let result = [];
-        let ptr = 0;
-        let leftCode, rightCode;
-        let leftProc, rightProc;
-        let leftResult, rightResult;
-        let [leftID, leftCt, rightID, rightCt] = [0,0,0,0];
-        let blockCounter = 0;
-        let stack = [];
 
-        function addLine(line) {
-            let blockId = stack.length > 0 ? stack[stack.length - 1] : null;
-            // let prefix = (line.includes("{") || blockId) ? `<span data-block="${blockId}">` : '';
-            // let suffix = (line.includes("}") || blockId) ? `</span>` : '';
+    pushCode(code, indent, terminate, blockId) {
+        let result = [];
+        let leftCode, rightCode;
+        let leftResult, rightResult;
+         
+        function addLine(line, blockId) {
             let prefix = blockId ? `<span data-block="${blockId}">` : '';
             let suffix = blockId ? `</span>` : '';
-            // console.log(`${SPC.repeat(indent)}${prefix}${line}${suffix}`);
             result.push(`${SPC.repeat(indent)}${prefix}${line}${suffix}`);
         }
 
-        let blockId;
         for (let ptr = 0; ptr < code.length; ptr++) {
+            console.log("---NEXT INTERATION---");
+            console.log("Looking at code segment", code);
+            blockId++;
+            console.log("Looking at blockId", blockId);
+            if (blockId > terminate) {
+                console.log("Terminating at blockId:", blockId);
+                break;
+            }
             if (code[ptr]!= "F" && code[ptr]!= EXIT_CHAR) {
-                // blockId = ++blockCounter;
-                addLine(`printf("${code[ptr]}");`, stack.slice(-1)[0]);
-                this.print(code[ptr])
+                addLine(`printf("${code[ptr]}");`, blockId);
+                this.print(code[ptr]);
                 continue;
             }
             if (code[ptr] == EXIT_CHAR) {
-                // blockId = ++blockCounter;
-                addLine(`exit();`, stack.slice(-1)[0]);
+                addLine(`exit();`, blockId);
                 this.exit();
-                // break
             }
             if (code[ptr] == "F") {
-                blockId = ++blockCounter;
-                if (blockId > terminate) {
-                    break;
-                }
-                stack.push(blockId);
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-                [leftResult, rightResult] = this.fork(leftCode, rightCode, indent + INDENT_SPC);
-                if (!leftCode && !rightCode) addLine("fork();");
+                [leftResult, rightResult, blockId] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate, blockId);
+                if (!leftCode && !rightCode) {
+                    addLine("fork();", blockId);
+                    blockId++;
+                }
                 if (leftCode) {
                     addLine("if (fork()) {", blockId);
                     result = result.concat(leftResult);
-                    addLine("}", blockId);
-                    if (rightCode) { addLine("else {", blockId); }
+                    if (rightCode) {
+                        addLine("} else {", null);
+                        // blockId+=2;
+                    } else {
+                        addLine("}", null);
+                        // blockId+=1;
+                    }
+                    blockId++;
                 }
                 if (rightCode) {
                     if (!leftCode) addLine("if (fork() == 0) {", blockId);
                     result = result.concat(rightResult);
-                    addLine("}", blockId);
+                    addLine("}", null);
+                    blockId++;
                 }
-                stack.pop();
             }
         }
         return result;
@@ -258,11 +264,6 @@ export function getTreeCSV(root) {
     return { csv: csvString, valuesList: valuesArray };
 }
 
-// function nodeCount(root) {
-//     if (!root) return 1;
-//     return 1+nodeCount(root.left)+nodeCount(root.right);
-// }
-
 function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
     let validPositions = [];
 
@@ -278,7 +279,6 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
 }
 
 export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
-    
     let code = "";
     const fork = hasElse?"F(,)":"F()";
 
@@ -312,13 +312,18 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
-    let codeC = tree.pushCode(code, Infinity).join(NEWLINE);
+    // let codeC = tree.pushCode(code, Infinity, 0).join(NEWLINE);
+    let blockId = 0;
+    let codeC = tree.pushCode(code, 0, Infinity, 0).join(NEWLINE);
     return [tree, codeC];
 }
 
 export function traceTree(code, terminate) {
     let tree = new ForkNode();
     // console.log("In tree builder, terminate is", terminate);
-    let codeC = tree.pushCode(code, terminate, 0).join(NEWLINE);
+    // let codeC = tree.pushCode(code, terminate, 0).join(NEWLINE);
+    let blockId = 0;
+    let codeC = tree.pushCode(code, 0, terminate, 0).join(NEWLINE);
+    console.log(codeC);
     return tree;
 }
