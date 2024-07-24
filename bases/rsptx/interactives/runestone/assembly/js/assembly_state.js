@@ -166,7 +166,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const feedbackDiv = $("<div>")
             .addClass("feedback")
             .attr("id", "feedback" + index)
-            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
+            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" })
+            .html(`<span style="font-weight: 200;">Instruction ${index} feedback will show here</span>`);
 
             listItem.append(instructionDiv, feedbackDiv);
 
@@ -404,11 +405,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Checks the user's answer and provides feedback
     checkAnswer() {
         const [userRegisters, userMemory] = this.gatherInput();
-
         const isCorrect = this.validateAnswers(userRegisters, userMemory);
-        this.reRenderFeedback(isCorrect);
-
+    
         if (isCorrect) {
+            this.reRenderFeedback(true);
             if (this.currentInstruction >= this.initialState[0].length) {
                 this.renderFinalFeedback();
                 this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
@@ -417,8 +417,23 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.currentInstruction++;
                 this.moveToNextInstruction();
             }
+        } else {
+            const currentInstruction = this.initialState[0][this.currentInstruction - 1];
+            const parsedInstruction = this.generator.parseInstruction(currentInstruction);
+            const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
+           
+
+            let customHint = null;
+            if (parsedInstruction) {
+                const { op } = parsedInstruction;
+                customHint = this.generator.getCustomHint(op);
+            }
+    
+            const feedbackMessage = customHint || "Incorrect. Please try again";
+            feedbackDiv.text(feedbackMessage).css('color', 'red');
         }
     }
+    
 
     // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory) {

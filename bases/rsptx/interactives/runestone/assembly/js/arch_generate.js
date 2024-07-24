@@ -54,6 +54,8 @@ class ArchInstructions {
             registers_32: config.registers_32,
             registers_64: config.registers_64
         });
+
+         this.customHints = config.customHints || {};
     }
 
     /*
@@ -138,6 +140,16 @@ class ArchInstructions {
                 this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32) :
                 cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
     }
+
+    // Gets custom hint for each instruction being executed in case user gets it wrong
+    getCustomHint(instruction) {
+
+        if (this.customHints[instruction]) {
+            return this.customHints[instruction];
+        }
+        return null;
+    }
+    
 
     /*
     =====================================================================================

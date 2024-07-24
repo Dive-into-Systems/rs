@@ -117,6 +117,13 @@
                 "{op} {reg1}, #{literal}"
             ]
         },
+        "customHints": {
+            "mov": "Hint for ARM64 MOV instruction.",
+            "add": "Hint for ARM64 ADD instruction.",
+            "sub": "Hint for ARM64 SUB instruction.",
+            "ldr": "Hint for ARM64 LDR instruction.",
+            "str": "Hint for ARM64 STR instruction."
+        },
         "offsets": ["#0x4", "#0x8", "#0x12", "#0x16"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
@@ -253,6 +260,13 @@
                 "{op} ${literal}, {memAddr}"
             ]
         },
+        "customHints": {
+            "mov": "Incorrect. Hint: [.",
+            "add": "Hint for X86_32 ADD instruction.",
+            "sub": "Hint for X86_32 SUB instruction.",
+            "push": "Hint for X86_32 PUSH instruction.",
+            "pop": "Hint for X86_32 POP instruction."
+        },
         "offsets": ["0x4", "0x8", "0xC", "0x10"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
@@ -377,6 +391,13 @@
                 "{op} ${literal}, %{reg1}",
                 "{op} ${literal}, {memAddr}"
             ]
+        },
+        "customHints": {
+            "mov": "Hint for X86_64 MOV instruction.",
+            "add": "Hint for X86_64 ADD instruction.",
+            "sub": "Hint for X86_64 SUB instruction.",
+            "push": "Hint for X86_64 PUSH instruction.",
+            "pop": "Hint for X86_64 POP instruction."
         },
         "offsets": ["0x8", "0x10", "0x18", "0x20"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi"],
