@@ -10,7 +10,7 @@
         "bad_dest": [0.40, 0.60],
         "memOps": {
             "mainWeight": 15,
-            "instructions": ["mov", "mvn"],
+            "instructions": ["mov"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
                 "ok": "r-(l/r)",
@@ -20,11 +20,15 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}",
-                "{op} {reg1}, [{reg2}]",
-                "{op} {reg1}, #{literal}",
-                "{op} {reg1}, [{reg2}, #{literal}]",
-                "{op} {reg1}, [{reg2}, #{literal}]!",
-                "{op} {reg1}, [{reg2}], #{literal}"
+                "{op} {reg2}, {reg1}",
+                "{op} {reg1}, [{memAddr}]",
+                "{op} {reg2}, [{memAddr}]",
+                "{op} [{memAddr}], {reg1}",
+                "{op} [{memAddr}], {reg2}",
+                "{op} #{literal}, {reg1}",
+                "{op} #{literal}, {reg2}",
+                "{op} {reg1}, [{memAddr}, #{literal}]",
+                "{op} {reg1}, [{memAddr}], #{literal}"
             ]
         },
         "archOps": {
@@ -39,7 +43,9 @@
             },
             "formats": [
                 "{op} {reg1}, [{reg3}]",
-                "{op} {reg2}, [{reg3}]"
+                "{op} {reg2}, [{reg3}]",
+                "{op} {reg1}, [{reg3}, #{literal}]",
+                "{op} {reg2}, [{reg3}, #{literal}]"
             ]
         },
         "arithUnary": {
@@ -68,7 +74,8 @@
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
-                "{op} {reg1}, {reg2}, {reg3}",
+                "{op} {reg1}, {reg1}, {reg2}",
+                "{op} {reg1}, {reg1}, #{literal}",
                 "{op} {reg1}, {reg2}, #{literal}"
             ]
         },
@@ -117,6 +124,13 @@
                 "{op} {reg1}, #{literal}"
             ]
         },
+        "customHints": {
+            "mov": "Hint for ARM64 MOV instruction.",
+            "add": "Hint for ARM64 ADD instruction.",
+            "sub": "Hint for ARM64 SUB instruction.",
+            "ldr": "Hint for ARM64 LDR instruction.",
+            "str": "Hint for ARM64 STR instruction."
+        },
         "offsets": ["#0x4", "#0x8", "#0x12", "#0x16"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
@@ -150,10 +164,14 @@
             },
             "formats": [
                 "{op} %{reg1}, %{reg2}",
-                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, %{reg1}",
                 "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
                 "{op} ${literal}, {memAddr}",
-                "{op} ${literal}, %{reg1}"
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "archOps": {
@@ -196,10 +214,14 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} {memAddr}, %{reg1}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}",
                 "{op} ${literal}, {memAddr}"
             ]
         },
@@ -252,6 +274,13 @@
                 "{op} ${literal}, %{reg1}",
                 "{op} ${literal}, {memAddr}"
             ]
+        },
+        "customHints": {
+            "mov": "Incorrect. Hint: [.",
+            "add": "Hint for X86_32 ADD instruction.",
+            "sub": "Hint for X86_32 SUB instruction.",
+            "push": "Hint for X86_32 PUSH instruction.",
+            "pop": "Hint for X86_32 POP instruction."
         },
         "offsets": ["0x4", "0x8", "0xC", "0x10"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi", "ebp", "esp"],
@@ -274,11 +303,15 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
                 "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
                 "{op} ${literal}, {memAddr}",
-                "{op} ${literal}, %{reg1}"
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "archOps": {
@@ -321,10 +354,14 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} {memAddr}, %{reg1}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}",
                 "{op} ${literal}, {memAddr}"
             ]
         },
@@ -377,6 +414,13 @@
                 "{op} ${literal}, %{reg1}",
                 "{op} ${literal}, {memAddr}"
             ]
+        },
+        "customHints": {
+            "mov": "Hint for X86_64 MOV instruction.",
+            "add": "Hint for X86_64 ADD instruction.",
+            "sub": "Hint for X86_64 SUB instruction.",
+            "push": "Hint for X86_64 PUSH instruction.",
+            "pop": "Hint for X86_64 POP instruction."
         },
         "offsets": ["0x8", "0x10", "0x18", "0x20"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi"],

@@ -72,8 +72,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // Initialize the generator based on the architecture
         const instructionTypes = [
-            { label: 'Memory Manipulation', value: 'memorymanipulation' },
-            { label: 'Stack Operations', value: 'stackoperation' }
+            { label: 'Memory Manipulation', value: 'memorymanipulation', instructions: ["mvn", "mov", "movl"] },
+            { label: 'Stack Operations', value: 'stackoperation', instructions: ["push", "pop", "ldr", "str"] }
         ];
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
@@ -117,7 +117,15 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 }
             });
 
-            const label = $("<label>").attr("for", family.value).text(family.label);
+            const label = $("<label>")
+                .attr("for", family.value)
+                .text(family.label)
+                .tooltip({
+                    placement: "bottom",
+                    html: true,
+                    title:
+                        `${family.instructions.join(", ")}`
+                });
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
         instructionTypeDiv.append("<br>");
@@ -145,38 +153,46 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Renders the list of instructions for the exercise
     renderInstructionsList(instructions) {
-        const instructionDiv = $("<div>").addClass("instruction-container");
-        instructionDiv.append($("<h4>").text("Assembly Code:").css(
-            "font-weight", "bold",
-            "font-size", "1.5em"
-        ));
+        const instructionContainer = $("<div>").addClass("instruction-container");
+
+        const instructionHeader = $("<div>").addClass("instruction-header");
+        instructionHeader.append(
+            $("<h4>").text("Assembly Code:").css({
+                "font-weight": "bold",
+                "font-size": "1.5em"
+            })
+        );
+        instructionHeader.append(
+            $("<h4>").text("Feedback:").css({
+                "font-weight": "bold",
+                "font-size": "1.5em"
+            })
+        );
 
         const instructionList = $("<ol>");
         for (let index = 1; index <= instructions.length; index++) {
-            const inst = instructions[index-1];
-            const listItem = $("<li>")
-            .addClass("instruction-item");
+            const inst = instructions[index - 1];
+            const listItem = $("<li>").addClass("instruction-item");
 
             const instructionDiv = $("<div>")
-            .addClass("instruction-div")
-            .attr("data-index", index)
-            .text(inst);
+                .addClass("instruction-div")
+                .attr("data-index", index)
+                .text(inst);
             index !== 1 ? instructionDiv.addClass("disabled") : instructionDiv.addClass("current");
 
             const feedbackDiv = $("<div>")
             .addClass("feedback")
             .attr("id", "feedback" + index)
-            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
+            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" })
+            .html(`<span style="font-weight: 200;">Instruction ${index} feedback will show here</span>`);
 
             listItem.append(instructionDiv, feedbackDiv);
 
             instructionList.append(listItem);
         }
 
-
-
-        instructionDiv.append(instructionList);
-        this.containerDiv.append(instructionDiv);
+        instructionContainer.append(instructionHeader, instructionList);
+        this.containerDiv.append(instructionContainer);
     }
 
     // Renders tables for registers and memory
@@ -319,9 +335,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         let feedbackMessage = isCorrect ?
             `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
             "Incorrect. Please try again.";
-        // if (this.currentInstruction >= this.initialState[0].length) {
-        //     feedbackMessage = "You have completed the exercise!";
-        // }
         feedbackDiv.text(feedbackMessage).css('color', isCorrect ? 'green' : 'red');
     }
 
@@ -398,17 +411,15 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderInstructionsList(this.initialState[0]);
         this.renderTables();
         this.renderButtons();
-        this.renderFeedback();
     }
 
     // Checks the user's answer and provides feedback
     checkAnswer() {
         const [userRegisters, userMemory] = this.gatherInput();
-
         const isCorrect = this.validateAnswers(userRegisters, userMemory);
-        this.reRenderFeedback(isCorrect);
-
+    
         if (isCorrect) {
+            this.reRenderFeedback(true);
             if (this.currentInstruction >= this.initialState[0].length) {
                 this.renderFinalFeedback();
                 this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
@@ -417,8 +428,32 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.currentInstruction++;
                 this.moveToNextInstruction();
             }
+        } else {
+            const currentInstruction = this.initialState[0][this.currentInstruction - 1];
+            let parsedInstruction;
+            console.log(this.architecture, "architecture")
+            if (this.architecture === "ARM64"){
+                parsedInstruction = this.parseARM64Instruction(currentInstruction);
+            } else {
+                console.log("going in");
+                parsedInstruction = this.parseX86Instruction(currentInstruction);
+                console.log("going out");
+            }
+            
+            const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
+           
+
+            let customHint = null;
+            if (parsedInstruction) {
+                const { op } = parsedInstruction;
+                customHint = this.generator.getCustomHint(op);
+            }
+    
+            const feedbackMessage = customHint || "Incorrect. Please try again";
+            feedbackDiv.text(feedbackMessage).css('color', 'red');
         }
     }
+    
 
     // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory) {
