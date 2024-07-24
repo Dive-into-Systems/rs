@@ -430,7 +430,16 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             }
         } else {
             const currentInstruction = this.initialState[0][this.currentInstruction - 1];
-            const parsedInstruction = this.generator.parseInstruction(currentInstruction);
+            let parsedInstruction;
+            console.log(this.architecture, "architecture")
+            if (this.architecture === "ARM64"){
+                parsedInstruction = this.parseARM64Instruction(currentInstruction);
+            } else {
+                console.log("going in");
+                parsedInstruction = this.parseX86Instruction(currentInstruction);
+                console.log("going out");
+            }
+            
             const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
            
 
