@@ -30,6 +30,9 @@ export default class Fork extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+        $(document).on('click', '.reference-trigger', function() {
+            $(this).next('.reference-content').toggle();
+        });
     }
 
     scriptSelector(root_node) {
@@ -81,6 +84,7 @@ export default class Fork extends RunestoneBase {
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
         }
+        this.lastSource = "";
     }
 
     initForkInputField() {
@@ -183,13 +187,7 @@ export default class Fork extends RunestoneBase {
 
     genSourceNAnswers() {
         // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-
-        let prev = this.source || null; // Store the previous source
         this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        while (this.source === prev) {
-            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        }
-        // console.log(this.source);
 
         [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
         console.log("Debugging c code content:", this.cCode);
@@ -319,16 +317,7 @@ export default class Fork extends RunestoneBase {
             }
         }
         if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
-        else {
-            this.feedback_msg.push(
-                "<br><u>For reference</u>:<br>" +
-                "<ul>" + 
-                "<li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.<br></li>" + 
-                "<li><code>exit()</code> terminates the process that calls it.<br></li>" +
-                "</ul>" + 
-                "<brb >For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>."
-            );
-        }
+        else { this.feedback_msg.push(`<br>`); }
         console.log(this.feedback_msg);
         this.updateFeedbackDiv();
     }
@@ -379,34 +368,59 @@ export default class Fork extends RunestoneBase {
 
     updateFeedbackDiv() {
         $(this.feedbackDiv).css('display', 'block').html(this.feedback_msg);
-
         if (this.correct === true) { $(this.feedbackDiv).attr('class', 'alert alert-info'); }
-        else { $(this.feedbackDiv).attr('class', 'alert alert-danger'); }
+        else { 
+            $(this.feedbackDiv).attr('class', 'alert alert-danger');
+            this.createReferenceSection();
+        }
         
         if (typeof MathJax !== 'undefined') { this.queueMathJax(document.body); }
     }
 
     bindCodeBlockEvents() {
-        /* Highlight code line on mouseover */
-        $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
-            const blockId = $(event.target).data('block');
-            $(`span[data-block="${blockId}"]`).addClass('highlight');
-        });
+        if ($(this.hierarchyTreeDiv).css('display') == 'block') {
+            /* Highlight code line on mouseover */
+            $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
+                const blockId = $(event.target).data('block');
+                $(`span[data-block="${blockId}"]`).addClass('highlight');
+            });
+    
+            /* Remove highlight line on mouseout */
+            $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
+                const blockId = $(event.this).data('block');
+                $(`span[data-block="${blockId}"]`).removeClass('highlight');
+            });
+    
+            /* Re-draw tree on click */
+            $(this.codeDiv).on('click', 'span[data-block]', (event) => {
+                console.log(this.cCode);
+                const blockId = $(event.target).data('block');
+                const traceRoot = build.traceTree(this.source, blockId);
+                const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
+                this.updateTreeGraph(csvTree, labels);
+            });
+        }
+    }
 
-        /* Remove highlight line on mouseout */
-        $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
-            const blockId = $(event.this).data('block');
-            $(`span[data-block="${blockId}"]`).removeClass('highlight');
-        });
+    createReferenceSection() {
+        var referenceTrigger = $("<u>").addClass('reference-trigger').css({
+            'cursor': 'pointer',
+            'text-decoration': 'underline'
+        }).text('For reference');
 
-        /* Re-draw tree on click */
-        $(this.codeDiv).on('click', 'span[data-block]', (event) => {
-            console.log(this.cCode);
-            const blockId = $(event.target).data('block');
-            const traceRoot = build.traceTree(this.source, blockId);
-            const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
-            this.updateTreeGraph(csvTree, labels);
+        var referenceContent = $("<div>").addClass('reference-content').html(`
+            <ul>
+                <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
+                <li><code>exit()</code> terminates the process that calls it.</li>
+            </ul>
+            <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>
+        `);
+    
+        referenceTrigger.click(function() {
+            $(this).next('.reference-content').toggle();
         });
+    
+        $(this.feedbackDiv).append(referenceTrigger, referenceContent);
     }
 
     /*===================================
