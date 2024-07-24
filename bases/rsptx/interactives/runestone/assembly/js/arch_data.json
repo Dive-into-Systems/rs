@@ -10,7 +10,7 @@
         "bad_dest": [0.40, 0.60],
         "memOps": {
             "mainWeight": 15,
-            "instructions": ["mov", "mvn"],
+            "instructions": ["mov"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
                 "ok": "r-(l/r)",
@@ -20,11 +20,15 @@
             },
             "formats": [
                 "{op} {reg1}, {reg2}",
-                "{op} {reg1}, [{reg2}]",
-                "{op} {reg1}, #{literal}",
-                "{op} {reg1}, [{reg2}, #{literal}]",
-                "{op} {reg1}, [{reg2}, #{literal}]!",
-                "{op} {reg1}, [{reg2}], #{literal}"
+                "{op} {reg2}, {reg1}",
+                "{op} {reg1}, [{memAddr}]",
+                "{op} {reg2}, [{memAddr}]",
+                "{op} [{memAddr}], {reg1}",
+                "{op} [{memAddr}], {reg2}",
+                "{op} #{literal}, {reg1}",
+                "{op} #{literal}, {reg2}",
+                "{op} {reg1}, [{memAddr}, #{literal}]",
+                "{op} {reg1}, [{memAddr}], #{literal}"
             ]
         },
         "archOps": {
@@ -39,7 +43,9 @@
             },
             "formats": [
                 "{op} {reg1}, [{reg3}]",
-                "{op} {reg2}, [{reg3}]"
+                "{op} {reg2}, [{reg3}]",
+                "{op} {reg1}, [{reg3}, #{literal}]",
+                "{op} {reg2}, [{reg3}, #{literal}]"
             ]
         },
         "arithUnary": {
@@ -68,7 +74,8 @@
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
-                "{op} {reg1}, {reg2}, {reg3}",
+                "{op} {reg1}, {reg1}, {reg2}",
+                "{op} {reg1}, {reg1}, #{literal}",
                 "{op} {reg1}, {reg2}, #{literal}"
             ]
         },
@@ -157,10 +164,14 @@
             },
             "formats": [
                 "{op} %{reg1}, %{reg2}",
-                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, %{reg1}",
                 "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
                 "{op} ${literal}, {memAddr}",
-                "{op} ${literal}, %{reg1}"
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "archOps": {
@@ -203,10 +214,14 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} {memAddr}, %{reg1}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}",
                 "{op} ${literal}, {memAddr}"
             ]
         },
@@ -288,11 +303,15 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
                 "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
                 "{op} ${literal}, {memAddr}",
-                "{op} ${literal}, %{reg1}"
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "archOps": {
@@ -335,10 +354,14 @@
                 "bad_ct": "a-a-r"
             },
             "formats": [
+                "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} {memAddr}, %{reg1}",
                 "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}",
                 "{op} ${literal}, {memAddr}"
             ]
         },

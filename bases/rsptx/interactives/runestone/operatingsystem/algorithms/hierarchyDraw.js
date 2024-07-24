@@ -10,7 +10,7 @@ function getHierarchyAttr(links, labels) {
     var nodeDef = "";
     var edgeDef = "";
 
-    console.log("Labels are", labels);
+    // console.log("Labels are", labels);
 
     let parsedLabels = labels.map(label => {
         let [key, value] = label.split(":");
@@ -24,7 +24,7 @@ function getHierarchyAttr(links, labels) {
 
     let sortedLabels = parsedLabels.map(label => `${label.key}: ${label.value}`);
 
-    console.log("Sorted labels are", sortedLabels);
+    // console.log("Sorted labels are", sortedLabels);
     // console.log("Links: " + links);
     for (let i = 0; i < sortedLabels.length; i++) {
         let [ID, val] = sortedLabels[i].split(':');
@@ -34,9 +34,9 @@ function getHierarchyAttr(links, labels) {
         // nodeDef.push(`${ID} [label="${prints}"];`);
         nodeDef += (`${ID} [label="${prints}"];`);
     }
-    console.log("Labels: " + sortedLabels);
+    // console.log("Labels: " + sortedLabels);
 
-    console.log("Links are", links);
+    // console.log("Links are", links);
 
     const groupedByParent = links.reduce((acc, obj) => {
         if (!acc[obj.parent]) {
@@ -55,7 +55,7 @@ function getHierarchyAttr(links, labels) {
         sortedArray = [...sortedArray, ...groupedByParent[parent]];
     }
     
-    console.log("Sorted Array is", sortedArray);
+    // console.log("Sorted Array is", sortedArray);
 
     sortedArray.forEach(e => {
         const c = e.child;
@@ -70,7 +70,7 @@ function getHierarchyAttr(links, labels) {
 export function drawHierarchy(linksCsv, labels) {
 
     const links = csvParse(linksCsv);
-    console.log(links);
+    // console.log(links);
 
     var digraphString = (
         'digraph {' + 
@@ -86,7 +86,7 @@ export function drawHierarchy(linksCsv, labels) {
 
     digraphString += "}";
 
-    console.log(digraphString);
+    // console.log(digraphString);
 
     select("#hierarchy_graph").graphviz()
         .renderDot(digraphString);

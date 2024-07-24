@@ -33,7 +33,12 @@ export default class Fork extends RunestoneBase {
     }
 
     scriptSelector(root_node) {
-        return $(root_node).find(`script[type="application/json"]`);
+        console.log(root_node);
+        // return $(root_node).find(`script[type="application/json"]`);
+        const scriptContent = $(root_node).find(`script[type="application/json"]`);
+        console.log("Script content found:", scriptContent.length); // Check if any script tags are found
+        console.log("JSON content:", scriptContent); // Log the actual JSON content
+        return scriptContent;
     }
 
     /*===========================================
@@ -46,31 +51,32 @@ export default class Fork extends RunestoneBase {
         this.initForkInputField();
         this.initForkButtons();
         this.initFeedback_Hierarchy_Timeline_Divs();
-        this.bindCodeBlockEvents();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
     }
 
     initParams() {
-        try {
-            const params = JSON.parse(
-                this.scriptSelector(this.origElem).html()
-            );
-            // TODO: make it possible to just pass in a source string.
-            if (params["static"] != undefined && params["static"] == true) { // If you want to hide the menu and manually set all parameters.
-                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else {this.numForks = 2; }
-                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else {this.numPrints = 3; }
-                if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { this.hasElse = false; }
-                if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { this.hasNest = false; }
-                if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { this.hasExit = false; }
-                if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { this.hasLoop = false; }
-                this.showMenu = false;
-            }
-            else {
-                this.modes = ["1", "2", "3"];
-                this.showMenu = true;
-            }
-        } catch (error) { }
+        // try {
+        //     const params = JSON.parse(
+        //         this.scriptSelector(this.origElem).html()
 
+        //     );
+        //     // TODO: make it possible to just pass in a source string.
+        //     if (params["static"] != undefined && params["static"] == true) { // If you want to hide the menu and manually set all parameters.
+        //         if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else {this.numForks = 2; }
+        //         if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else {this.numPrints = 3; }
+        //         if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { this.hasElse = false; }
+        //         if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { this.hasNest = false; }
+        //         if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { this.hasExit = false; }
+        //         if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { this.hasLoop = false; }
+        //         this.showMenu = false;
+        //     }
+        //     else {
+        //         this.modes = ["1", "2", "3"];
+        //         this.showMenu = true;
+        //     }
+        // } catch (error) { console.error("Error loading parameters:", error); }
+        this.showMenu = true;
+        this.modes = ["1", "2", "3"];
         this.printContent = [];
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
@@ -90,6 +96,7 @@ export default class Fork extends RunestoneBase {
         this.statementDiv = $("<div>").addClass("statement-box");
 
         /* Mode menu */
+        console.log("Checking is params are set", this.showMenu);
         if (this.showMenu == true) {
             this.configHelperText = $("<div>").html(
                 "<br><br><span style='font-size:large;font-weight:bold'>Configure this question</span><br><br>" +
@@ -118,7 +125,6 @@ export default class Fork extends RunestoneBase {
 
         /* C-code and input boxes */
         this.codeDiv = $("<div>").addClass("code-div-inline").html(this.cCode);
-        // this.bindCodeBlockEvents(); // Bind the c-code block with pointer events.
 
         this.inputDiv = $("<div>").addClass("input-div-inline");
         for (var i = 0; i < this.numPrints; i++) {
@@ -143,35 +149,11 @@ export default class Fork extends RunestoneBase {
         this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
-    bindCodeBlockEvents() {
-        /* Highlight code line on mouseover */
-        $(this.codeDiv).on('mouseover', 'span[data-block]', function(event) {
-            const blockId = $(this).data('block');
-            $(`span[data-block="${blockId}"]`).addClass('highlight');
-            // console.log("In code event, terminates at ID", blockId);
-        });
-
-        /* Remove highlight line on mouseout */
-        $(this.codeDiv).on('mouseout', 'span[data-block]', function(event) {
-            const blockId = $(this).data('block');
-            $(`span[data-block="${blockId}"]`).removeClass('highlight');
-        });
-
-        /* Re-draw tree on mouseover */
-        $(this.codeDiv).on('click', 'span[data-block]', (event) => {
-            const blockId = $(event.target).data('block');
-            console.log("In binding event, terminate location is", blockId);
-            const traceRoot = build.traceTree(this.source, blockId);
-            const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
-            console.log("In binding events, csv is", csvTree, "and labels are", labels);
-            this.updateTreeGraph(csvTree, labels);
-        });
-    }
-
-    // TODO: maybe seperate out a helper function just to update the parameters. 
     updateConfigParams() {
+        console.log("Show menu is", this.showMenu);
         if (this.showMenu == true) {
             const mode = this.modeMenu.val().toString();
+            console.log("Menu value is", mode);
             if (mode == "2") {
                 this.numForks = 3;
                 this.numPrints = this.pick([3, 4]);
@@ -193,20 +175,28 @@ export default class Fork extends RunestoneBase {
                 this.numPrints = this.pick([2, 3]);
                 this.hasNest = false;
                 this.hasExit = false;
-                this.hasElse = true;
+                this.hasElse = false;
                 this.hasLoop = false;
             }
         }
     }
 
-    // TODO: maybe have another function just to get source code and answers. get all the first time initialization and store the full tree. 
     genSourceNAnswers() {
+        // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+
+        let prev = this.source || null; // Store the previous source
         this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        while (this.source === prev) {
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        }
+        // console.log(this.source);
+
         [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
+        console.log("Debugging c code content:", this.cCode);
         const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
         this.csvTree = c;
         this.labels = l;
-        console.log(this.csvTree);
+        // console.log(this.csvTree);
         // console.log(build.printTreeVert(this.fullTree));
         this.answerMap = build.getAnswer(this.fullTree, this.numPrints);
         // this.fullTreeGraph = hierarchy.drawHierarchy(this.csvTree, this.labels);
@@ -319,6 +309,7 @@ export default class Fork extends RunestoneBase {
     checkCurrentAnswer() {
         this.feedback_msg = []; // Clear feedback_msg.
         this.correct = true; // Initialize answer first as true, only update when incorrect choice occurs. 
+
         for (let i = 0; i < this.numPrints; i++) {
             let currAnswer = $("#" + this.divid + "_input_" + i).val().toString();
             if (currAnswer !== this.answerMap[this.printContent[i]].toString()) {
@@ -327,8 +318,7 @@ export default class Fork extends RunestoneBase {
                 else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
             }
         }
-        if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); } 
-        //TODO: Here, make the details pop up only when click 'for reference', and make it into a diff background color. 
+        if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
         else {
             this.feedback_msg.push(
                 "<br><u>For reference</u>:<br>" +
@@ -339,22 +329,24 @@ export default class Fork extends RunestoneBase {
                 "<brb >For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>."
             );
         }
+        console.log(this.feedback_msg);
         this.updateFeedbackDiv();
     }
 
-    // TODO: maybe have a function just to build the tree / updating the tree.
     updateTreeGraph(csv, labels) {
         $('#hierarchy_graph').html(hierarchy.drawHierarchy(csv, labels));
     }
 
     showProcessHierarchy() {
-        // this.hideTimeline();
         $(this.hierarchyTreeDiv).css("display", "block");
         $(this.hierarchyTreeDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br><br>" + 
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
+            "<div id='trace_hierarchy'><strong>Click on the C-code above to see how the tree is built step by step.</strong></div>" +
+            "<br>" +
             "<div id='hierarchy_graph'></div>"
         );
         $('#hierarchy_graph').html(hierarchy.drawHierarchy(this.csvTree, this.labels));
+        this.bindCodeBlockEvents();
     }
 
     hideProcessHierarchy() {
@@ -392,6 +384,29 @@ export default class Fork extends RunestoneBase {
         else { $(this.feedbackDiv).attr('class', 'alert alert-danger'); }
         
         if (typeof MathJax !== 'undefined') { this.queueMathJax(document.body); }
+    }
+
+    bindCodeBlockEvents() {
+        /* Highlight code line on mouseover */
+        $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
+            const blockId = $(event.target).data('block');
+            $(`span[data-block="${blockId}"]`).addClass('highlight');
+        });
+
+        /* Remove highlight line on mouseout */
+        $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
+            const blockId = $(event.this).data('block');
+            $(`span[data-block="${blockId}"]`).removeClass('highlight');
+        });
+
+        /* Re-draw tree on click */
+        $(this.codeDiv).on('click', 'span[data-block]', (event) => {
+            console.log(this.cCode);
+            const blockId = $(event.target).data('block');
+            const traceRoot = build.traceTree(this.source, blockId);
+            const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
+            this.updateTreeGraph(csvTree, labels);
+        });
     }
 
     /*===================================
