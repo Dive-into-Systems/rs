@@ -170,3 +170,8 @@ caption {
 input:focus::placeholder {
     color: transparent;
 }
+
+.instruction-header {
+    display: flex;
+    justify-content: space-around;
+}
