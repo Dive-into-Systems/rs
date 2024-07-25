@@ -187,7 +187,13 @@ export default class Fork extends RunestoneBase {
 
     genSourceNAnswers() {
         // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        let prev = this.source || null;
         this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        let attempts = 0; 
+        while (prev === this.source && attempts < 10) {
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            attempts++;
+        }
 
         [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
         console.log("Debugging c code content:", this.cCode);
