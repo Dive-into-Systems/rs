@@ -61,7 +61,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the header of the exercise
     renderHeader() {
         this.headerDiv = $("<div>").html(
-            "For the highlighted instruction, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
+            "For the instruction highlighted in green, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
             + "You do not need to enter values for registers or memory locations whose values do not change.<br></br>"
         ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
@@ -160,7 +160,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             $("<h4>").text("Assembly Code:").css({
                 "font-weight": "bold",
                 "font-size": "1.5em"
-            })
+            }).addClass("assembly-code")
         );
         instructionHeader.append(
             $("<h4>").text("Feedback:").css({
@@ -183,7 +183,11 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const feedbackDiv = $("<div>")
                 .addClass("feedback")
                 .attr("id", "feedback" + index)
-                .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" })
+                .css({
+                    "margin-bottom": "0px",
+                    "margin-left": "auto",
+                    "margin-right": "10%"
+                });
 
             listItem.append(instructionDiv, feedbackDiv);
 
@@ -330,11 +334,29 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Updates the feedback message based on correctness
     reRenderFeedback(isCorrect) {
-        let feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
-        let feedbackMessage = isCorrect ?
-            `Correct! Moving to instruction ${this.currentInstruction + 1}.` :
-            "Incorrect. Please try again.";
-        feedbackDiv.text(feedbackMessage).css('color', isCorrect ? 'green' : 'red');
+        const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
+        feedbackDiv.removeClass("alert alert-success alert-danger");
+
+        let feedbackMessage = isCorrect ? "Correct! Moving to next instruction." : "Incorrect. Please try again.";
+
+        if (isCorrect) {
+            feedbackDiv.addClass("alert alert-success");
+            feedbackMessage = `Correct! Moving to instruction ${this.currentInstruction + 1}.`;
+        } else {
+            const currentInstruction = this.initialState[0][this.currentInstruction - 1];
+            const parsedInstruction = this.architecture === "ARM64" ? this.generator.parseARM64Instruction(currentInstruction) : this.generator.parseX86Instruction(currentInstruction);
+            feedbackDiv.addClass("alert alert-danger");
+
+            let customHint = null;
+            if (parsedInstruction) {
+                const { op } = parsedInstruction;
+                customHint = this.generator.getCustomHint(op);
+            }
+
+            feedbackMessage = customHint || "Incorrect. Please try again";
+        }
+
+        feedbackDiv.text(feedbackMessage);
     }
 
     renderFinalFeedback() {
@@ -418,8 +440,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const [userRegisters, userMemory] = this.gatherInput();
         const isCorrect = this.validateAnswers(userRegisters, userMemory);
 
+        this.reRenderFeedback(isCorrect);
         if (isCorrect) {
-            this.reRenderFeedback(true);
             if (this.currentInstruction >= this.initialState[0].length) {
                 this.renderFinalFeedback();
                 this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
@@ -428,20 +450,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.currentInstruction++;
                 this.moveToNextInstruction();
             }
-        } else {
-            const currentInstruction = this.initialState[0][this.currentInstruction - 1];
-            const parsedInstruction = this.architecture === "ARM64" ? this.generator.parseARM64Instruction(currentInstruction) : this.generator.parseX86Instruction(currentInstruction);
-            const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
-
-
-            let customHint = null;
-            if (parsedInstruction) {
-                const { op } = parsedInstruction;
-                customHint = this.generator.getCustomHint(op);
-            }
-
-            const feedbackMessage = customHint || "Incorrect. Please try again";
-            feedbackDiv.text(feedbackMessage).css('color', 'red');
         }
     }
 

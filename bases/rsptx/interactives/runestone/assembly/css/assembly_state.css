@@ -7,7 +7,7 @@ body {
     overflow-x: hidden;
 }
 
-.header-box, .instruction-box, .customization-container, .feedback-container {
+.header-box, .instruction-box, .customization-container {
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -68,14 +68,6 @@ th {
     background-color: #4cae4c;
 }
 
-.feedback-container {
-    background-color: #fffdd0;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
 ol {
     counter-reset: instruction-counter;
     list-style-type: none;
@@ -87,7 +79,6 @@ ol {
     border-radius: 3px;
     transition:  0.3s ease;
     display: flex;
-    justify-content: space-between;
 }
 
 .instruction-item::before {
@@ -104,7 +95,6 @@ ol {
     transition:  0.3s ease;
     display: flex;
     justify-content: space-between;
-    flex: 1;
 }
 
 .instruction-div.current {
@@ -140,13 +130,6 @@ input[type='text'] {
 input[type='text']:focus {
     outline: none;
     border-color: #5cb85c;
-}
-
-.feedback-container {
-    margin-top: 20px;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f8f8f8;
 }
 
 .customization-container {
