@@ -22,11 +22,12 @@ export default class Fork extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
-
+        
         this.createForkElement();
         this.caption = "Process hierarchy";
-        this.addCaption("runestone");
+        // this.addCaption("runestone");
 
+        // this.checkServer("fork", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
@@ -56,7 +57,6 @@ export default class Fork extends RunestoneBase {
         try {
             const params = JSON.parse(
                 this.scriptSelector(this.origElem).html()
-
             );
             // TODO: make it possible to just pass in a source string.
             if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
@@ -79,7 +79,10 @@ export default class Fork extends RunestoneBase {
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
         }
+        this.modes = ["1", "2", "3"];
         this.lastSource = "";
+        this.proc_ancestors = [];
+        this.proc_extra = {value: ""};
     }
 
     initForkInputField() {
@@ -95,7 +98,7 @@ export default class Fork extends RunestoneBase {
         this.statementDiv = $("<div>").addClass("statement-box");
 
         /* Mode menu */
-        console.log("Checking is params are set", this.showMenu);
+        // console.log("Checking is params are set", this.showMenu);
         if (this.showMenu == true) {
             this.configHelperText = $("<div>").html(
                 "<br><br><span style='font-size:large;font-weight:bold'>Configure this question</span><br><br>" +
@@ -119,11 +122,12 @@ export default class Fork extends RunestoneBase {
             });
         }
 
-        /* Generate initial question and answers */
+            /* Generate initial question and answers */
         this.genNewQuestionNAnswer();
+        // Create C-code section
+        this.codeDiv = $("<div>").addClass("code-div-inline");
+        this.updateCodeDiv();
 
-        /* C-code and input boxes */
-        this.codeDiv = $("<div>").addClass("code-div-inline").html(this.cCode);
 
         this.inputDiv = $("<div>").addClass("input-div-inline");
         for (var i = 0; i < this.numPrints; i++) {
@@ -148,64 +152,80 @@ export default class Fork extends RunestoneBase {
         // this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
-    updateSourceCode() {
-        console.log("Show menu is", this.showMenu);
+    updateCodeDiv() {
+        const formatLine = (codeLine, index, isBold) => {
+            const formattedLine = isBold ? `<b>${codeLine}</b>` : codeLine;
+            return (formattedLine.includes("}")) ? `<span data-block="${index}">${formattedLine}</span>` : `<span>${formattedLine}</span>`;
+        };
+        const debugProcs = false;
 
-        if (this.showMenu == true) {
-            const mode = this.modeMenu.val().toString();
-            console.log("Menu value is", mode);
-            let prev = this.source || "";
-            while (this.source == prev) {
-                if (mode == "2") {
-                    this.numForks = 3;
-                    this.numPrints = this.pick([3, 4]);
-                    this.hasNest = true;
-                    this.hasExit = false;
-                    this.hasElse = true;
-                    this.hasLoop = false;
+        let cBoldCode = this.rawCode.map((codeLine, index) => {
+            const db_trace = debugProcs? ` // ${this.code_trace[index]??[]}` :"";
+            for (const activeProcInLine of this.code_trace[index]??[]) {
+                if (this.proc_ancestors.includes(activeProcInLine)) {
+                    return formatLine(codeLine+db_trace, index, true);
                 }
-                else if (mode == "3") {
-                    this.numForks = 4;
-                    this.numPrints = 4;
-                    this.hasNest = true;
-                    this.hasExit = true;
-                    this.hasElse = true;
-                    this.hasLoop = true;
+                if (this.proc_extra.value && activeProcInLine == this.proc_extra.value) {
+                    this.proc_extra.value = "";
+                    return formatLine(codeLine+db_trace, index, true);
                 }
-                else {
-                    this.numForks = 2;
-                    this.numPrints = this.pick([2, 3]);
-                    this.hasNest = false;
-                    this.hasExit = false;
-                    this.hasElse = false;
-                    this.hasLoop = false;
-                }
-                this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             }
+            return formatLine(codeLine+db_trace, index, false);
+        }).join('<br>');
+
+        this.codeDiv.html(cBoldCode);
+    }
+
+    
+    pick(myList) { // randomly pick one item in list
+        return myList[Math.floor(Math.random() * (myList.length))];
+    }
+
+    updateSourceCode() {
+        const mode = this.modeMenu?this.modeMenu.val().toString():1;
+        var prev = this.source || "";
+        // console.log("mode is", mode);
+        for (let i = 0; this.source == prev && i < 10; i++) {
+            if (mode === "2") {
+                this.numForks = 3;
+                this.numPrints = this.pick([3, 4]);
+                this.hasNest = true;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            else if (mode == "3") {
+                this.numForks = 4;
+                this.numPrints = 4;
+                this.hasNest = true;
+                this.hasExit = true;
+                this.hasElse = true;
+                this.hasLoop = true;
+            }
+            else {
+                this.numForks = 2;
+                this.numPrints = this.pick([2, 3]);
+                this.hasNest = false;
+                this.hasExit = false;
+                this.hasElse = true;
+                this.hasLoop = false;
+            }
+            
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         }
     }
-
-    genSourceNAnswers() {
-        [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
-        // console.log("Debugging c code content:", this.cCode);
-        const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
-        this.csvTree = c;
-        this.labels = l;
-        // console.log(this.csvTree);
-        // console.log(build.printTreeVert(this.fullTree));
-        this.answerMap = build.getAnswer(this.fullTree, this.numPrints);
-        // this.fullTreeGraph = hierarchy.drawHierarchy(this.csvTree, this.labels);
-    }
+    // genSourceNAnswers() {
+        
+    // }
 
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
         this.updateSourceCode();
-        this.genSourceNAnswers();
-    }
-    
-    // Randomly pick one item in list
-    pick(myList) {
-        return myList[Math.floor(Math.random() * (myList.length))];
+        [this.root, this.rawCode, this.code_trace] = build.buildAndTranspile(this.source);
+        const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
+        this.csvTree = c;
+        this.labels = l;
+        this.answerMap = build.getAnswer(this.fullTree, this.numPrints);
     }
 
     initForkButtons() {
@@ -271,7 +291,7 @@ export default class Fork extends RunestoneBase {
 
         this.buttonsDiv.append(this.generateButton);
         this.buttonsDiv.append(this.revealTreeButton);
-        // this.buttonsDiv.append(this.revealTimelineButton);
+        this.buttonsDiv.append(this.revealTimelineButton);
         this.buttonsDiv.append(this.checkAnswerButton);
 
         this.containerDiv.append(this.buttonsDiv);
@@ -279,8 +299,9 @@ export default class Fork extends RunestoneBase {
 
     clearInputNFeedbackField () {
         $('input').val("");
+        this.clearGraphics();
         this.inputDiv.html("");
-
+        this.rightDiv.html("");
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none");
@@ -288,7 +309,7 @@ export default class Fork extends RunestoneBase {
 
     updatePrompts(){
         this.genNewQuestionNAnswer();
-        this.codeDiv.html(this.cCode);
+        this.updateCodeDiv();
         for (var i = 0; i < this.numPrints; i++) {
             this.inputBox = $("<input>").attr({
                 'placeholder': 'Enter your answer here',
@@ -324,6 +345,7 @@ export default class Fork extends RunestoneBase {
     }
 
     showProcessHierarchy() {
+        this.clearGraphics();
         $(this.hierarchyTreeDiv).css("display", "block");
         $(this.hierarchyTreeDiv).html(
             "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
@@ -340,17 +362,25 @@ export default class Fork extends RunestoneBase {
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
-    showTimeline() {
+    clearGraphics() {
+        this.proc_extra.value = "";
+        this.proc_ancestors = [];
+        this.updateCodeDiv();
+        this.hideTimeline();
         this.hideProcessHierarchy();
+    }
+
+    showTimeline() {
+        this.clearGraphics();
         $(this.timelineDiv).css("display", "block");
         const [tl_width, tl_height, tl_margin] = [
             650,
             500,
             {top: 20,bottom: 20,left: 20,right: 20,}
-        ] 
-        $(this.timelineDiv).html(timeline.drawTimeline(this.root, tl_width, tl_height, tl_margin));
+        ];
+        $(this.timelineDiv).html(timeline.drawTimeline(this.root, tl_width, tl_height, tl_margin, this.proc_ancestors, this.proc_extra, () => this.updateCodeDiv()));
     }
-
+    
     hideTimeline() {
         $(this.timelineDiv).css("display", "none");
     }
@@ -390,10 +420,10 @@ export default class Fork extends RunestoneBase {
     
             /* Re-draw tree on click */
             $(this.codeDiv).on('click', 'span[data-block]', (event) => {
-                console.log(this.cCode);
+                console.log(this.rawCode.join("\n"));
                 const blockId = $(event.target).data('block');
-                const traceRoot = build.traceTree(this.source, blockId);
-                const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
+                const partialTreeRoot = build.partialTree(this.source, blockId);
+                const { csv: csvTree, valuesList : labels} = build.getTreeCSV(partialTreeRoot);
                 this.updateTreeGraph(csvTree, labels);
             });
         }
@@ -473,14 +503,15 @@ $(document).on("runestone:login-complete", function () {
             useRunestoneServices: eBookConfig.useRunestoneServices,
         };
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
-            try {
-                ForkList[this.id] = new Fork(opts);
-            } catch (err) {
-                console.log(
-                    `Error rendering Forking Problem ${this.id}
-                     Details: ${err}`
-                );
-            }
+            // If this element exists within a timed component, don't render it here
+            ForkList[this.id] = new Fork(opts);
+            // try {
+            // } catch (err) {
+            //     console.log(
+            //         `Error rendering Forking Problem ${this.id}
+            //          Details: ${err}`
+            //     );
+            // }
         }
     });
 });

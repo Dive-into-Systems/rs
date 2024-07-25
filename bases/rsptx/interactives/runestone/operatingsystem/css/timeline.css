@@ -15,7 +15,7 @@
 
 .node text {
     /* font-family: 'Courier New', Courier, monospace; */
-    font: 12px sans-serif;
+    font: large;
 }
 
 
@@ -34,7 +34,7 @@
 .link-group text {
     fill: black;
     stroke: none;
-    font: 12px sans-serif;
+    font: large;
     text-anchor: "middle";
     /* font-family: 'Courier New', Courier, monospace; */
 }

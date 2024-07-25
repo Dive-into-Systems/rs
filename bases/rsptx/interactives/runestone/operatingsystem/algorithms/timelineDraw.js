@@ -5,7 +5,7 @@ import * as d3 from "d3";
 
 
 const nodeID = (node) => `${node.data.id}.${node.data.childCt}`;
-function nodeSpacing(d, x_gap, y_gap, x_start, y_start) {
+function nodeSpacing(d, x_gap, y_gap, x_start, y_start, maxWidth) {
     let down_indent = 0; // bump timelines down
     if (!d.children || d.children.length === 0) {
         return 0;
@@ -16,32 +16,54 @@ function nodeSpacing(d, x_gap, y_gap, x_start, y_start) {
     }
     for (const child of d.children) {
         if (child.data.id == d.data.id) {
-            child.x = d.x+x_gap;
+            child.x = (child.data.childCt==-1)?maxWidth:(d.x+x_gap);
             child.y = d.y;
-            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start);
+            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth);
         }
         else {
             child.x = d.x;
             child.y = d.y + down_indent + y_gap;
-            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start)+y_gap;
+            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth)+y_gap;
         }
     }
     return down_indent;
 }
 
 
-function highlightPath(node, links) {
+function clearPath(links, traceArray, refreshCode, extra_trace) {
     links.classed("active", false); // Turn off all active links
-    const trace = [];
+    traceArray.length = 0;
+    extra_trace.value  = "";
+    refreshCode();
+}
+
+function highlightPath(node, links, traceArray, refreshCode, extra_trace) {
+    clearPath(links, traceArray, refreshCode, extra_trace);
+    let skip = false;
+    let temp_arr = [];
     node.ancestors().forEach(anc => {
-        trace.push(nodeID(anc));
         links.filter(l => l.target === anc).classed("active", true);
+        if (skip) {
+            skip = false;
+        } else {
+            if (nodeID(anc)!=nodeID(node)) temp_arr.push(nodeID(anc)); // last node technically hasnt happened yet
+            if (anc.data.childCt == 0) {
+                skip = true;
+            } // really weird hack, we want to skip the next node if we reach the timeline end, helps with bolding
+        }
     });
-    // console.log(trace);
+    const fullTrace = false;
+    if (node.data.childCt ==0) {
+        extra_trace.value  = nodeID(node);
+    } else {
+        traceArray.push(...(fullTrace?temp_arr:temp_arr.slice(0,1)));
+    }
+    // console.log(traceArray);
+    refreshCode();
 }
 
 
-export function drawTimeline(tree, tl_width, tl_height, margin) {
+export function drawTimeline(tree, tl_width, tl_height, margin, traceArray, extra_trace, refreshCode) {
     const data = tree.serialize();
     const width = tl_width - margin.right - margin.left;
     const height = tl_height - margin.top - margin.bottom;
@@ -57,7 +79,7 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
     const root = d3.hierarchy(data);
     const treeLayout = d3.tree().size([height, width]);
     treeLayout(root);
-    nodeSpacing(root, x_gap, y_gap, margin.left, margin.top);
+    nodeSpacing(root, x_gap, y_gap, margin.left, margin.top, (tl_width - margin.right));
 
     let locked = null;
 
@@ -69,19 +91,17 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
         .on("mouseover", function(event, d) {
             event.stopPropagation();
             if (!locked) {
-                highlightPath(d.target, links);
+                highlightPath(d.target, links, traceArray, refreshCode, extra_trace);
             }
         })
         .on("mouseout", function(d) {
-            if (!locked) {
-                links.classed("active", false);
-            }
+            if (!locked) clearPath(links, traceArray, refreshCode, extra_trace);
         })
         .on("click", function(event, d) {
             event.stopPropagation();
             if (locked !== d.target) {
                 locked = d.target;
-                highlightPath(d.target, links);
+                highlightPath(d.target, links, traceArray, refreshCode, extra_trace);
             } else {
                 locked = null;
             }
@@ -143,45 +163,12 @@ export function drawTimeline(tree, tl_width, tl_height, margin) {
         .text(d => (d.target.data.childCt == 0)?"":d.source.data.value);
         // .text(function(d) { return (d.source.data.id == d.target.data.id)?"":(d.source.x+"|"+d.source.y+":")+d.source.data.value; });
 
-    const nodes = timelineSvg.selectAll('.node')
-        .data(root.descendants())
-        .enter()
-        .append('g')
-        .attr('class', 'node')
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-        
-    nodes.append('text')
-        .attr("dy", "-.4em")
-        .attr("x" , ".4em")
-        .style("text-anchor", "start")
-        // .text(function(d) { return nodeID(d)+":"+(d.x+"|"+d.y+":"+d.data.value )});
-        .text(function(d) { return (d.children && d.children[0].data.id == d.data.id)?"":d.data.value; });
-
-    nodes.append('circle')
-        .attr('r', 15)
-        .attr('fill', 'transparent')
-        .attr('pointer-events', 'all')
-        .on("mouseover", function(event, d) {
-            if (!locked) {
-                highlightPath(d, links);
-            }
-        })
-        .on("mouseout", function(d) {
-            if (!locked) {
-                links.classed("active", false);
-            }
-        })
-        .on("click", function(event, d) {
-            event.stopPropagation();
-            if (locked !== d) {
-                locked = d;
-                highlightPath(d, links);
-            } else {
-                locked = null;
-            }
-        });
-
-
+    // const nodes = timelineSvg.selectAll('.node')
+    //     .data(root.descendants())
+    //     .enter()
+    //     .append('g')
+    //     .attr('class', 'node')
+    //     .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
     return $(timelineSvg.node());
 }
