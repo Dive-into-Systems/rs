@@ -30,18 +30,13 @@ export default class Fork extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        $(document).on('click', '.reference-trigger', function() {
-            $(this).next('.reference-content').toggle();
-        });
+        // $(document).on('click', '.reference-trigger', function() {
+        //     $(this).next('.reference-content').toggle();
+        // });
     }
 
     scriptSelector(root_node) {
-        console.log(root_node);
-        // return $(root_node).find(`script[type="application/json"]`);
-        const scriptContent = $(root_node).find(`script[type="application/json"]`);
-        console.log("Script content found:", scriptContent.length); // Check if any script tags are found
-        console.log("JSON content:", scriptContent); // Log the actual JSON content
-        return scriptContent;
+        return $(root_node).find(`script[type="application/json"]`);
     }
 
     /*===========================================
@@ -58,28 +53,28 @@ export default class Fork extends RunestoneBase {
     }
 
     initParams() {
-        // try {
-        //     const params = JSON.parse(
-        //         this.scriptSelector(this.origElem).html()
+        try {
+            const params = JSON.parse(
+                this.scriptSelector(this.origElem).html()
 
-        //     );
-        //     // TODO: make it possible to just pass in a source string.
-        //     if (params["static"] != undefined && params["static"] == true) { // If you want to hide the menu and manually set all parameters.
-        //         if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else {this.numForks = 2; }
-        //         if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else {this.numPrints = 3; }
-        //         if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { this.hasElse = false; }
-        //         if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { this.hasNest = false; }
-        //         if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { this.hasExit = false; }
-        //         if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { this.hasLoop = false; }
-        //         this.showMenu = false;
-        //     }
-        //     else {
-        //         this.modes = ["1", "2", "3"];
-        //         this.showMenu = true;
-        //     }
-        // } catch (error) { console.error("Error loading parameters:", error); }
-        this.showMenu = true;
-        this.modes = ["1", "2", "3"];
+            );
+            // TODO: make it possible to just pass in a source string.
+            if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
+                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else {this.numForks = 2; }
+                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else {this.numPrints = 3; }
+                if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { this.hasElse = false; }
+                if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { this.hasNest = false; }
+                if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { this.hasExit = false; }
+                if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { this.hasLoop = false; }
+                this.showMenu = false;
+            }
+            else {
+                this.modes = ["1", "2", "3"];
+                this.showMenu = true;
+            }
+        } catch (error) { console.error("Error loading parameters:", error); }
+        // this.showMenu = true;
+        // this.modes = ["1", "2", "3"];
         this.printContent = [];
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
@@ -150,47 +145,49 @@ export default class Fork extends RunestoneBase {
 
         /* Some default Runestone things */
         $(this.origElem).children().clone().appendTo(this.containerDiv); // Copy the original elements to the container holding what the user will see.
-        this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
+        // this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
-    updateConfigParams() {
+    updateSourceCode() {
         console.log("Show menu is", this.showMenu);
+
         if (this.showMenu == true) {
             const mode = this.modeMenu.val().toString();
             console.log("Menu value is", mode);
-            if (mode == "2") {
-                this.numForks = 3;
-                this.numPrints = this.pick([3, 4]);
-                this.hasNest = true;
-                this.hasExit = false;
-                this.hasElse = true;
-                this.hasLoop = false;
-            }
-            else if (mode == "3") {
-                this.numForks = 4;
-                this.numPrints = 4;
-                this.hasNest = true;
-                this.hasExit = true;
-                this.hasElse = true;
-                this.hasLoop = true;
-            }
-            else {
-                this.numForks = 2;
-                this.numPrints = this.pick([2, 3]);
-                this.hasNest = false;
-                this.hasExit = false;
-                this.hasElse = false;
-                this.hasLoop = false;
+            let prev = this.source || "";
+            while (this.source == prev) {
+                if (mode == "2") {
+                    this.numForks = 3;
+                    this.numPrints = this.pick([3, 4]);
+                    this.hasNest = true;
+                    this.hasExit = false;
+                    this.hasElse = true;
+                    this.hasLoop = false;
+                }
+                else if (mode == "3") {
+                    this.numForks = 4;
+                    this.numPrints = 4;
+                    this.hasNest = true;
+                    this.hasExit = true;
+                    this.hasElse = true;
+                    this.hasLoop = true;
+                }
+                else {
+                    this.numForks = 2;
+                    this.numPrints = this.pick([2, 3]);
+                    this.hasNest = false;
+                    this.hasExit = false;
+                    this.hasElse = false;
+                    this.hasLoop = false;
+                }
+                this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             }
         }
     }
 
     genSourceNAnswers() {
-        // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-
         [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
-        console.log("Debugging c code content:", this.cCode);
+        // console.log("Debugging c code content:", this.cCode);
         const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
         this.csvTree = c;
         this.labels = l;
@@ -202,7 +199,7 @@ export default class Fork extends RunestoneBase {
 
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
-        this.updateConfigParams();
+        this.updateSourceCode();
         this.genSourceNAnswers();
     }
     
