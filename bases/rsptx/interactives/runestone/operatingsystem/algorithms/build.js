@@ -75,37 +75,30 @@ class ForkNode {
             this.left.exit();
         }
         else {
-            // this.print("X");
             this.active = false;
         }
     }
 
     fork(leftCode, rightCode, indent, terminate, blockId) {
-        // if (blockId > terminate) {
-        //     console.log("Terminating at blockId:", blockId);
-        //     return;
-        // }
-        console.log("In fork function, we are looking at blockId", blockId, "with leftCode", leftCode, "and rightCode", rightCode);
+        console.log("In fork function, we are looking at leftCode", leftCode, "and rightCode", rightCode);
+        
         if (!this.active) {
-            return (new ForkNode()).fork(leftCode,rightCode, indent, terminate, blockId);
+            return (new ForkNode()).fork(leftCode, rightCode, indent, terminate, blockId);
         }
 
         let leftResult, rightResult;
-
-        // if "future" self exist, that one executes instead
-        if (this.left) {
-            [leftResult, rightResult] = this.left.fork(leftCode, rightCode, indent, terminate, blockId);
+        if (this.left) { // if "future" self exist, that one executes instead
+            [leftResult, rightResult, blockId] = this.left.fork(leftCode, rightCode, indent, terminate, blockId);
         }
         else {
             let [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
             this.left = new ForkNode(leftID, leftCt);
-            leftResult = this.left.pushCode(leftCode, indent, terminate, blockId);
+            [leftResult, blockId] = this.left.pushCode(leftCode, indent, terminate, blockId);
             this.left.right = new ForkNode(rightID, rightCt);
-            rightResult = this.left.right.pushCode(rightCode, indent, terminate, blockId);
+            [rightResult, blockId] = this.left.right.pushCode(rightCode, indent, terminate, blockId);
         }
-        // you have a child, it also forks
-        if (this.right) {
-            this.right.fork(leftCode, rightCode, indent, terminate, blockId+1);
+        if (this.right) { // you have a child, it also forks
+            [leftResult, rightResult, blockId] = this.right.fork(leftCode, rightCode, indent, terminate, blockId);
         }
         return [leftResult, rightResult, blockId];
     }
@@ -116,16 +109,11 @@ class ForkNode {
         let leftResult, rightResult;
          
         function addLine(line, blockId) {
-            let prefix = blockId ? `<span data-block="${blockId}">` : '';
-            let suffix = blockId ? `</span>` : '';
-            result.push(`${SPC.repeat(indent)}${prefix}${line}${suffix}`);
+            result.push(`${SPC.repeat(indent)}${line}`);
         }
 
         for (let ptr = 0; ptr < code.length; ptr++) {
-            console.log("---NEXT INTERATION---");
-            console.log("Looking at code segment", code);
             blockId++;
-            console.log("Looking at blockId", blockId);
             if (blockId > terminate) {
                 console.log("Terminating at blockId:", blockId);
                 break;
@@ -141,34 +129,34 @@ class ForkNode {
             }
             if (code[ptr] == "F") {
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
+                console.log(leftCode, rightCode, ptr);
                 [leftResult, rightResult, blockId] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate, blockId);
                 if (!leftCode && !rightCode) {
                     addLine("fork();", blockId);
-                    blockId++;
                 }
                 if (leftCode) {
                     addLine("if (fork()) {", blockId);
                     result = result.concat(leftResult);
                     if (rightCode) {
                         addLine("} else {", null);
-                        // blockId+=2;
-                    } else {
-                        addLine("}", null);
-                        // blockId+=1;
                     }
-                    blockId++;
+                    else {
+                        addLine("}", null);
+                    }
                 }
                 if (rightCode) {
-                    if (!leftCode) addLine("if (fork() == 0) {", blockId);
+                    if (!leftCode) {
+                        addLine("if (fork() == 0) {", blockId);
+                    }
                     result = result.concat(rightResult);
+                    console.log(rightResult);
                     addLine("}", null);
-                    blockId++;
                 }
             }
         }
-        return result;
+        return [result, blockId];
     }
-    
+
     serialize() {
         const obj = {
             id: this.id,
@@ -279,6 +267,7 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
 }
 
 export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
+    
     let code = "";
     const fork = hasElse?"F(,)":"F()";
 
@@ -312,18 +301,31 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
-    // let codeC = tree.pushCode(code, Infinity, 0).join(NEWLINE);
-    let blockId = 0;
-    let codeC = tree.pushCode(code, 0, Infinity, 0).join(NEWLINE);
-    return [tree, codeC];
+    let [codeC, trash] = tree.pushCode(code, 0, Infinity, 0);
+    let labeledCodeC = labelLines(codeC);
+    return [tree, labeledCodeC];
+}
+
+function labelLines(code) {
+    let lineId = 0;
+    let annotated = []
+    for (let i = 0; i < code.length; i++) {
+        if (code[i].indexOf("}")===-1) {
+            lineId++;
+            let prefix = `<span data-block="${lineId}">`;
+            let suffix = `</span>`;
+            annotated.push(`${prefix}${code[i]}${suffix}`);
+        } else {
+            annotated.push(`${code[i]}`);
+        }
+    }
+    let joinedAnnotated = annotated.join(NEWLINE);
+    return joinedAnnotated;
 }
 
 export function traceTree(code, terminate) {
     let tree = new ForkNode();
-    // console.log("In tree builder, terminate is", terminate);
-    // let codeC = tree.pushCode(code, terminate, 0).join(NEWLINE);
-    let blockId = 0;
-    let codeC = tree.pushCode(code, 0, terminate, 0).join(NEWLINE);
-    console.log(codeC);
+    console.log("In tree builder, terminate is", terminate);
+    let [codeC, trash] = tree.pushCode(code, 0, terminate, 0);
     return tree;
 }
