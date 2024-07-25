@@ -72,8 +72,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // Initialize the generator based on the architecture
         const instructionTypes = [
-            { label: 'Memory Manipulation', value: 'memorymanipulation', instructions: ["mvn", "mov", "movl"] },
-            { label: 'Stack Operations', value: 'stackoperation', instructions: ["push", "pop", "ldr", "str"] }
+            { label: 'Memory Manipulation', value: 'memOps', instructions: ["mov"] },
+            { label: 'Stack Operations', value: "archOps", instructions: ["push", "pop", "ldr", "str"] }
         ];
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
@@ -96,10 +96,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
                 // Update the states based on the checkbox change
                 switch (event.target.id) {
-                    case "memorymanipulation":
+                    case "memOps":
                         this.memo_checked = event.target.checked;
                         break;
-                    case "stackoperation":
+                    case "archOps":
                         this.stack_checked = event.target.checked;
                         break;
                 }
@@ -181,10 +181,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             index !== 1 ? instructionDiv.addClass("disabled") : instructionDiv.addClass("current");
 
             const feedbackDiv = $("<div>")
-            .addClass("feedback")
-            .attr("id", "feedback" + index)
-            .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" })
-            .html(`<span style="font-weight: 200;">Instruction ${index} feedback will show here</span>`);
+                .addClass("feedback")
+                .attr("id", "feedback" + index)
+                .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" })
 
             listItem.append(instructionDiv, feedbackDiv);
 
@@ -284,7 +283,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Repopulates tables with current state after an instruction
     repopulateTables() {
-        const currentState = this.allStates[this.currentInstruction-1];
+        const currentState = this.allStates[this.currentInstruction - 1];
 
         // Clear the tables
         const registersTableBody = $(".register-table tbody");
@@ -393,6 +392,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     resetValues() {
         this.containerDiv.find("input[type='text']").val("");
         this.containerDiv.find("[id^='feedback']").empty();
+        this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', false);
         this.currentInstruction = 1;
         this.moveToInitialInstruction();
     }
@@ -417,7 +417,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     checkAnswer() {
         const [userRegisters, userMemory] = this.gatherInput();
         const isCorrect = this.validateAnswers(userRegisters, userMemory);
-    
+
         if (isCorrect) {
             this.reRenderFeedback(true);
             if (this.currentInstruction >= this.initialState[0].length) {
@@ -430,21 +430,21 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             }
         } else {
             const currentInstruction = this.initialState[0][this.currentInstruction - 1];
-            const parsedInstruction = this.generator.parseInstruction(currentInstruction);
+            const parsedInstruction = this.architecture === "ARM64" ? this.generator.parseARM64Instruction(currentInstruction) : this.generator.parseX86Instruction(currentInstruction);
             const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
-           
+
 
             let customHint = null;
             if (parsedInstruction) {
                 const { op } = parsedInstruction;
                 customHint = this.generator.getCustomHint(op);
             }
-    
+
             const feedbackMessage = customHint || "Incorrect. Please try again";
             feedbackDiv.text(feedbackMessage).css('color', 'red');
         }
     }
-    
+
 
     // Validates user answers against expected state
     validateAnswers(userRegisters, userMemory) {

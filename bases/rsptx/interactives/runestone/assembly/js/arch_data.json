@@ -25,10 +25,9 @@
                 "{op} {reg2}, [{memAddr}]",
                 "{op} [{memAddr}], {reg1}",
                 "{op} [{memAddr}], {reg2}",
-                "{op} #{literal}, {reg1}",
-                "{op} #{literal}, {reg2}",
-                "{op} {reg1}, [{memAddr}, #{literal}]",
-                "{op} {reg1}, [{memAddr}], #{literal}"
+                "{op} [{memAddr}], #{literal}",
+                "{op} {reg1}, #{literal}",
+                "{op} {reg2}, #{literal}"
             ]
         },
         "archOps": {
@@ -42,10 +41,8 @@
                 "bad_ct": "r-r-r"
             },
             "formats": [
-                "{op} {reg1}, [{reg3}]",
-                "{op} {reg2}, [{reg3}]",
-                "{op} {reg1}, [{reg3}, #{literal}]",
-                "{op} {reg2}, [{reg3}, #{literal}]"
+                "{op} {reg1}, [{memAddr}]",
+                "{op} {reg2}, [{memAddr}]"
             ]
         },
         "arithUnary": {
@@ -125,13 +122,13 @@
             ]
         },
         "customHints": {
-            "mov": "Hint for ARM64 MOV instruction.",
-            "add": "Hint for ARM64 ADD instruction.",
-            "sub": "Hint for ARM64 SUB instruction.",
-            "ldr": "Hint for ARM64 LDR instruction.",
-            "str": "Hint for ARM64 STR instruction."
+            "mov": "mov D, S => D = S",
+            "add": "add D, O1, O2 => D = O1 + O2",
+            "sub": "sub D, O1, O2 => D = O1 - O2",
+            "ldr": "ldr D, [R] => D = Mem[R]",
+            "str": "ldr D, [R] => D = Mem[R]"
         },
-        "offsets": ["#0x4", "#0x8", "#0x12", "#0x16"],
+        "offsets": ["0x8", "0x10", "0x18", "0x20"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
             "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15",
@@ -276,9 +273,9 @@
             ]
         },
         "customHints": {
-            "mov": "Incorrect. Hint: [.",
-            "add": "Hint for X86_32 ADD instruction.",
-            "sub": "Hint for X86_32 SUB instruction.",
+            "mov": "mov S, D => D = S",
+            "add": "add S, D => D = D + S",
+            "sub": "sub S, D => D = D - S",
             "push": "Hint for X86_32 PUSH instruction.",
             "pop": "Hint for X86_32 POP instruction."
         },
@@ -416,11 +413,11 @@
             ]
         },
         "customHints": {
-            "mov": "Hint for X86_64 MOV instruction.",
-            "add": "Hint for X86_64 ADD instruction.",
-            "sub": "Hint for X86_64 SUB instruction.",
-            "push": "Hint for X86_64 PUSH instruction.",
-            "pop": "Hint for X86_64 POP instruction."
+            "mov": "mov S, D => D = S",
+            "add": "add S, D => D = D + S",
+            "sub": "sub S, D => D = D - S",
+            "push": "push S => %rsp = %rsp - 8 , mem[%rsp] = S",
+            "pop": "pop D => D = mem[%rsp] , %rsp = %rsp + 8"
         },
         "offsets": ["0x8", "0x10", "0x18", "0x20"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi"],
