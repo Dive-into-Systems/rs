@@ -48,6 +48,8 @@ Here are the specifics:
 - `hasExit`: (boolean) indicates if you want call(s) to `exit()`.
 - `hasLoop`: (boolean) indicates if you want `for` structures.
 
+If you want to customize the instructions, you can add it to the `instruction` field (see example 3).
+
 ## Examples
 
 ### 1. A basic example
@@ -98,9 +100,10 @@ You don't even need the `<script>` section. It will generate the default complex
 ```html
 <div class="ptx-runestone-container">
   <div class="runestone">
-    <div data-component="fork" data-question_label="2" id="fork_preset_code">
+    <div data-component="processHierarchy" data-question_label="2" id="fork_preset_code">
       <script type="application/json">
         {
+          "instruction" : "This question has manually written question, and this is a customized instruction.",
           "source" : "aF(,F(bx))",
           "numForks" : 2,
           "numPrints" : 2

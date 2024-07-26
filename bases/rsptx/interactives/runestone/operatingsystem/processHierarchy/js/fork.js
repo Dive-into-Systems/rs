@@ -12,9 +12,9 @@ import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
-export var ForkList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
+export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
-export default class Fork extends RunestoneBase {
+export default class ProcHierarchy extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig;
@@ -22,7 +22,7 @@ export default class Fork extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
-        this.createForkElement();
+        this.createProcHierarchyElement();
         this.caption = "Process hierarchy";
         this.addCaption("runestone");
 
@@ -39,11 +39,11 @@ export default class Fork extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
 
-    // Create the Fork Element
-    createForkElement() {
+    // Create the ProcHierarchy Element
+    createProcHierarchyElement() {
         this.initParams();
-        this.initForkInputField();
-        this.initForkButtons();
+        this.initProcHierarchyInputField();
+        this.initProcHierarchyButtons();
         this.initFeedback_Hierarchy_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
     }
@@ -91,7 +91,7 @@ export default class Fork extends RunestoneBase {
         }
     }
 
-    initForkInputField() {
+    initProcHierarchyInputField() {
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.confidDiv = $("<div>").addClass("config-box");
 
@@ -161,7 +161,7 @@ export default class Fork extends RunestoneBase {
             const mode = this.modeMenu.val().toString();
             console.log("Menu value is", mode);
             let prev = this.source || "";
-            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            this.source = build.genRandSourceCode(this.ProcHierarchys, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             while (this.source == prev) {
                 if (mode == "2") {
                     this.numForks = 3;
@@ -218,7 +218,7 @@ export default class Fork extends RunestoneBase {
         return myList[Math.floor(Math.random() * (myList.length))];
     }
 
-    initForkButtons() {
+    initProcHierarchyButtons() {
         this.containerDiv.append($('<br>'));
 
         /* Ask me another button */
@@ -435,7 +435,7 @@ export default class Fork extends RunestoneBase {
             timestamp: new Date(),
         });
         let data = {
-            event: "Fork",
+            event: "ProcHierarchy",
             act: answer || "",
             answer: answer || "",
             correct: this.correct ? "T" : "F",
@@ -463,10 +463,10 @@ $(document).on("runestone:login-complete", function () {
         };
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             try {
-                ForkList[this.id] = new Fork(opts);
+                ProcHierarchyList[this.id] = new ProcHierarchy(opts);
             } catch (err) {
                 console.log(
-                    `Error rendering Forking Problem ${this.id}
+                    `Error rendering Process hierarchy problem ${this.id}
                      Details: ${err}`
                 );
             }

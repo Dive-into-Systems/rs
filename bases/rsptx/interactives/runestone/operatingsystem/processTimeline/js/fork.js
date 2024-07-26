@@ -4,7 +4,7 @@
 // This file contains the process hierarchy component. 
 // It is created by Luyuan Fan and Tony Cao (Summer 2024). 
 
-import RunestoneBase from "../../common/js/runestonebase.js";
+import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
 import * as build from "../algorithms/build.js";
@@ -497,7 +497,7 @@ export default class Fork extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    $("[data-component=fork]").each(function (index) {
+    $("[data-component=processTimeline]").each(function (index) {
         var opts = {
             orig: this,
             useRunestoneServices: eBookConfig.useRunestoneServices,
