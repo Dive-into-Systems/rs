@@ -215,37 +215,51 @@ class ArchInstructions {
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         const offsets = arch_data[this.architecture]['offsets'];
 
-        for (let attempt = 0; attempt < 100; attempt++) {
-            let selected_instructions = [];
+        // Ensure at least one instruction from each selected category
+        let selected_instructions = [];
+        let instruction_sources = [];
 
-            // Keep generating instructions until we have the required number
-            let instruction_num = 0;
-            while (selected_instructions.length < num_instructions) {
-                instruction_num++;
-                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, instruction_num);
-                if (!selected_instructions.includes(instruction)) {
-                    selected_instructions.push(instruction);
-                }
-            }
-
-            // Create a deep copy of the initial state
-            const initialState = {
-                instructions: [...selected_instructions],
-                registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
-                memory: JSON.parse(JSON.stringify(selected_addresses))
-            };
-
-            // Execute instructions and check for negative values
-            this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
-
-            // If no negative values were found, return the selected instructions
-            if (!this.states.some(state => this.hasNegativeNumbers(state))) {
-                return selected_instructions;
-            }
-
-            // Reset states for the next attempt
-            this.states = [];
+        if (selection[0]) { // Arithmetic
+            const arithmeticInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'arithBinary');
+            selected_instructions.push(arithmeticInstruction);
+            instruction_sources.push('arithBinary');
         }
+
+        if (selection[1]) { // Memory
+            const memoryInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'memOps');
+            selected_instructions.push(memoryInstruction);
+            instruction_sources.push('memOps');
+        }
+
+        if (selection[2]) { // Stack
+            const stackInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'archOps');
+            selected_instructions.push(stackInstruction);
+            instruction_sources.push('archOps');
+        }
+
+        // Fill the remaining instructions randomly from the selected categories
+        while (selected_instructions.length < num_instructions) {
+            const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1);
+            selected_instructions.push(instruction);
+        }
+
+        // Create a deep copy of the initial state
+        const initialState = {
+            instructions: [...selected_instructions],
+            registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
+            memory: JSON.parse(JSON.stringify(selected_addresses))
+        };
+
+        // Execute instructions and check for negative values
+        this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
+
+        // If no negative values were found, return the selected instructions
+        if (!this.states.some(state => this.hasNegativeNumbers(state))) {
+            return selected_instructions;
+        }
+
+        // Reset states for the next attempt
+        this.states = [];
 
         // If we couldn't generate a valid set of instructions after 100 attempts
         console.warn("Could not generate instructions without negative values after 100 attempts");
@@ -282,11 +296,35 @@ class ArchInstructions {
         return [formatType, format];
     }
 
+    // New method to generate instruction format for a specific type
+    generateComplexInstructionFormatSpecific(selection, instruction_num, formatType) {
+        const archData = arch_data[this.architecture];
+        let availableFormats = {}
+
+        if (selection[0] && formatType === "arithBinary") availableFormats["arithBinary"] = archData["arithBinary"].formats;
+        if (selection[1] && formatType === "memOps") availableFormats["memOps"] = archData["memOps"].formats;
+        if (selection[2] && formatType === "archOps") availableFormats["archOps"] = archData["archOps"].formats;
+
+        if (selection[2] && instruction_num == 2 && formatType === "archOps") {
+            availableFormats = {};
+            availableFormats["archOps"] = archData["archOps"].formats;
+        }
+
+        const format = unifPickItem(availableFormats[formatType]);
+
+        return format;
+    }
+
     // Generates a complex instruction based on the given parameters
-    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection, instruction_num) {
+    generateComplexInstruction(regular_registers, stack_registers, memory, offsets, selection, instruction_num, specificType = null) {
+        let formatType, format;
 
-        let [formatType, format] = this.generateComplexInstructionFormat(selection, instruction_num);
-
+        if (specificType) {
+            formatType = specificType;
+            format = this.generateComplexInstructionFormatSpecific(selection, instruction_num, formatType);
+        } else {
+            [formatType, format] = this.generateComplexInstructionFormat(selection, instruction_num);
+        }
 
         let op = unifPickItem(arch_data[this.architecture][formatType].instructions);
 

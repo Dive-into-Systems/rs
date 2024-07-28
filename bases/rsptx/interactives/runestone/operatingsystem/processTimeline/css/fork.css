@@ -49,6 +49,7 @@
   margin-top: 10px;
   font-family: 'Courier New', Courier, monospace;
   font-size: large;
+  /* font-size: 12px; */
   position: sticky;
   top: 0;
 }

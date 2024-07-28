@@ -80,7 +80,7 @@ class ForkNode {
     }
 
     fork(leftCode, rightCode, indent, terminate, blockId) {
-        // console.log("In fork function, we are looking at leftCode", leftCode, "and rightCode", rightCode);
+        console.log("In fork function, we are looking at leftCode", leftCode, "and rightCode", rightCode);
         
         if (!this.active) {
             return (new ForkNode()).fork(leftCode, rightCode, indent, terminate, blockId);
@@ -115,7 +115,7 @@ class ForkNode {
         for (let ptr = 0; ptr < code.length; ptr++) {
             blockId++;
             if (blockId > terminate) {
-                // console.log("Terminating at blockId:", blockId);
+                console.log("Terminating at blockId:", blockId);
                 break;
             }
             if (code[ptr]!= "F" && code[ptr]!= EXIT_CHAR) {
@@ -129,7 +129,7 @@ class ForkNode {
             }
             if (code[ptr] == "F") {
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-                // console.log(leftCode, rightCode, ptr);
+                console.log(leftCode, rightCode, ptr);
                 [leftResult, rightResult, blockId] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate, blockId);
                 if (!leftCode && !rightCode) {
                     addLine("fork();", blockId);
@@ -149,7 +149,7 @@ class ForkNode {
                         addLine("if (fork() == 0) {", blockId);
                     }
                     result = result.concat(rightResult);
-                    // console.log(rightResult);
+                    console.log(rightResult);
                     addLine("}", null);
                 }
             }
@@ -325,7 +325,7 @@ function labelLines(code) {
 
 export function traceTree(code, terminate) {
     let tree = new ForkNode();
-    // console.log("In tree builder, terminate is", terminate);
+    console.log("In tree builder, terminate is", terminate);
     let [codeC, trash] = tree.pushCode(code, 0, terminate, 0);
     return tree;
 }

@@ -4,18 +4,17 @@
 // This file contains the process hierarchy component. 
 // It is created by Luyuan Fan and Tony Cao (Summer 2024). 
 
-import RunestoneBase from "../../common/js/runestonebase.js";
+import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
 import * as build from "../algorithms/build.js";
 import * as hierarchy from "../algorithms/hierarchyDraw.js";
-import * as timeline from "../algorithms/timelineDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
-export var ForkList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
+export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
-export default class Fork extends RunestoneBase {
+export default class ProcHierarchy extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig;
@@ -23,16 +22,13 @@ export default class Fork extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
-        this.createForkElement();
+        this.createProcHierarchyElement();
         this.caption = "Process hierarchy";
         this.addCaption("runestone");
 
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        // $(document).on('click', '.reference-trigger', function() {
-        //     $(this).next('.reference-content').toggle();
-        // });
     }
 
     scriptSelector(root_node) {
@@ -43,12 +39,12 @@ export default class Fork extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
 
-    // Create the Fork Element
-    createForkElement() {
+    // Create the ProcHierarchy Element
+    createProcHierarchyElement() {
         this.initParams();
-        this.initForkInputField();
-        this.initForkButtons();
-        this.initFeedback_Hierarchy_Timeline_Divs();
+        this.initProcHierarchyInputField();
+        this.initProcHierarchyButtons();
+        this.initFeedback_Hierarchy_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
     }
 
@@ -56,55 +52,62 @@ export default class Fork extends RunestoneBase {
         try {
             const params = JSON.parse(
                 this.scriptSelector(this.origElem).html()
-
             );
-            // TODO: make it possible to just pass in a source string.
-            if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
-                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else {this.numForks = 2; }
-                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else {this.numPrints = 3; }
-                if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { this.hasElse = false; }
-                if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { this.hasNest = false; }
-                if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { this.hasExit = false; }
-                if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { this.hasLoop = false; }
+            if (params["instruction"] != undefined) {
+                this.instructionText = params["instruction"];
+            } else {
+                this.instructionText = (`This question intends to guide you through understanding parent-child relationships between processes. 
+                    For the code snippet shown below (assuming all calls to <code>fork()</code> succeed),
+                    answer <strong>how many times</strong> each letter is printed with <code>printf()</code>.`);
+            }
+            if (params["source"] != undefined) { // If you want to pass in a source code string for generating the C-code. 
+                this.source = params["source"];
+                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
+                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                console.log(this.source);
                 this.showMenu = false;
+                this.staticQuestion = true;
             }
             else {
-                this.modes = ["1", "2", "3"];
-                this.showMenu = true;
+                if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
+                    if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
+                    if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                    if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
+                    if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { console.error("Invalid hasNext param from .ptx file"); }
+                    if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
+                    if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
+                    this.showMenu = false;
+                }
+                else {
+                    this.modes = ["1", "2", "3"];
+                    this.showMenu = true;
+                }
+                this.staticQuestion = false;
             }
         } catch (error) { console.error("Error loading parameters:", error); }
-        // this.showMenu = true;
-        // this.modes = ["1", "2", "3"];
         this.printContent = [];
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
         }
-        this.lastSource = "";
     }
 
-    initForkInputField() {
+    initProcHierarchyInputField() {
         this.containerDiv = $("<div>").attr("id", this.divid);
+        this.confidDiv = $("<div>").addClass("config-box");
 
         /* Instructions */
-        this.instruction = $("<div>").html(
-            "<span style='font-size:large;font-weight:bold'>Instructions</span><br><br>" +
-            "This question intends to guide you through understanding parent-child relationships between processes. " +
-            "For the code snippet shown below (assuming all calls to <code>fork()</code> succeed), " + 
-            "answer <strong>how many times</strong> each letter is printed with <code>printf()</code>.<br>"
-        );
-        this.statementDiv = $("<div>").addClass("statement-box");
+        this.instruction = $("<div>").html("<span style='font-weight:bold'><u>Instructions</u></span>: " + this.instructionText).css("padding", "10px");
 
         /* Mode menu */
-        console.log("Checking is params are set", this.showMenu);
         if (this.showMenu == true) {
             this.configHelperText = $("<div>").html(
-                "<br><br><span style='font-size:large;font-weight:bold'>Configure this question</span><br><br>" +
-                "You can generate the C code block from several modes:<br>" +
-                "<ul style='line-height:90%'>" + 
-                    "<li>Mode 1 creates a small number of processes with if structures.</li>" + 
-                    "<li>Mode 2 has more processes with if-else structures and nested conditions.</li>" +
-                    "<li>Mode 3 has everything in mode 2 and introduces exits.</li>" + 
-                "</ul>"
+                `<span style='font-weight:bold'><u>Configure question</u></span>: 
+                You can generate the C code block from several modes:<br>
+                <ul style='line-height:90%'> 
+                    <li>Mode 1 creates a small number of processes with if structures.</li> 
+                    <li>Mode 2 has more processes with if-else structures and nested conditions.</li>
+                    <li>Mode 3 has everything in mode 2 and introduces exits.</li> 
+                </ul>`
             );
             this.label = $("<label>").addClass("fork-inline").html("<span>Select a mode</span>:&ensp;");
             this.modeMenu = $("<select>").addClass("form-control fork-inline mode");
@@ -139,13 +142,16 @@ export default class Fork extends RunestoneBase {
 
         /* Combine all elements into the container */
         this.promptDiv = $("<div>").addClass("prompt-div").append(this.codeDiv, this.inputDiv);
-        this.statementDiv.append(this.instruction);
-        if (this.showMenu == true) { this.statementDiv.append(this.configHelperText, this.label, this.modeMenu); }
-        this.containerDiv.append(this.statementDiv, this.promptDiv);
+        this.containerDiv.append(this.instruction);
+        if (this.showMenu == true) {
+            this.confidDiv.append(this.configHelperText, this.label, this.modeMenu);
+            this.containerDiv.append($("<br>"), this.confidDiv);
+        }
+        this.containerDiv.append(this.promptDiv);
 
         /* Some default Runestone things */
         $(this.origElem).children().clone().appendTo(this.containerDiv); // Copy the original elements to the container holding what the user will see.
-        // this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
+        this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
     updateSourceCode() {
@@ -155,6 +161,7 @@ export default class Fork extends RunestoneBase {
             const mode = this.modeMenu.val().toString();
             console.log("Menu value is", mode);
             let prev = this.source || "";
+            this.source = build.genRandSourceCode(this.ProcHierarchys, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             while (this.source == prev) {
                 if (mode == "2") {
                     this.numForks = 3;
@@ -183,23 +190,26 @@ export default class Fork extends RunestoneBase {
                 this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             }
         }
+        else {
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            let prev = this.source || "";
+            while (this.source == prev) {
+                this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            }
+        }
     }
 
     genSourceNAnswers() {
         [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
-        // console.log("Debugging c code content:", this.cCode);
         const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
         this.csvTree = c;
         this.labels = l;
-        // console.log(this.csvTree);
-        // console.log(build.printTreeVert(this.fullTree));
         this.answerMap = build.getAnswer(this.fullTree, this.numPrints);
-        // this.fullTreeGraph = hierarchy.drawHierarchy(this.csvTree, this.labels);
     }
 
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
-        this.updateSourceCode();
+        if (this.staticQuestion == false) { this.updateSourceCode(); }
         this.genSourceNAnswers();
     }
     
@@ -208,7 +218,7 @@ export default class Fork extends RunestoneBase {
         return myList[Math.floor(Math.random() * (myList.length))];
     }
 
-    initForkButtons() {
+    initProcHierarchyButtons() {
         this.containerDiv.append($('<br>'));
 
         /* Ask me another button */
@@ -216,7 +226,6 @@ export default class Fork extends RunestoneBase {
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");
         $(this.generateButton).attr({
             class: "btn btn-success",
-            name: "generate a new question",
             type: "button",
             id: this.divid + "submit",
         });
@@ -230,13 +239,17 @@ export default class Fork extends RunestoneBase {
         this.checkAnswerButton.textContent = $.i18n("msg_fork_check_answer");
         $(this.checkAnswerButton).attr({
             class: "btn btn-success",
-            name: "draw hierarchy tree",
             type: "button",
             id: this.divid + "check_answer",
         });
         this.checkAnswerButton.addEventListener("click", () => {
-            this.checkCurrentAnswer();
-            this.updateFeedbackDiv();
+            if ($(this.feedbackDiv).css('display') == 'none') {
+                this.checkCurrentAnswer();
+                this.updateFeedbackDiv();
+                $(this.feedbackDiv).show();
+            } else {
+                $(this.feedbackDiv).hide();
+            }
         });
 
         /* Reveal tree button */
@@ -244,7 +257,6 @@ export default class Fork extends RunestoneBase {
         this.revealTreeButton.textContent = $.i18n("msg_fork_reveal_tree");
         $(this.revealTreeButton).attr({
             class: "btn btn-success",
-            name: "draw hierarchy tree",
             type: "button",
             id: this.divid + "draw_tree",
         });
@@ -253,25 +265,24 @@ export default class Fork extends RunestoneBase {
             else { this.hideProcessHierarchy(); }
         });
 
-        /* Reveal timeline button */
-        this.revealTimelineButton = document.createElement("button");
-        this.revealTimelineButton.textContent = $.i18n("msg_fork_reveal_timeline");
-        $(this.revealTimelineButton).attr({
+        /* Reveal help button */
+        this.helpButton = document.createElement("button");
+        this.helpButton.textContent = $.i18n("msg_fork_help");
+        $(this.helpButton).attr({
             class: "btn btn-success",
-            name: "draw timeline",
             type: "button",
-            id: this.divid + "draw_timeline",
+            id: this.divid + "help",
         });
-        this.revealTimelineButton.addEventListener("click", () => {
-            if ($(this.timelineDiv).css('display') == 'none') { this.showTimeline(); }
-            else { this.hideTimeline(); }
+        this.helpButton.addEventListener("click", () => {
+            if ($(this.helpDiv).css('display') == 'none') { this.showHelp(); console.log("show");}
+            else { this.hideHelp(); console.log("hide");}
         });
 
         this.buttonsDiv = $("<div>");
 
-        this.buttonsDiv.append(this.generateButton);
+        if (this.staticQuestion == false) { this.buttonsDiv.append(this.generateButton); }
         this.buttonsDiv.append(this.revealTreeButton);
-        // this.buttonsDiv.append(this.revealTimelineButton);
+        this.buttonsDiv.append(this.helpButton);
         this.buttonsDiv.append(this.checkAnswerButton);
 
         this.containerDiv.append(this.buttonsDiv);
@@ -283,7 +294,7 @@ export default class Fork extends RunestoneBase {
 
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none").empty();
-        $(this.timelineDiv).css("display", "none");
+        $(this.helpDiv).css("display", "none");
     }
 
     updatePrompts(){
@@ -314,7 +325,6 @@ export default class Fork extends RunestoneBase {
             }
         }
         if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
-        else { this.feedback_msg.push(`<br>`); }
         console.log(this.feedback_msg);
         this.updateFeedbackDiv();
     }
@@ -326,8 +336,8 @@ export default class Fork extends RunestoneBase {
     showProcessHierarchy() {
         $(this.hierarchyTreeDiv).css("display", "block");
         $(this.hierarchyTreeDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
-            "<div id='trace_hierarchy'><strong>Click on the C-code above to see how the tree is built step by step.</strong></div>" +
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br><br>" + 
+            "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the C-code above</mark> to see how the tree is built step by step.</strong></div>" +
             "<br>" +
             "<div id='hierarchy_graph'></div>"
         );
@@ -340,36 +350,36 @@ export default class Fork extends RunestoneBase {
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
-    showTimeline() {
-        this.hideProcessHierarchy();
-        $(this.timelineDiv).css("display", "block");
-        const [tl_width, tl_height, tl_margin] = [
-            650,
-            500,
-            {top: 20,bottom: 20,left: 20,right: 20,}
-        ] 
-        $(this.timelineDiv).html(timeline.drawTimeline(this.root, tl_width, tl_height, tl_margin));
+    showHelp() {
+        $(this.helpDiv).css("display", "block");
+        $(this.helpDiv).html(
+            `<strong>Try viewing the process hierarchy to see full answer.</strong><br><br>
+            For reference:
+            <ul>
+                <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
+                <li><code>exit()</code> terminates the process that calls it.</li>
+            </ul>
+            <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>`
+        );
     }
 
-    hideTimeline() {
-        $(this.timelineDiv).css("display", "none");
+    hideHelp() {
+        $(this.helpDiv).html("");
+        $(this.helpDiv).css("display", "none");
     }
 
-    initFeedback_Hierarchy_Timeline_Divs() {
+    initFeedback_Hierarchy_Help_Divs() {
         this.feedbackDiv = $('<div>').attr('id', this.divid + '_feedback').css('display', 'none');
         this.hierarchyTreeDiv = $('<div>').css('display', 'none').addClass('tree-div');
-        this.timelineDiv = $('<div>').attr('id', this.divid + 'timeline_graph').css('display', 'none').addClass('tree-div');
+        this.helpDiv = $('<div>').css('display', 'none').addClass('help-div');
 
-        this.containerDiv.append(this.feedbackDiv, this.hierarchyTreeDiv, this.timelineDiv);
+        this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.hierarchyTreeDiv);
     }
 
     updateFeedbackDiv() {
         $(this.feedbackDiv).css('display', 'block').html(this.feedback_msg);
         if (this.correct === true) { $(this.feedbackDiv).attr('class', 'alert alert-info'); }
-        else { 
-            $(this.feedbackDiv).attr('class', 'alert alert-danger');
-            this.createReferenceSection();
-        }
+        else { $(this.feedbackDiv).attr('class', 'alert alert-danger'); }
         
         if (typeof MathJax !== 'undefined') { this.queueMathJax(document.body); }
     }
@@ -399,27 +409,6 @@ export default class Fork extends RunestoneBase {
         }
     }
 
-    createReferenceSection() {
-        var referenceTrigger = $("<u>").addClass('reference-trigger').css({
-            'cursor': 'pointer',
-            'text-decoration': 'underline'
-        }).text('For reference');
-
-        var referenceContent = $("<div>").addClass('reference-content').html(`
-            <ul>
-                <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
-                <li><code>exit()</code> terminates the process that calls it.</li>
-            </ul>
-            <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>
-        `);
-    
-        referenceTrigger.click(function() {
-            $(this).next('.reference-content').toggle();
-        });
-    
-        $(this.feedbackDiv).append(referenceTrigger, referenceContent);
-    }
-
     /*===================================
     === Checking/loading from storage ===
     ===================================*/
@@ -446,7 +435,7 @@ export default class Fork extends RunestoneBase {
             timestamp: new Date(),
         });
         let data = {
-            event: "Fork",
+            event: "ProcHierarchy",
             act: answer || "",
             answer: answer || "",
             correct: this.correct ? "T" : "F",
@@ -467,17 +456,17 @@ export default class Fork extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    $("[data-component=fork]").each(function (index) {
+    $("[data-component=processHierarchy]").each(function (index) {
         var opts = {
             orig: this,
             useRunestoneServices: eBookConfig.useRunestoneServices,
         };
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             try {
-                ForkList[this.id] = new Fork(opts);
+                ProcHierarchyList[this.id] = new ProcHierarchy(opts);
             } catch (err) {
                 console.log(
-                    `Error rendering Forking Problem ${this.id}
+                    `Error rendering Process hierarchy problem ${this.id}
                      Details: ${err}`
                 );
             }
