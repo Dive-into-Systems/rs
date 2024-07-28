@@ -87,6 +87,40 @@ export default class RunestoneBase {
         });
     }
 
+    logData(bundle) {
+        let data = {
+            timestamp: bundle.timestamp,
+            componentId: bundle.componentId,
+            questionId: bundle.questionId,
+            actionId: bundle.actionId,
+            userId: bundle.userId,
+            details: bundle.details
+        };
+
+        console.log(data);
+
+        const url = 'http://127.0.0.1:5000/log';
+
+        fetch(url, {
+            method: 'POST',
+            // mode: 'no-cors',
+            body: JSON.stringify(data),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Access-Control-Allow-Origin": "*"
+            }
+        })
+        .then(response => {
+            console.log(response.status);
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(json => console.log(json))
+        .catch(error => console.error('Error during fetch:', error));
+    }
+
     // _`logBookEvent`
     //----------------
     // This function sends the provided ``eventInfo`` to the `hsblog endpoint` of the server. Awaiting this function returns either ``undefined`` (if Runestone services are not available) or the data returned by the server as a JavaScript object (already JSON-decoded).

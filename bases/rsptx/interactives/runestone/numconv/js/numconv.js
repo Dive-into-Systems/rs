@@ -256,7 +256,7 @@ export default class NC extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
-                this.logData(3);
+                this.sendData(3);
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.clearAnswer();
@@ -480,7 +480,7 @@ export default class NC extends RunestoneBase {
             this.contWrong = 0;
         }
         // Log data 
-        if (this.correct === true) { this.logData(1); } else { this.logData(2); }
+        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
     }
 
     // log the answer and other info to the server (in the future)
@@ -507,38 +507,54 @@ export default class NC extends RunestoneBase {
         return data;
     }
 
-    logData(actionId) {
+    // sendData(actionId) {
+    //     let now = new Date();
+    //     let data = {
+    //         timestamp: now.toString(),
+    //         componentId : this.componentId,
+    //         questionId : this.questionId,
+    //         actionId : actionId,
+    //         userId : this.userId,
+    //         systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
+    //         userAnswer : this.inputNode.value.toLowerCase()
+    //     };
+    //     console.log(data);
+
+    //     const url = 'http://127.0.0.1:5000/binaryconversion';
+
+    //     fetch (url, {
+    //         method: 'POST',
+    //         body: JSON.stringify(data),
+    //         headers: {
+    //             "Content-type": "application/json; charset=UTF-8",
+    //             "Access-Control-Allow-Origin" : "*"
+    //         }
+    //     })
+    //     .then(response => {
+    //         console.log(response.status);
+    //         if (response.ok) {
+    //             return response.json();
+    //         }
+    //         throw new Error('Network response was not ok.');
+    //     })
+    //     .then(json => console.log(json))
+    //     .catch(error => console.error('Error during fetch:', error));
+    // }
+
+    sendData(actionId) {
         let now = new Date();
-        let data = {
+        let bundle = {
             timestamp: now.toString(),
             componentId : this.componentId,
             questionId : this.questionId,
             actionId : actionId,
             userId : this.userId,
-            systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
-            userAnswer : this.inputNode.value.toLowerCase()
+            details : {
+                systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
+                userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+            }
         };
-        console.log(data);
-
-        const url = 'http://127.0.0.1:5000/binaryconversion';
-
-        fetch (url, {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Access-Control-Allow-Origin" : "*"
-            }
-        })
-        .then(response => {
-            console.log(response.status);
-            if (response.ok) {
-                return response.json();
-            }
-            throw new Error('Network response was not ok.');
-        })
-        .then(json => console.log(json))
-        .catch(error => console.error('Error during fetch:', error));
+        this.logData(bundle);
     }
 
     /*===================================
