@@ -79,82 +79,80 @@ class ForkNode {
         }
     }
 
-    fork(leftCode, rightCode, indent, terminate, blockId) {
-        console.log("In fork function, we are looking at leftCode", leftCode, "and rightCode", rightCode);
-        
+    fork(leftCode, rightCode, indent, terminate, current) {        
         if (!this.active) {
-            return (new ForkNode()).fork(leftCode, rightCode, indent, terminate, blockId);
+            return (new ForkNode()).fork(leftCode, rightCode, indent, terminate, current);
         }
 
         let leftResult, rightResult;
-        if (this.left) { // if "future" self exist, that one executes instead
-            [leftResult, rightResult, blockId] = this.left.fork(leftCode, rightCode, indent, terminate, blockId);
+        if (this.left) {
+            [leftResult, rightResult, current] = this.left.fork(leftCode, rightCode, indent, terminate, current);
         }
         else {
             let [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
             this.left = new ForkNode(leftID, leftCt);
-            [leftResult, blockId] = this.left.pushCode(leftCode, indent, terminate, blockId);
+            [leftResult, current] = this.left.pushCode(leftCode, indent, terminate, current);
             this.left.right = new ForkNode(rightID, rightCt);
-            [rightResult, blockId] = this.left.right.pushCode(rightCode, indent, terminate, blockId);
+            [rightResult, current] = this.left.right.pushCode(rightCode, indent, terminate, current);
         }
-        if (this.right) { // you have a child, it also forks
-            [leftResult, rightResult, blockId] = this.right.fork(leftCode, rightCode, indent, terminate, blockId);
+        if (this.right) {
+            [leftResult, rightResult, current] = this.right.fork(leftCode, rightCode, indent, terminate, current);
         }
-        return [leftResult, rightResult, blockId];
+        return [leftResult, rightResult, current];
     }
 
-    pushCode(code, indent, terminate, blockId) {
+    pushCode(code, indent, terminate, current) {
         let result = [];
         let leftCode, rightCode;
         let leftResult, rightResult;
-         
-        function addLine(line, blockId) {
+        
+        function addLine(line) {
             result.push(`${SPC.repeat(indent)}${line}`);
         }
 
         for (let ptr = 0; ptr < code.length; ptr++) {
-            blockId++;
-            if (blockId > terminate) {
-                console.log("Terminating at blockId:", blockId);
+            console.log("Current is", current);
+            if (current > terminate) {
                 break;
             }
             if (code[ptr]!= "F" && code[ptr]!= EXIT_CHAR) {
-                addLine(`printf("${code[ptr]}");`, blockId);
+                current++;
+                addLine(`printf("${code[ptr]}");`);
                 this.print(code[ptr]);
                 continue;
             }
             if (code[ptr] == EXIT_CHAR) {
-                addLine(`exit();`, blockId);
+                current++;
+                addLine(`exit();`);
                 this.exit();
             }
             if (code[ptr] == "F") {
+                current++;
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-                console.log(leftCode, rightCode, ptr);
-                [leftResult, rightResult, blockId] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate, blockId);
+                [leftResult, rightResult, current] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate, current);
                 if (!leftCode && !rightCode) {
-                    addLine("fork();", blockId);
+                    addLine("fork();");
                 }
                 if (leftCode) {
-                    addLine("if (fork()) {", blockId);
+                    addLine("if (fork()) {");
                     result = result.concat(leftResult);
                     if (rightCode) {
-                        addLine("} else {", null);
+                        addLine("} else {");
                     }
                     else {
-                        addLine("}", null);
+                        addLine("}");
                     }
                 }
                 if (rightCode) {
                     if (!leftCode) {
-                        addLine("if (fork() == 0) {", blockId);
+                        addLine("if (fork() == 0) {");
                     }
                     result = result.concat(rightResult);
-                    console.log(rightResult);
-                    addLine("}", null);
+                    addLine("}");
                 }
             }
         }
-        return [result, blockId];
+        return [result, current];
     }
 
     serialize() {
@@ -267,7 +265,6 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
 }
 
 export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
-    
     let code = "";
     const fork = hasElse?"F(,)":"F()";
 
@@ -295,15 +292,17 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
         return char;
     };
     let t = code.replace(/-/g, replaceChar); 
-    console.log(t);
+    // console.log(t);
     return t;
 }
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
     let [codeC, trash] = tree.pushCode(code, 0, Infinity, 0);
+    // codeC = codeC.join(NEWLINE);
     let labeledCodeC = labelLines(codeC);
     return [tree, labeledCodeC];
+    // return [tree, codeC];
 }
 
 function labelLines(code) {
@@ -311,13 +310,13 @@ function labelLines(code) {
     let annotated = []
     for (let i = 0; i < code.length; i++) {
         if (code[i].indexOf("}")===-1) {
-            lineId++;
             let prefix = `<span data-block="${lineId}">`;
             let suffix = `</span>`;
             annotated.push(`${prefix}${code[i]}${suffix}`);
         } else {
             annotated.push(`${code[i]}`);
         }
+        lineId++;
     }
     let joinedAnnotated = annotated.join(NEWLINE);
     return joinedAnnotated;

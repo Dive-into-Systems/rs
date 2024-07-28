@@ -7,6 +7,7 @@ $.i18n().load({
         msg_fork_compare_me: "Compare me",
         msg_fork_reveal_tree: "Show process hierarchy",
         msg_fork_help: "Help",
+        msg_fork_correct: "Correct. Good job!",
         msg_fork_generate_another: "Generate another question",
     },
 });

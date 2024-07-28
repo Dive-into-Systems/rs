@@ -1,5 +1,8 @@
 #hierarchy_graph {
   pointer-events: none;
+  width: auto;
+  max-width: 100%;
+  display: inline-block;
 }
 
 .fork-inline {
@@ -7,6 +10,9 @@
   display: inline-block !important;
 }
 
+.feedback-div {
+  margin: 5px !important;
+}
 .mode {
   width: fit-content !important;
   height: 30px !important;
@@ -14,13 +20,12 @@
 }
 
 .help-div {
-  background-color: #f8f8f8;
+  background-color: #fdfdfd;
   line-height : 90%;
-  margin: 10px;
+  margin: 5px;
   padding: 8px;
-  border-width: 1px;
-  border-radius: 5px;
-  border-color: #f3f3f3;
+  border-width: 3px;
+  border-radius: 6px;
 }
 
 .code-div-inline {
@@ -51,17 +56,17 @@ span[data-block]:hover {
 }
 
 .tree-div {
-  flex: 1;
+  display: flex;
   border-width: 1px;
   border-radius: 5px;
   background-color:rgb(252, 252, 252);
   border: 1px solid #bebebe;
   padding: 15px;
-  margin-top: 10px;
+  margin: 5px;
   justify-content: center;
   display: flex;
   flex-flow: column;
-  /* pointer-events: none; */
+  overflow: auto;
 }
 
 .input-box {
