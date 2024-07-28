@@ -164,8 +164,8 @@ class ArchInstructions {
     generateStates(num_instructions, num_registers, num_addresses, selection) {
         const selected_addresses = this.generateAddresses(num_addresses);
         const { selected_regular_registers, selected_stack_registers } = this.generateRegisters(num_registers, selected_addresses);
-        const selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
-        // for initial state
+        let selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
+        // for initial states
         this.states.unshift([selected_instructions, [...selected_regular_registers, ...selected_stack_registers], selected_addresses.reverse()]);
         return this.states;
     }
@@ -211,6 +211,18 @@ class ArchInstructions {
         return { selected_regular_registers, selected_stack_registers };
     }
 
+    // Generates random order for selected instructions
+    generateRandomInstructionOrder(instructions_to_be_shuffled) {
+
+        let shuffledArray = instructions_to_be_shuffled.slice();
+        for (let i = shuffledArray.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+        }
+        return shuffledArray;
+    }
+
+    
     // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         const offsets = arch_data[this.architecture]['offsets'];
@@ -242,6 +254,8 @@ class ArchInstructions {
             const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1);
             selected_instructions.push(instruction);
         }
+
+        selected_instructions =  this.generateRandomInstructionOrder(selected_instructions);
 
         // Create a deep copy of the initial state
         const initialState = {
