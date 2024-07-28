@@ -77,13 +77,13 @@ ol {
 .instruction-item {
     margin: 2px 0;
     border-radius: 3px;
-    transition:  0.3s ease;
+    transition: 0.3s ease;
     display: flex;
 }
 
 .instruction-item::before {
     counter-increment: instruction-counter;
-    content: counter(instruction-counter) ".";;
+    content: counter(instruction-counter) ".";
     margin: 10px;
     font-weight: bold;
 }
@@ -92,9 +92,10 @@ ol {
     padding: 10px;
     margin: 2px 0;
     border-radius: 3px;
-    transition:  0.3s ease;
+    transition: 0.3s ease;
     display: flex;
     justify-content: space-between;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 .instruction-div.current {
@@ -158,3 +159,57 @@ input:focus::placeholder {
     display: flex;
     justify-content: space-around;
 }
+
+.help-container {
+    border-width: 1px;
+    border-radius: 5px;
+    background-color: rgb(252, 252, 252);
+    border: 1px solid #bebebe;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+/* Specific Styles Based on Instructions */
+
+.instructions {
+    background-color: #007bff; /* Blue background for instructions */
+    color: #000; /* Black text */
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.configuration {
+    background-color: #f7f7f7; /* Grey background for configuration */
+    color: #000; /* Black text */
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.question {
+    background-color: #007bff; /* Blue background */
+    color: #000; /* Black text */
+}
+
+.fixed-font {
+    font-family: monospace; /* Fixed width font */
+    color: #000; /* Black text */
+}
+
+/* Feedback Styles */
+
+.feedback-correct {
+    background-color: #007bff; /* Blue background if correct */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.feedback-incorrect {
+    background-color: #ffc0cb; /* Pink background if incorrect */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+

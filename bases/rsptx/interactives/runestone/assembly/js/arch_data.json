@@ -10,7 +10,7 @@
         "bad_dest": [0.40, 0.60],
         "memOps": {
             "mainWeight": 15,
-            "instructions": ["mov"],
+            "instructions": ["ldr", "str"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
                 "ok": "r-(l/r)",
@@ -19,20 +19,13 @@
                 "bad_ct": "r-r-r"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg2}, {reg1}",
                 "{op} {reg1}, [{memAddr}]",
-                "{op} {reg2}, [{memAddr}]",
-                "{op} [{memAddr}], {reg1}",
-                "{op} [{memAddr}], {reg2}",
-                "{op} [{memAddr}], #{literal}",
-                "{op} {reg1}, #{literal}",
-                "{op} {reg2}, #{literal}"
+                "{op} {reg2}, [{memAddr}]"
             ]
         },
         "archOps": {
             "mainWeight": 15,
-            "instructions": ["ldr", "str"],
+            "instructions": ["mov"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
                 "ok": "r-m",
@@ -41,8 +34,10 @@
                 "bad_ct": "r-r-r"
             },
             "formats": [
-                "{op} {reg1}, [{memAddr}]",
-                "{op} {reg2}, [{memAddr}]"
+                "{op} {reg1}, {reg2}",
+                "{op} {reg2}, {reg1}",
+                "{op} {reg1}, #{literal}",
+                "{op} {reg2}, #{literal}"
             ]
         },
         "arithUnary": {
@@ -121,14 +116,7 @@
                 "{op} {reg1}, #{literal}"
             ]
         },
-        "customHints": {
-            "mov": "mov D, S => D = S",
-            "add": "add D, O1, O2 => D = O1 + O2",
-            "sub": "sub D, O1, O2 => D = O1 - O2",
-            "ldr": "ldr D, [R] => D = Mem[R]",
-            "str": "ldr D, [R] => D = Mem[R]"
-        },
-        "offsets": ["0x8", "0x10", "0x18", "0x20"],
+        "offsets": ["0x8", "0x10", "0x18"],
         "registers_32": [
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
             "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15",
@@ -272,13 +260,6 @@
                 "{op} ${literal}, {memAddr}"
             ]
         },
-        "customHints": {
-            "mov": "mov S, D => D = S",
-            "add": "add S, D => D = D + S",
-            "sub": "sub S, D => D = D - S",
-            "push": "Hint for X86_32 PUSH instruction.",
-            "pop": "Hint for X86_32 POP instruction."
-        },
         "offsets": ["0x4", "0x8", "0xC", "0x10"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi", "ebp", "esp"],
         "registers_64": [],
@@ -411,13 +392,6 @@
                 "{op} ${literal}, %{reg1}",
                 "{op} ${literal}, {memAddr}"
             ]
-        },
-        "customHints": {
-            "mov": "mov S, D => D = S",
-            "add": "add S, D => D = D + S",
-            "sub": "sub S, D => D = D - S",
-            "push": "push S => %rsp = %rsp - 8 , mem[%rsp] = S",
-            "pop": "pop D => D = mem[%rsp] , %rsp = %rsp + 8"
         },
         "offsets": ["0x8", "0x10", "0x18", "0x20"],
         "registers_32": ["eax", "ecx", "edx", "edx", "esi", "edi"],

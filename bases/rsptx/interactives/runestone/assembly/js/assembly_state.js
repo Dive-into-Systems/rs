@@ -9,6 +9,7 @@ import "./assembly-i18n.en.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
+import arch_data from './arch_data.json';
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 const num_instructions = 3;
@@ -28,8 +29,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.memo_checked = false;
         this.stack_checked = false;
 
-        // Create the Assembly State exercise element
-        this.createAssemblyStateElement();
+        const json = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (json["instructions"] || json["registers"] || json["addresses"]) {
+            // custom randomization of instructions, registers, and addresses
+            this.instructions = json.instructions;
+            this.registers = json.registers;
+            this.memory = json.memory;
+            this.createCustomizedAssemblyStateElement();
+        }
+        else {
+            this.createRegularAssemblyStateElement();
+        }
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
@@ -44,8 +54,25 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
 
-    // Creates the main Assembly State exercise element
-    createAssemblyStateElement() {
+    // Creates the Customized Assembly State exercise element
+    createCustomizedAssemblyStateElement() {
+        this.setDefaultParams();
+        this.setCustomizedParams();
+
+        // create the main div
+        this.containerDiv = $("<div>").attr("id", this.divid);
+
+        // rendering the whole thing
+        this.renderHeader();
+        this.initialState = [this.instructions, this.registers, this.memory];
+        console.log(this.initialState);
+        this.currentInstruction = 1;
+        this.customizedTryAnother();
+
+    }
+
+    // Creates the Regular Assembly State exercise element
+    createRegularAssemblyStateElement() {
         this.setDefaultParams();
         this.setCustomizedParams();
 
@@ -61,7 +88,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders the header of the exercise
     renderHeader() {
         this.headerDiv = $("<div>").html(
-            "For the instruction highlighted in green, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
+            "<strong><u>Instructions:</u></strong>" +
+            " For the instruction highlighted in green, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
             + "You do not need to enter values for registers or memory locations whose values do not change.<br></br>"
         ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
@@ -72,14 +100,18 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // Initialize the generator based on the architecture
         const instructionTypes = [
-            { label: 'Memory Manipulation', value: 'memOps', instructions: ["mov"] },
-            { label: 'Stack Operations', value: "archOps", instructions: ["push", "pop", "ldr", "str"] }
+            { label: 'Memory Manipulation', value: 'memOps', instructions: arch_data[this.architecture]["memOps"].instructions },
         ];
+
+        if (this.architecture !== "ARM64") {
+            instructionTypes.push({ label: 'Stack Operations', value: 'archOps', instructions: arch_data[this.architecture]["archOps"].instructions });
+        } else {
+            this.stack_checked = true; // Set stack_checked to true for ARM64 architecture
+        }
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
 
-        instructionTypeDiv.append($("<h4>").text("Configure Your Question Type:"));
-        instructionTypeDiv.append($("<p>").text("Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt."));
+        instructionTypeDiv.append($("<div>").html("<strong><u>Configure:</u></strong>" + " Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt." + "<br></br>"));
 
         instructionTypes.forEach(family => {
             let checkbox = $("<input>").attr({
@@ -124,8 +156,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                     placement: "bottom",
                     html: true,
                     title:
-                        `${family.instructions.join(", ")}`
-                });
+                        `${family.instructions}`,
+                })
             instructionTypeDiv.append(checkbox).append(label).append(" ");
         });
         instructionTypeDiv.append("<br>");
@@ -145,8 +177,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         );
 
         this.initialState = this.allStates[0];
-
-        console.log(this.allStates)
 
         this.currentInstruction = 1;
     }
@@ -201,6 +231,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders tables for registers and memory
     renderTables() {
         const [instructions, registers, addresses] = this.initialState;
+
+        console.log(registers, addresses);
 
         // Create table for registers
         const registersTable = $("<table>").addClass("register-table");
@@ -323,9 +355,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
-        const tryAnotherButton = $("<button>").text("Try Another Question").addClass("btn-success").on("click", () => this.tryAnother());
+        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => this.tryAnother());
         const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
-        const linkButton = $("<button>").text("Go to Dive Into Systems").addClass("btn-success").on("click", () => this.goToLink());
+        const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => this.provideHelp());
         const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
 
         buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);
@@ -343,17 +375,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             feedbackDiv.addClass("alert alert-success");
             feedbackMessage = `Correct! Moving to instruction ${this.currentInstruction + 1}.`;
         } else {
-            const currentInstruction = this.initialState[0][this.currentInstruction - 1];
-            const parsedInstruction = this.architecture === "ARM64" ? this.generator.parseARM64Instruction(currentInstruction) : this.generator.parseX86Instruction(currentInstruction);
             feedbackDiv.addClass("alert alert-danger");
-
-            let customHint = null;
-            if (parsedInstruction) {
-                const { op } = parsedInstruction;
-                customHint = this.generator.getCustomHint(op);
-            }
-
-            feedbackMessage = customHint || "Incorrect. Please try again";
+            feedbackMessage = "Incorrect. Please try again";
         }
 
         feedbackDiv.text(feedbackMessage);
@@ -362,6 +385,25 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderFinalFeedback() {
         const feedbackDiv = this.containerDiv.find("[id^='feedback']");
         feedbackDiv.text("Congratulations! Completed all instructions").css('color', 'blue');
+    }
+
+    provideHelp() {
+        const helpDiv = this.containerDiv.find(".help-container");
+        if (helpDiv.length > 0) {
+            helpDiv.remove();
+        }
+        else {
+            const helpDiv = $("<div>").addClass("help-container");
+            helpDiv.append($("<div>").text("Click the button to visualize and trace through the assembly code in ASM Visualizer:").css("font-weight", "bold"));
+            helpDiv.append($("<button>").text("Visualization").addClass("link-button").on("click", () => this.goToLink()));
+
+            const bookChapter = this.architecture == "ARM64" ? "C9-ARM64/common.html" : (this.architecture == "X86_32" ? "C8-IA32/common.html" : "C7-x86_64/common.html");
+            helpDiv.append($("<div>").text("Click the link to the textbook chapter for more information.").css("font-weight", "bold"));
+            helpDiv.append($("<button>").text("Textbook").addClass("link-button").on("click", () => window.open(`https://diveintosystems.org/book/${bookChapter}`)));
+
+
+            this.containerDiv.append(helpDiv);
+        }
     }
 
     goToLink() {
@@ -428,6 +470,23 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find('.button-container').remove();
         this.containerDiv.find("[id^='feedback']").remove();
         this.containerDiv.find('.link-button').remove();
+        this.containerDiv.find(".help-container").remove();
+
+        // rerender
+        this.renderInstructionsList(this.initialState[0]);
+        this.renderTables();
+        this.renderButtons();
+    }
+
+    customizedTryAnother() {
+        // Clear the current state and re-render the component
+
+        this.containerDiv.find('.instruction-container').remove();
+        this.containerDiv.find('.tables-container').remove();
+        this.containerDiv.find('.button-container').remove();
+        this.containerDiv.find("[id^='feedback']").remove();
+        this.containerDiv.find('.link-button').remove();
+        this.containerDiv.find(".help-container").remove();
 
         // rerender
         this.renderInstructionsList(this.initialState[0]);

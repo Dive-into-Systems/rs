@@ -54,8 +54,6 @@ class ArchInstructions {
             registers_32: config.registers_32,
             registers_64: config.registers_64
         });
-
-        this.customHints = config.customHints || {};
     }
 
     /*
@@ -139,15 +137,6 @@ class ArchInstructions {
             cloneExpr.includes('/') ?
                 this._evalPrompt(unifPickItem(cloneExpr.split('/')), is32) :
                 cloneExpr.split('').map(char => this._solveChar(char, is32)).join(", ");
-    }
-
-    // Gets custom hint for each instruction being executed in case user gets it wrong
-    getCustomHint(instruction) {
-
-        if (this.customHints[instruction]) {
-            return this.customHints[instruction];
-        }
-        return null;
     }
 
 
@@ -319,7 +308,7 @@ class ArchInstructions {
             memItem = unifPickItem(memory);
         }
 
-        const memAddr = this.architecture === "ARM64" ? `${stack_registers[1].register}, #-${offset}` : `${"-" + offset}(%${stack_registers[1].register})`;
+        const memAddr = this.architecture === "ARM64" ? `${stack_registers[0].register}, #${offset}` : `${"-" + offset}(%${stack_registers[1].register})`;
         // randomly select literal
         let literal = Math.floor(Math.random() * 8) + 1;
 
@@ -340,8 +329,6 @@ class ArchInstructions {
         const memory = JSON.parse(JSON.stringify(initialMemory));
         this.states = instructions.map((instruction, step) => {
             const parsed = this.architecture === "ARM64" ? this.parseARM64Instruction(instruction) : this.parseX86Instruction(instruction);
-            console.log(instruction)
-            console.log(parsed);
             if (parsed) this.executeInstruction(parsed.op, parsed.args, registers, memory);
             return { instruction, step: step + 1, registers: JSON.parse(JSON.stringify(registers)), memory: JSON.parse(JSON.stringify(memory)).reverse() };
         });
@@ -427,7 +414,6 @@ class ArchInstructions {
     // Executes memory operations
     executeMemoryOperation(op, dest, src, registers, memory) {
         const value = this.getValue(src, registers, memory);
-        console.log(value);
         this.setValue(dest, value, registers, memory);
     }
 
@@ -507,14 +493,12 @@ class ArchInstructions {
         // Handle memory accesses
         if (operand.startsWith('[') && operand.endsWith(']') || operand.includes('(') && operand.includes(')')) {
             const mem = memory.find(m => m.address === this.getMemoryAddress(operand, registers, memory));
-            console.log(operand, mem);
             return mem && /^[0-9]+$/.test(mem.value) ? mem.value : 0;
         }
     }
 
     // Set the value from the given registers and memories
     setValue(operand, value, registers, memory) {
-        console.log(this.getMemoryAddress(operand, registers, memory), registers, memory);
         if (operand == undefined) return null;
         if (operand.startsWith('%')) return registers.find(r => `%${r.register}` === operand).value = value;
         if (operand.startsWith('X')) return registers.find(r => `${r.register}` === operand).value = value;
