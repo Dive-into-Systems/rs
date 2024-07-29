@@ -176,6 +176,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             [this.arith_checked, this.memo_checked, this.stack_checked]
         );
 
+        console.log(this.allStates);
+
         this.initialState = this.allStates[0];
 
         this.currentInstruction = 1;
@@ -398,7 +400,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             helpDiv.append($("<button>").text("Visualization").addClass("link-button").on("click", () => this.goToLink()));
 
             const bookChapter = this.architecture == "ARM64" ? "C9-ARM64/common.html" : (this.architecture == "X86_32" ? "C8-IA32/common.html" : "C7-x86_64/common.html");
-            helpDiv.append($("<div>").text("Click the link to the textbook chapter for more information.").css("font-weight", "bold"));
+            helpDiv.append($("<div>").text("Click the link to the textbook chapter for more information:").css("font-weight", "bold"));
             helpDiv.append($("<button>").text("Textbook").addClass("link-button").on("click", () => window.open(`https://diveintosystems.org/book/${bookChapter}`)));
 
 

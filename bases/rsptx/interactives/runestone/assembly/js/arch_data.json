@@ -201,13 +201,8 @@
             "formats": [
                 "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} %{reg1}, {memAddr}",
-                "{op} %{reg2}, {memAddr}",
-                "{op} {memAddr}, %{reg1}",
-                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
-                "{op} ${literal}, %{reg2}",
-                "{op} ${literal}, {memAddr}"
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "bitLogic": {
@@ -334,13 +329,8 @@
             "formats": [
                 "{op} %{reg1}, %{reg2}",
                 "{op} %{reg2}, %{reg1}",
-                "{op} %{reg1}, {memAddr}",
-                "{op} %{reg2}, {memAddr}",
-                "{op} {memAddr}, %{reg1}",
-                "{op} {memAddr}, %{reg2}",
                 "{op} ${literal}, %{reg1}",
-                "{op} ${literal}, %{reg2}",
-                "{op} ${literal}, {memAddr}"
+                "{op} ${literal}, %{reg2}"
             ]
         },
         "bitLogic": {

@@ -164,7 +164,7 @@ class ArchInstructions {
     generateStates(num_instructions, num_registers, num_addresses, selection) {
         const selected_addresses = this.generateAddresses(num_addresses);
         const { selected_regular_registers, selected_stack_registers } = this.generateRegisters(num_registers, selected_addresses);
-        let selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
+        const selected_instructions = this.generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection);
         // for initial states
         this.states.unshift([selected_instructions, [...selected_regular_registers, ...selected_stack_registers], selected_addresses.reverse()]);
         return this.states;
@@ -222,7 +222,7 @@ class ArchInstructions {
         return shuffledArray;
     }
 
-    
+
     // Generates a list of instructions for the simulation
     generateInstructions(num_instructions, selected_regular_registers, selected_stack_registers, selected_addresses, selection) {
         const offsets = arch_data[this.architecture]['offsets'];
@@ -249,34 +249,38 @@ class ArchInstructions {
             instruction_sources.push('archOps');
         }
 
-        // Fill the remaining instructions randomly from the selected categories
-        while (selected_instructions.length < num_instructions) {
-            const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1);
-            selected_instructions.push(instruction);
+        for(let i = 0; i < 1000; i++) {
+
+            // Fill the remaining instructions randomly from the selected categories
+            while (selected_instructions.length < num_instructions) {
+                const instruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1);
+                selected_instructions.push(instruction);
+            }
+
+            selected_instructions =  this.generateRandomInstructionOrder(selected_instructions);
+
+            // Create a deep copy of the initial state
+            const initialState = {
+                instructions: [...selected_instructions],
+                registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
+                memory: JSON.parse(JSON.stringify(selected_addresses))
+            };
+
+            // Execute instructions and check for negative values
+            this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
+
+            // If no negative values were found, return the selected instructions
+            if (!this.states.some(state => this.hasNegativeNumbers(state))) {
+                return selected_instructions;
+            }
+
+            // Reset states for the next attempt
+            this.states = [];
+            selected_instructions = [];
         }
-
-        selected_instructions =  this.generateRandomInstructionOrder(selected_instructions);
-
-        // Create a deep copy of the initial state
-        const initialState = {
-            instructions: [...selected_instructions],
-            registers: JSON.parse(JSON.stringify([...selected_regular_registers, ...selected_stack_registers])),
-            memory: JSON.parse(JSON.stringify(selected_addresses))
-        };
-
-        // Execute instructions and check for negative values
-        this.executeInstructions([initialState.instructions, initialState.registers, initialState.memory]);
-
-        // If no negative values were found, return the selected instructions
-        if (!this.states.some(state => this.hasNegativeNumbers(state))) {
-            return selected_instructions;
-        }
-
-        // Reset states for the next attempt
-        this.states = [];
 
         // If we couldn't generate a valid set of instructions after 100 attempts
-        console.warn("Could not generate instructions without negative values after 100 attempts");
+        console.warn("Could not generate instructions without negative values after 1000 attempts");
         return selected_instructions;
     }
 
