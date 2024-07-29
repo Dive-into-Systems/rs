@@ -292,17 +292,14 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
         return char;
     };
     let t = code.replace(/-/g, replaceChar); 
-    // console.log(t);
     return t;
 }
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
     let [codeC, trash] = tree.pushCode(code, 0, Infinity, 0);
-    // codeC = codeC.join(NEWLINE);
     let labeledCodeC = labelLines(codeC);
     return [tree, labeledCodeC];
-    // return [tree, codeC];
 }
 
 function labelLines(code) {
