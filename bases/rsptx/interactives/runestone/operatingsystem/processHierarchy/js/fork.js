@@ -163,13 +163,9 @@ export default class ProcHierarchy extends RunestoneBase {
     }
 
     updateSourceCode() {
-
         console.log("Show menu is", this.showMenu);
-        const generateNewSourceCode = () => {
-            return build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        };
 
-        if (this.showMenu == true) {
+        if (this.showMenu === true) {
             const mode = this.modeMenu.val().toString();
             switch (mode) {
                 case "2":
@@ -197,17 +193,17 @@ export default class ProcHierarchy extends RunestoneBase {
                     this.hasLoop = false;
                     break;
             }
-            let prev = this.source || "";
-            this.source = generateNewSourceCode();
-            while (this.source == prev) {
-                this.source = generateNewSourceCode();
+            let prev = (this.source !== undefined) ? this.source : "invalid";
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            while (this.source === prev) {
+                this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             }
         }
         else {
-            let prev = this.source || "";
-            this.source = generateNewSourceCode();
-            while (this.source == prev) {
-                this.source = generateNewSourceCode();
+            let prev = (this.source !== undefined) ? this.source : "invalid";
+            this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            while (this.source === prev) {
+                this.source = build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
             }
         }
     }
