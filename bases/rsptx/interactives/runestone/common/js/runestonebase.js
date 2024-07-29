@@ -86,7 +86,8 @@ export default class RunestoneBase {
             Accept: "application/json",
         });
     }
-
+    
+    // This function sends data to the Dive in to Systems exercise book database
     logData(bundle) {
         let data = {
             timestamp: bundle.timestamp,

@@ -7,20 +7,8 @@
   input.input-validation-error {
    border: 1px solid #e80c4d;
   }
-  
-  .binops-inline{
-    padding: 0px;
-    font-size: 100%;
-    /* color: #c7254e; */
-    background-color: #fffef9;
-    border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-    box-sizing: border-box;
-  }
-  
+
   .number-input-box {
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
-    font-size: 18px !important;
     width: 45% !important;
     margin:3px !important;
   }
@@ -34,9 +22,9 @@
   .code-style-menu {
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
     border: none;
-    font-weight: 550 !important;
+    /* font-weight: 550 !important; */
     display: block;
-    width: 100%;
+    width: auto;
     height: 34px;
     padding: 6px 12px;
     color: #c7254e !important;
@@ -46,9 +34,6 @@
   }
   
   .calculate-btn {
-    background-color: rgb(33, 187, 100) !important;
-    border-radius: 8px !important;
-    color: rgb(255, 255, 255) !important;
     cursor: pointer;
     display: inline-block;
     /* font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important; */
@@ -65,14 +50,9 @@
   }
   
   .generate-btn {
-    background-color: #3e78f5 !important;
-    border-radius: 8px !important;
-    color: rgb(255, 255, 255) !important;
     cursor: pointer;
     display: inline-block;
-    /* font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important; */
     font-weight: 500;
-    line-height: 20px !important;
     text-align: center;
     transition: all 200ms;
     vertical-align: baseline;
@@ -89,13 +69,11 @@
   
   .clear-btn {
     background-color: #ababab !important;
-    border-radius: 8px !important;
     color: #ffffff !important;
     cursor: pointer;
     display: inline-block;
     /* font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif !important; */
     font-weight: 500;
-    line-height: 20px !important;
     text-align: center;
     transition: all 200ms;
     vertical-align: baseline;

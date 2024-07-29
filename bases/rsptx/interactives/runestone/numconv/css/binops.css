@@ -8,22 +8,12 @@ input.input-validation-error {
  border: 1px solid #e80c4d;
 }
 
-.binops-inline{
-  padding: 0px;
-  font-size: 100%;
-  /* color: #c7254e; */
-  background-color: #fffef9;
-  border-radius: 4px;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-  box-sizing: border-box;
-}
-
 .statement-div {
   border-width: 1px;
   border-radius: 5px;
-  border-block-style: solid;
-  border-block-color: white;
-  background-color: white;
+  border-style: solid;
+  border-color: rgb(234, 234, 234);
+  background-color: rgb(255, 255, 255);
   padding: 8px;
 }
 

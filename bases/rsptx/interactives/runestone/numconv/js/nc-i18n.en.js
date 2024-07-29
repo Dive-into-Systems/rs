@@ -4,7 +4,7 @@ $.i18n().load({
         msg_boxes_unchecked: "No operators selected.",
         msg_NC_check_me: "Check answer",
         msg_NC_compare_me: "Compare me",
-        msg_NC_generate_a_number: "Try a new value",
+        msg_NC_generate_a_number: "Generate another question",
         msg_NC_incorrect: "Incorrect. Please try again.",
         msg_NC_correct: "Correct. Good job!",
         msg_NC_same_exp: "There's no point to convert between two same type. Please choose two different expressions.",

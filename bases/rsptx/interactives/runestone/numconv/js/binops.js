@@ -6,56 +6,70 @@
 
 
 import RunestoneBase from "../../common/js/runestonebase.js";
+import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
 import "../css/binops.css";
 import { Pass } from "codemirror";
-
 
 export var BOList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
 
 // NC constructor
 export default class BO extends RunestoneBase {
-   constructor(opts) {
+   constructor(opts, userId) {
        super(opts);
        var orig = opts.orig; // entire <p> element
        this.useRunestoneServices = opts.useRunestoneServices;
        this.origElem = orig;
        this.divid = orig.id;
+
+        // Default configuration settings
        this.correct = null;
-       this.num_bits = 4; // default number of bits = 4
+       this.num_bits = 4;
        this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
        this.toOpt = ["4", "6", "8"];
-      
-       this.createBOElement();
-       this.generateButton.click();
-       this.caption = "Bitwise Operation";
-       this.addCaption("runestone");
-       this.checkServer("nc", true);
-    //    this.randomItem = "";
-       if (typeof Prism !== "undefined") {
-           Prism.highlightAllUnder(this.containerDiv);
-       }
 
-       this.contWrong = 0;
-   }
-   // Find the script tag containing JSON in a given root DOM node.
-   scriptSelector(root_node) {
-       return $(root_node).find(`script[type="application/json"]`);
-   }
-   /*===========================================
-   ====   Functions generating final HTML   ====
-   ===========================================*/
-   // Create the NC Element
-   createBOElement() {
-       this.renderBOPromptAndInput();
-       this.renderBOButtons();
-       this.renderBOFeedbackDiv();
-        // this.getCheckedValues();
-        // replaces the intermediate HTML for this component with the rendered HTML of this component
-       $(this.origElem).replaceWith(this.containerDiv);
-   }
+        // Fields for logging data
+        this.componentId = 2;
+        this.userId = userId;
+        this.questionId = 1;
+      
+        this.createBOElement();
+        this.clearAnswer();
+        this.getCheckedValues();
+        // only generate new prompt when there is item selected
+        if (this.checkedValues.length != 0){
+            this.generateNumber();
+            this.generateAnswer();
+        } 
+        this.checkValidConversion();
+        // this.caption = "Bitwise Operation";
+        // this.addCaption("runestone");
+        //    this.checkServer("nc", true);
+        if (typeof Prism !== "undefined") {
+            Prism.highlightAllUnder(this.containerDiv);
+        }
+
+        this.contWrong = 0;
+        this.sendData(0);
+    }
+    // Find the script tag containing JSON in a given root DOM node.
+    scriptSelector(root_node) {
+        return $(root_node).find(`script[type="application/json"]`);
+    }
+    /*===========================================
+    ====   Functions generating final HTML   ====
+    ===========================================*/
+    // Create the NC Element
+    createBOElement() {
+        this.renderBOPromptAndInput();
+        this.renderBOButtons();
+        this.renderBOFeedbackDiv();
+            // this.getCheckedValues();
+            // replaces the intermediate HTML for this component with the rendered HTML of this component
+        $(this.origElem).replaceWith(this.containerDiv);
+    }
 
    // Generate the layout of the prompt and input
    renderBOPromptAndInput() {
@@ -86,7 +100,15 @@ export default class BO extends RunestoneBase {
         // Create the statement div
         this.statementDiv = document.createElement("div");
         this.statementDiv.className = "statement-div";
-        this.statementNode05 = document.createTextNode("Please do the bitwise operation based on the operator and the number of bits you select.");
+        
+        this.instruction = document.createElement("div");
+        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
+            "Please do the bitwise operation based on the operator and the number of bits you select.";
+        this.instruction.style.padding = "10px";
+
+        this.configHelperText = document.createElement("div");
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
+
         this.statementNode1 = document.createTextNode(" Choose operators: ");
 
         // Create the container for the dropdown checkbox list
@@ -160,19 +182,22 @@ export default class BO extends RunestoneBase {
                     this.contWrong = 0;
             }.bind(this),
             false);
-
+        console.log("here1");
         // Render the statement
-        this.statementDiv.appendChild(this.statementNode05);
-        // br element starts a new line in the statement
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(this.statementNode2);
-        this.statementDiv.appendChild(this.menuNode2);
-        this.statementDiv.appendChild(this.statementNode1);
-        this.statementDiv.appendChild(this.menuNode1);
-        this.statementDiv.appendChild(document.createElement("br"));
+        this.containerDiv.append(this.instruction);
+        this.containerDiv.append(document.createElement("br"));
+
+        this.configDiv = document.createElement("div");
+        this.configDiv.appendChild(this.configHelperText);
+        this.configDiv.appendChild(this.statementNode2);
+        this.configDiv.appendChild(this.menuNode2);
+        this.configDiv.appendChild(this.statementNode1);
+        this.configDiv.appendChild(this.menuNode1);
+
+        // Append configDiv to statementDiv
+        this.statementDiv.appendChild(this.configDiv);
         this.containerDiv.appendChild(this.statementDiv);
-        this.containerDiv.appendChild(document.createElement("br"));
+        this.containerDiv.append(document.createElement("br"));
 
         // create the div node for the prompt
         this.promptDiv = document.createElement("div");
@@ -181,8 +206,8 @@ export default class BO extends RunestoneBase {
             
 
         // create the node for the number being displayed
-        this.promptDivTextNode = document.createElement("binops-inline");
-        this.promptDivTextNode.className = "binops-inline";
+        this.promptDivTextNode = document.createElement("code");
+        // this.promptDivTextNode.className = "binops-inline code";
         this.promptDiv.appendChild(this.promptDivTextNode);
         this.promptDiv.appendChild(document.createElement("br"));
         
@@ -275,7 +300,7 @@ export default class BO extends RunestoneBase {
 
         // "try another" button
         this.generateButton = document.createElement("button");
-        this.generateButton.textContent = "Try Another";
+        this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
         $(this.generateButton).attr({
             class: "btn btn-success",
             name: "generate a number",
@@ -285,6 +310,7 @@ export default class BO extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
+                this.sendData(3);
                 this.clearAnswer();
                 this.getCheckedValues();
                 // only generate new prompt when there is item selected
@@ -526,31 +552,54 @@ export default class BO extends RunestoneBase {
            this.correct = true;
            this.contWrong = 0;
        }
+       if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
    }
 
-   // log the answer and other info to the server (in the future)
-   async logCurrentAnswer(sid) {
-       let answer = JSON.stringify(this.inputNode.value);
-       // Save the answer locally.
-       this.setLocalStorage({
-           answer: answer,
-           timestamp: new Date(),
-       });
-       let data = {
-           event: "numconv",
-           act: answer || "",
-           answer: answer || "",
-           correct: this.correct ? "T" : "F",
-           div_id: this.divid,
-       };
-       if (typeof sid !== "undefined") {
-           data.sid = sid;
-           feedback = false;
-       }
-       // render the feedback
-       this.renderFeedback();
-       return data;
-   }
+    // log the answer and other info to the server (in the future)
+    async logCurrentAnswer(sid) {
+        let answer = JSON.stringify(this.inputNode.value);
+        // Save the answer locally.
+        this.setLocalStorage({
+            answer: answer,
+            timestamp: new Date(),
+        });
+        let data = {
+            event: "numconv",
+            act: answer || "",
+            answer: answer || "",
+            correct: this.correct ? "T" : "F",
+            div_id: this.divid,
+        };
+        if (typeof sid !== "undefined") {
+            data.sid = sid;
+            feedback = false;
+        }
+        // render the feedback
+        this.renderFeedback();
+        return data;
+    }
+
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId,
+            details : {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+                questionPrompt : `${this.promptDivTextNode}`,
+                correctAnswer: `${this.target_num_string}`,
+                userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+            }
+        };
+        this.logData(bundle);
+    }
 
 
    /*===================================
@@ -606,6 +655,7 @@ export default class BO extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
+    const userId = nanoid(20);
    $("[data-component=binops]").each(function (index) {
        var opts = {
            orig: this,
@@ -614,7 +664,7 @@ $(document).on("runestone:login-complete", function () {
        if ($(this).closest("[data-component=timedAssessment]").length == 0) {
            // If this element exists within a timed component, don't render it here
            try {
-               BOList[this.id] = new BO(opts);
+               BOList[this.id] = new BO(opts, userId);
            } catch (err) {
                console.log(
                    `Error rendering Bitwise Operation Problem ${this.id}

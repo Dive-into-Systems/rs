@@ -207,7 +207,7 @@ export default class ProcHierarchy extends RunestoneBase {
             let prev = this.source || "";
             let max = 0;
             this.source = generateNewSourceCode();
-            while (this.source == prev && max <= 50) {
+            while (this.source == prev && max <= 509) {
                 this.source = generateNewSourceCode();
                 max++;
             }

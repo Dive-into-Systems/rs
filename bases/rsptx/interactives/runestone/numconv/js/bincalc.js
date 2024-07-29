@@ -5,6 +5,7 @@
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
+import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js";
 import "../css/bincalc.css";
 import { Pass } from "codemirror";
@@ -14,24 +15,30 @@ export var BinCalcList = {}; // Object containing all instances of NC that aren'
 
 // BinCalc constructor
 export default class BinCalc extends RunestoneBase {
-   constructor(opts) {
+   constructor(opts, userId) {
        super(opts);
        var orig = opts.orig; // entire <p> element
        this.useRunestoneServices = opts.useRunestoneServices;
        this.origElem = orig;
        this.divid = orig.id;
+        
+       // Default configuration settings
        this.correct = null;
        this.num_bits = 6; // default number of bits is 6
        this.operatorList = ["AND (&)", "OR (|)", "XOR (^)", "NOT (~)", "Left shift (<<)", "Logical right shift (>>)", "Arithmetic right shift (>>)"];
        this.bitShiftList = ["1", "2", "3", "4","5"];
 
+       // Fields for logging data
+       this.componentId = 3;
+       this.userId = userId;
+       this.questionId = 1;
+
        this.initBinCalcElement();
-       this.caption = "Binary Calculator";
-       this.addCaption("runestone");
-       this.checkServer("nc", true);
+
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
+       this.sendData(0);
    }
 
    // Find the script tag containing JSON in a given root DOM node.
@@ -59,12 +66,8 @@ export default class BinCalc extends RunestoneBase {
     this.containerDiv = document.createElement("div");
     this.containerDiv.id = this.divid;
 
-    this.statementDiv = document.createElement("div");
-    this.statementDiv.className = "statement-div"
-
-    this.statementNode = document.createTextNode("Choose an operator: ");
     this.instructionNode = document.createElement("div");
-    this.instructionNode.innerHTML = "This is a binary value calculator. You can experiment with 6-bit value(s) with your chosen operator. You can only type in 0s and 1s.";
+    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: This is a binary value calculator. You can experiment with 6-bit value(s) with your chosen operator. You can only type in 0s and 1s.";
 
     this.buttonsDiv = document.createElement("div");
     this.buttonsDiv.style.display = 'flex';
@@ -184,8 +187,8 @@ export default class BinCalc extends RunestoneBase {
     this.resultDiv.appendChild(this.resultDivTextNode);
 
     // render the statement
-    this.statementDiv.appendChild(this.instructionNode);
-    this.containerDiv.appendChild(this.statementDiv);
+    this.containerDiv.appendChild(this.instructionNode);
+    this.containerDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(document.createElement("br"));
     this.containerDiv.appendChild(this.inputDiv);
     this.containerDiv.appendChild(document.createElement("br"));
@@ -241,7 +244,7 @@ export default class BinCalc extends RunestoneBase {
         this.calculateButton = document.createElement("button");
         this.calculateButton.textContent = "Calculate \u27A4";
         $(this.calculateButton).attr({
-            class: "btn calculate-btn",
+            class: "btn btn-success",
             name: "calculate button",
             type: "button",
         });
@@ -250,6 +253,7 @@ export default class BinCalc extends RunestoneBase {
         this.calculateButton.addEventListener(
             "click",
             function () {
+                this.sendData(8);
                 this.generateAnswer();
                 this.renderBinCalcFeedbackDiv();
             }.bind(this),
@@ -277,7 +281,7 @@ export default class BinCalc extends RunestoneBase {
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = "Generate Values";
         $(this.generateButton).attr({
-            class: "btn generate-btn",
+            class: "btn btn-success",
             name: "generate values",
             type: "button",
         });
@@ -285,6 +289,7 @@ export default class BinCalc extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
+                this.sendData(9);
                 $(this.feedbackDiv).remove();
                 this.generateRandomValues(this.operatorMenu.value);
             }.bind(this), false);
@@ -423,27 +428,51 @@ export default class BinCalc extends RunestoneBase {
     
         this.containerDiv.appendChild(this.feedbackDiv);
     }
+
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId,
+            details : {
+                config : {
+                    operator : `${this.operatorMenu.value}`,
+                    shiftBits : `${parseInt(this.bitShiftMenu.value, 10)}`,
+                    value : {
+                        num1 : `${parseInt(this.inputBoxTop.value, 2)}`,
+                        num2 : `${parseInt(this.inputBoxBottom.value, 2)}`
+                    }
+                },
+                answer : this.answerValue
+            }
+        };
+        this.logData(bundle);
+    }
 }
     /*=================================
     == Find the custom HTML tags and ==
     ==   execute our code on them    ==
     =================================*/
     $(document).on("runestone:login-complete", function () {
-    $("[data-component=bincalc]").each(function (index) {
-        var opts = {
-            orig: this,
-            useRunestoneServices: eBookConfig.useRunestoneServices,
-        };
-        if ($(this).closest("[data-component=timedAssessment]").length == 0) {
-            // If this element exists within a timed component, don't render it here
-            try {
-                BinCalcList[this.id] = new BinCalc(opts);
-            } catch (err) {
-                console.log(
-                    `Error rendering Bitwise Operation Problem ${this.id}
-                        Details: ${err}`
-                );
+        const userId = nanoid(20);
+        $("[data-component=bincalc]").each(function (index) {
+            var opts = {
+                orig: this,
+                useRunestoneServices: eBookConfig.useRunestoneServices,
+            };
+            if ($(this).closest("[data-component=timedAssessment]").length == 0) {
+                // If this element exists within a timed component, don't render it here
+                try {
+                    BinCalcList[this.id] = new BinCalc(opts, userId);
+                } catch (err) {
+                    console.log(
+                        `Error rendering Bitwise Operation Problem ${this.id}
+                            Details: ${err}`
+                    );
+                }
             }
-        }
-    });
+        });
     });

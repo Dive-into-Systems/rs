@@ -32,15 +32,21 @@ export default class NC extends RunestoneBase {
         this.questionId = 1;
 
         this.createNCElement();
-        this.generateButton.click();
+        this.checkValidConversion();
+        if ( this.valid_conversion ) {
+            this.clearAnswer();
+            this.generateNumber();
+            this.generateAnswer();
+        }
         this.caption = "Number Conversion";
-        this.addCaption("runestone");
-        this.checkServer("nc", true);
+        // this.addCaption("runestone");
+        // this.checkServer("nc", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
 
         this.contWrong = 0;
+        this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -233,17 +239,13 @@ export default class NC extends RunestoneBase {
             type: "button",
         });
         // check the answer when the conversion is valid
-        this.submitButton.addEventListener(
-            "click",
-            function () {
-                this.checkValidConversion();
-                if ( this.valid_conversion ) {
-                    this.checkCurrentAnswer();
-                    this.logCurrentAnswer();
-                }
-            }.bind(this),
-            false
-        );
+        this.submitButton.addEventListener("click", () => {
+            this.checkValidConversion();
+            if ( this.valid_conversion ) {
+                this.checkCurrentAnswer();
+                this.logCurrentAnswer();
+            }
+        });
 
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
@@ -253,32 +255,25 @@ export default class NC extends RunestoneBase {
             type: "button",
         });
         // generate a new number for conversion 
-        this.generateButton.addEventListener(
-            "click",
-            function () {
-                this.sendData(3);
-                this.checkValidConversion();
-                if ( this.valid_conversion ) {
-                    this.clearAnswer();
-                    this.generateNumber();
-                    this.generateAnswer();
-                }
-            }.bind(this),
-            false
-        );
+        this.generateButton.addEventListener("click", () => {
+            this.sendData(3);
+            this.checkValidConversion();
+            if ( this.valid_conversion ) {
+                this.clearAnswer();
+                this.generateNumber();
+                this.generateAnswer();
+            }
+        });
 
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
 
-        this.inputNode.addEventListener(
-            "keypress",
-            function(event) {
+        this.inputNode.addEventListener("keypress", (event) => {
             if (event.key === "Enter") {
-                    this.submitButton.click();
-                }
-            }.bind(this), false
-            );
+                this.submitButton.click();
+            }
+        });
     }
 
     renderNCFeedbackDiv() {
@@ -507,40 +502,6 @@ export default class NC extends RunestoneBase {
         return data;
     }
 
-    // sendData(actionId) {
-    //     let now = new Date();
-    //     let data = {
-    //         timestamp: now.toString(),
-    //         componentId : this.componentId,
-    //         questionId : this.questionId,
-    //         actionId : actionId,
-    //         userId : this.userId,
-    //         systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
-    //         userAnswer : this.inputNode.value.toLowerCase()
-    //     };
-    //     console.log(data);
-
-    //     const url = 'http://127.0.0.1:5000/binaryconversion';
-
-    //     fetch (url, {
-    //         method: 'POST',
-    //         body: JSON.stringify(data),
-    //         headers: {
-    //             "Content-type": "application/json; charset=UTF-8",
-    //             "Access-Control-Allow-Origin" : "*"
-    //         }
-    //     })
-    //     .then(response => {
-    //         console.log(response.status);
-    //         if (response.ok) {
-    //             return response.json();
-    //         }
-    //         throw new Error('Network response was not ok.');
-    //     })
-    //     .then(json => console.log(json))
-    //     .catch(error => console.error('Error during fetch:', error));
-    // }
-
     sendData(actionId) {
         let now = new Date();
         let bundle = {
@@ -550,7 +511,12 @@ export default class NC extends RunestoneBase {
             actionId : actionId,
             userId : this.userId,
             details : {
-                systems : `${this.menuNode1.value}->${this.menuNode2.value}`,
+                config : {
+                    from_system : `${this.menuNode1.value}`,
+                    to_system : `${this.menuNode2.value}`
+                },
+                questionPrompt : `${this.displayed_num_string}`, 
+                correctAnswer: `${this.target_num_string}`,
                 userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
             }
         };
@@ -561,15 +527,15 @@ export default class NC extends RunestoneBase {
     === Checking/loading from storage ===
     ===================================*/
     // Note: they are not needed here
-    restoreAnswers(data) {
-        // pass
-    }
-    checkLocalStorage() {
-        // pass
-    }
-    setLocalStorage(data) {
-        // pass
-    }
+    // restoreAnswers(data) {
+    //     // pass
+    // }
+    // checkLocalStorage() {
+    //     // pass
+    // }
+    // setLocalStorage(data) {
+    //     // pass
+    // }
     
     hideFeedback() {
         this.feedbackDiv.remove();
