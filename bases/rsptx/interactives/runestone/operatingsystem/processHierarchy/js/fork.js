@@ -156,20 +156,17 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
-        if (this.hardCodedCCode == false) { this.updateSourceCode(); }
+        if (this.hardCodedCCode == false) { this.updateSourceCode();}
         console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         console.log(this.source);
         this.genQuestionInfo();
     }
 
     updateSourceCode() {
-
-        console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
             return build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         };
-
-        if (this.showMenu == true) {
+        if (this.showMenu === true) {
             const mode = this.modeMenu.val().toString();
             switch (mode) {
                 case "2":
@@ -197,17 +194,22 @@ export default class ProcHierarchy extends RunestoneBase {
                     this.hasLoop = false;
                     break;
             }
+
             let prev = this.source || "";
+            let max = 0;
             this.source = generateNewSourceCode();
-            while (this.source == prev) {
+            while (this.source == prev && max <= 50) {
                 this.source = generateNewSourceCode();
+                max++;
             }
         }
         else {
             let prev = this.source || "";
+            let max = 0;
             this.source = generateNewSourceCode();
-            while (this.source == prev) {
+            while (this.source == prev && max <= 50) {
                 this.source = generateNewSourceCode();
+                max++;
             }
         }
     }
@@ -331,9 +333,9 @@ export default class ProcHierarchy extends RunestoneBase {
     }
 
     updateTreeGraph(traceCsv, traceLabels) {
-        console.log("Trace CSV is", traceCsv);
-        console.log("Trace labels is", traceLabels);
-        $('#hierarchy_graph').html(hierarchy.drawHierarchy(traceCsv, traceLabels));
+        if (this.hierarchyTreeDiv.css('display') == 'block') {
+            $('#hierarchy_graph').html(hierarchy.drawHierarchy(traceCsv, traceLabels));
+        }
     }
 
     showProcessHierarchy() {
@@ -345,7 +347,6 @@ export default class ProcHierarchy extends RunestoneBase {
             "<div id='hierarchy_graph'></div>"
         );
         $('#hierarchy_graph').html(hierarchy.drawHierarchy(this.csvTree, this.labels));
-        console.log("Real ones", this.csvTree, this.labels);
         this.bindCodeBlockEvents();
     }
 

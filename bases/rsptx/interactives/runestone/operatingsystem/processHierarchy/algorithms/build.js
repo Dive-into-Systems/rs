@@ -10,8 +10,8 @@ const EXIT_CHAR = "X";
 const nullChar = "\\";
 
 function randomFloat32() {
-    // return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
-    return Math.random();
+    return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
+    // return Math.random();
 }
 
 function parseForkArgs(code, forkIndex) {
@@ -360,13 +360,14 @@ export function getTreeCSV(root) {
 function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
     let validPositions = [];
 
-    for (let i = minSlot; i < mainStr.length-1; i++) {
+    for (let i = minSlot; i < mainStr.length; i++) {
         if (mainStr[i] !== '(') {
             if (anySlot || (mainStr[i] !== '-' && mainStr[i-1] !== '-')) {
                 validPositions.push(i);
             }
         }
     }
+    validPositions.push(mainStr.length);
     const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
