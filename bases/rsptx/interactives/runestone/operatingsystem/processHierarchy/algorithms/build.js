@@ -97,7 +97,7 @@ class ForkNode {
             this.left.exit();
         }
         else {
-            this.print("X");
+            // this.print("X");
             this.active = false;
             // this.left = new ForkNode(this.id, -1, false);
         }
