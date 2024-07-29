@@ -163,9 +163,12 @@ export default class ProcHierarchy extends RunestoneBase {
     }
 
     updateSourceCode() {
+
+        console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
             return build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         };
+
         if (this.showMenu == true) {
             const mode = this.modeMenu.val().toString();
             switch (mode) {
@@ -194,12 +197,18 @@ export default class ProcHierarchy extends RunestoneBase {
                     this.hasLoop = false;
                     break;
             }
-        }
-
-        let prev = this.source || "";
-        this.source = generateNewSourceCode();
-        while (this.source == prev) {
+            let prev = this.source || "";
             this.source = generateNewSourceCode();
+            while (this.source == prev) {
+                this.source = generateNewSourceCode();
+            }
+        }
+        else {
+            let prev = this.source || "";
+            this.source = generateNewSourceCode();
+            while (this.source == prev) {
+                this.source = generateNewSourceCode();
+            }
         }
     }
 
