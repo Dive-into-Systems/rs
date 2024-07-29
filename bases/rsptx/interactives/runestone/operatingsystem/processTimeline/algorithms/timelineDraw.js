@@ -15,18 +15,27 @@ function nodeSpacing(d, x_gap, y_gap, x_start, y_start, maxWidth) {
         d.y = y_start;
     }
     for (const child of d.children) {
-        if (child.data.id == d.data.id) {
-            child.x = (child.data.childCt==-1)?maxWidth:(d.x+x_gap);
-            child.y = d.y;
-            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth);
-        }
-        else {
-            child.x = d.x;
-            child.y = d.y + down_indent + y_gap;
-            down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth)+y_gap;
+        if (child.x == 0 && child.y == 0) {
+            if (child.data.id == d.data.id) {
+                child.x = (child.data.childCt==-1)?maxWidth:(d.x+x_gap);
+                child.y = d.y;
+                down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth);
+            }
+            else {
+                child.x = d.x;
+                child.y = d.y + down_indent + y_gap;
+                down_indent += nodeSpacing(child, x_gap, y_gap, x_start, y_start, maxWidth)+y_gap;
+            }
         }
     }
     return down_indent;
+}
+function zeroSpace(d) {
+    for (const child of d.children) {
+        child.x = 0;
+        child.y = 0;
+        zeroSpace(child)
+    }
 }
 
 
@@ -39,26 +48,22 @@ function clearPath(links, traceArray, refreshCode, extra_trace) {
 
 function highlightPath(node, links, traceArray, refreshCode, extra_trace) {
     clearPath(links, traceArray, refreshCode, extra_trace);
-    let skip = false;
-    let temp_arr = [];
-    node.ancestors().forEach(anc => {
-        links.filter(l => l.target === anc).classed("active", true);
-        if (skip) {
-            skip = false;
-        } else {
-            if (nodeID(anc)!=nodeID(node)) temp_arr.push(nodeID(anc)); // last node technically hasnt happened yet
-            if (anc.data.childCt == 0) {
-                skip = true;
-            } // really weird hack, we want to skip the next node if we reach the timeline end, helps with bolding
-        }
-    });
-    const fullTrace = false;
-    if (node.data.childCt ==0) {
-        extra_trace.value  = nodeID(node);
-    } else {
-        traceArray.push(...(fullTrace?temp_arr:temp_arr.slice(0,1)));
-    }
+    // let skip = false;
+    // let temp_arr = [];
+    // for (const anc of node.ancestors()) {
+    //     if (skip) break;
+    //     links.filter(l => l.target === anc).classed("active", true);
+    //     if (nodeID(anc)!=nodeID(node)) temp_arr.push(nodeID(anc)); // last node technically hasnt happened yet
+    //     if (anc.data.childCt == 0) skip = true;
+    // }
+    // const fullTrace = true;
+    // if (node.data.childCt ==0) {
+    //     extra_trace.value  = nodeID(node);
+    // } else {
+    //     traceArray.push(...(fullTrace?temp_arr:temp_arr.slice(0,1)));
+    // }
     // console.log(traceArray);
+    // console.log(extra_trace);
     refreshCode();
 }
 
@@ -79,6 +84,7 @@ export function drawTimeline(tree, tl_width, tl_height, margin, traceArray, extr
     const root = d3.hierarchy(data);
     const treeLayout = d3.tree().size([height, width]);
     treeLayout(root);
+    zeroSpace(root);
     nodeSpacing(root, x_gap, y_gap, margin.left, margin.top, (tl_width - margin.right));
 
     let locked = null;
