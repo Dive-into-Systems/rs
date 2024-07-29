@@ -4,8 +4,9 @@ const DASH = "─";
 // const BAR = "|";
 const SPC = "&#8195;";
 const SPC1 = " ";
+const WAIT_CHAR = "W";
 const NEWLINE = "<br>";
-const EXIT_CHAR = "x";
+const EXIT_CHAR = "X";
 const nullChar = "\\";
 
 function randomFloat32() {
@@ -54,6 +55,7 @@ class ForkNode {
         this.value = value;
         this.left = left;
         this.right = right;
+        this.waited = false;
     }
 
     getChildrenInfo() {
@@ -95,7 +97,9 @@ class ForkNode {
             this.left.exit();
         }
         else {
+            this.print("X");
             this.active = false;
+            // this.left = new ForkNode(this.id, -1, false);
         }
     }
 
@@ -123,11 +127,11 @@ class ForkNode {
             a.hist = [];
             a.proc = [];
         }
-
         let left = blankInfo();
         let right = blankInfo();
         let temp1 = blankInfo();
         let temp2 = blankInfo();
+        let exitingProc;
         if (!this.active) {
             [left, temp1] = (new ForkNode()).fork(leftCode, rightCode, indent, terminate);
             purge(left);
@@ -138,24 +142,36 @@ class ForkNode {
                 [left, temp1] = this.left.fork(leftCode, rightCode, indent, terminate);
             } else {
                 // self exec, BASE CASE
+                let leftTerm = terminate-1; // adjust for F(
                 const [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
                 this.left = new ForkNode(leftID, leftCt);
-                left = this.left.pushCode(leftCode, indent, terminate);
-                
+                left = this.left.pushCode(leftCode, indent, leftTerm);
+
+                let rightTerm = leftTerm;
+                if (left.cCode.length>0) {
+                    rightTerm = leftTerm - 1 - left.cCode.length;
+                }
                 // ordering matters here! , left.right can only be created after left push is done
                 this.left.right = new ForkNode(rightID, rightCt);
-                temp1 = this.left.right.pushCode(rightCode, indent, terminate);
+                temp1 = this.left.right.pushCode(rightCode, indent, rightTerm);
+                exitingProc = this.left.right;
+                while (exitingProc.left) {
+                    exitingProc = exitingProc.left;
+                }
             }
 
         }
         if (this.right) [temp2, right] = this.right.fork(leftCode, rightCode, indent, terminate);
         right.cCode = temp1.cCode;
+        // left.hist.push(temp2.hist);
         mergeInfo(left, temp2);
         mergeInfo(right, temp1);
-        return [left, right];
+
+        return [left, right, exitingProc];
     }
 
     pushCode(code, indent = 0, terminate) {
+        terminate ??= code.length;
         let leftResult = blankInfo();
         let rightResult = blankInfo();
         let liveProcesses = this.active?[`${this.id}.${this.childCt}`]:[""];
@@ -164,44 +180,52 @@ class ForkNode {
         let hist = [];
 
         let leftCode, rightCode;
+        let exitingProc;
 
         function addLine(line, active, extraProc) {
-            trace.push((active)?(extraProc||liveProcesses):([]));
+            terminate--;
+            trace.push(active?(extraProc||liveProcesses):([]));
             cCode.push(`${SPC.repeat(indent)}${line}`);
         }
 
         function emptyStrOnly(arr) {
             return !Array.isArray(arr) || arr.every(str => typeof str !== 'string' || str.trim() === '');
         }
-        for (let ptr = 0; ptr < code.length && ptr < terminate; ptr++) {
-            if (code[ptr]!= "F" && code[ptr]!= EXIT_CHAR) {
-                addLine(`printf("${code[ptr]}");`);
-                this.print(code[ptr]);
-                continue;
-            }
-            if (code[ptr] == EXIT_CHAR) {
-                addLine(`exit();`);
-                addLine(`printf("${code[ptr]}");`, this.active);
-                this.print(code[ptr])
-                continue;
+        for (let ptr = 0; ptr < code.length; ptr++) {
+            if (terminate < 0) {
+                break;
             }
             if (code[ptr] == EXIT_CHAR) {
                 addLine(`exit();`, this.active);
-                hist.push(...liveProcesses);
+                // hist.push(...liveProcesses);
                 liveProcesses = [""];
                 this.exit();
+                continue;
+            }
+            if (code[ptr] == WAIT_CHAR) {
+                addLine(`wait(NULL);`, this.active);
+                this.wait(exitingProc);
+                // this.exit();
+                continue;
+            }
+            if (code[ptr]!= "F") {
+                addLine(`printf("${code[ptr]}");`, this.active);
+                this.print(code[ptr]);
+                continue;
             }
             // if you're fixing this section i apologize ;-; - tony
             if (code[ptr] == "F") {
                 [leftCode, rightCode, ptr] = parseForkArgs(code, ptr);
-                [leftResult, rightResult] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate);
+                [leftResult, rightResult, exitingProc] = this.fork(leftCode, rightCode, indent + INDENT_SPC, terminate);
 
                 let leftPre = emptyStrOnly(leftResult.hist)?leftResult.proc:leftResult.hist;
                 let rightPre = emptyStrOnly(rightResult.hist)?rightResult.proc:rightResult.hist;
+                // let rightPre = rightResult.hist;
 
                 if (!leftCode && !rightCode) addLine("fork();", this.active, concat(leftPre, rightPre)); // odd
                 if (leftCode) {
                     addLine("if (fork()) {", this.active, concat(leftPre, rightPre));
+                    terminate -= leftResult.cCode.length;
                     cCode.push(...leftResult.cCode);
                     trace.push(...leftResult.trace);
                     if (rightCode)  addLine("} else {", this.active, rightPre);
@@ -209,11 +233,13 @@ class ForkNode {
                 }
                 if (rightCode) {
                     if (!leftCode) addLine("if (fork() == 0) {", this.active, concat(leftPre, rightPre));
+                    terminate -= rightResult.cCode.length;
                     cCode.push(...rightResult.cCode);
                     trace.push(...rightResult.trace);
                     addLine("}", this.active, concat(leftResult.proc, rightResult.proc));
                 }
                 if (this.active) {
+                    // hist.push(...liveProcesses, ...leftResult.hist);
                     hist.push(...liveProcesses);
                     liveProcesses = concat(leftResult.proc, rightResult.proc);
                 }
@@ -257,7 +283,6 @@ function output(node) {
 }
 
 export function getAnswer(node, numPrints) {
-    
     const alphabet = 'abcdefghijklmnopqrstuvwxyz';
     let map = {}
     for (let i = 0; (i < numPrints) && (i < 26); i++) {
@@ -347,7 +372,6 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
 }
 
 export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
-    
     let code = "";
     const fork = hasElse?"F(,)":"F()";
 
@@ -375,19 +399,34 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
         return char;
     };
     let t = code.replace(/-/g, replaceChar); 
-    console.log(t);
     return t;
 }
 
+
 export function buildAndTranspile(code) {
     let tree = new ForkNode();
-    let result = tree.pushCode(code, 0, Infinity);
-    return [tree, result.cCode, result.trace];
-
+    let result = tree.pushCode(code);
+    let labeledCodeC = labelLines(result.cCode);
+    return [tree, labeledCodeC];
 }
 
-export function partialTree(code, terminate) {
+function labelLines(code) {
+    let annotated = [];
+    for (let i = 0; i < code.length; i++) {
+        if (code[i].indexOf("}")===-1) {
+            let prefix = `<span data-block="${i}">`;
+            let suffix = `</span>`;
+            annotated.push(`${prefix}${code[i]}${suffix}`);
+        } else {
+            annotated.push(`${code[i]}`);
+        }
+    }
+    let joinedAnnotated = annotated.join(NEWLINE);
+    return joinedAnnotated;
+}
+
+export function traceTree(code, terminate) {
     let tree = new ForkNode();
-    let result = tree.pushCode(code, 0, terminate);
-    return result.tree;
+    tree.pushCode(code, 0, terminate);
+    return tree;
 }
