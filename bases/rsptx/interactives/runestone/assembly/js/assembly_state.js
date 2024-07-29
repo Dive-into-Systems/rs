@@ -460,7 +460,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.containerDiv.find("[id^='feedback']").empty();
         this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', false);
         this.currentInstruction = 1;
-        const feedbackDiv = this.containerDiv.find(`#feedback${this.currentInstruction}`);
+        const feedbackDiv = this.containerDiv.find("[id^='feedback']");
         feedbackDiv.removeClass("alert alert-success alert-danger");
         feedbackDiv.css('color', 'black');
         this.moveToInitialInstruction();
