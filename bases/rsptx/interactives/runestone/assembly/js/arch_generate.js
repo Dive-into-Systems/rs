@@ -249,7 +249,7 @@ class ArchInstructions {
             instruction_sources.push('archOps');
         }
 
-        for(let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 1000; i++) {
 
             // Fill the remaining instructions randomly from the selected categories
             while (selected_instructions.length < num_instructions) {
@@ -257,7 +257,7 @@ class ArchInstructions {
                 selected_instructions.push(instruction);
             }
 
-            selected_instructions =  this.generateRandomInstructionOrder(selected_instructions);
+            selected_instructions = this.generateRandomInstructionOrder(selected_instructions);
 
             // Create a deep copy of the initial state
             const initialState = {

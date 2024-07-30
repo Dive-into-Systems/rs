@@ -56,7 +56,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
  ===========================================*/
 
     // set default parameters
-    setDefaultParams() {}
+    setDefaultParams() { }
 
     // load customized parameters
     setCustomizedParams() {
@@ -85,9 +85,9 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     renderHeader() {
         this.instruction = $("<div>").html(
             "For each of the following " +
-                this.architecture +
-                " instructions, indicate whether the instruction " +
-                "<b>could</b> be valid or invalid",
+            this.architecture +
+            " instructions, indicate whether the instruction " +
+            "<b>could</b> be valid or invalid",
         );
         this.statementDiv = $("<div>").append(this.instruction);
         this.statementDiv.append("<br>");

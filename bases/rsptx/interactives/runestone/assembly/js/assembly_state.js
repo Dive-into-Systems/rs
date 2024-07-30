@@ -35,6 +35,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             this.instructions = json.instructions;
             this.registers = json.registers;
             this.memory = json.memory;
+            this.selection = json.selection;
             this.createCustomizedAssemblyStateElement();
         }
         else {
@@ -65,7 +66,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // rendering the whole thing
         this.renderHeader();
         this.initialState = [this.instructions, this.registers, this.memory];
-        console.log(this.initialState);
         this.currentInstruction = 1;
         this.customizedTryAnother();
 
@@ -173,10 +173,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             num_instructions,
             num_registers,
             num_addresses,
-            [this.arith_checked, this.memo_checked, this.stack_checked]
+            this.selection ? [this.selection[0], this.selection[1], this.selection[2]] : [this.arith_checked, this.memo_checked, this.stack_checked]
         );
-
-        console.log(this.allStates);
 
         this.initialState = this.allStates[0];
 
@@ -233,8 +231,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Renders tables for registers and memory
     renderTables() {
         const [instructions, registers, addresses] = this.initialState;
-
-        console.log(registers, addresses);
 
         // Create table for registers
         const registersTable = $("<table>").addClass("register-table");
