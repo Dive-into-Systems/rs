@@ -350,6 +350,17 @@ class ArchInstructions {
         let reg1 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
         let reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
         let reg3 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : '';
+
+        // ensure same registers are not selected, but possible
+        const sameRegistersChance = Math.random();
+        if (sameRegistersChance < 0.05) {
+            reg2 = reg1;
+        } else {
+            while (reg1 === reg2) {
+            reg2 = this.architecture === 'ARM64' ? unifPickItem(regular_registers).register : `${unifPickItem(regular_registers).register}`;
+            }
+        }
+
         // randomly select offset
         let offset = unifPickItem(offsets);
         if (format.includes('offset')) {
@@ -487,7 +498,7 @@ class ArchInstructions {
             if (op === "ldr") {
                 this.setValue(dest, memoryLocation.value, registers, memoryArray);
             } else if (op === "str") {
-                value = this.getValue(src, registers, memoryArray);
+                value = this.getValue(dest, registers, memoryArray);
                 memoryLocation.value = value;
             }
         } else {
