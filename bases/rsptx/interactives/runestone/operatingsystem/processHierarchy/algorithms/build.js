@@ -390,12 +390,24 @@ function exitInsert(mainStr) {
     return mainStr.slice(0, insertPosition) + PRINT_CHAR + EXIT_CHAR + mainStr.slice(insertPosition);
 }
 
-export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
+export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse) {
     let code = "";
     const fork = hasElse?"F(,)":"F()";
 
     if (!hasNest) {
-        code = fork.repeat(numForks);
+        if (hasElse) {
+            code = fork.repeat(numForks); // we have enough diversity already
+        } else { // forced diversity, this cause us to weigh it more to have forks
+            for (let i = 0; i < numForks; i++) {
+                if (randomFloat32() < 0.5 && numPrints > 0) {
+                    numPrints--;
+                    code +=`F(${PRINT_CHAR})`;
+                }
+                else {
+                    code += fork;
+                }
+            }
+        }
     }
     else {
         // Generate forking locations
