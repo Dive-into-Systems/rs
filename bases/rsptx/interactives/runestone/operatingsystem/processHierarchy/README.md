@@ -125,7 +125,55 @@ To write the `source` string:
         printf("b");
       }
       ```
-  - `x` means exit.
-  - A letter that is not `F` nor `x` is what gets printed with `printf()`.
+  - `X` means exit.
+  - A letter that is not `F` nor `X` is what gets printed with `printf()`.
 
 *Note*: DO NOT include any spaces in this source string. 
+
+
+## Data structures and Algorithms
+### Fork node and how is it built
+- This data structure simulates a timeline of processes
+- This data structure is NOT symmetrical, right and left children convey different things
+- Left is intended to mean a process in a future timestep, and right is a child process.
+#### pushCode()
+- This method returns the corresponding transpiled C code from our internal string, and modify the data structure accordingly
+- Any instructions pushed down the tree is propagated until we find no more future timesteps (no more lefts),
+  then these nodes executes the corresponding instruction
+#### Fork():
+  - This method is quite messy due to instrumenting needed data for timeline.
+  - For example of how this works, when a node 0.1 (name 0 at timestep 1) forks, it creates
+  node 0.2 (process 0 at timestep 2) which has a child 1.0.
+  - The rest of the checks are to ensure we propagate code correctly and
+  to know which section of code results in which processes being created (was helpful for timeline highlight, DEPRECATED)
+
+### generate source code:
+  - Q: why did we not generate straight C code?
+  - A: i thought this was easier to store internally and process. I could be wrong...  - Tony '25
+  - To modify odds of certain if-else structures, I recommend changing how often F() and F(,) occur. You could also
+  make changes to the insertion of a dash which will cause it to turn into a print() line.
+
+### timeline (deprecated for now)
+  - we could draw a timeline based on the data structure using the timelineDraw.js and serialize() method from build.js.
+  - there are support for path highlighting but this seemed quite confusing (and tricky to get the recursion right to highlight which code
+  block cause which processes) so we disable it for now.
+#### FUTURE
+  - this could be a good backbone for exit-wait problems
+  - My recommendations from trying to do this is generate code with no forks inside forks (which will cause grandchildrens)
+  and have all children always exit, i.e all times there are 2 processes at most.
+  - Drawing: I tried but I don't recommend actually try to make something like
+  0.1 -> 0.2
+  |       ^
+  v       |
+  1.0 -> 1.1
+  inside the data structure. I would do this as a postprocessing step in timelineDraw.js
+  and only have 0.1 and 1.0. The necessary assumptions are right children are always leaves, then we can draw the
+  extra processes in the future even if they dont actually look like that in the data structure
+  - How to generate valid and invalid combinations?
+  - VALID
+    - write an interleaving function ex: 123 and abc -> 1a2b3c OR 1abc23 OR ...etc.
+    - I would recommend using seeds for the random generator for this ^
+    - The possible number of ways to interleave 2 strings of n and m length is
+    (n+m) choose n (the binomial coefficient function)
+  - INVALID
+    - parent pre-wait prints have finished, we see a post wait print, THEN at least 1 value from child.
