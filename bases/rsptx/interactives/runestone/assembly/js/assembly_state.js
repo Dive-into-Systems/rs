@@ -90,7 +90,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.headerDiv = $("<div>").html(
             "<strong><u>Instructions:</u></strong>" +
             " For the instruction highlighted in green, show changes to register and memory values after it is executed in the  “Post Instruction Value” column."
-            + "You do not need to enter values for registers or memory locations whose values do not change.<br></br>"
+            + " You do not need to enter values for registers or memory locations whose values do not change.<br></br>"
         ).addClass("header-container");
         this.containerDiv.append(this.headerDiv);
     }
@@ -111,7 +111,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         const instructionTypeDiv = $("<div>").attr("id", this.divid + "_instruction_types");
 
-        instructionTypeDiv.append($("<div>").html("<strong><u>Configure:</u></strong>" + " Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt." + "<br></br>"));
+        instructionTypeDiv.append($("<div>").html("<strong><u>Configure Questions:</u></strong>" + " Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt." + "<br></br>"));
 
         instructionTypes.forEach(family => {
             let checkbox = $("<input>").attr({
@@ -216,7 +216,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 .css({
                     "margin-bottom": "0px",
                     "margin-left": "auto",
-                    "margin-right": "10%"
+                    "margin-right": "5%"
                 });
 
             listItem.append(instructionDiv, feedbackDiv);
