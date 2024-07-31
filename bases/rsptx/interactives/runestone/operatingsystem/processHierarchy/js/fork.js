@@ -341,7 +341,8 @@ export default class ProcHierarchy extends RunestoneBase {
     showProcessHierarchy() {
         $(this.hierarchyTreeDiv).css("display", "block");
         $(this.hierarchyTreeDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br><br>" + 
+            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
+            "<b>Red nodes</b> indicate processes which have exited.<br><br>" + 
             "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the C-code above</mark> to see how the tree is built step by step.</strong></div>" +
             "<br>" +
             "<div id='hierarchy_graph'></div>"

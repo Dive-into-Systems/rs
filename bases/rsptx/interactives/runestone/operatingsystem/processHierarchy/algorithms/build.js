@@ -6,7 +6,8 @@ const SPC = "&#8195;";
 const SPC1 = " ";
 const WAIT_CHAR = "W";
 const NEWLINE = "<br>";
-const EXIT_CHAR = "X";
+export const EXIT_CHAR = "X";
+const PRINT_CHAR = "-";
 const nullChar = "\\";
 
 function randomFloat32() {
@@ -97,7 +98,7 @@ class ForkNode {
             this.left.exit();
         }
         else {
-            // this.print("X");
+            this.print("X");
             this.active = false;
             // this.left = new ForkNode(this.id, -1, false);
         }
@@ -357,19 +358,36 @@ export function getTreeCSV(root) {
     return { csv: csvString, valuesList: valuesArray };
 }
 
-function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0) {
+function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset = 0) {
     let validPositions = [];
 
-    for (let i = minSlot; i < mainStr.length; i++) {
+    for (let i = minSlot; i < (mainStr.length+1-maxOffset); i++) {
         if (mainStr[i] !== '(') {
-            if (anySlot || (mainStr[i] !== '-' && mainStr[i-1] !== '-')) {
+            if (anySlot || (mainStr[i] !== '-' && mainStr[i-1] !== '-' && mainStr[i-1] !== EXIT_CHAR)) {
                 validPositions.push(i);
             }
         }
     }
-    validPositions.push(mainStr.length);
+    // validPositions.push(mainStr.length);
     const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
+}
+
+function exitInsert(mainStr) {
+    let validPositions = [];
+    console.log(mainStr);
+    console.log(mainStr.slice(Math.floor(mainStr.length /4), mainStr.length-Math.floor(mainStr.length /5)));
+    for (let i = 2; i < (mainStr.length-3); i++) {
+        if (mainStr[i] == ')') {
+            validPositions.push(i);
+        }
+    }
+    // validPositions.push(mainStr.length);
+    // if (validPositions.length == 0) {
+    //     console.log("COOOKED")
+    // }
+    const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
+    return mainStr.slice(0, insertPosition) + PRINT_CHAR + EXIT_CHAR + mainStr.slice(insertPosition);
 }
 
 export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse, hasLoop) {
@@ -387,11 +405,13 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
     }
 
     if (hasExit) {
-        code = randInsert(code, EXIT_CHAR, false, code.length / 4);
+        code = exitInsert(code);
     }
-    for (let i = 0; i < numPrints; i++) {
-        code = randInsert(code, "-", false);
+
+    for (let i = 0; i < numPrints-1 - (hasExit?1:0); i++) {
+        code = randInsert(code, PRINT_CHAR, false, 0, 1);
     }
+    code += PRINT_CHAR;
 
     let i = 0;
     const replaceChar = () => {
@@ -399,7 +419,7 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
         i++;
         return char;
     };
-    let t = code.replace(/-/g, replaceChar); 
+    let t = code.replace(new RegExp(PRINT_CHAR, 'g'), replaceChar); 
     return t;
 }
 
