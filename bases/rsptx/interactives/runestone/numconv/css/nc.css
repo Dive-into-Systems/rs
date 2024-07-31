@@ -8,3 +8,11 @@ input.input-validation-error {
     border: 1px solid #e80c4d;
 }
 
+.statement-div {
+    border-width: 1px;
+    border-radius: 5px;
+    border-style: solid;
+    border-color: rgb(234, 234, 234);
+    background-color: rgb(255, 255, 255);
+    padding: 8px;
+  }

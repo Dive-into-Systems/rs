@@ -16,6 +16,7 @@
  */
 
 import { pageProgressTracker } from "./bookfuncs.js";
+import { nanoid } from 'nanoid/non-secure';
 //import "./../styles/runestone-custom-sphinx-bootstrap.css";
 
 export default class RunestoneBase {
@@ -86,8 +87,22 @@ export default class RunestoneBase {
             Accept: "application/json",
         });
     }
+
+    ///// This function generates an anonymous user Id in local storage if not already set. /////
+    getUserId() {
+        let userId;
+        if (! localStorage.getItem("Dive-into-Systems-user-Id")) {
+            userId = "test-id-for-dis-exercise";
+            // userId = nanoid(30);
+            localStorage.setItem("Dive-into-Systems-user-Id", userId);
+        } else {
+            userId = localStorage.getItem("Dive-into-Systems-user-Id");
+        }
+        console.log("Local Storage is", localStorage.getItem("Dive-into-Systems-user-Id"));
+        return userId;
+    }
     
-    // This function sends data to the Dive in to Systems exercise book database
+    ///// This function sends data to the Dive in to Systems exercise book database. /////
     logData(bundle) {
         let data = {
             timestamp: bundle.timestamp,
@@ -428,6 +443,7 @@ export default class RunestoneBase {
         let serverDate = new Date(data.timestamp);
         return serverDate >= storageDate;
     }
+    
     // Return the key which to be used when accessing local storage.
     localStorageKey() {
         return (

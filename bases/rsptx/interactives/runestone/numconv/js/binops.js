@@ -17,7 +17,7 @@ export var BOList = {}; // Object containing all instances of NC that aren't a c
 
 // NC constructor
 export default class BO extends RunestoneBase {
-   constructor(opts, userId) {
+   constructor(opts) {
        super(opts);
        var orig = opts.orig; // entire <p> element
        this.useRunestoneServices = opts.useRunestoneServices;
@@ -32,8 +32,8 @@ export default class BO extends RunestoneBase {
 
         // Fields for logging data
         this.componentId = 2;
-        this.userId = userId;
         this.questionId = 1;
+        this.userId = this.getUserId();
       
         this.createBOElement();
         this.clearAnswer();
@@ -182,11 +182,8 @@ export default class BO extends RunestoneBase {
                     this.contWrong = 0;
             }.bind(this),
             false);
-        console.log("here1");
         // Render the statement
         this.containerDiv.append(this.instruction);
-        this.containerDiv.append(document.createElement("br"));
-
         this.configDiv = document.createElement("div");
         this.configDiv.appendChild(this.configHelperText);
         this.configDiv.appendChild(this.statementNode2);
@@ -197,8 +194,7 @@ export default class BO extends RunestoneBase {
         // Append configDiv to statementDiv
         this.statementDiv.appendChild(this.configDiv);
         this.containerDiv.appendChild(this.statementDiv);
-        this.containerDiv.append(document.createElement("br"));
-
+        this.containerDiv.appendChild(document.createElement("br"));
         // create the div node for the prompt
         this.promptDiv = document.createElement("div");
         this.promptDiv.className = "prompt-div";
@@ -221,6 +217,7 @@ export default class BO extends RunestoneBase {
         this.statementNode11 = document.createTextNode("Your answer: ");
         this.answerDiv.appendChild(this.statementNode11);
         this.answerDiv.appendChild(this.inputNode);
+        // this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.promptDiv);
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.answerDiv);
@@ -264,10 +261,7 @@ export default class BO extends RunestoneBase {
         // if there is item being checked, randomly select an operator
         if (this.checkedValues.length > 0){
             this.getRandomItem(this.checkedValues);
-        } else{
-            console.log("No checkboxes are checked.");
         }
-        console.log("checked values: " + this.checkedValues);
     }
 
     // Keep track whether the user answer the question
@@ -586,8 +580,11 @@ export default class BO extends RunestoneBase {
             componentId : this.componentId,
             questionId : this.questionId,
             actionId : actionId,
-            userId : this.userId,
-            details : {
+            userId : this.userId
+        }
+
+        if (actionId !== 0) {
+            bundle.details = {
                 config : {
                     numBits : `${this.num_bits}`,
                     checkedOperators : `${this.checkedValues}`,
@@ -597,10 +594,11 @@ export default class BO extends RunestoneBase {
                 correctAnswer: `${this.target_num_string}`,
                 userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
             }
-        };
+        }
+        else { bundle.details = null }
+
         this.logData(bundle);
     }
-
 
    /*===================================
    === Checking/loading from storage ===
@@ -655,7 +653,6 @@ export default class BO extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    const userId = nanoid(20);
    $("[data-component=binops]").each(function (index) {
        var opts = {
            orig: this,
@@ -664,7 +661,7 @@ $(document).on("runestone:login-complete", function () {
        if ($(this).closest("[data-component=timedAssessment]").length == 0) {
            // If this element exists within a timed component, don't render it here
            try {
-               BOList[this.id] = new BO(opts, userId);
+               BOList[this.id] = new BO(opts);
            } catch (err) {
                console.log(
                    `Error rendering Bitwise Operation Problem ${this.id}

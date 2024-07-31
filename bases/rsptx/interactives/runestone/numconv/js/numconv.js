@@ -15,7 +15,7 @@ export var NCList = {}; // Object containing all instances of NC that aren't a c
 
 // NC constructor
 export default class NC extends RunestoneBase {
-    constructor(opts, userId) {
+    constructor(opts) {
         super(opts);
         var orig = opts.orig; // entire <p> element
         this.useRunestoneServices = opts.useRunestoneServices;
@@ -28,8 +28,11 @@ export default class NC extends RunestoneBase {
         
         // Fields for logging data
         this.componentId = 1;
-        this.userId = userId;
+        // const userId = nanoid(20);
+        // this.userId = userId;
+        // this.userId = "testId-for-this-page";
         this.questionId = 1;
+        this.userId = this.getUserId();
 
         this.createNCElement();
         this.checkValidConversion();
@@ -90,8 +93,12 @@ export default class NC extends RunestoneBase {
 
         this.statementDiv = document.createElement("div");
 
-        // specify the number of bits in the statement
-        this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
+        this.instructionNode = document.createElement("div");
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Please convert a value from one selected number system to another selected number system.";
+        this.instructionNode.style.padding = "10px";
+
+        // // specify the number of bits in the statement
+        // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
 
         this.statementNode1 = document.createTextNode("Please convert from ");
         // default menu options
@@ -165,23 +172,19 @@ export default class NC extends RunestoneBase {
             }.bind(this),
             false);
         
+        this.configHelperText = document.createElement("div");
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
         // render the statement
-        this.statementDiv.appendChild(this.statementNode05);
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(document.createElement("br"));
+        this.containerDiv.appendChild(this.instructionNode);
+        this.statementDiv.appendChild(this.configHelperText);
         this.statementDiv.appendChild(this.statementNode1);
         this.statementDiv.appendChild(this.menuNode1);
         this.statementDiv.appendChild(this.statementNode2);
         this.statementDiv.appendChild(this.menuNode2);
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
+        this.statementDiv.className = "statement-div";
 
-        this.statementDiv.style.borderWidth = "1px";
-        this.statementDiv.style.borderRadius = "5px";
-        this.statementDiv.style.borderBlockStyle = "solid";
-        this.statementDiv.style.borderBlockColor = "white";
-        this.statementDiv.style.backgroundColor = "white";
-        this.statementDiv.style.padding = "8px";
 
         // create the node for the prompt
         this.promptDiv = document.createElement("div");
@@ -509,8 +512,11 @@ export default class NC extends RunestoneBase {
             componentId : this.componentId,
             questionId : this.questionId,
             actionId : actionId,
-            userId : this.userId,
-            details : {
+            userId : this.userId
+        }
+
+        if (actionId !== 0) {
+            bundle.details = {
                 config : {
                     from_system : `${this.menuNode1.value}`,
                     to_system : `${this.menuNode2.value}`
@@ -519,24 +525,24 @@ export default class NC extends RunestoneBase {
                 correctAnswer: `${this.target_num_string}`,
                 userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
             }
-        };
+        }
+        else { bundle.details = null }
+
         this.logData(bundle);
     }
 
     /*===================================
     === Checking/loading from storage ===
     ===================================*/
-    // Note: they are not needed here
-    // restoreAnswers(data) {
-    //     // pass
-    // }
-    // checkLocalStorage() {
-    //     // pass
-    // }
-    // setLocalStorage(data) {
-    //     // pass
-    // }
-    
+    restoreAnswers(data) {
+        // pass;
+    }
+    checkLocalStorage() {
+        // pass;
+    }
+    setLocalStorage(data) {
+        // pass;
+    }
     hideFeedback() {
         this.feedbackDiv.remove();
     }
@@ -571,7 +577,6 @@ export default class NC extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    const userId = nanoid(20);
     $("[data-component=numberconversion]").each(function (index) {
         var opts = {
             orig: this,
@@ -580,7 +585,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                NCList[this.id] = new NC(opts, userId);
+                NCList[this.id] = new NC(opts);
             } catch (err) {
                 console.log(
                     `Error rendering Number Conversion Problem ${this.id}
