@@ -5,7 +5,7 @@ This guide covers three types of Assembly-related exercises, with a particular f
 ## 1. Assembly Operations (`assembly`)
 
 ### Purpose
-Test your ability to identify valid and invalid assembly language instructions.
+This exercise tests your ability to identify valid and invalid assembly language instructions.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)
@@ -44,7 +44,7 @@ Test your ability to identify valid and invalid assembly language instructions.
 ## 2. Assembly State Exercise (`assembly_state`)
 
 ### Purpose
-Evaluate your ability to analyze and predict the final state of a system after executing a series of assembly instructions.
+This exercise evaluates your ability to analyze and predict the state of a system after executing a series of assembly instructions.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)
@@ -149,7 +149,7 @@ The `validateAnswers()` method checks the user-provided register and memory valu
 ## 3. Assembly Flag Exercise (`assembly_flag`)
 
 ### Purpose
-Test your understanding of how assembly instructions affect status flags.
+This exercise tests your understanding of how assembly instructions affect status flags.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)
