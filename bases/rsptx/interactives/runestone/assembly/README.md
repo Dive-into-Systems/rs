@@ -114,7 +114,7 @@ The exercise is presented as a customized component with four key tunable elemen
 </div>
 ```
 
-**Data Structures**
+## Data Structures
 
 ## Reading Inputs
 The component reads inputs from a script tag containing JSON data within the root DOM node. It uses the `scriptSelector()` method to find and parse this JSON data, which includes custom instructions, registers, and memory values.
