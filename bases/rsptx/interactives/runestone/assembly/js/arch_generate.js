@@ -284,6 +284,7 @@ class ArchInstructions {
         return selected_instructions;
     }
 
+    // Checks if the state contains any negative numbers
     hasNegativeNumbers(state) {
         return state.registers.some(r => parseInt(r.value) < 0) ||
             state.memory.some(m => parseInt(m.value) < 0);
@@ -300,8 +301,7 @@ class ArchInstructions {
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
 
-        console.log(availableFormats);
-        if (selection[0] && selection[1] && !selection[2]) {
+        if (selection[0] && selection[1]) {
             availableFormats["arithBinary"].push(...[
                 "{op} %{reg1}, {memAddr}",
                 "{op} %{reg2}, {memAddr}",
@@ -331,8 +331,7 @@ class ArchInstructions {
         if (selection[1] && formatType === "memOps") availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2] && formatType === "archOps") availableFormats["archOps"] = archData["archOps"].formats;
 
-        console.log(availableFormats);
-        if (formatType == "arithBinary" && selection[0] && selection[1] && !selection[2]) {
+        if (formatType == "arithBinary" && selection[0] && selection[1]) {
             availableFormats["arithBinary"].push(...[
                 "{op} %{reg1}, {memAddr}",
                 "{op} %{reg2}, {memAddr}",
@@ -627,6 +626,7 @@ class ArchInstructions {
         return { op, args: parsedArgs };
     }
 
+    // Parses an ARM64 instruction string into its components
     parseARM64Instruction(instruction) {
         const regex = /(\w+)\s+(.+)/;
         const match = instruction.match(regex);
@@ -678,6 +678,7 @@ class ArchInstructions {
         return [selected_instructions, selected_registers];
     }
 
+    // Generates a list of flag-setting instructions for the simulation
     selectFlagRegisters(num_registers) {
         const registers = arch_data[this.architecture]['registers_regular'].slice(0, 2);
         return Array.from({
@@ -700,32 +701,30 @@ class ArchInstructions {
         });
     }
 
+    // Generates a list of flag-setting instructions for the simulation
     generateFlagInstructions(num_instructions, registers) {
         const instructions = [];
         const operations = arch_data[this.architecture]["comparison"].instructions;
         for (let i = 0; i < num_instructions; i++) {
             const op = unifPickItem(operations);
             let src, dest;
-            if (Math.random() < 0.3) { // 30% chance of same source and destination
-                src = this.getRandomOperand(registers);
-                dest = src;
-            } else {
-                src = this.getRandomOperand(registers);
+            src = this.getRandomOperand(registers);
+            dest = this.getRandomOperand(registers);
+            while (src === dest) {
                 dest = this.getRandomOperand(registers);
-                while (src === dest) {
-                    dest = this.getRandomOperand(registers);
-                }
             }
             instructions.push(`${op} ${dest}, ${src}`);
         }
         return instructions;
     }
 
+    // Analyzes the flag settings for the given instructions
     getRandomOperand(registers) {
         const reg = unifPickItem(registers);
         return this.architecture === 'ARM64' ? `${reg.register}` : `%${reg.register}`;
     }
 
+    // Analyzes the flag settings for the given instructions
     analyzeFlagSettings(instruction, registers) {
         const parsedInstruction = this.parseX86Instruction(instruction);
         if (!parsedInstruction) {
@@ -773,6 +772,7 @@ class ArchInstructions {
         return { carryFlag, overflowFlag, zeroFlag, signFlag };
     }
 
+    // Gets the flag value for the given operand
     getFlagValue(operand, registers) {
         if (operand.startsWith('$') || operand.startsWith('#')) {
             return parseInt(operand.slice(1), 16);
