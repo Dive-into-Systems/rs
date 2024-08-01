@@ -301,7 +301,7 @@ class ArchInstructions {
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
 
-        if (selection[0] && selection[1]) {
+        if (selection[0] && selection[1] && this.architecture !== "ARM64") {
             availableFormats["arithBinary"].push(...[
                 "{op} %{reg1}, {memAddr}",
                 "{op} %{reg2}, {memAddr}",
@@ -331,7 +331,7 @@ class ArchInstructions {
         if (selection[1] && formatType === "memOps") availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2] && formatType === "archOps") availableFormats["archOps"] = archData["archOps"].formats;
 
-        if (formatType == "arithBinary" && selection[0] && selection[1]) {
+        if (formatType == "arithBinary" && selection[0] && selection[1] && this.architecture !== "ARM64") {
             availableFormats["arithBinary"].push(...[
                 "{op} %{reg1}, {memAddr}",
                 "{op} %{reg2}, {memAddr}",
