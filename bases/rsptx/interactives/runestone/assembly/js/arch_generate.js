@@ -360,6 +360,7 @@ class ArchInstructions {
             [formatType, format] = this.generateComplexInstructionFormat(selection, instruction_num);
         }
 
+        console.log("formatType", format);
         let op = unifPickItem(arch_data[this.architecture][formatType].instructions);
 
         // randomly select registers
