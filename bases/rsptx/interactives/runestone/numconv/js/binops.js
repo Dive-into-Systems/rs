@@ -291,7 +291,6 @@ export default class BO extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
-                this.sendData(3);
                 this.clearAnswer();
                 this.getCheckedValues();
                 // only generate new prompt when there is item selected
@@ -300,6 +299,7 @@ export default class BO extends RunestoneBase {
                     this.generateAnswer();
                 } 
                 this.checkValidConversion();
+                this.sendData(3);
             }.bind(this),
             false
         );
@@ -576,7 +576,7 @@ export default class BO extends RunestoneBase {
                     checkedOperators : `${this.checkedValues}`,
                     usedOperator : `${this.randomItem}`
                 },
-                questionPrompt : `${this.promptDivTextNode}`,
+                questionPrompt : `${this.promptDivTextNode.textContent}`,
                 correctAnswer: `${this.target_num_string}`,
                 userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
             }

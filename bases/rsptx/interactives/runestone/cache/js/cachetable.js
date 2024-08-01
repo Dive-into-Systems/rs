@@ -16,37 +16,6 @@ const twoWaySetAssociative = "2-Way Set Associative";
 const algo_boost = "boost";
 const algo_hitNmiss = "hitNmiss";
 
-function DIS_Log(QID, timestamp, data) {
-    // Print a message to the console for now
-    console.log("Logging data for question with ID:", QID);
-    console.log("Timestamp:", timestamp);
-    console.log("Data:", data);
-
-    //send asynchronous request to flask server
-    // JSON data to send
-    const postData = {
-        questionID: QID,
-        timestamp: timestamp,
-        data: data
-    };
-
-    // URL of the Flask route designed to accept POST requests
-    const url = 'http://localhost:5000/submit-answer'; // CHANGE
-
-    fetch(url, {
-        method: 'POST', // Sending data as POST
-        headers: {
-            'Content-Type': 'application/json' // Specifying the content type
-        },
-        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
-    })
-    .then(response => response.json())
-    .then(data => console.log('Success:', data))
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
 // cachetable constructor
 export default class cachetable extends RunestoneBase {
     constructor(opts) {
@@ -56,9 +25,14 @@ export default class cachetable extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
+        // Fields for logging data
+        this.componentId = 6;
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createCachetableElement();
-        this.caption = "Cache Table";
-        this.addCaption("runestone");
+        // this.caption = "Cache Table";
+        // this.addCaption("runestone");
         // this.checkServer("cachetable", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -72,6 +46,8 @@ export default class cachetable extends RunestoneBase {
             tag: 0,
             lru: 0 
         };
+
+        this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -1777,6 +1753,61 @@ export default class cachetable extends RunestoneBase {
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
+    }
+
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId
+        }
+        if (actionId !== 0) {
+            bundle.details = {
+                config : {
+                    cache_organization : `${this.cacheOrg}`,
+                    address_length : `${this.numBits}`,
+                    block_size : `${this.blockSize}`,
+                    num_rows : `${this.numRows}`
+                },
+                prompt : {
+                    address: `${this.addressNodeText.textContent}`,
+                    block_size : `${this.block_size_ans}`, 
+                    num_lines : `${this.num_line_ans}`
+                },
+                eval : {
+                    correct_answer : {
+                        tag_bits: `${this.tag_bits}`,
+                        index_bits: `${this.index_bits}`,
+                        offset_bits: `${this.offset_bits}`
+                    },
+                    user_input : {
+                        tag_bits: `${this.input_tag_bits}`,
+                        index_bits: `${this.input_index_bits}`,
+                        offset_bits: `${this.input_offset_bits}`
+                    },
+                    incorrect_attempts : {
+                        tag_bits_incorrect_count: `${this.tagIncorrectCount}`,
+                        index_bits_incorrect_count: `${this.indexIncorrectCount}`,
+                        offset_bits_incorrect_count: `${this.offsetIncorrectCount}`
+                    }
+                },
+                algorithm : {
+                    name: `${this.algorithm}`,
+                    params: {
+                        chance_hit: `${this.chance_hit}`, 
+                        hit_incr: `${this.hit_incr}`, 
+                        chance_conf: `${this.chance_conf}`, 
+                        conf_incr: `${conf_incr}`
+                    }
+                }
+            }
+        }
+        else { bundle.details = null }
+
+        this.logData(bundle);
     }
 }
 

@@ -28,9 +28,6 @@ export default class NC extends RunestoneBase {
         
         // Fields for logging data
         this.componentId = 1;
-        // const userId = nanoid(20);
-        // this.userId = userId;
-        // this.userId = "testId-for-this-page";
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -140,7 +137,7 @@ export default class NC extends RunestoneBase {
                     this.generateAnswer();
                 }
             }.bind(this),
-            false);
+        false);
 
 
         this.statementNode2 = document.createTextNode(" to ");

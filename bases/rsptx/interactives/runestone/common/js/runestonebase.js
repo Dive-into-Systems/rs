@@ -105,12 +105,12 @@ export default class RunestoneBase {
     ///// This function sends data to the Dive in to Systems exercise book database. /////
     logData(bundle) {
         let data = {
-            timestamp: bundle.timestamp,
-            componentId: bundle.componentId,
-            questionId: bundle.questionId,
-            actionId: bundle.actionId,
-            userId: bundle.userId,
-            details: bundle.details
+            TS: bundle.timestamp,
+            CID: bundle.componentId,
+            QID: bundle.questionId,
+            AID: bundle.actionId,
+            UID: bundle.userId,
+            DET: bundle.details
         };
 
         console.log(data);
