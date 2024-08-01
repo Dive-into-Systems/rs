@@ -7,7 +7,7 @@ $.i18n().load({
         msg_no_answer: "No answer provided.",
         
         msg_cachepartition_check_me: "Check answer",        
-        msg_cachepartition_generate_a_number: "Try a new question",
+        msg_cachepartition_generate_a_number: "Generate another question",
         msg_cachepartition_correct: "Correct. Good job!",
         msg_cachepartition_incorrect: "Incorrect. Please try again.",
         msg_cachepartition_tag_incorrect: "Tag bits are incorrect. ",
@@ -17,7 +17,7 @@ $.i18n().load({
         msg_cachepartition_clear_selection: "Clear all selection" ,
         
         msg_cacheinfo_check_me: "Check answer",
-        msg_cacheinfo_generate_a_number: "Try a new question",
+        msg_cacheinfo_generate_a_number: "Generate another question",
         msg_cacheinfo_incorrect_00: "Block size is incorrect.", 
         msg_cacheinfo_incorrect_hint0: " Hint: the offset bits is dependent on blocksize of cache table. You may refer to <a href = 'https://diveintosystems.org/book/C11-MemHierarchy/caching.html#_direct_mapped_caches'>11.4</a>", 
         msg_cacheinfo_incorrect_01: "Number of sets is incorrect.",

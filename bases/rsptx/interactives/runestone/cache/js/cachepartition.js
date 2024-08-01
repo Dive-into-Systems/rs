@@ -11,37 +11,6 @@ import { Pass } from "codemirror";
 
 export var cachepartitionList = {}; // Object containing all instances of cachepartition that aren't a child of a timed assessment.
 
-function DIS_Log(QID, timestamp, data) {
-    // Print a message to the console for now
-    console.log("Logging data for question with ID:", QID);
-    console.log("Timestamp:", timestamp);
-    console.log("Data:", data);
-
-    //send asynchronous request to flask server
-    // JSON data to send
-    const postData = {
-        questionID: QID,
-        timestamp: timestamp,
-        data: data
-    };
-
-    // URL of the Flask route designed to accept POST requests
-    const url = 'http://localhost:5000/submit-answer'; // CHANGE
-
-    fetch(url, {
-        method: 'POST', // Sending data as POST
-        headers: {
-            'Content-Type': 'application/json' // Specifying the content type
-        },
-        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
-    })
-    .then(response => response.json())
-    .then(data => console.log('Success:', data))
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
 // cachepartition constructor
 export default class cachepartition extends RunestoneBase {
     constructor(opts) {
@@ -50,13 +19,21 @@ export default class cachepartition extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+
+        // Fields for logging data
+        this.componentId = 5;
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createCachePartitionElement();
 
-        this.caption = "Cache Partition";
-        this.addCaption("runestone");
+        // this.caption = "Cache Partition";
+        // this.addCaption("runestone");
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
+        this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -154,12 +131,10 @@ export default class cachepartition extends RunestoneBase {
         this.addressNode.addEventListener("mousemove", this.currInputBits.bind(this));
 
         // create help text
-        this.helperDiv = document.createElement("div");
-        this.instructionText = document.createTextNode("Divide this address into the tag, index, and offset.");
-        this.helperDiv.appendChild(this.instructionText);
-        this.helperDiv.appendChild(document.createElement("br"));
-        this.usageText = document.createTextNode("Usage: Click on a button then drag through some address bits to highlight.");
-        this.helperDiv.appendChild(this.usageText);
+        this.instructionNode = document.createElement("div");
+        this.instructionNode.innerHTML = `<span style='font-weight:bold'><u>Instructions</u></span>: 
+            Divide this address into the tag, index, and offset. To use this tool, click on a button then drag through some address bits to highlight.`;
+        this.instructionNode.style.padding = "10px";
 
         // create question prompt (block size, total number of lines)
         this.promptNode = document.createElement("p");
@@ -178,26 +153,25 @@ export default class cachepartition extends RunestoneBase {
         this.promptNode.style.textAlign = "center";
         this.promptNode.style.fontSize = "x-large";
         
-        // put all question prompt segements together
+        this.configHelperText = document.createElement("div");
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
+
+        this.containerDiv.appendChild(this.instructionNode);
         this.statementDiv = document.createElement("div");
-        this.statementDiv.appendChild(this.helperDiv);
-        this.statementDiv.appendChild(document.createElement("br"));
+        this.statementDiv.className = "statement-div";
+        this.statementDiv.appendChild(this.configHelperText);
+
+        // put all question prompt segements together
         this.statementDiv.append("Cache Organization: ");
         this.statementDiv.appendChild(this.orgMenuNode);
         this.statementDiv.appendChild(document.createElement("br"));
         this.statementDiv.append("Address Length: ");
         this.statementDiv.appendChild(this.addrMenuNode);
         this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(this.promptNode);
-        
-        // set question prompt apart from the rest by a white background
-        this.statementDiv.style.borderWidth = "1px";
-        this.statementDiv.style.borderRadius = "5px";
-        this.statementDiv.style.borderBlockStyle = "solid";
-        this.statementDiv.style.borderBlockColor = "White";
-        this.statementDiv.style.backgroundColor = "White";
-        this.statementDiv.style.padding = "8px";
+
+        this.containerDiv.appendChild(this.statementDiv);
+        this.containerDiv.appendChild(document.createElement("br"));
+        this.containerDiv.appendChild(this.promptNode);
 
         // create selected bits display section
         var spaceNode = document.createTextNode("  ");
@@ -220,9 +194,8 @@ export default class cachepartition extends RunestoneBase {
         this.inputBitsDiv.appendChild(this.input_offset_text);
         this.inputBitsDiv.appendChild(this.input_offset_count);
         this.inputBitsDiv.style.textAlign = "center";
-        this.inputBitsDiv.style.fontSize = "medium";
 
-        this.containerDiv.appendChild(this.statementDiv);
+        // this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.questionButtionDiv);
         this.containerDiv.appendChild(document.createElement("br"));
@@ -287,21 +260,6 @@ export default class cachepartition extends RunestoneBase {
                 this.updateCPFeedbackDiv();
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                DIS_Log("11.1.2-submit_button", new Date().toISOString(), {
-                    // user answers
-                    user_Tag_Bits: this.input_tag_bits,
-                    tagIncorrectCount: this.tagIncorrectCount,
-                    user_Index_Bits: this.input_index_bits,
-                    indexIncorrectCount: this.indexIncorrectCount,
-                    user_Offset_Bits: this.input_offset_bits,
-                    offsetIncorrectCount: this.offsetIncorrectCount,
-
-                    //correct answer
-                    correct_Tag_Bits: this.tag_bits,
-                    correct_Index_Bits: this.index_bits,
-                    correct_Offset_Bits: this.offset_bits,
-                    correct: this.correct,
-                });
             }.bind(this), false);
         
         this.generateButton.textContent = $.i18n("msg_cachepartition_generate_a_number");
@@ -316,10 +274,11 @@ export default class cachepartition extends RunestoneBase {
                 this.clearFeedback();
                 this.updatePromptNAnswer();
                 this.resetHighlight();
+                this.tagIncorrectCount = 0;
+                this.indexIncorrectCount = 0;
+                this.offsetIncorrectCount = 0;
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
-                DIS_Log("11.1.2-generate_button", new Date().toISOString(), {
-                    Question_Regeneration_Count: this.generateButtonCounter,
-                });
+                this.sendData(3);
             }.bind(this), false);
         
         // set to TAG button
@@ -505,6 +464,50 @@ export default class cachepartition extends RunestoneBase {
         this.lineNodeLine.textContent = this.num_line_ans.toString();
     }
 
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId
+        }
+        if (actionId !== 0) {
+            bundle.details = {
+                config : {
+                    cache_organization : `${this.orgMenuNode.value}`,
+                    address_length : `${this.addrMenuNode.value}`
+                },
+                prompt : {
+                    address: `${this.addressNodeText.textContent}`,
+                    block_size : `${this.block_size_ans}`, 
+                    num_lines : `${this.num_line_ans}`
+                },
+                eval : {
+                    correct_answer : {
+                        tag_bits: `${this.tag_bits}`,
+                        index_bits: `${this.index_bits}`,
+                        offset_bits: `${this.offset_bits}`
+                    },
+                    user_input : {
+                        tag_bits: `${this.input_tag_bits}`,
+                        index_bits: `${this.input_index_bits}`,
+                        offset_bits: `${this.input_offset_bits}`
+                    },
+                    incorrect_attempts : {
+                        tag_bits_incorrect_count: `${this.tagIncorrectCount}`,
+                        index_bits_incorrect_count: `${this.indexIncorrectCount}`,
+                        offset_bits_incorrect_count: `${this.offsetIncorrectCount}`
+                    }
+                }
+            }
+        }
+        else { bundle.details = null }
+
+        this.logData(bundle);
+    }
+
     /*===================================
     === Checking/loading from storage ===
     ===================================*/
@@ -557,6 +560,8 @@ export default class cachepartition extends RunestoneBase {
 
         // The overall correctness is true only if all parts are correct
         this.correct = tagCorrect && indexCorrect && offsetCorrect;
+
+        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
     }
 
     async logCurrentAnswer(sid) {

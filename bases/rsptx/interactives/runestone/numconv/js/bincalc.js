@@ -252,9 +252,8 @@ export default class BinCalc extends RunestoneBase {
         this.calculateButton.addEventListener(
             "click",
             function () {
-                this.sendData(8);
-                this.generateAnswer();
                 this.renderBinCalcFeedbackDiv();
+                this.sendData(8);
             }.bind(this),
             false
         );
@@ -291,6 +290,7 @@ export default class BinCalc extends RunestoneBase {
                 this.sendData(9);
                 $(this.feedbackDiv).remove();
                 this.generateRandomValues(this.operatorMenu.value);
+                this.generateAnswer();
             }.bind(this), false);
 
         this.generateButton.style.marginRight = "10px";
@@ -307,6 +307,7 @@ export default class BinCalc extends RunestoneBase {
         this.feedbackDiv.remove();
         this.inputBoxTop.value = "";
         this.inputBoxBottom.value = "";
+        this.incomplete = 1;
     }
 
     // Generate random values for the input fields
@@ -340,10 +341,10 @@ export default class BinCalc extends RunestoneBase {
     }
 
     generateAnswer() {
-
         this.incomplete = 0;
         let opt = this.operatorMenu.value;
-        if ((this.inputBoxTop.value == "") || ((opt == "AND (&)" || opt == "OR (|)" || opt == "XOR (^)") && (this.inputBoxBottom.value == ""))) {
+        if ((! this.inputBoxTop.value) || ((opt == "AND (&)" || opt == "OR (|)" || opt == "XOR (^)") && (! this.inputBoxBottom.value))) {
+            console.log("In this case");
             this.incomplete = 1;
             return;
         }
@@ -395,7 +396,7 @@ export default class BinCalc extends RunestoneBase {
         
         this.feedbackDiv.innerHTML = ""; 
         
-        if (this.incomplete == 1) {
+        if (this.incomplete == 1 || !this.answerValue) {
             this.feedbackDiv.className = "alert alert-danger";
             this.feedbackDiv.innerHTML = "Please make sure you have enter the value(s)."
         }
@@ -444,10 +445,10 @@ export default class BinCalc extends RunestoneBase {
                     shiftBits : (this.operatorMenu.value == "AND (&)" || this.operatorMenu.value == "OR (|)" || this.operatorMenu.value == "XOR (^)") ? null : `${parseInt(this.bitShiftMenu.value, 10)}`,
                     value : {
                         num1 : `${this.inputBoxTop.value}`,
-                        num2 : (this.operatorMenu.value == "AND (&)" || this.operatorMenu.value == "OR (|)" || this.operatorMenu.value == "XOR (^)") ? null : `${this.inputBoxBottom.value}`
+                        num2 : (this.operatorMenu.value == "AND (&)" || this.operatorMenu.value == "OR (|)" || this.operatorMenu.value == "XOR (^)") ? `${this.inputBoxBottom.value}` : null
                     }
                 },
-                calculatedResult : this.answerValue
+                calculatedResult : `${this.answerValue}`
             }
         }
         else { bundle.details = null }

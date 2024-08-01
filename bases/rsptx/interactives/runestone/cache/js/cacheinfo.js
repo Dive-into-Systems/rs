@@ -11,56 +11,6 @@ import { Pass } from "codemirror";
 
 export var cacheinfoList = {}; // Object containing all instances of cacheinfo that aren't a child of a timed assessment.
 
-// // Example POST method implementation, edited for local server:
-// async function postData(url = "http://localhost:3000/api/data", data = {}) {
-//   // Default options are marked with *
-//   const response = await fetch(url, {
-//     method: "POST", // *GET, POST, PUT, DELETE, etc.
-//     mode: "cors", // no-cors, *cors, same-origin
-//     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-//     credentials: "include", // include, *same-origin, omit
-//     headers: {
-//       "Content-Type": "application/json",
-//       // 'Content-Type': 'application/x-www-form-urlencoded',
-//     },
-//     redirect: "follow", // manual, *follow, error
-//     referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-//     body: JSON.stringify(data) // body data type must match "Content-Type" header
-//   });
-//   return response.json(); // parses JSON response into native JavaScript objects
-// }
-
-function DIS_Log(QID, timestamp, data) {
-    // Print a message to the console for now
-    console.log("Logging data for question with ID:", QID);
-    console.log("Timestamp:", timestamp);
-    console.log("Data:", data);
-
-    //send asynchronous request to flask server
-    // JSON data to send
-    const postData = {
-        questionID: QID,
-        timestamp: timestamp,
-        data: data
-    };
-
-    // URL of the Flask route designed to accept POST requests
-    const url = 'http://pikachu:5000/wtv-endpoint'; // CHANGE
-
-    fetch(url, {
-        method: 'POST', // Sending data as POST
-        headers: {
-            'Content-Type': 'application/json' // Specifying the content type
-        },
-        body: JSON.stringify(postData) // Converting the JavaScript object to a JSON string
-    })
-    .then(response => response.json())
-    .then(data => console.log('Success:', data))
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
 // cacheinfo constructor
 export default class cacheinfo extends RunestoneBase {
     constructor(opts) {
@@ -70,21 +20,27 @@ export default class cacheinfo extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.correct = null;
-        // default number of bits = 4
-        this.num_bits = 8;
+        this.num_bits = 8; // default number of bits = 4
         // keep track of the last generated cache combination and ensure
         // each time it generates a different combination
         this.last_rand_choice = [0,0,0];
 
+        // Fields for logging data
+        this.componentId = 4;
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createCacheInfoElement();
-        this.caption = "Cache System";
-        this.addCaption("runestone");
+        // this.caption = "Cache System";
+        // this.addCaption("runestone");
         // this.checkServer("cacheinfo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
         this.generateButtonCounter = 0;
         this.contWrong = 0;
+
+        this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -153,8 +109,9 @@ export default class cacheinfo extends RunestoneBase {
         // Question Display //
             // create the helper instruction
         this.helperDiv = document.createElement("div");
-        this.helperDiv.innerHTML = "In this assignment, you will answer questions about cache configuration " +
+        this.helperDiv.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: In this assignment, you will answer questions about cache configuration " +
         "based on the provided information regarding the number of bits for the tag, index, and offset given below.";
+        this.helperDiv.style.padding = "10px";
 
             // create the address in the question prompt
         this.addressNode = document.createElement("div");
@@ -189,30 +146,27 @@ export default class cacheinfo extends RunestoneBase {
         this.partitionNode.style.textAlign = "center";
         this.partitionNode.style.fontSize = "x-large";
 
-            // create the menus and put the question prompt together
+        // create the menus and put the question prompt together
+        this.containerDiv.appendChild(this.helperDiv);
         this.statementDiv = document.createElement("div");
-        this.statementDiv.appendChild(this.helperDiv);
-        this.statementDiv.appendChild(document.createElement("br"));
+        this.statementDiv.className = "statement-div";
+        this.configHelperText = document.createElement("div");
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
+        this.statementDiv.appendChild(this.configHelperText);
         this.statementDiv.append("Cache Organization: ");
         this.statementDiv.appendChild(this.orgMenuNode);
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.append("Address Length: ");
+        this.statementDiv.append("  Address Length: ");
         this.statementDiv.appendChild(this.addrMenuNode);
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(this.addressNode);
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.appendChild(this.partitionNode);
-        this.statementDiv.appendChild(document.createElement("br"));
 
-        this.statementDiv.style.borderWidth = "1px";
-        this.statementDiv.style.borderRadius = "5px";
-        this.statementDiv.style.borderBlockStyle = "solid";
-        this.statementDiv.style.borderBlockColor = "white";
-        this.statementDiv.style.backgroundColor = "white";
-        this.statementDiv.style.padding = "9px";
+        this.promptDiv = document.createElement("div");
+
+        this.promptDiv.appendChild(this.addressNode);
+        this.promptDiv.appendChild(document.createElement("br"));
+        this.promptDiv.appendChild(this.partitionNode);;
 
         this.containerDiv.appendChild(this.statementDiv);
+        this.containerDiv.appendChild(document.createElement("br"));
+        this.containerDiv.appendChild(this.promptDiv);
         this.containerDiv.appendChild(document.createElement("br"));
         
         // create answer field
@@ -295,18 +249,6 @@ export default class cacheinfo extends RunestoneBase {
                 //add additional button functions below here
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                DIS_Log("11.1.1-submit_button", new Date().toISOString(), {
-                    //user answers
-                    user_block_size: this.inputNode1.value,
-                    user_num_lines: this.inputNode2.value,
-                    user_num_sets: this.inputNode3.value,
-
-                    //correct answers
-                    block_size: this.block_size_ans, 
-                    num_lines: this.num_line_ans,
-                    num_sets: this.num_entry,
-                    correct: this.correct,
-                });
             }.bind(this),
             false
         );
@@ -321,14 +263,11 @@ export default class cacheinfo extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
-                //insert additional onclick functions here
                 this.generateAddress();
                 this.clearInput();
                 this.generateAnswer();
                 this.generateButtonCounter++;
-                DIS_Log("11.1.1-generate_button", new Date().toISOString(), {
-                    Question_Regeneration_Count: this.generateButtonCounter,
-                });
+                this.sendData(3);
             }.bind(this),
             false)
         ;
@@ -450,6 +389,47 @@ export default class cacheinfo extends RunestoneBase {
         this.generatePrompt();
     }
 
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId
+        }
+        if (actionId !== 0) {
+            bundle.details = {
+                config : {
+                    cache_organization : `${this.orgMenuNode.value}`,
+                    address_length : `${this.addrMenuNode.value}`
+                },
+                prompt : {
+                    address: `${this.address_eg}`,
+                    tag_bits: `${this.tag_bits}`,
+                    index_bits: `${this.index_bits}`,
+                    offset_bits: `${this.offset_bits}`
+                },
+                eval : {
+                    correct_answer : {
+                        block_size: `${this.block_size_ans}`,
+                        num_entries: `${this.entries_ans}`,
+                        num_lines: (this.orgMenuNode.value !== "Direct-Mapped") ? `${this.num_line_ans}` : null
+
+                    },
+                    user_input : {
+                        block_size: `${this.inputNode1.value}`,
+                        num_entries: `${this.inputNode2.value}`,
+                        num_lines: (this.orgMenuNode.value !== "Direct-Mapped") ? `${this.inputNode3.value}` : null
+                    }
+                }
+            }
+        }
+        else { bundle.details = null }
+
+        this.logData(bundle);
+    }
+
     /*===================================
     === Checking/loading from storage ===
     ===================================*/
@@ -506,6 +486,8 @@ export default class cacheinfo extends RunestoneBase {
         } else {
             this.contWrong = 0;
         }
+
+        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
     }
 
     async logCurrentAnswer(sid) {
