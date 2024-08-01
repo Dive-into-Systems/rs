@@ -300,9 +300,17 @@ class ArchInstructions {
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
 
-        if (selection[2] && instruction_num == 2) {
-            availableFormats = {};
-            availableFormats["archOps"] = archData["archOps"].formats;
+        console.log(availableFormats);
+        if (selection[0] && selection[1] && !selection[2]) {
+            availableFormats["arithBinary"].push(...[
+                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} ${literal}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}"
+            ]);
+        } else if (selection[0]) {
+            availableFormats["arithBinary"] = availableFormats["arithBinary"].filter(format => !format.includes("memAddr"));
         }
 
         // Select a random type from the available format types
@@ -323,9 +331,17 @@ class ArchInstructions {
         if (selection[1] && formatType === "memOps") availableFormats["memOps"] = archData["memOps"].formats;
         if (selection[2] && formatType === "archOps") availableFormats["archOps"] = archData["archOps"].formats;
 
-        if (selection[2] && instruction_num == 2 && formatType === "archOps") {
-            availableFormats = {};
-            availableFormats["archOps"] = archData["archOps"].formats;
+        console.log(availableFormats);
+        if (formatType == "arithBinary" && selection[0] && selection[1] && !selection[2]) {
+            availableFormats["arithBinary"].push(...[
+                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} ${literal}, {memAddr}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}"
+            ]);
+        } else if (formatType == "arithBinary") {
+            availableFormats["arithBinary"] = availableFormats["arithBinary"].filter(format => !format.includes("memAddr"));
         }
 
         const format = unifPickItem(availableFormats[formatType]);
