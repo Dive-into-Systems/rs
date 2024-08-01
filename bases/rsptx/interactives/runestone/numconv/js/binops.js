@@ -1,57 +1,66 @@
 // *********
-// numconv.js
+// binops.js
 // *********
-// This file contains the JS for the Runestone numberconversion component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
+/*
+ * - This file contains the JS for the Runestone bitwiseoperation component.
+ * - Inputs are read from this.menuNode2 (set number of bits, 4/6/8), this.menuNode1 (dropdown checklist of
+ *   bitwise operators), and this.inputNode (text box for answer). 
+ * - Every time the user clicks on "generate another question", the component reads if there is any changes
+ *   to the aforementioned input readers and make corresponding actions, such as generatePrompt and generateAnswer.
+ * - The component randomizes values by Math library based on the number of bits in the generateNumber function.
+ * - The component validates answer by first generating answer in generateAnswer function and compare the
+ *   calculated asnwer with the user input answer.
+ * - TODO:
+ *     this.menuNode1: the dropdown checkbox list doesn't support checking items when clicking on the text. 
+ *                     Currently it's clicking on the box only which is a bit inconvenient.  
+*/
 "use strict";
-
 
 import RunestoneBase from "../../common/js/runestonebase.js";
 import { nanoid } from 'nanoid/non-secure';
-import "./nc-i18n.en.js";
-// import "./NC-i18n.pt-br.js";
-import "../css/binops.css";
+import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
+import "../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
 
 export var BOList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
 
-// NC constructor
+// BitwiseOperation constructor
 export default class BO extends RunestoneBase {
    constructor(opts) {
-       super(opts);
-       var orig = opts.orig; // entire <p> element
-       this.useRunestoneServices = opts.useRunestoneServices;
-       this.origElem = orig;
-       this.divid = orig.id;
+        super(opts);
+        var orig = opts.orig; // entire <p> element
+        this.useRunestoneServices = opts.useRunestoneServices;
+        this.origElem = orig;
+        this.divid = orig.id;
 
         // Default configuration settings
-       this.correct = null;
-       this.num_bits = 4;
-       this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
-       this.toOpt = ["4", "6", "8"];
+        this.correct = null;
+        this.num_bits = 4;
+        this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift (Logical)", "Right Shift (Arithmetic)"];
+        this.toOpt = ["4", "6", "8"];
 
         // Fields for logging data
         this.componentId = 2;
         this.questionId = 1;
+        this.contWrong = 0;
         this.userId = this.getUserId();
-      
+        
+        // Behaviors when page is loaded
         this.createBOElement();
         this.clearAnswer();
         this.getCheckedValues();
-        // only generate new prompt when there is item selected
+
+        // Only generate new prompt when there are items selected
         if (this.checkedValues.length != 0){
             this.generateNumber();
             this.generateAnswer();
         } 
         this.checkValidConversion();
-        // this.caption = "Bitwise Operation";
-        // this.addCaption("runestone");
-        //    this.checkServer("nc", true);
+
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-
-        this.contWrong = 0;
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -61,38 +70,18 @@ export default class BO extends RunestoneBase {
     /*===========================================
     ====   Functions generating final HTML   ====
     ===========================================*/
+    
     // Create the NC Element
     createBOElement() {
         this.renderBOPromptAndInput();
         this.renderBOButtons();
         this.renderBOFeedbackDiv();
-            // this.getCheckedValues();
-            // replaces the intermediate HTML for this component with the rendered HTML of this component
+        // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
    // Generate the layout of the prompt and input
    renderBOPromptAndInput() {
-        // parse options from the JSON script inside
-        var currOption = JSON.parse(
-            this.scriptSelector(this.origElem).html()
-        );
-        // read number of bits
-        if (currOption["bits"] != undefined) {
-            this.num_bits = eval(currOption["bits"]);
-        }
-        // ensure number of bits is a multiple of 4
-        if ( this.num_bits % 4 != 0 ){
-            alert($.i18n("msg_NC_not_divisible_by_4"));
-            return;
-        }
-        // ensure number of bits is not too large
-        if ( this.num_bits > 16 ){
-            alert($.i18n("msg_NC_too_many_bits"));
-            return;
-        }
-
-
         // Create the parent div which contains everything
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
@@ -149,7 +138,7 @@ export default class BO extends RunestoneBase {
             }
         }.bind(this), false);
 
-        // What happens when there is a change to the dropdown
+        // addEventListener define functions to be executed when menuNode1 has any changes
         this.menuNode1.addEventListener("change",
         function () {
             this.getCheckedValues();
@@ -182,6 +171,7 @@ export default class BO extends RunestoneBase {
                     this.contWrong = 0;
             }.bind(this),
             false);
+
         // Render the statement
         this.containerDiv.append(this.instruction);
         this.configDiv = document.createElement("div");
@@ -199,7 +189,6 @@ export default class BO extends RunestoneBase {
         this.promptDiv = document.createElement("div");
         this.promptDiv.className = "prompt-div";
         this.promptDiv.style.paddingRight = '0px';
-            
 
         // create the node for the number being displayed
         this.promptDivTextNode = document.createElement("code");
@@ -222,7 +211,6 @@ export default class BO extends RunestoneBase {
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.answerDiv);
 
-
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
 
@@ -242,7 +230,6 @@ export default class BO extends RunestoneBase {
         ba.attr("aria-label", "input area");
         this.blankArray = ba.toArray();
         // Set the style of code
-        // $(this.containerDiv).find("code").attr("class","code-inline tex2jax_ignore");
         // When a blank is changed mark this component as interacted with.
         // And set a class on the component in case we want to render components that have been used
         // differently
@@ -415,7 +402,6 @@ export default class BO extends RunestoneBase {
         this.generatePrompt();
     }
 
-
    // generate the answer as a string based on the randomly generated number
    generateAnswer() {
        this.hideFeedback();
@@ -483,12 +469,12 @@ export default class BO extends RunestoneBase {
        }
 
        // the placeholder tells what the desired input should be like
-       var placeholder;
-        placeholder = this.num_bits.toString() + "-digit binary value";
-        this.inputNode.setAttribute("placeholder", placeholder);
-        this.inputNode.setAttribute("size", placeholder.length);
-        this.inputNode.setAttribute("maxlength", this.num_bits);
-        this.inputNode.setAttribute('style', 'width: 50ptx;');
+        var placeholder;
+            placeholder = this.num_bits.toString() + "-digit binary value";
+            this.inputNode.setAttribute("placeholder", placeholder);
+            this.inputNode.setAttribute("size", placeholder.length);
+            this.inputNode.setAttribute("maxlength", this.num_bits);
+            this.inputNode.setAttribute('style', 'width: 50ptx;');
    }
 
    // check if the prompt is valid 
@@ -542,9 +528,9 @@ export default class BO extends RunestoneBase {
                 }
             }          
        } else {
-           this.feedback_msg = ($.i18n("msg_NC_correct"));
-           this.correct = true;
-           this.contWrong = 0;
+            this.feedback_msg = ($.i18n("msg_NC_correct"));
+            this.correct = true;
+            this.contWrong = 0;
        }
        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
    }
@@ -630,20 +616,19 @@ export default class BO extends RunestoneBase {
        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
        this.containerDiv.appendChild(this.feedbackDiv);
 
-
-       // only the feedback message needs to display
-       var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
-       if (this.correct) {
-           $(this.feedbackDiv).attr("class", "alert alert-info");
-       } else {
-           $(this.feedbackDiv).attr("class", "alert alert-danger");
-       }
+        // only the feedback message needs to display
+        var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
+        if (this.correct) {
+            $(this.feedbackDiv).attr("class", "alert alert-info");
+        } else {
+            $(this.feedbackDiv).attr("class", "alert alert-danger");
+        }
       
-       this.feedbackDiv.innerHTML = feedback_html;
-       this.displayFeedback();
-       if (typeof MathJax !== "undefined") {
-           this.queueMathJax(document.body);
-       }
+        this.feedbackDiv.innerHTML = feedback_html;
+        this.displayFeedback();
+        if (typeof MathJax !== "undefined") {
+            this.queueMathJax(document.body);
+        }
    }
 }
 
@@ -653,23 +638,23 @@ export default class BO extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-   $("[data-component=binops]").each(function (index) {
-       var opts = {
-           orig: this,
-           useRunestoneServices: eBookConfig.useRunestoneServices,
-       };
-       if ($(this).closest("[data-component=timedAssessment]").length == 0) {
-           // If this element exists within a timed component, don't render it here
-           try {
-               BOList[this.id] = new BO(opts);
-           } catch (err) {
-               console.log(
-                   `Error rendering Bitwise Operation Problem ${this.id}
-                    Details: ${err}`
-               );
-           }
-       }
-   });
+    $("[data-component=binops]").each(function (index) {
+        var opts = {
+            orig: this,
+            useRunestoneServices: eBookConfig.useRunestoneServices,
+        };
+        if ($(this).closest("[data-component=timedAssessment]").length == 0) {
+            // If this element exists within a timed component, don't render it here
+            try {
+                BOList[this.id] = new BO(opts);
+            } catch (err) {
+                console.log(
+                    `Error rendering Bitwise Operation Problem ${this.id}
+                        Details: ${err}`
+                );
+            }
+        }
+    });
 });
 
 

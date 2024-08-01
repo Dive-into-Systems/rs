@@ -5,7 +5,7 @@ This guide covers three types of Assembly-related exercises, with a particular f
 ## 1. Assembly Operations (`assembly`)
 
 ### Purpose
-Test your ability to identify valid and invalid assembly language instructions.
+This exercise tests your ability to identify valid and invalid assembly language instructions.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)
@@ -44,23 +44,27 @@ Test your ability to identify valid and invalid assembly language instructions.
 ## 2. Assembly State Exercise (`assembly_state`)
 
 ### Purpose
-Evaluate your ability to analyze and predict the final state of a system after executing a series of assembly instructions.
+This exercise evaluates your ability to analyze and predict the state of a system after executing a series of assembly instructions.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)
 - ARM64
 
-### Exercise Components
-1. **Instructions**: A set of assembly language instructions to be executed.
-2. **Registers**: Initial values of relevant registers.
-3. **Memory**: Initial state of relevant memory locations.
-4. **Selection**: Indicates which instructions should be considered for execution.
+### Tunable parameters
 
-### User Task
-Analyze the given state and instructions to determine the final state of the system, including register values and memory contents.
+### In User Interface
 
-### Exercise Structure
-The exercise is presented as a customized component with four key elements:
+![Default Component Look](./pictures/assembly_state_default.png)
+
+This is the default component appearance. You can generate different types of instructions by selecting from the following checkboxes:
+
+- **Arithmetic Operation (hidden)**: Includes add and sub for both x86 and ARM architectures.
+- **Memory Manipulation**: Includes mov for x86 and ldr, str for ARM.
+- **Stack Operations**: Includes push and pop for x86.
+
+### In PreTeXt file
+
+The exercise is presented as a customized component with four key tunable elements:
 
 1. **Instructions**: List of assembly instructions to be executed.
 2. **Registers**: Initial register states, including:
@@ -73,6 +77,8 @@ The exercise is presented as a customized component with four key elements:
 4. **Selection**: Boolean array indicating which instructions to execute
 
 ### Example (IA32 X86_64)
+
+![Customized Component Look](./pictures/assembly_state_customized.png)
 
 ```html
 <div data-component="assembly_state" data-question_label="1" id="test-assembly-state-ia64-div-unique-2">
@@ -108,22 +114,42 @@ The exercise is presented as a customized component with four key elements:
 </div>
 ```
 
-### How to Solve
-1. Identify the initial states of registers and memory.
-2. Execute each selected instruction (where selection is `true`), updating register and memory values.
-3. Keep track of changes after each instruction.
-4. Determine the final state of all registers and affected memory locations.
+## Data Structures
 
-### Tips for Effective Problem-Solving
-- Pay close attention to memory addressing modes (e.g., `-0x10(%ebp)`)
-- Remember that some instructions may affect multiple registers or memory locations
-- Consider how each instruction impacts the overall system state
-- Double-check your calculations, especially when dealing with hexadecimal values
+## Reading Inputs
+The component reads inputs from a script tag containing JSON data within the root DOM node. It uses the `scriptSelector()` method to find and parse this JSON data, which includes custom instructions, registers, and memory values.
+
+## Randomizing Values for New Questions
+The `generateStates()` method is responsible for creating new questions with random initial states. It generates random memory addresses, register values, and selects random instructions based on the selected architecture (x86_64, ARM64, etc.).
+
+## Validating User Answers
+The `validateAnswers()` method checks the user-provided register and memory values against the expected state. It compares the values after executing the instructions to ensure correctness.
+
+## Method Explanations
+### `generateStates()`
+**Goal:** Generate the initial state for the exercise, including random instructions, registers, and memory addresses.
+**How:** It randomly selects values and formats them according to the specified architecture, ensuring valid memory addresses and avoiding negative values.
+
+### `renderComponent()`
+**Goal:** Render the complete component structure, including instructions list, registers table, and memory table.
+**How:** It creates HTML elements for each part of the component and appends them to the main container.
+
+### `executeInstructions()`
+**Goal:** Execute each instruction in sequence and update the state accordingly.
+**How:** It parses each instruction, determines the operation and operands, and applies changes to registers and memory based on the operation.
+
+### `validateAnswers()`
+**Goal:** Validate the user's answers by comparing them with the expected state.
+**How:** It checks each register and memory value against the expected values after executing the instructions.
+
+## TODO Items and Improvement Ideas
+- User Feedback: Provide more detailed feedback on why an answer is incorrect.
+- Performance Optimization: Optimize the performance of state generation and validation for larger datasets or more complex instructions.
 
 ## 3. Assembly Flag Exercise (`assembly_flag`)
 
 ### Purpose
-Test your understanding of how assembly instructions affect status flags.
+This exercise tests your understanding of how assembly instructions affect status flags.
 
 ### Supported Architectures
 - IA32 (including X86_32 and X86_64)

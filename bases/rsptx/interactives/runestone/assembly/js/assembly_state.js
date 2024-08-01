@@ -513,30 +513,42 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         }
     }
 
+    // Handle case sensitivity or number forms
+    normalizeValue(value) {
+        if (typeof value === "string") {
+            value = value.trim().toLowerCase();
+            if (value.startsWith("0x")) {
+                return parseInt(value, 16);
+            }
+            return parseInt(value, 10);
+        }
+        return value;
+    }
 
-    // Validates user answers against expected state
+    //Validates user's input against expected values
     validateAnswers(userRegisters, userMemory) {
-        const expectedState = this.allStates[this.currentInstruction];
-        let isCorrect = true;
+    const expectedState = this.allStates[this.currentInstruction];
+    let isCorrect = true;
 
-        for (let reg of expectedState.registers) {
-            if (userRegisters[reg.register] != reg.value) {
+    for (let reg of expectedState.registers) {
+        if (this.normalizeValue(userRegisters[reg.register]) !== this.normalizeValue(reg.value)) {
+            isCorrect = false;
+            break;
+        }
+    }
+
+    if (isCorrect) {
+        for (let mem of expectedState.memory) {
+            if (this.normalizeValue(userMemory[mem.address]) !== this.normalizeValue(mem.value)) {
                 isCorrect = false;
                 break;
             }
         }
-
-        if (isCorrect) {
-            for (let mem of expectedState.memory) {
-                if (userMemory[mem.address] != mem.value) {
-                    isCorrect = false;
-                    break;
-                }
-            }
-        }
-
-        return isCorrect;
     }
+
+    return isCorrect;
+    }
+
 
     // Collects user input from register and memory tables
     gatherInput() {
