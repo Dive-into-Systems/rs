@@ -28,7 +28,7 @@ export default class BinCalc extends RunestoneBase {
        this.bitShiftList = ["1", "2", "3", "4","5"];
 
        // Fields for logging data
-       this.componentId = 3;
+       this.componentId = "4.3";
        this.questionId = 1;
        this.userId = this.getUserId();
 

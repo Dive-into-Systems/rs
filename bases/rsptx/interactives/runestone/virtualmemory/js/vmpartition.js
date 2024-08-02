@@ -21,6 +21,11 @@ export default class vmpartition extends RunestoneBase {
         this.divid = orig.id;
         this.correct = null;
 
+        // Fields for logging data
+        this.componentId = "13.2";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createCachePartitionElement();
         this.caption = "Cache Partition";
         this.addCaption("runestone");

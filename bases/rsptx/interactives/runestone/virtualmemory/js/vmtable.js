@@ -24,6 +24,11 @@ export default class vmtable extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
+        // Fields for logging data
+        this.componentId = "13.3";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createVmtableElement();
         this.caption = "Virtual Memory Table";
         this.addCaption("runestone");

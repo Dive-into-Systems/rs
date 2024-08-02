@@ -26,7 +26,7 @@ export default class cacheinfo extends RunestoneBase {
         this.last_rand_choice = [0,0,0];
 
         // Fields for logging data
-        this.componentId = 4;
+        this.componentId = "11.1";
         this.questionId = 1;
         this.userId = this.getUserId();
 

@@ -27,7 +27,7 @@ export default class NC extends RunestoneBase {
         this.num_bits = 8;
         
         // Fields for logging data
-        this.componentId = 1;
+        this.componentId = "4.1";
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -515,12 +515,16 @@ export default class NC extends RunestoneBase {
         if (actionId !== 0) {
             bundle.details = {
                 config : {
-                    from_system : `${this.menuNode1.value}`,
-                    to_system : `${this.menuNode2.value}`
+                    fromSystem : `${this.menuNode1.value}`,
+                    toSystem : `${this.menuNode2.value}`
                 },
-                questionPrompt : `${this.displayed_num_string}`, 
-                correctAnswer: `${this.target_num_string}`,
-                userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                prompt : {
+                    number: `${this.displayed_num_string}`, 
+                },
+                eval : {
+                    correctAnswer: `${this.target_num_string}`,
+                    userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                }
             }
         }
         else { bundle.details = null }

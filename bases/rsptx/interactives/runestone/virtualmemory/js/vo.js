@@ -21,6 +21,11 @@ export default class VO extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
+        // Fields for logging data
+        this.componentId = "13.4";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createVOElement();
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");

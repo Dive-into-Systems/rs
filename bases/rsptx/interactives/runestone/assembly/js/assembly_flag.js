@@ -22,6 +22,12 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         this.origElem = opts.orig;
         this.divid = opts.orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
+
+        // Fields for logging data
+        this.componentId = "7.3";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createAssemblyFlagElement();
         $(this.origElem).replaceWith(this.containerDiv);
     }

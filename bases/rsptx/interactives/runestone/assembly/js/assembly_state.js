@@ -25,6 +25,11 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.divid = orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
 
+        // Fields for logging data
+        this.componentId = "7.2";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.arith_checked = true;
         this.memo_checked = false;
         this.stack_checked = false;

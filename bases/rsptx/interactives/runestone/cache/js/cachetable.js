@@ -26,7 +26,7 @@ export default class cachetable extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = 6;
+        this.componentId = "11.3";
         this.questionId = 1;
         this.userId = this.getUserId();
 

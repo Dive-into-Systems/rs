@@ -21,6 +21,11 @@ export default class vmInfo extends RunestoneBase {
         this.divid = orig.id;
         this.correct = null;
 
+        // Fields for logging data
+        this.componentId = "13.1";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createvmInfoElement();
         this.caption = "Virtual Memory Information";
         this.addCaption("runestone");

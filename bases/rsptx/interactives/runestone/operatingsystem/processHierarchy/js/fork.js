@@ -22,6 +22,11 @@ export default class ProcHierarchy extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
+        // Fields for logging data
+        this.componentId = "13.5";
+        this.questionId = 1;
+        this.userId = this.getUserId();
+
         this.createElements();
         this.caption = "Process hierarchy";
         this.addCaption("runestone");
