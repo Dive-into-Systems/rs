@@ -252,6 +252,7 @@ export default class BinCalc extends RunestoneBase {
         this.calculateButton.addEventListener(
             "click",
             function () {
+                this.generateAnswer();
                 this.renderBinCalcFeedbackDiv();
                 this.sendData(8);
             }.bind(this),
