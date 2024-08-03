@@ -1,6 +1,6 @@
-// *********
-// circuit.js
-// *********
+// *****************************************************************
+// circuit.js. This file was created by Yana Yuan in August2024.
+// *****************************************************************
 /*
  * - This file contains the JS for the logic circuit component.
  * - The goal for this component is to randomly generate a logic circuit in
@@ -32,38 +32,72 @@
  *     circuit repo into corresponding sections in the CodePen.
  *   · The first method is to let you view current progress while the second
  *     allows editing and saving. Make it into a Runestone component might
- *     be a better method. 
+ *     be a better method.
+ * 
+ * TODO:
+ *   - Make the variable "circuit" global if it is more convenient. Not
+ *     top priority though.
+ *   - Design algorithms that can better determine the circuit visualization
+ *     layout such as which port a certain connection goes into. Currently
+ *     many of them are swapped causing the connections look chaotic.
+ *   - Make this a Runestone component
+ *      - considering separate this circuit.js into two js files, one 
+ *        randomly generate the text expression, the other purely on the 
+ *        visualization using GoJS library.
+ *      - the truth table currently displays the answer instead of letting
+ *        the user fill in and check their answers. But this feature should be
+ *        quick to implement.
+ *      - circuit.html needs to be embedded in circuit.js by innerHTML. 
+ *   - Authorization from GoJS to use their library
+ *   - Consider moving those style codes from GoJS to the CSS file.
+ *    
 */
 
-var json;
+/* Global Variables */
+var json; //JSON to visualize the circuit
+//set colors of the inputs
 var red = 'orangered'; // 0 or false
 var green = 'forestgreen'; // 1 or true
-var myDiagram; // Declare myDiagram globally
+var myDiagram;
 
 document.getElementById('generateButton').addEventListener('click', generateCircuit);
 
+/**
+ * Main function of how randomly generating a circuit works.
+ * Variables explanation:
+ *    - maxGates: by setting exactGates to 0, program is able to generate a circuit
+ *                with max number of gates determined by maxGates variable.
+ *    - exactGates: set exactly how many gates will be generated in the circuit. 
+ *                  Doesn't matter what maxGates is set to.
+ *    - numGates: Count how many gates are in the circuit.
+ */
 function generateCircuit() {
-    const inputs = ['A', 'B', 'C'];
+    const inputs = ['A', 'B', 'C']; //Possible input
     const gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
-    const gates2 = ['AND', 'OR', 'XOR'];
+    // const gates2 = ['AND', 'OR', 'XOR'];
     const notGate = 'NOT';
     let maxGates = 3;
     let exactGates = 0;
     let numGates = 0;
+    let noGateChance = 0.5 //Chance of not generating any gates
+    let notChance = 0.08 //Chance of generating NOT gate
 
+    /** Get a random element from the array passed in */
     function getRandomElement(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    /** Recursive helper function in generating the text expression of circuit. */
     function generateSubExpression(depth = 0) {
+        // maximum depth of 3 to avoid too complicated circuit
         if (depth > 3 || numGates >= maxGates) {
             return getRandomElement(inputs);
         }
 
         const chance = Math.random();
-        if (chance < 0.5 && depth != 0) {
+        if (chance < noGateChance && depth != 0) { // no gate
             return getRandomElement(inputs);
-        } else if (chance < 0.58) {
+        } else if (chance < noGateChance+notChance) { // not gate (one input)
             numGates = numGates + 1;
             let input = generateSubExpression(depth + 1);
             if (input.length == 1 || input[2]=='T'){
@@ -71,11 +105,13 @@ function generateCircuit() {
             } else{
               return `${notGate}${input}`;
             }
-        } else {
+        } else { // all other gates (two inputs)
             numGates = numGates + 1;
-            const gate = getRandomElement(gates);
-            let input1 = generateSubExpression(depth + 1);
-            let input2 = generateSubExpression(depth + 1);
+            const gate = getRandomElement(gates); // randomly choose a gate
+            let input1 = generateSubExpression(depth + 1); // get input 1
+            let input2 = generateSubExpression(depth + 1); // get input 2
+            // while loop to avoid same inputs on both side, disregarding NOT.
+            // So expression like (NOT(A) AND A) woudl be filtered.
             while ((input1.replace(/NOT\(|\)|\(/g, '') === input2.replace(/NOT\(|\)|\(/g, '')) && (input1.replace(/NOT\(|\)|\(/g, '').length==1)) {
                 input2 = generateSubExpression(depth + 1);
             }
@@ -83,55 +119,68 @@ function generateCircuit() {
         }
     }
 
-      let circuit = generateSubExpression();
-      if (exactGates != 0){
-          while (numGates != exactGates){
-          numGates = 0;
-          circuit = generateSubExpression();
-          // console.log("number of gates", numGates);
-          }
-      }
-      // console.log("number of gates final ", numGates);
-
+        let circuit = generateSubExpression();
+        // Keep generating circuits until the number of gates is what we what
+        if (exactGates != 0){
+            while (numGates != exactGates){
+            numGates = 0;
+            circuit = generateSubExpression();
+            }
+        }
+    // update HTML to display the text
     document.getElementById('circuitOutput').innerText = circuit;
 
+    // pass in the text circuit to display truth table
     displayTruthTable(circuit);
   
+    // pass the text circuit into a tree
     let ast = parseExpression(circuit);
 
+    // if you want to see what the tree looks like, comment out this
     // visualizeAST(ast);
   
+    // assign a JSON to the global variable json
     json = generateJSON(ast, circuit);
-    // console.log(json);
-    // let jsonString = JSON.stringify(json, null, 2);
-    // jsonString = jsonString.replace(/'/g, '"');
-    // console.log(jsonString);
-    // init();
-    load();
+    load(); // visualize the circuit
 }
 
+/**
+ * evaluateExpression calculates the answer (0 or 1) that the circuit will output
+ * when the input alternates between 0 and 1. This function is called in
+ * displayTruthTable function. 
+ * The logic of this function is to keep replacing gates in text with real operator,
+ * such as replacing AND with & (single ampersand here because all values are binary)
+ * and ultimately use the built in function eval() to evaluate a circuit such as 
+ * (A NAND NOT(B)) as !(A & !B) imagine A B replaced by certain combinations of 1 and 0.
+ * @param {*} expr: circuit expression
+ * @param {*} values: values 
+ * @returns results: calculation results ready to be displayed in truth table.
+ */
 function evaluateExpression(expr, values) {
-    // Replace variables with values
+    // Replace variables with values. So input A will be replaced by 1 0 etc.
     for (const [key, value] of Object.entries(values)) {
         const re = new RegExp(`\\b${key}\\b`, 'g');
         expr = expr.replace(re, value ? 1 : 0);
     }
 
+    // preliminary replacement. NAND NOR not replaced yet because they need to put
+    // '!' in front of the parentheses, so they can't be directly replaced.
     expr = expr.replace(/NAND/g, 'NAND_PLACEHOLDER')
                .replace(/NOR/g, 'NOR_PLACEHOLDER')
                .replace(/XOR/g, '^')
                .replace(/ AND /g, ' & ')
                .replace(/ OR /g, ' | ')
-               .replace(/NOT(\d+)/g, '!($1)')
+               .replace(/NOT(\d+)/g, '!($1)') // many NOT to handle different cases
                .replace(/NOT\(([^()]+)\)/g, '!($1)')
                .replace(/NOT/g, '!');
-
-    // console.log('After replacement:', expr);
-
+    
+    /** avoid  extra parentheses such as ((A AND B)) */
     function removeExtraParentheses(exp) {
         return exp.replace(/\((\d+)\)/g, '$1');
     }
-
+    /** start evaluating the expression from the innermost parentheses as they have
+     *  the highest priority in operation.
+     */
     function evaluateInnermost(exp) {
         let prevExp;
         let iterations = 0;
@@ -140,19 +189,18 @@ function evaluateExpression(expr, values) {
             exp = exp.replace(/\(([^()]+)\)/g, (match, subExpr) => {
                 try {
                     const evaluated = eval(subExpr);
-                    // console.log(`Evaluated sub-expression: (${subExpr}) -> ${evaluated}`);
                     return evaluated ? 1 : 0;
                 } catch {
                     return match;
                 }
             });
             exp = removeExtraParentheses(exp);
-            if (prevExp === exp) break;
-            iterations++;
+            if (prevExp === exp) break; // no changes are made means replacement is done.
+            iterations++; // avoid infinite loop
         }
         return exp;
     }
-
+    /** separate function to handle NAND and NOR */
     function replacePlaceholders(exp) {
         let prevExpr;
         let iterations = 0;
@@ -166,21 +214,22 @@ function evaluateExpression(expr, values) {
         } while (prevExpr !== exp);
         return exp;
     }
-
+    /** function to handle simple NOT cases such as !A.
+     *  I know it seems kind of strange to separate simple NOT and complex 
+     *  NOT but I tried integrating them but failed.
+     */
     function handleSimpleNOTs(exp) {
         exp = exp.replace(/!([01])/g, (match, p1) => {
             const result = !parseInt(p1, 10) ? 1 : 0;
-            // console.log(`Evaluated simple NOT: !${p1} -> ${result}`);
             return result;
         });
         exp = removeExtraParentheses(exp); 
         return exp;
     }
-
+    /** function to handle nested NOT cases such as !(A AND B) */
     function handleComplexNOTs(exp) {
         exp = exp.replace(/!\(([^()]+)\)/g, (match, subExpr) => {
             const result = !eval(subExpr) ? 1 : 0;
-            // console.log(`Evaluated complex NOT: !(${subExpr}) -> ${result}`);
             return result;
         });
         exp = removeExtraParentheses(exp);
@@ -188,7 +237,7 @@ function evaluateExpression(expr, values) {
     }
 
     let prevExpr;
-    do {
+    do { // loop over those functions until no changes can be made.
         prevExpr = expr;
         expr = evaluateInnermost(expr);
         expr = handleSimpleNOTs(expr);
@@ -197,17 +246,21 @@ function evaluateExpression(expr, values) {
         expr = removeExtraParentheses(expr);
     } while (prevExpr !== expr); 
 
-    // console.log('Evaluating expression:', expr);
     try {
         const result = eval(expr);
-        // console.log('Expression:', expr, 'Values:', values, 'Result:', result);
         return result;
     } catch (e) {
-        // console.error('Error evaluating expression:', e);
-        return false;
+        return false; // in case anything goes wrong
     }
 }
 
+/**
+ * This function helps us keep track of what inputs are generated, so that we know
+ * how to generate the input header in the truth table as the truth tabel is 
+ * dynamic and three inputs ABC are not always generated. 
+ * For example, if the expression is (A AND B) this function will return ['A','B'].
+ * @param {*} circuit: circuit expression
+ */
 function extractInputs(circuit) {
     const inputSet = new Set();
     const inputPattern = /\b[A-Z]\b/g;
@@ -215,10 +268,15 @@ function extractInputs(circuit) {
     while ((match = inputPattern.exec(circuit)) !== null) {
         inputSet.add(match[0]);
     }
-    // console.log("extract inputs ", Array.from(inputSet).sort());
-    return Array.from(inputSet).sort();
+    return Array.from(inputSet).sort(); // sort it before return
 }
 
+/**
+ * This function handles the truth table display. Basically it creates headers based on
+ * the inputs sorted by extractInputs function and use evaluateExpression to calculate
+ * the output by passing in different values of inputs.
+ * @param {*} circuit circuit expression
+ */
 function displayTruthTable(circuit) {
     const inputs = extractInputs(circuit);
     const table = document.getElementById('truthTable');
@@ -239,10 +297,11 @@ function displayTruthTable(circuit) {
         for (let j = 0; j < inputs.length; j++) {
             values[inputs[j]] = Boolean(i & (1 << (inputs.length - 1 - j)));
         }
-
+        // output generated from evaluateExpression function that calculates
+        // the answer
         const output = evaluateExpression(circuit, values);
 
-        let row = '<tr>';
+        let row = '<tr>'; //HTML
         for (const input of inputs) {
             row += `<td>${values[input] ? 1 : 0}</td>`;
         }
@@ -251,15 +310,25 @@ function displayTruthTable(circuit) {
     }
 }
 
+/**
+ * This function parses the circuit expression into a tree. For example the circuit
+ * ((A AND B) OR C), the parent node is OR and it has children AND and C. The child
+ * AND has children A and C. So the parent node is the node that is going in output.
+ * @param {*} expression: circuit expression
+ * @returns ast[0]: parent node of the tree
+ */
 function parseExpression(expression) {
+    // consider making operators and inputs global
     const operators = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
     const inputs = ['A', 'B', 'C'];
+    // tokens are anything in the expression except space
     let tokens = expression.match(/\(|\)|\w+|AND|OR|XOR|NAND|NOR|NOT/g);
 
     function parse(tokens) {
         let stack = [];
         let output = [];
-        let precedence = {
+        let precedence = { // well I personally don't think precedence really makes
+                           // any difference but it works so...
             'OR': 1,
             'XOR': 1,
             'AND': 1,
@@ -267,19 +336,19 @@ function parseExpression(expression) {
             'NAND': 1,
             'NOT': 2
         };
-
+        /** peak what the top element is on the stack */
         function peek(arr) {
             return arr[arr.length - 1];
         }
-
+        /** checks if the token is an operator */
         function isOperator(token) {
             return operators.includes(token);
         }
-      
+        /** checks if the token is an input */
         function isInput(token){
             return inputs.includes(token);
         }
-
+        /** using stack to determine tree structure by tracking parentheses */
         tokens.forEach(token => {
             if (isInput(token)) {
                 output.push({ type: 'INPUT', value: token });
@@ -298,14 +367,15 @@ function parseExpression(expression) {
             }
         });
 
-        while (stack.length) {
+        while (stack.length) { // push items from stack to output
             output.push(stack.pop());
         }
       
-        let ast = [];
+        let ast = []; // ast stands for Abstract Syntax Tree if you ever wonder...
         output.forEach(token => {
             if (isOperator(token)) {
                 let node = { type: 'OPERATOR', value: token, children: [] };
+                // Add children depending on operator type
                 if (token === 'NOT') {
                     node.children.push(ast.pop());
                 } else {
@@ -317,18 +387,24 @@ function parseExpression(expression) {
                 ast.push(token);
             }
         });
-        // console.log(ast[0]);
         return ast[0];
     }
 
     return parse(tokens);
 }
 
+/**
+ * Visualizes the tree structure in text. This is used during debugging so it is 
+ * commented out in the generateCircuit function.
+ * @param {*} node: parent node of the tree
+ * @param {*} indent: indent of each item in the tree, for visualization
+ * @returns 
+ */
 function visualizeAST(node, indent = 0) {
     if (!node) return;
-
     let treeVisual = [];
 
+    /** recursive helper function */
     function buildVisual(node, depth) {
         let spacing = ' '.repeat(depth * 2);
         if (node.type === 'INPUT') {
@@ -340,23 +416,54 @@ function visualizeAST(node, indent = 0) {
     }
 
     buildVisual(node, indent);
+    // astOutput is still included in the html. 
     document.getElementById('astOutput').innerText = treeVisual.join('\n');
 }
 
+/**
+ * This is the most important function!! It takes the tree structure and the 
+ * circuit expression and returns the JSON object. The library we use, GoJS,
+ * loads object in JSON format and visualizes it, so that's why JSON.
+ * JSON requires:
+ *   - nodeDataArray: a unique ID for each element in the circuit (inputs, 
+ *     gates, output) and their corresponding locations in coordinates
+ *   - linkDataArray: how the circuit elements are connected (from which
+ *     element to which element, which port is the wire going in)
+ * If you want to see JSON in console, go to generateCircuit function and 
+ * can console.log there.
+ * 
+ * My thinking in design:
+ *    First extract the inputs and give them unique ID and set their locations
+ *    based on how many inputs there are. Then for the gates, set the
+ *    canvas width and evenly distribute each layer of gates (corresponding
+ *    to each level of the tree) evenly. Each layer will be on the same
+ *    vertical line. The vertical distribution is hardcoded that it allows
+ *    three gates maximum, because when we generate the circuit the max
+ *    depth is 3. So it should be fine.
+ *    For the linkDataArray, I wrote a recursive function. For each child
+ *    node, they have information on what their parentId is and which port
+ *    they should connect to. Information are passed in at the parent node
+ *    level.
+ * 
+ * @param {*} node: parent node of the tree 
+ * @param {*} circuit: expression 
+ * @returns: JSON object ready to be inputted in GoJS.
+ */
 function generateJSON(node, circuit) {
     let nodeDataArray = [];
     let linkDataArray = [];
-    let nodeId = -1;
+    let nodeId = -1; // ID counts from here
     let inputNodes = extractInputs(circuit);
     inputNodes.sort();
-    let inputKeyMapping = {};
-  
+    let inputKeyMapping = {}; // an input name-ID mapping
+   
     function getNextNodeId() {
         return nodeId--;
     }
 
+    /** push input nodes in the nodeDataArray */
     function generateInputNodes(inputNodes) {
-      const inputOrder = { 'A': 2, 'B': 1, 'C': 0 };
+      const inputOrder = { 'A': 2, 'B': 1, 'C': 0 }; // vertical layout of ABC, A on top
       inputNodes.sort((a, b) => inputOrder[a] - inputOrder[b]);
 
       inputNodes.forEach((input, index) => {
@@ -367,7 +474,7 @@ function generateJSON(node, circuit) {
           if (inputNodes.length === 1) {
               locationY = 0; // one input
           } else if (inputNodes.length === 2) {
-              locationY = (index === 0) ? 80 : -80;
+              locationY = (index === 0) ? 80 : -80; // distance from x axis. Configurable. 
           } else if (inputNodes.length === 3) {
               if (index === 0) {
                   locationY = 80; // First input (A)
@@ -381,13 +488,16 @@ function generateJSON(node, circuit) {
           nodeDataArray.push({
               category: 'input',
               key: inputId,
-              loc: `0 ${locationY}`
+              loc: `0 ${locationY}` // inputs are on the same y axis, but configurable.
           });
       });
-      // console.log(inputKeyMapping);
     }
     generateInputNodes(inputNodes);  
-  
+    
+    /** in order to give gates locations, we need information on how many gates
+     *  there are on the same layer (inputs don't count because they won't be in 
+     *  the same layer as gates). This function returns an array.
+     */
     function preprocessTree(node, depth = 0, layers = {}) {
         if (node.type === 'INPUT') {
             return;
@@ -399,15 +509,24 @@ function generateJSON(node, circuit) {
     }
   
     let layers = preprocessTree(node);
-    let currId = -inputNodes.length-1;
+    let currId = -inputNodes.length-1; // ID of first non-input node
+
+    /**
+     * sets up things in linkDataArray. Design explained in the generateJSON stub.
+     * @param {*} node: parent node of the tree
+     * @param {*} depth: information needed to determine which layer the gate is at 
+     * @param {*} layers: how are the gates allocated in each layer 
+     * @param {*} positions: array used to calculate exact y position 
+     * @returns 
+     */
     function setPosition(node, depth = 0, layers, positions = {}) {
         if (node.type === 'INPUT') return;
 
-        let width = 400;
+        let width = 400; // distance between input and output. configurable.
         let numLevels = Object.keys(layers).length;
         let interval = width / (numLevels + 1);
         let xPosition = width - interval * (depth + 1);
-        let yPosition = 0;
+        let yPosition = 0; // default on the x axis
 
         // Initialize positions count if not already done
         if (!positions[depth]) positions[depth] = 0;
@@ -430,10 +549,10 @@ function generateJSON(node, circuit) {
         // Recurse for children
         node.children.forEach(child => setPosition(child, depth + 1, layers, positions));
     }
-
     setPosition(node, 0, layers);
+
+    // deal with output
     let outputId = currId;
-    // console.log(outputId);
     nodeDataArray.push({
         category: "output",
         key: outputId,
@@ -446,67 +565,66 @@ function generateJSON(node, circuit) {
         toPort: ''
     });
  
-    function traverse(node, parentId = null, depth = 0) {
+    /**
+     * Traverse through the tree to determine connection of edges between elements.
+     * @param {*} node: parent node of the tree 
+     * @param {*} parentId: ID of its parent 
+     * @param {*} parentPort: parent port it should connect to 
+     * @param {*} depth: which level it is at 
+     * @returns 
+     */
+    function traverse(node, parentId = null, parentPort = null, depth = 0) {
         let currentId;
         let category;
-      
-        if (node.type === 'INPUT'){
-          return;
-        }
-        else {
-            currentId = getNextNodeId();
-            category = node.value.toLowerCase();
-            // nodeDataArray.push({ category: category, key: currentId, loc: '' });
-        }
-      
-        if (node.children) {
-            if (node.children.length === 1) { //one child
-              if (node.children[0].type === 'INPUT'){ //one child is input
-                  linkDataArray.push({
-                    from: inputKeyMapping[node.children[0].value],
-                    to: currentId,
-                    fromPort: '',
-                    toPort: 'in1'
-                  }); 
-              } else{ //one child is gate
+
+        // separate out INPUT because its fromPort is ''
+        if (node.type === 'INPUT') {
+            if (parentId !== null) {
+                // Link from input node to its parent
                 linkDataArray.push({
-                    from: currentId-1,
-                    to: currentId,
-                    fromPort: 'out',
-                    toPort: 'in1'
-                  });
-                traverse(node.children[0], currentId, '');
-              }
-              }
-            if (node.children.length > 1) { //two children
-                  let toport = 'in1';
-                  let firstInput = true;
-                  node.children.forEach(child => {
-                  if (child.type === 'INPUT'){
-                    linkDataArray.push({
-                      from: inputKeyMapping[child.value],
-                      to: currentId,
-                      fromPort: '',
-                      toPort: firstInput ? 'in1' : 'in2'
-                  });
-                    firstInput = false;
-                  } else{
-                    linkDataArray.push({
-                      from: currentId-1,
-                      to: currentId,
-                      fromPort: 'out',
-                      toPort: firstInput ? 'in1' : 'in2'
-                    });
-                    traverse(child, currentId, '');
-                    firstInput = false;
-                  }
+                    from: inputKeyMapping[node.value],
+                    to: parentId,
+                    fromPort: '',
+                    toPort: parentPort
                 });
             }
+            return;
+        } else {
+            currentId = getNextNodeId();
+            category = node.value.toLowerCase();
+        }
+
+        // Create links to children nodes
+        if (node.children) {
+            node.children.forEach((child, index) => {
+                let port = index === 0 ? 'in1' : 'in2'; // Determine the port for the current child
+                if (child.type === 'INPUT') {
+                    // Directly link input nodes to the current node
+                    linkDataArray.push({
+                        from: inputKeyMapping[child.value],
+                        to: currentId,
+                        fromPort: '',
+                        toPort: port
+                    });
+                } else {
+                    // Recursively handle non-input child nodes
+                    traverse(child, currentId, port, depth + 1);
+                }
+            });
+        }
+        // If this node is not the root, connect it to its parent
+        if (parentId !== null) {
+            linkDataArray.push({
+                from: currentId,
+                to: parentId,
+                fromPort: 'out',
+                toPort: parentPort
+            });
         }
     }
-
     traverse(node);
 
+    // this is the structure of JSON object
     return {
         class: "go.GraphLinksModel",
         linkFromPortIdProperty: "fromPort",
@@ -519,20 +637,27 @@ function generateJSON(node, circuit) {
 /*==============================================
 === Circuit Visualization using GoJS Library ===
 ===============================================*/
+/**
+ * All functions below are rarely modified other than deletion of features we
+ * don't want for this component, such as dragging gates from the palette to
+ * the canvas. So I won't exhaustively comment the codes below because I don't
+ * 100% understand everything going on.
+ * load() function below is where JSON object is passed in.
+ */
 function init() {
     var $ = go.GraphObject.make; // for conciseness in defining templates
 
     myDiagram =
-            $(go.Diagram, "myDiagramDiv",  // create a new Diagram in the HTML DIV element "myDiagramDiv"
-            {
-                initialContentAlignment: go.Spot.Center,
-                allowDrop: true,  // Nodes from the Palette can be dropped into the Diagram
-                "draggingTool.isGridSnapEnabled": true,  // dragged nodes will snap to a grid of 10x10 cells
-                "undoManager.isEnabled": true
-            });
+        $(go.Diagram, "myDiagramDiv",  // create a new Diagram in the HTML DIV element "myDiagramDiv"
+        {
+            initialContentAlignment: go.Spot.Center,
+            allowDrop: true,
+            "draggingTool.isGridSnapEnabled": true,
+            "undoManager.isEnabled": true
+        });
 
     // install the PortShiftingTool as a "mouse move" tool
-        myDiagram.toolManager.mouseMoveTools.insertAt(0, new PortShiftingTool());
+    myDiagram.toolManager.mouseMoveTools.insertAt(0, new PortShiftingTool());
   
     myDiagram.addDiagramListener('Modified', function(e) {
         var button = document.getElementById('saveModel');
