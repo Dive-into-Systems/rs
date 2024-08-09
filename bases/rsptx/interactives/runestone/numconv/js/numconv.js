@@ -519,7 +519,7 @@ export default class NC extends RunestoneBase {
                     toSystem : `${this.menuNode2.value}`
                 },
                 prompt : {
-                    number: `${this.displayed_num_string}`, 
+                    displayedPrompt: `${this.displayed_num_string}`, 
                 },
                 eval : {
                     correctAnswer: `${this.target_num_string}`,

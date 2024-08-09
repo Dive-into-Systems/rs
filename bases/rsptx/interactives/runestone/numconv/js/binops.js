@@ -576,9 +576,13 @@ export default class BO extends RunestoneBase {
                     checkedOperators : `${this.checkedValues}`,
                     usedOperator : `${this.randomItem}`
                 },
-                questionPrompt : `${this.promptDivTextNode.textContent}`,
-                correctAnswer: `${this.target_num_string}`,
-                userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                prompt: {
+                    displayedPrompt: `${this.promptDivTextNode.textContent}`,
+                },
+                eval: {
+                    correctAnswer: `${this.target_num_string}`,
+                    userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                }
             }
         }
         else { bundle.details = null }
