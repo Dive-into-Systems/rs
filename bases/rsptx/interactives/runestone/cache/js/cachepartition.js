@@ -164,8 +164,7 @@ export default class cachepartition extends RunestoneBase {
         // put all question prompt segements together
         this.statementDiv.append("Cache Organization: ");
         this.statementDiv.appendChild(this.orgMenuNode);
-        this.statementDiv.appendChild(document.createElement("br"));
-        this.statementDiv.append("Address Length: ");
+        this.statementDiv.append(" Address Length: ");
         this.statementDiv.appendChild(this.addrMenuNode);
         this.statementDiv.appendChild(document.createElement("br"));
 

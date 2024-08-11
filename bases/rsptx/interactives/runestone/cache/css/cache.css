@@ -140,6 +140,12 @@ table {
    padding: 8px;
 }
 
+.instruction-div {
+   border-width: 1px;
+   border-radius: 5px;
+   padding: 8px;
+}
+
 .at-center {
    text-align: center;
    font-size: x-large;

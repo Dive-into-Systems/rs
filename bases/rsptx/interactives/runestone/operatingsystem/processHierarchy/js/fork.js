@@ -11,6 +11,7 @@ import * as build from "../algorithms/build.js";
 import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
+import { timeThursday } from "d3";
 
 export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
@@ -419,6 +420,41 @@ export default class ProcHierarchy extends RunestoneBase {
         }
     }
 
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId
+        }
+        if (actionId !== 0) {
+            bundle.details = {
+                config : {
+                    hardCodedQuestion: `${this.hardCodedCCode}`,
+                    showMenu: `${this.showMenu}`,
+                    numForks: `${this.numForks}`,
+                    numPrints: `${this.numPrints}`,
+                    hasElse: `${this.hasElse}`,
+                    hasNest: `${this.hasNest}`,
+                    hasExit: `${this.hasExit}`,
+                    hasLoop: `${this.hasLoop}`,
+                    selectedMode: `${this.modeMenu.value}`
+                },
+                prompt : {
+                    cCode: `${this.cCode}`
+                },
+                eval : {
+                    
+                }
+            }
+        }
+        else { bundle.details = null }
+
+        this.logData(bundle);
+    }
+    
     /*===================================
     === Checking/loading from storage ===
     ===================================*/

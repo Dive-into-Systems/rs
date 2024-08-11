@@ -191,7 +191,7 @@ async function handlePageSetup() {
             console.error(`Error setting timezone ${e}`);
         }
     }
-    console.log(`This page served by ${eBookConfig.served_by}`);
+    // console.log(`This page served by ${eBookConfig.served_by}`);
     if (eBookConfig.isLoggedIn) {
         mess = `username: ${eBookConfig.username}`;
         if (!eBookConfig.isInstructor) {

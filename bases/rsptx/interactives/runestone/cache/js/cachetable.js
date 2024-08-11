@@ -195,8 +195,9 @@ export default class cachetable extends RunestoneBase {
     // create the div with general instructions 
     createStatement1() {
         this.statementDiv1 = document.createElement("div");
-        this.statementDiv1.textContent = 
-            "Fill in the results of each memory operation (listed in the memory operations " + 
+        this.statementDiv1.className = "instruction-";
+        this.statementDiv1.innerHTML= 
+            "<strong><u>Instructions</u></strong>: Fill in the results of each memory operation (listed in the memory operations " + 
             "table) in the table located at the lower-right corner. The effects of each memory operation " +
             "will be reflected in your current cache content table below.";
         this.containerDiv.appendChild(this.statementDiv1);
@@ -237,21 +238,21 @@ export default class cachetable extends RunestoneBase {
                 "<div>Click 'Generate another' to generate another exercise.</div>";
         }
             
-        this.helpStatement.style.visibility = "hidden";
+        this.helpStatement.style.visibility = "visible";
         // create the button for display/hide help
         this.helpButton = document.createElement("button");
-        this.helpButton.textContent = $.i18n("msg_cachetable_display_help");
+        this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
         this.helpButton.addEventListener(            
             "click",
             function() {
-                if (this.helpStatement.style.visibility == "hidden") {
-                    this.helpStatement.style.visibility = "visible";
-                    this.helpDiv.appendChild(this.helpStatement);
-                    this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
-                } else {
+                if (this.helpStatement.style.visibility == "visible") {
                     this.helpStatement.style.visibility = "hidden";
                     this.helpDiv.removeChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_display_help");
+                } else {
+                    this.helpStatement.style.visibility = "visible";
+                    this.helpDiv.appendChild(this.helpStatement);
+                    this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
                 }
             }.bind(this),
         false); 
@@ -813,7 +814,7 @@ export default class cachetable extends RunestoneBase {
                 this.submitResponse();
             }
         }.bind(this), false);
-
+        console.log("New answer table row", answerTableNewRow);
         this.answerTableBody.appendChild(answerTableNewRow);
     }
     
@@ -859,11 +860,7 @@ export default class cachetable extends RunestoneBase {
             "click",
             function () {
                 this.submitResponse();
-
-                DIS_Log("11.1.3-Submit Button", new Date().toISOString(), {
-                    incorrect_Attempts: this.incorrectAttempts
-                    // other data to log
-                });
+                this.sendData(3); // Action 3 for data logging
             }.bind(this),
             false
         );
@@ -888,9 +885,6 @@ export default class cachetable extends RunestoneBase {
                     this.incorrectAttempts[key] = 0;
                 });
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
-                DIS_Log("11.1.3-Generate Button", new Date().toISOString(), {
-                    Question_Regeneration_Count: this.generateButtonCounter
-                })
             }.bind(this),
             false
         );
@@ -905,6 +899,7 @@ export default class cachetable extends RunestoneBase {
         this.redoButton.addEventListener(
             "click",
             function () {
+                this.sendData(8); // Action 8 : Restart table for data logging
                 this.resetGeneration();
                 this.displayNecessaryFields();
                 this.hidefeedback();
@@ -1770,13 +1765,20 @@ export default class cachetable extends RunestoneBase {
                     cache_organization : `${this.cacheOrg}`,
                     address_length : `${this.numBits}`,
                     block_size : `${this.blockSize}`,
-                    num_rows : `${this.numRows}`
+                    num_rows : `${this.numRows}`,
+                    algorithm : {
+                        name: `${this.algorithm}`,
+                        chance_hit: `${this.chance_hit}`, 
+                        hit_incr: `${this.hit_incr}`, 
+                        chance_conf: `${this.chance_conf}`, 
+                        conf_incr: `${conf_incr}`
+                    }
                 },
-                prompt : {
-                    address: `${this.addressNodeText.textContent}`,
-                    block_size : `${this.block_size_ans}`, 
-                    num_lines : `${this.num_line_ans}`
-                },
+                // prompt : {
+                //     address: `${this.addressNodeText.textContent}`,
+                //     block_size : `${this.block_size_ans}`, 
+                //     num_lines : `${this.num_line_ans}`
+                // },
                 eval : {
                     correct_answer : {
                         tag_bits: `${this.tag_bits}`,
