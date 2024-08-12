@@ -375,8 +375,8 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset 
 
 function exitInsert(mainStr) {
     let validPositions = [];
-    console.log(mainStr);
-    console.log(mainStr.slice(Math.floor(mainStr.length /4), mainStr.length-Math.floor(mainStr.length /5)));
+    // console.log(mainStr);
+    // console.log(mainStr.slice(Math.floor(mainStr.length /4), mainStr.length-Math.floor(mainStr.length /5)));
     for (let i = 2; i < (mainStr.length-3); i++) {
         if (mainStr[i] == ')') {
             validPositions.push(i);

@@ -47,6 +47,7 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Create the ProcHierarchy Element
     createElements() {
+        this.sendData(0);
         this.initParams();
         this.initInputField();
         this.initButtons();
@@ -66,11 +67,16 @@ export default class ProcHierarchy extends RunestoneBase {
                     For the code snippet shown below (assuming all calls to <code>fork()</code> succeed),
                     answer <strong>how many times</strong> each letter is printed with <code>printf()</code>.`);
             }
-            if (params["source"] != undefined) { // If you want to pass in a source code string for generating the C-code. 
+            if (params["source"] != undefined) { // If you want to pass in a source code string for generating the code. 
                 this.hardCodedCCode = true;
                 this.source = params["source"];
                 if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
                 if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
+                if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { console.error("Invalid hasNext param from .ptx file"); }
+                if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
+                if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
                 this.showMenu = false;
             }
             else {
@@ -94,6 +100,12 @@ export default class ProcHierarchy extends RunestoneBase {
         for (var i = 0; i < 26; i++) { // All letters are available. 
             this.printContent.push(String.fromCharCode((i + 97)));
         }
+
+        this.interacted = false; // a global variable that traces if user has interacted with the graph (cleared for each question)
+        this.usedTextbook = false;
+        this.viewedHelp = false;
+        this.viewedHierarchy = false;
+        this.incorrectAttempts = 0;
     }
 
     initInputField() {
@@ -131,7 +143,7 @@ export default class ProcHierarchy extends RunestoneBase {
         /* Generate initial question and answers */
         this.genNewQuestionNAnswer();
 
-        /* C-code and input boxes */
+        /* Code and input boxes */
         this.codeDiv = $("<div>").addClass("code-div-inline").html(this.cCode);
 
         this.inputDiv = $("<div>").addClass("input-div-inline");
@@ -159,12 +171,11 @@ export default class ProcHierarchy extends RunestoneBase {
         this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
-
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
         if (this.hardCodedCCode == false) { this.updateSourceCode();}
-        console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        console.log(this.source);
+        // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+        // console.log(this.source);
         this.genQuestionInfo();
     }
 
@@ -245,6 +256,7 @@ export default class ProcHierarchy extends RunestoneBase {
             id: this.divid + "submit",
         });
         this.generateButton.addEventListener("click", () => {
+            this.sendData(3);
             this.clearInputNFeedbackField();
             this.loadAnotherQuestion();
         });
@@ -271,7 +283,11 @@ export default class ProcHierarchy extends RunestoneBase {
             id: this.divid + "draw_tree",
         });
         this.revealTreeButton.addEventListener("click", () => {
-            if ($(this.hierarchyTreeDiv).css('display') == 'none') { this.showProcessHierarchy(); }
+            if ($(this.hierarchyTreeDiv).css('display') == 'none') {
+                this.viewedHierarchy = true;
+                this.sendData(8);
+                this.showProcessHierarchy();
+            }
             else { this.hideProcessHierarchy(); }
         });
 
@@ -284,7 +300,11 @@ export default class ProcHierarchy extends RunestoneBase {
             id: this.divid + "help",
         });
         this.helpButton.addEventListener("click", () => {
-            if ($(this.helpDiv).css('display') == 'none') { this.showHelp(); }
+            if ($(this.helpDiv).css('display') == 'none') {
+                this.viewedHelp = true;
+                this.sendData(4);
+                this.showHelp();
+            }
             else { this.hideHelp(); }
         });
 
@@ -305,6 +325,12 @@ export default class ProcHierarchy extends RunestoneBase {
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.helpDiv).css("display", "none");
+
+        this.interacted = false;
+        this.usedTextbook = false;
+        this.viewedHelp = false;
+        this.viewedHierarchy = false;
+        this.incorrectAttempts = 0;
     }
 
     loadAnotherQuestion(){
@@ -322,19 +348,37 @@ export default class ProcHierarchy extends RunestoneBase {
         }
     }
 
-    checkCurrentAnswer() {
-        this.feedback_msg = []; // Clear feedback_msg.
-        this.correct = true; // Initialize answer first as true, only update when incorrect choice occurs. 
+    getUserInputAndAnswer() {
+        this.correctAnswer = [];
+        this.userAnswer = [];
 
         for (let i = 0; i < this.numPrints; i++) {
             let currAnswer = $("#" + this.divid + "_input_" + i).val().toString();
-            if (currAnswer !== this.answerMap[this.printContent[i]].toString()) {
+            this.userAnswer.push(currAnswer);
+            this.correctAnswer.push(this.answerMap[this.printContent[i]].toString());
+        }
+    }
+
+    checkCurrentAnswer() {
+        this.feedback_msg = []; // Clear feedback_msg.
+        this.correct = true; // Initialize answer first as true, only update when incorrect choice occurs. 
+        this.getUserInputAndAnswer();
+
+        for (let i = 0; i < this.numPrints; i++) {
+            if (this.userAnswer[i] !== this.correctAnswer[i]) {
                 this.correct = false;
-                if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
+                if (! this.userAnswer[i]) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
                 else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
             }
         }
-        if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
+        if (this.correct === true) {
+            this.feedback_msg.push($.i18n('msg_fork_correct'));
+            this.sendData(1);
+        }
+        else {
+            this.incorrectAttempts++;
+            this.sendData(2);
+        }
         this.updateFeedbackDiv();
     }
 
@@ -349,7 +393,7 @@ export default class ProcHierarchy extends RunestoneBase {
         $(this.hierarchyTreeDiv).html(
             "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br>" + 
             "<b>Red nodes</b> indicate processes which have exited.<br><br>" + 
-            "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the C-code above</mark> to see how the tree is built step by step.</strong></div>" +
+            "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the code above</mark> to see how the tree is built step by step.</strong></div>" +
             "<br>" +
             "<div id='hierarchy_graph'></div>"
         );
@@ -371,8 +415,13 @@ export default class ProcHierarchy extends RunestoneBase {
                 <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
                 <li><code>exit()</code> terminates the process that calls it.</li>
             </ul>
-            <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>`
+            <br>For more detailed information, please refer to the <a id='bookLink' href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>`
         );
+
+        const self = this;
+        $('#bookLink').on("click", function(event) {
+            self.usedTextbook = true;
+        });
     }
 
     hideHelp() {
@@ -412,6 +461,7 @@ export default class ProcHierarchy extends RunestoneBase {
     
             /* Re-draw tree on click */
             $(this.codeDiv).on('click', 'span[data-block]', (event) => {
+                this.interacted = true;
                 const blockId = $(event.target).data('block');
                 const traceRoot = build.traceTree(this.source, blockId);
                 const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
@@ -430,6 +480,8 @@ export default class ProcHierarchy extends RunestoneBase {
             userId : this.userId
         }
         if (actionId !== 0) {
+            this.getUserInputAndAnswer();
+
             bundle.details = {
                 config : {
                     hardCodedQuestion: `${this.hardCodedCCode}`,
@@ -440,14 +492,21 @@ export default class ProcHierarchy extends RunestoneBase {
                     hasNest: `${this.hasNest}`,
                     hasExit: `${this.hasExit}`,
                     hasLoop: `${this.hasLoop}`,
-                    selectedMode: `${this.modeMenu.value}`
+                    selectedMode: this.showMenu === true ? `${this.modeMenu.val()}` : null
                 },
                 prompt : {
-                    cCode: `${this.cCode}`
+                    displayedPrompt: `${this.cCode}`,
+                    sourceCode: `${this.source}`
                 },
-                eval : {
-                    
-                }
+                eval: actionId !== 3 ? {
+                    correctAnswer: `${this.correctAnswer}`,
+                    userAnswer: `${this.userAnswer}`,
+                    viewedHierarchy : `${this.viewedHierarchy}`,
+                    interactedWithTree: `${this.interacted}`,
+                    viewedHelp: `${this.viewedHelp}`,
+                    usedTextbook: `${this.usedTextbook}`,
+                    incorrectAttempts: `${this.incorrectAttempts}`
+                } : null
             }
         }
         else { bundle.details = null }
