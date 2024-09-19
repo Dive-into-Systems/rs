@@ -25,6 +25,7 @@ export default class NC extends RunestoneBase {
         // Default configuration settings
         this.correct = null;
         this.num_bits = 8;
+        this.prev_num = -1;
         
         // Fields for logging data
         this.componentId = "4.1";
@@ -317,11 +318,20 @@ export default class NC extends RunestoneBase {
 
     // generate a random number from 0 to 2^(this.num_bits)-1 and set the number to display
     generateNumber() {
-        this.target_num = Math.floor(Math.random() * (1 << this.num_bits) ) ;
+        this.target_num = Math.floor(Math.random() * (1 << this.num_bits) ) ; // lzf changed
         // ensure the number is not 2^(this.num_bits)
         if (this.target_num === (1 << this.num_bits)) {
             this.target_num --;
         }
+        while (this.target_num == this.prev_num) {
+            this.target_num = Math.floor(Math.random() * (1 << this.num_bits) );
+            // ensure the number is not 2^(this.num_bits)
+            if (this.target_num === (1 << this.num_bits)) {
+                this.target_num --;
+        }
+        }
+        this.prev_num = this.target_num;
+
         switch (this.menuNode1.value) {
             case "binary" : 
                 this.displayed_num_string = this.toBinary(this.target_num);
@@ -405,7 +415,7 @@ export default class NC extends RunestoneBase {
                 break;
             case "hexadecimal" : 
                 this.promptDivTextNode.append("0x");
-                placeholder = "your answer (" + this.num_bits.toString() + "-digit hexadecimal value)";
+                placeholder = "your answer (" + (this.num_bits/4).toString() + "-digit hexadecimal value)";  // lzf bug fix
                 break;           
         }
         this.inputNode.setAttribute("placeholder", placeholder);
