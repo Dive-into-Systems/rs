@@ -22,6 +22,7 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
         this.origElem = opts.orig;
         this.divid = opts.orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
+        this.num_bits = 8
 
         // Fields for logging data
         this.componentId = "7.3";
@@ -125,11 +126,11 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
     }
 
     checkAnswer() {
-        const userAnswers = {
-            carryFlag: $(`#${this.divid}_CF`).is(":checked"),
-            overflowFlag: $(`#${this.divid}_OF`).is(":checked"),
-            zeroFlag: $(`#${this.divid}_ZF`).is(":checked"),
-            signFlag: $(`#${this.divid}_SF`).is(":checked")
+        const userAnswers = { // lzf change
+            carryFlag: $(`#${this.divid}_${this.flagNames[0]}`).is(":checked"),
+            overflowFlag: $(`#${this.divid}_${this.flagNames[1]}`).is(":checked"),
+            zeroFlag: $(`#${this.divid}_${this.flagNames[2]}`).is(":checked"),
+            signFlag: $(`#${this.divid}_${this.flagNames[3]}`).is(":checked")
         };
 
         let isCorrect = true;
@@ -161,6 +162,11 @@ export default class ASMFlag_EXCERCISE extends RunestoneBase {
 
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+
+        if (currentOptions["bits"] != undefined) {
+            this.num_bits = eval(currentOptions["bits"]);
+        }
+
         if (currentOptions["architecture"] !== undefined) {
             this.architecture = currentOptions["architecture"];
         }

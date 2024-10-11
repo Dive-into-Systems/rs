@@ -423,7 +423,10 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
     for (let i = 0; i < numPrints-1 - (hasExit?1:0); i++) {
         code = randInsert(code, PRINT_CHAR, false, 0, 1);
     }
-    code += PRINT_CHAR;
+    
+    if (numPrints > 0) {
+        code += PRINT_CHAR; // lzf changes
+    }
 
     let i = 0;
     const replaceChar = () => {

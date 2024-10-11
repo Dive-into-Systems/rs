@@ -13,10 +13,10 @@
             "instructions": ["ldr", "str"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
-                "ok": "r-(l/r)",
-                "bad_dest": "(l/m)-(r/l/m)",
-                "bad_src": "r-m",
-                "bad_ct": "r-r-r"
+                "ok": "r-m",
+                "bad_dest": "(m/l)-m",
+                "bad_src": "r-(r/l)",
+                "bad_ct": "r-(r/m)-(r/m)"
             },
             "formats": [
                 "{op} {reg1}, [{memAddr}]",
@@ -28,10 +28,10 @@
             "instructions": ["mov"],
             "errorsOdds": [40, 25, 25, 10],
             "errors": {
-                "ok": "r-m",
-                "bad_dest": "(l/m)-(l/m)",
-                "bad_src": "r-r",
-                "bad_ct": "r-r-r"
+                "ok": "r-(r/l)",
+                "bad_dest": "(l/m)-r",
+                "bad_src": "r-m",
+                "bad_ct": "r-(r/l)-(r/l)"
             },
             "formats": [
                 "{op} {reg1}, {reg2}",
@@ -45,14 +45,13 @@
             "instructions": ["neg"],
             "errorsOdds": [40, 25, 20, 15],
             "errors": {
-                "ok": "r-(r/l)",
-                "bad_dest": "(m/l)-(r/l)",
-                "bad_src": "r-m",
+                "ok": "r-r",
+                "bad_dest": "(m/l)-r",
+                "bad_src": "r-(m/l)",
                 "bad_ct": "r-(r/l)-(r/l)"
             },
             "formats": [
-                "{op} {reg1}, {reg2}",
-                "{op} {reg1}, #{literal}"
+                "{op} {reg1}, {reg2}"
             ]
         },
         "arithBinary": {
@@ -60,13 +59,14 @@
             "instructions": ["add", "sub"],
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
-                "ok": "r-(r/l)-(r/l)",
-                "bad_dest": "m-(r/l)-(r/l)",
-                "bad_src": "r-(ml/mr/lm/rm/mm)",
-                "bad_ct": "r-(r/l)"
+                "ok": "r-r-(r/l)",
+                "bad_dest": "(m/l)-(r/l)-(r/l)",
+                "bad_src": "r-(lr/lm/ll/mr/ml/mm/rm)",
+                "bad_ct": "(r/l)-(r/l)"
             },
             "formats": [
                 "{op} {reg1}, {reg1}, {reg2}",
+                "{op} {reg1}, {reg2}, {reg3}",
                 "{op} {reg1}, {reg1}, #{literal}",
                 "{op} {reg1}, {reg2}, #{literal}"
             ]
@@ -76,9 +76,9 @@
             "instructions": ["and", "orr", "eor"],
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
-                "ok": "r-(r/l)-(r/l)",
-                "bad_dest": "m-(r/l)-(r/l)",
-                "bad_src": "r-(ml/mr/lm/rm/mm)",
+                "ok": "r-r-(r/l)",
+                "bad_dest": "(m/l)-r-(r/l)",
+                "bad_src": "r-(lr/lm/ll/mr/ml/mm/rm)",
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
@@ -91,9 +91,9 @@
             "instructions": ["lsl", "lsr", "asr"],
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
-                "ok": "r-(r/l)-(r/l)",
-                "bad_dest": "m-(r/l)-(r/l)",
-                "bad_src": "r-(ml/mr/lm/rm/mm)",
+                "ok": "r-r-(r/l)",
+                "bad_dest": "(m/l)-r-(r/l)",
+                "bad_src": "r-(ll/lr/ml/mr/lm/rm/mm)",
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
@@ -106,7 +106,7 @@
             "instructions": ["cmp", "tst"],
             "errorsOdds": [25, 25, 25, 25],
             "errors": {
-                "ok": "r-r",
+                "ok": "r-(r/l)",
                 "bad_operand": "r-m/m-r/m-m",
                 "no_effect": "r-i/i-r/i-i",
                 "undefined_behavior": "m-m"
@@ -121,13 +121,13 @@
             "W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7",
             "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15",
             "W16", "W17", "W18", "W19", "W20", "W21", "W22", "W23",
-            "W24", "W25", "W26", "W27", "W28", "W29", "W30", "WZR", "WSP"
+            "W24", "W25", "W26", "W27", "W28", "W29", "W30", "WSP"
         ],
         "registers_64": [
             "X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7",
             "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15",
             "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23",
-            "X24", "X25", "X26", "X27", "X28", "X29", "X30", "XZR", "SP"
+            "X24", "X25", "X26", "X27", "X28", "X29", "X30", "SP"
         ],
         "registers_stack": ["FP","SP"],
         "registers_regular": ["X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7",
@@ -139,7 +139,7 @@
         "name": "X86_32",
         "memOps": {
             "mainWeight": 15,
-            "instructions": ["mov"],
+            "instructions": ["movl"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "mr/lr/rr/rm/lm",
@@ -165,8 +165,8 @@
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "r",
-                "bad_dest": "m/l",
-                "bad_src": "m/l",
+                "bad_dest": "l",
+                "bad_src": "l",
                 "bad_ct": "a-a"
             },
             "formats": [
@@ -176,13 +176,13 @@
         },
         "arithUnary": {
             "mainWeight": 20,
-            "instructions": ["neg", "not"],
+            "instructions": ["negl", "notl"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
-                "bad_dest": "a-l",
-                "bad_src": "mm",
-                "bad_ct": "a-a-r"
+                "ok": "m/r",
+                "bad_dest": "l",
+                "bad_src": "l",
+                "bad_ct": "a-a"
             },
             "formats": [
                 "{op} %{reg1}"
@@ -190,7 +190,7 @@
         },
         "arithBinary": {
             "mainWeight": 30,
-            "instructions": ["add", "sub"],
+            "instructions": ["addl", "subl"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "mr/lr/rr/rm/lm",
@@ -207,7 +207,7 @@
         },
         "bitLogic": {
             "mainWeight": 15,
-            "instructions": ["and", "or", "xor"],
+            "instructions": ["andl", "orl", "xorl"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "mr/lr/rr/rm/lm",
@@ -224,7 +224,7 @@
         },
         "bitShift": {
             "mainWeight": 20,
-            "instructions": ["shl", "shr", "sar"],
+            "instructions": ["sall", "shrl", "sarl"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "mr/lr/rr/rm/lm",
@@ -239,7 +239,7 @@
         },
         "comparison": {
             "mainWeight": 10,
-            "instructions": ["cmp", "test"],
+            "instructions": ["cmpl", "testl"],
             "errorsOdds": [25, 25, 25, 25],
             "errors": {
                 "ok": "r-r",
@@ -293,8 +293,8 @@
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
                 "ok": "r",
-                "bad_dest": "m/l",
-                "bad_src": "m/l",
+                "bad_dest": "l",
+                "bad_src": "l",
                 "bad_ct": "a-a"
             },
             "formats": [
@@ -307,10 +307,10 @@
             "instructions": ["neg", "not"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
-                "bad_dest": "a-l",
-                "bad_src": "mm",
-                "bad_ct": "a-a-r"
+                "ok": "m/r",
+                "bad_dest": "l",
+                "bad_src": "l",
+                "bad_ct": "a-a"
             },
             "formats": [
                 "{op} %{reg1}"

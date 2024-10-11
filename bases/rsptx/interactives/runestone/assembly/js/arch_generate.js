@@ -95,9 +95,29 @@ class ArchInstructions {
         const op = unifPickItem(family.instructions);
         const q_type = weightedPickId(family.errorsOdds);
         const expr = [family.errors.ok, family.errors.bad_dest, family.errors.bad_src, family.errors.bad_ct][q_type];
-        const feedback = [MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT][q_type];
+        let feedback_temp;
+        if (this.architecture === "ARM64" && op === "str" && q_type == 1) { // lzf change
+            feedback_temp = MSG_BAD_SRC;
+        } else if (this.architecture === "ARM64" && op === "str" && q_type == 2) {
+            feedback_temp = MSG_BAD_DEST;
+        } else if (this.architecture === "X86_64" && op === "push" && q_type == 1) {
+            feedback_temp = MSG_BAD_SRC;
+        } else if (this.architecture === "X86_64" && op === "pop" && q_type == 2) {
+            feedback_temp = MSG_BAD_DEST;
+        } else if (this.architecture === "X86_64" && index === "2" && q_type == 2) {
+            feedback_temp = MSG_BAD_DEST;
+        }  else if (this.architecture === "X86_32" && op === "push" && q_type == 1) {
+            feedback_temp = MSG_BAD_SRC;
+        } else if (this.architecture === "X86_32" && op === "pop" && q_type == 2) {
+            feedback_temp = MSG_BAD_DEST;
+        } else if (this.architecture === "X86_32" && index === "2" && q_type == 2) {
+            feedback_temp = MSG_BAD_DEST;
+        } 
+        else {
+            feedback_temp = [MSG_OK, MSG_BAD_DEST, MSG_BAD_SRC, MSG_CT][q_type];
+        }
+        const feedback = feedback_temp;
         const prompt = `${op} ${this._evalPrompt(expr, this._is_32())}`;
-
         return [prompt, q_type, feedback];
     }
 
@@ -726,30 +746,45 @@ class ArchInstructions {
 
     // Analyzes the flag settings for the given instructions
     analyzeFlagSettings(instruction, registers) {
-        const parsedInstruction = this.parseX86Instruction(instruction);
+        let parsedInstruction_temp;
+        parsedInstruction_temp = this.architecture === 'ARM64' ? this.parseARM64Instruction(instruction) : this.parseX86Instruction(instruction); // lzf change
+        const parsedInstruction = parsedInstruction_temp
         if (!parsedInstruction) {
             console.error('Failed to parse instruction:', instruction);
             return;
         }
 
         const { op, args } = parsedInstruction;
-        const [src, dest] = args;
+        console.log("parsed ins");
+        console.log(parsedInstruction);
+        const [src, dest] = this.architecture === "ARM64" ? args.reverse() : args;
 
         const destVal = this.getFlagValue(dest, registers);
         const srcVal = this.getFlagValue(src, registers);
+        const destVal_unsigned = destVal < 0 ? (1 << 8)*1 + destVal*1 : destVal
+        const srcVal_unsigned = srcVal < 0 ? (1 << 8)*1 + srcVal*1 : srcVal
+        console.log(destVal);
+        console.log(destVal_unsigned);
+        console.log(srcVal);
+        console.log(srcVal_unsigned);
 
         let carryFlag = false, overflowFlag = false, zeroFlag = false, signFlag = false;
 
         const cmpResult = (destVal - srcVal);
+        console.log(cmpResult)
         const testResult = (destVal & srcVal);
 
         if (op === 'cmp') {
             // Carry flag for unsigned comparison
-            carryFlag = destVal < srcVal; // Convert to unsigned for comparison
-
+            if (this.architecture == "ARM64") {
+                carryFlag = destVal_unsigned >= srcVal_unsigned; // ARM no borrow results in carry
+            } else {
+                carryFlag = destVal_unsigned < srcVal_unsigned; // x86 borrow results in carry
+            }
+            
             // Overflow flag for signed comparison
-            overflowFlag = ((destVal < 0 && srcVal > 0 && cmpResult > 0) ||
-                (destVal > 0 && srcVal < 0 && cmpResult < 0));
+            overflowFlag = ((destVal < 0 && srcVal > 0 && cmpResult >= 0) || // N-P
+                (destVal > 0 && srcVal < 0 && cmpResult <= 0));
 
             // Zero flag for zero result
             zeroFlag = cmpResult === 0;
@@ -768,16 +803,17 @@ class ArchInstructions {
             // Sign flag for negative result (most significant bit check)
             signFlag = testResult < 0; // This works since testResult will be signed
         }
-
+        console.log({ carryFlag, overflowFlag, zeroFlag, signFlag })
         return { carryFlag, overflowFlag, zeroFlag, signFlag };
     }
 
     // Gets the flag value for the given operand
     getFlagValue(operand, registers) {
+        console.log(registers)
         if (operand.startsWith('$') || operand.startsWith('#')) {
             return parseInt(operand.slice(1), 16);
         } else {
-            const reg = registers.find(r => `%${r.register}` === operand);
+            const reg = this.architecture === "ARM64" ? registers.find(r => r.register === operand) : registers.find(r => `%${r.register}` === operand);
             return reg ? reg.value : 0;
         }
     }
