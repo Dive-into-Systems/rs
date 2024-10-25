@@ -270,7 +270,29 @@
             "instructions": ["mov"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
+                "ok": "mr/lr/rr/rm",
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} %{reg1}, %{reg2}",
+                "{op} %{reg2}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} {memAddr}, %{reg2}",
+                "{op} %{reg1}, {memAddr}",
+                "{op} %{reg2}, {memAddr}",
+                "{op} ${literal}, {memAddr}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
+            ]
+        },
+        "memOpsDisamb": {
+            "mainWeight": 5,
+            "instructions": ["movq"],
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
+                "ok": "lm",
                 "bad_dest": "a-l",
                 "bad_src": "mm",
                 "bad_ct": "a-a-r"
@@ -321,7 +343,24 @@
             "instructions": ["add", "sub"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
+                "ok": "mr/lr/rr/rm",
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} %{reg1}, %{reg2}",
+                "{op} %{reg2}, %{reg1}",
+                "{op} ${literal}, %{reg1}",
+                "{op} ${literal}, %{reg2}"
+            ]
+        },
+        "arithBinaryDisamb": {
+            "mainWeight": 5,
+            "instructions": ["addq", "subq"],
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
+                "ok": "lm",
                 "bad_dest": "a-l",
                 "bad_src": "mm",
                 "bad_ct": "a-a-r"
@@ -338,7 +377,24 @@
             "instructions": ["and", "or", "xor"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
+                "ok": "mr/lr/rr/rm",
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} %{reg2}, %{reg1}",
+                "{op} ${literal}, %{reg1}",
+                "{op} {memAddr}, %{reg1}",
+                "{op} %{reg1}, {memAddr}"
+            ]
+        },
+        "bitLogicDisamb": {
+            "mainWeight": 5,
+            "instructions": ["andq", "orq", "xorq"],
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
+                "ok": "lm",
                 "bad_dest": "a-l",
                 "bad_src": "mm",
                 "bad_ct": "a-a-r"
@@ -355,7 +411,22 @@
             "instructions": ["shl", "shr", "sar"],
             "errorsOdds": [40, 20, 20, 20],
             "errors": {
-                "ok": "mr/lr/rr/rm/lm",
+                "ok": "mr/lr/rr/rm",
+                "bad_dest": "a-l",
+                "bad_src": "mm",
+                "bad_ct": "a-a-r"
+            },
+            "formats": [
+                "{op} %cl, %{reg1}",
+                "{op} ${literal}, %{reg1}"
+            ]
+        },
+        "bitShiftDisamb": {
+            "mainWeight": 5,
+            "instructions": ["shlq", "shrq", "sarq"],
+            "errorsOdds": [40, 20, 20, 20],
+            "errors": {
+                "ok": "lm",
                 "bad_dest": "a-l",
                 "bad_src": "mm",
                 "bad_ct": "a-a-r"

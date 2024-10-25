@@ -47,6 +47,15 @@ class ArchInstructions {
             if (!config[key]) throw new Error(`Missing configuration for ${key}`);
             this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
         });
+        this.families = [this.memOps, this.archOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift]
+        // lzf change
+        if (config.name == "X86_64") {
+            ['memOpsDisamb', 'arithBinaryDisamb', 'bitLogicDisamb', 'bitShiftDisamb'].forEach(key => {
+                if (!config[key]) throw new Error(`Missing configuration for ${key}`);
+                this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
+            });
+            this.families.push(this.memOpsDisamb, this.arithBinaryDisamb, this.bitLogicDisamb, this.bitShiftDisamb)
+        }
 
         Object.assign(this, {
             architecture: config.name,
@@ -78,7 +87,7 @@ class ArchInstructions {
 
     // Generates a question based on the specified instruction types
     generate_question(mem_arch, arith, bit) {
-        const fam_weights = [
+        let fam_weights_temp = [
             mem_arch ? this.memOps.mainWeight : 0,
             mem_arch ? this.archOps.mainWeight : 0,
             arith ? this.arithUnary.mainWeight : 0,
@@ -86,12 +95,21 @@ class ArchInstructions {
             bit ? this.bitLogic.mainWeight : 0,
             bit ? this.bitShift.mainWeight : 0,
         ];
+        if (this.architecture == "X86_64") {
+            fam_weights_temp.push(
+                mem_arch ? this.memOpsDisamb.mainWeight : 0,
+                arith ? this.arithBinaryDisamb.mainWeight : 0,
+                bit ? this.bitLogicDisamb.mainWeight : 0,
+                bit ? this.bitShiftDisamb.mainWeight : 0,
+            );
+        }
+        const fam_weights = fam_weights_temp;
         return this._makePrompt(weightedPickId(fam_weights));
     }
 
     // Creates a prompt for an instruction with potential errors
     _makePrompt(index) {
-        const family = [this.memOps, this.archOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift][index];
+        const family = this.families[index];
         const op = unifPickItem(family.instructions);
         const q_type = weightedPickId(family.errorsOdds);
         const expr = [family.errors.ok, family.errors.bad_dest, family.errors.bad_src, family.errors.bad_ct][q_type];
