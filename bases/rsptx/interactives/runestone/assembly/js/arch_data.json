@@ -24,12 +24,12 @@
             ]
         },
         "archOps": {
-            "mainWeight": 15,
+            "mainWeight": 7,
             "instructions": ["mov"],
-            "errorsOdds": [40, 25, 25, 10],
+            "errorsOdds": [40, 30, 10, 10],
             "errors": {
                 "ok": "r-(r/l)",
-                "bad_dest": "(l/m)-r",
+                "bad_dest": "(l/l/m)-r",
                 "bad_src": "r-m",
                 "bad_ct": "r-(r/l)-(r/l)"
             },
@@ -46,8 +46,8 @@
             "errorsOdds": [40, 25, 20, 15],
             "errors": {
                 "ok": "r-r",
-                "bad_dest": "(m/l)-r",
-                "bad_src": "r-(m/l)",
+                "bad_dest": "(m/l/l)-r",
+                "bad_src": "r-(m/l/l)",
                 "bad_ct": "r-(r/l)-(r/l)"
             },
             "formats": [
@@ -60,8 +60,8 @@
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
                 "ok": "r-r-(r/l)",
-                "bad_dest": "(m/l)-(r/l)-(r/l)",
-                "bad_src": "r-(lr/lm/ll/mr/ml/mm/rm)",
+                "bad_dest": "(m/l/l)-(r/l)-(r/l)",
+                "bad_src": "r-(lr/lr/lr/lr/lm/ll/ll/ll/ll/mr/ml/mm/rm)",
                 "bad_ct": "(r/l)-(r/l)"
             },
             "formats": [
@@ -77,8 +77,8 @@
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
                 "ok": "r-r-(r/l)",
-                "bad_dest": "(m/l)-r-(r/l)",
-                "bad_src": "r-(lr/lm/ll/mr/ml/mm/rm)",
+                "bad_dest": "(m/l/l)-r-(r/l)",
+                "bad_src": "r-(lr/lr/lr/lr/lm/ll/ll/ll/ll/mr/ml/mm/rm)",
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
@@ -92,8 +92,8 @@
             "errorsOdds": [30, 20, 20, 20],
             "errors": {
                 "ok": "r-r-(r/l)",
-                "bad_dest": "(m/l)-r-(r/l)",
-                "bad_src": "r-(ll/lr/ml/mr/lm/rm/mm)",
+                "bad_dest": "(m/l/l)-r-(r/l)",
+                "bad_src": "r-(ll/ll/ll/ll/lr/lr/lr/lr/ml/mr/lm/rm/mm)",
                 "bad_ct": "r-(r/l)"
             },
             "formats": [
@@ -159,12 +159,27 @@
                 "{op} ${literal}, %{reg2}"
             ]
         },
-        "archOps": {
-            "mainWeight": 15,
-            "instructions": ["push", "pop"],
-            "errorsOdds": [40, 20, 20, 20],
+        "archOpsPush": {
+            "mainWeight": 5,
+            "instructions": ["pushl"],
+            "errorsOdds": [40, 0, 0, 20],
             "errors": {
-                "ok": "r",
+                "ok": "a",
+                "bad_dest": "a-a",
+                "bad_src": "a-a",
+                "bad_ct": "a-a"
+            },
+            "formats": [
+                "{op} %{reg1}",
+                "{op} {memAddr}"
+            ]
+        },
+        "archOpsPop": {
+            "mainWeight": 10,
+            "instructions": ["popl"],
+            "errorsOdds": [40, 20, 0, 20],
+            "errors": {
+                "ok": "r/m",
                 "bad_dest": "l",
                 "bad_src": "l",
                 "bad_ct": "a-a"
@@ -175,9 +190,9 @@
             ]
         },
         "arithUnary": {
-            "mainWeight": 20,
+            "mainWeight": 15,
             "instructions": ["negl", "notl"],
-            "errorsOdds": [40, 20, 20, 20],
+            "errorsOdds": [40, 20, 0, 20],
             "errors": {
                 "ok": "m/r",
                 "bad_dest": "l",
@@ -309,12 +324,27 @@
                 "{op} ${literal}, %{reg2}"
             ]
         },
-        "archOps": {
-            "mainWeight": 15,
-            "instructions": ["push", "pop"],
-            "errorsOdds": [40, 20, 20, 20],
+        "archOpsPush": {
+            "mainWeight": 5,
+            "instructions": ["push"],
+            "errorsOdds": [40, 0, 0, 20],
             "errors": {
-                "ok": "r",
+                "ok": "a",
+                "bad_dest": "a-a",
+                "bad_src": "a-a",
+                "bad_ct": "a-a"
+            },
+            "formats": [
+                "{op} %{reg1}",
+                "{op} {memAddr}"
+            ]
+        },
+        "archOpsPop": {
+            "mainWeight": 10,
+            "instructions": ["pop"],
+            "errorsOdds": [40, 20, 0, 20],
+            "errors": {
+                "ok": "r/m",
                 "bad_dest": "l",
                 "bad_src": "l",
                 "bad_ct": "a-a"
@@ -325,9 +355,9 @@
             ]
         },
         "arithUnary": {
-            "mainWeight": 20,
+            "mainWeight": 15,
             "instructions": ["neg", "not"],
-            "errorsOdds": [40, 20, 20, 20],
+            "errorsOdds": [40, 20, 0, 20],
             "errors": {
                 "ok": "m/r",
                 "bad_dest": "l",

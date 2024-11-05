@@ -41,10 +41,10 @@ button[disabled] {
 }
 
 .button-check.checkingbutton {
-    background-color: HoneyDew;
+    background-color: #5cb85b;
     border-radius: 8px;
     border-width: 0;
-    color: seagreen;
+    color: white;
     cursor: pointer;
     display: inline-block;
     font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial,
@@ -101,5 +101,5 @@ button[disabled] {
 
 .centerplease {
     text-align: center;
-    vertical-align: baseline;
+    vertical-align: middle;
 }

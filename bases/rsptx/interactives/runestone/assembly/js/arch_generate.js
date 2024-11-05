@@ -43,18 +43,30 @@ class ArchInstructions {
     constructor(config) {
         if (!config) throw new Error("Config data required");
 
-        ['memOps', 'archOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'].forEach(key => {
+        ['memOps', 'arithUnary', 'arithBinary', 'bitLogic', 'bitShift'].forEach(key => {
             if (!config[key]) throw new Error(`Missing configuration for ${key}`);
             this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
         });
-        this.families = [this.memOps, this.archOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift]
+        this.families = [this.memOps, this.arithUnary, this.arithBinary, this.bitLogic, this.bitShift]
         // lzf change
         if (config.name == "X86_64") {
-            ['memOpsDisamb', 'arithBinaryDisamb', 'bitLogicDisamb', 'bitShiftDisamb'].forEach(key => {
+            ['archOpsPush', 'archOpsPop', 'memOpsDisamb', 'arithBinaryDisamb', 'bitLogicDisamb', 'bitShiftDisamb'].forEach(key => {
                 if (!config[key]) throw new Error(`Missing configuration for ${key}`);
                 this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
             });
-            this.families.push(this.memOpsDisamb, this.arithBinaryDisamb, this.bitLogicDisamb, this.bitShiftDisamb)
+            this.families.push(this.archOpsPush,this.archOpsPop,this.memOpsDisamb, this.arithBinaryDisamb, this.bitLogicDisamb, this.bitShiftDisamb)
+        } else if (config.name == "X86_32") {
+            ['archOpsPush', 'archOpsPop'].forEach(key => {
+                if (!config[key]) throw new Error(`Missing configuration for ${key}`);
+                this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
+            });
+            this.families.push(this.archOpsPush,this.archOpsPop)
+        } else if (config.name == "ARM64") {
+            ['archOps'].forEach(key => {
+                if (!config[key]) throw new Error(`Missing configuration for ${key}`);
+                this[key] = new InstructionsFamily(config[key].mainWeight, config[key].instructions, config[key].errorsOdds, config[key].errors);
+            });
+            this.families.push(this.archOps)
         }
 
         Object.assign(this, {
@@ -89,7 +101,6 @@ class ArchInstructions {
     generate_question(mem_arch, arith, bit) {
         let fam_weights_temp = [
             mem_arch ? this.memOps.mainWeight : 0,
-            mem_arch ? this.archOps.mainWeight : 0,
             arith ? this.arithUnary.mainWeight : 0,
             arith ? this.arithBinary.mainWeight : 0,
             bit ? this.bitLogic.mainWeight : 0,
@@ -97,10 +108,21 @@ class ArchInstructions {
         ];
         if (this.architecture == "X86_64") {
             fam_weights_temp.push(
+                mem_arch ? this.archOpsPush.mainWeight : 0,
+                mem_arch ? this.archOpsPop.mainWeight : 0,
                 mem_arch ? this.memOpsDisamb.mainWeight : 0,
                 arith ? this.arithBinaryDisamb.mainWeight : 0,
                 bit ? this.bitLogicDisamb.mainWeight : 0,
                 bit ? this.bitShiftDisamb.mainWeight : 0,
+            );
+        } else if (this.architecture == "X86_32") {
+            fam_weights_temp.push(
+                mem_arch ? this.archOpsPush.mainWeight : 0,
+                mem_arch ? this.archOpsPop.mainWeight : 0,
+            );
+        } else if (this.architecture == "ARM64") {
+            fam_weights_temp.push(
+                mem_arch ? this.archOps.mainWeight : 0,
             );
         }
         const fam_weights = fam_weights_temp;
@@ -282,8 +304,17 @@ class ArchInstructions {
         }
 
         if (selection[2]) { // Stack
-            const stackInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'archOps');
-            selected_instructions.push(stackInstruction);
+            let stackInstruction;
+            if (this.architecture == "ARM64") {
+                stackInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'archOps');
+                selected_instructions.push(stackInstruction);
+            } else if (this.architecture == "X86_64" || this.architecture == "X86_32") {
+                stackInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'archOpsPush');
+                selected_instructions.push(stackInstruction);
+                stackInstruction = this.generateComplexInstruction(selected_regular_registers, selected_stack_registers, selected_addresses, offsets, selection, selected_instructions.length + 1, 'archOpsPop');
+                selected_instructions.push(stackInstruction);
+            }
+            
             instruction_sources.push('archOps');
         }
 
@@ -337,7 +368,18 @@ class ArchInstructions {
 
         if (selection[0]) availableFormats["arithBinary"] = archData["arithBinary"].formats;
         if (selection[1]) availableFormats["memOps"] = archData["memOps"].formats;
-        if (selection[2]) availableFormats["archOps"] = archData["archOps"].formats;
+        if (selection[2]) {
+            switch (this.architecture) {
+                case 'X86_32':
+                case 'X86_64':
+                    availableFormats["archOpsPush"] = archData["archOpsPush"].formats;
+                    availableFormats["archOpsPop"] = archData["archOpsPop"].formats;
+                    break;
+                case 'ARM64':
+                    availableFormats["archOps"] = archData["archOps"].formats;
+                    break;
+            }
+        }
 
         if (selection[0] && selection[1] && this.architecture !== "ARM64") {
             availableFormats["arithBinary"].push(...[
@@ -367,7 +409,9 @@ class ArchInstructions {
 
         if (selection[0] && formatType === "arithBinary") availableFormats["arithBinary"] = archData["arithBinary"].formats;
         if (selection[1] && formatType === "memOps") availableFormats["memOps"] = archData["memOps"].formats;
-        if (selection[2] && formatType === "archOps") availableFormats["archOps"] = archData["archOps"].formats;
+        if (selection[2] && formatType.substr(0,7) === "archOps") { // lzf change
+            availableFormats[formatType] = archData[formatType].formats;            
+        }
 
         if (formatType == "arithBinary" && selection[0] && selection[1] && this.architecture !== "ARM64") {
             availableFormats["arithBinary"].push(...[

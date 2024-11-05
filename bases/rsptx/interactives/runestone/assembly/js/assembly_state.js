@@ -104,13 +104,14 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderCustomizations() {
 
         // Initialize the generator based on the architecture
-        const instructionTypes = [
-            { label: 'Memory Manipulation', value: 'memOps', instructions: arch_data[this.architecture]["memOps"].instructions },
-        ];
+        // lzf changes
+        const instructionTypes = [];
 
-        if (this.architecture !== "ARM64") {
-            instructionTypes.push({ label: 'Stack Operations', value: 'archOps', instructions: arch_data[this.architecture]["archOps"].instructions });
-        } else {
+        if (this.architecture == "X86_64" || this.architecture == "X86_32") {
+            instructionTypes.push({ label: 'Memory Manipulation', value: 'memOps', instructions: arch_data[this.architecture]["memOps"].instructions },
+                { label: 'Stack Operations', value: 'archOps', instructions: [...arch_data[this.architecture]["archOpsPush"].instructions, ...arch_data[this.architecture]["archOpsPop"].instructions] });
+        } else if (this.architecture == "ARM64") {
+            instructionTypes.push({ label: 'Data Movement', value: 'memOps', instructions: arch_data[this.architecture]["memOps"].instructions });
             this.stack_checked = true; // Set stack_checked to true for ARM64 architecture
         }
 

@@ -75,12 +75,15 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         switch (this.architecture) {
             case "X86_32":
                 this.generator = new X86_32_OPS();
+                this.architecture_str = 'IA-32';
                 break;
             case "X86_64":
                 this.generator = new X86_64_OPS();
+                this.architecture_str = 'x86_64';
                 break;
             case "ARM64":
                 this.generator = new ARM64_OPS();
+                this.architecture_str = 'ARM';
                 break;
             default:
                 throw new Error("Invalid architecture option");
@@ -90,7 +93,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     renderHeader() {
         this.instruction = $("<div>").html(
             "For each of the following " +
-            this.architecture +
+            this.architecture_str +
             " instructions, indicate whether the instruction " +
             "<b>could</b> be valid or invalid",
         );
@@ -102,11 +105,26 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
     renderCheckboxes() {
         // create three checkboxes that will be used later on for question generation
-        const instructionTypes = [
-            { label: "Arithmetics", value: "arithmetic" },
+        let instructionTypes_temp = [
+            { label: "Arithmetic", value: "arithmetic" },
             { label: "Bit Operations", value: "bitmanipulation" },
-            { label: "Memory Manipulation", value: "memorymanipulation" },
         ];
+
+        switch (this.architecture) {
+            case "X86_32":
+                instructionTypes_temp.push({ label: "Memory Manipulation", value: "memorymanipulation" });
+                break;
+            case "X86_64":
+                instructionTypes_temp.push({ label: "Memory Manipulation", value: "memorymanipulation" });
+                break;
+            case "ARM64":
+                instructionTypes_temp.push({ label: "Data Movement", value: "memorymanipulation" });
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
+
+        const instructionTypes = instructionTypes_temp;
 
         const instructionTypeDiv = $("<div>").attr(
             "id",
@@ -189,7 +207,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             // create the prompt
             const textNode = $(document.createElement("code")).text(
                 this.promptList[i],
-            );
+            ).css({
+                "background-color": "white",
+                "color": "black"
+            });
             textNode.css({ "font-size": "large", height: "25px" });
             this.textNodes.push(textNode);
 
@@ -200,11 +221,14 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             this.mainSecondLine = $("<div>").css({
                 display: "flex",
                 "align-items": "center",
+                "justify-content": "space-between",
             });
 
             // create a div to hold the radio buttons
             this.buttonsDiv = $("<div>").css({
                 display: "flex",
+                "align-items": "center",
+                gap: "5px", // Adds space between elements
             });
 
             // create and render valid/invalid answer fields
@@ -225,7 +249,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 .addClass("centerplease");
             const lblYes = $("<label>")
                 .attr("for", "Yes" + i)
-                .text("VALID");
+                .text("VALID")
+                .addClass("centerplease");
 
             // Add a label and radio button for the "Invalid" answer option
             const btnNo = $("<input>")
@@ -244,7 +269,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 .addClass("centerplease");
             const lblNo = $("<label>")
                 .attr("for", "No" + i)
-                .text("INVALID");
+                .text("INVALID")
+                .addClass("centerplease");
 
             // Append the radio buttons and labels to the question div
             this.buttonsDiv.append(lblYes);
@@ -280,6 +306,9 @@ export default class ASM_EXCERCISE extends RunestoneBase {
 
             this.main.append(this.mainFirstLine);
             this.main.append(this.mainSecondLine);
+            this.blankLine = document.createElement("div");
+            this.blankLine.style.height = "1.5em";
+            this.main.append(this.blankLine);
 
             // create the feedback
             const feedbackDiv = $("<span>")
