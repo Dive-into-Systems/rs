@@ -47,7 +47,7 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Create the ProcHierarchy Element
     createElements() {
-        this.sendData(0);
+        // this.sendData(0);
         this.initParams();
         this.initInputField();
         this.initButtons();

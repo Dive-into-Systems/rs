@@ -205,7 +205,7 @@ class ForkNode {
             }
             if (code[ptr] == WAIT_CHAR) {
                 addLine(`wait(NULL);`, this.active);
-                this.wait(exitingProc);
+                // this.wait(exitingProc);
                 // this.exit();
                 continue;
             }
@@ -438,6 +438,30 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
     return t;
 }
 
+export function genSimpleWaitCode(numForks, numPrints, numWaits) {
+    // lzf changes
+    let code = ""; // so that main parent does not exit
+    const fork = `F(${WAIT_CHAR},${EXIT_CHAR})`; // assumed here: parents need to wait and child need to exit
+
+    // Nested Fork ?
+    for (let i = 0; i < numForks; i++) {
+        code = randInsert(code, fork, false);
+    }
+
+    // Insert prints
+    for (let i = 0; i < numPrints; i++) {
+        code = randInsert(code, PRINT_CHAR, false, 0, 1);
+    }
+    let i = 0;
+    const replaceChar = () => {
+        const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
+        i++;
+        return char;
+    };
+    code = code.replace(new RegExp("-", 'g'), replaceChar);
+
+    return code;
+}
 
 export function buildAndTranspile(code) {
     let tree = new ForkNode();

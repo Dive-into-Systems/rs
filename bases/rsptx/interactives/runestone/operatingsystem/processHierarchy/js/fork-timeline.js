@@ -7,8 +7,10 @@
 import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
+import "../css/timeline.css";
 import * as build from "../algorithms/build.js";
 import * as hierarchy from "../algorithms/hierarchyDraw.js";
+import * as timeline from "../algorithms/timelineDraw.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -49,7 +51,7 @@ export default class ProcTimeline extends RunestoneBase {
         this.initParams();
         this.initInputField();
         this.initButtons();
-        this.initFeedback_Hierarchy_Help_Divs();
+        this.initFeedback_Hierarchy_Timeline_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
     }
 
@@ -167,11 +169,52 @@ export default class ProcTimeline extends RunestoneBase {
         this.genQuestionInfo();
     }
 
-    updateSourceCode() {
+    // testCodeGen() {
+    //     let code, tree, ccode, i;
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(2, 4, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(2, 6, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(3, 6, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(3, 9, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(4, 8, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    //     for (i = 0; i < 3; i++) {
+    //         code = build.genSimpleWaitCode(4, 12, -1);
+    //         console.log(code);
+    //         [tree, ccode] = build.buildAndTranspile(code);
+    //         console.log(ccode);
+    //     }
+    // }
 
+    updateSourceCode() {
+        // this.testCodeGen();
         console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
-            return build.genRandSourceCode(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
+            const ret = build.genSimpleWaitCode(this.numForks, this.numPrints, this.numWaits);
+            return ret;
         };
 
         if (this.showMenu == true) {
@@ -179,7 +222,7 @@ export default class ProcTimeline extends RunestoneBase {
             switch (mode) {
                 case "2":
                     this.numForks = 3;
-                    this.numPrints = this.pick([3, 4]);
+                    this.numPrints = this.pick([5, 6]);
                     this.hasNest = true;
                     this.hasExit = false;
                     this.hasElse = true;
@@ -187,7 +230,7 @@ export default class ProcTimeline extends RunestoneBase {
                     break;
                 case "3":
                     this.numForks = 4;
-                    this.numPrints = 4;
+                    this.numPrints = 7;
                     this.hasNest = true;
                     this.hasExit = true;
                     this.hasElse = true;
@@ -195,7 +238,7 @@ export default class ProcTimeline extends RunestoneBase {
                     break;
                 default:
                     this.numForks = 2;
-                    this.numPrints = this.pick([2, 3]);
+                    this.numPrints = this.pick([4, 5]);
                     this.hasNest = false;
                     this.hasExit = false;
                     this.hasElse = false;
@@ -272,6 +315,19 @@ export default class ProcTimeline extends RunestoneBase {
             else { this.hideProcessHierarchy(); }
         });
 
+        /* Reveal timeline button */
+        this.revealTimeLineButton = document.createElement("button");
+        this.revealTimeLineButton.textContent = $.i18n("msg_fork_reveal_timeline");
+        $(this.revealTimeLineButton).attr({
+            class: "btn btn-success",
+            type: "button",
+            id: this.divid + "draw_timeline",
+        });
+        this.revealTimeLineButton.addEventListener("click", () => {
+            if ($(this.timelineDiv).css('display') == 'none') { this.showProcessTimeline(); }
+            else { this.hideProcessTimeline(); }
+        });
+
         /* Reveal help button */
         this.helpButton = document.createElement("button");
         this.helpButton.textContent = $.i18n("msg_fork_help");
@@ -289,6 +345,7 @@ export default class ProcTimeline extends RunestoneBase {
 
         if (this.hardCodedCCode == false) { this.buttonsDiv.append(this.generateButton); }
         this.buttonsDiv.append(this.revealTreeButton);
+        this.buttonsDiv.append(this.revealTimeLineButton);
         this.buttonsDiv.append(this.helpButton);
         this.buttonsDiv.append(this.checkAnswerButton);
 
@@ -301,6 +358,7 @@ export default class ProcTimeline extends RunestoneBase {
 
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none").empty();
+        $(this.timelineDiv).css("display", "none").empty();
         $(this.helpDiv).css("display", "none");
     }
 
@@ -354,9 +412,36 @@ export default class ProcTimeline extends RunestoneBase {
         this.bindCodeBlockEvents();
     }
 
+    showProcessTimeline() {
+        $(this.timelineDiv).css("display", "block");
+        $(this.timelineDiv).html(
+            "<strong>Process Timeline Graph:</strong> Lorem ipsum description of Process Timeline<br><br>" + 
+            "<div id='trace_hierarchy'>Lorem ipsum description of Process Timeline</div>" +
+            "<br>" +
+            "<div id='timeline_graph'></div>"
+        );
+        
+        // some params
+        const tl_width = 0.9 * $(this.timelineDiv).width();
+        const tl_height = 0.7 * $(this.timelineDiv).width();
+        const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+        const traceArray = [];
+        const extra_trace = { value: "" };
+        const refreshCode = () => console.log("Refreshed");
+
+        $('#timeline_graph').html(timeline.drawTimeline(this.fullTree, tl_width, tl_height, margin, traceArray, extra_trace, refreshCode));
+        console.log("Real ones", this.csvTree, this.labels);
+        this.bindCodeBlockEvents();
+    }
+
     hideProcessHierarchy() {
         $(this.hierarchyTreeDiv).html("");
         $(this.hierarchyTreeDiv).css("display", "none");
+    }
+
+    hideProcessTimeline() {
+        $(this.timelineDiv).html("");
+        $(this.timelineDiv).css("display", "none");
     }
 
     showHelp() {
@@ -377,12 +462,13 @@ export default class ProcTimeline extends RunestoneBase {
         $(this.helpDiv).css("display", "none");
     }
 
-    initFeedback_Hierarchy_Help_Divs() {
+    initFeedback_Hierarchy_Timeline_Help_Divs() {
         this.feedbackDiv = $('<div>').attr('id', this.divid + '_feedback').css('display', 'none').addClass('feedback-div');
         this.hierarchyTreeDiv = $('<div>').css('display', 'none').addClass('tree-div');
+        this.timelineDiv = $('<div>').css('display', 'none').addClass('tree-div');
         this.helpDiv = $('<div>').css('display', 'none').addClass('help-div');
 
-        this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.hierarchyTreeDiv);
+        this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.hierarchyTreeDiv, this.timelineDiv);
     }
 
     updateFeedbackDiv() {

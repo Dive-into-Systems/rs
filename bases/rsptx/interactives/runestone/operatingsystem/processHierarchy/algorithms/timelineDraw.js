@@ -42,6 +42,7 @@ function highlightPath(node, links) {
 
 
 export function drawTimeline(tree, tl_width, tl_height, margin) {
+    console.log(tree)
     const data = tree.serialize();
     const width = tl_width - margin.right - margin.left;
     const height = tl_height - margin.top - margin.bottom;
