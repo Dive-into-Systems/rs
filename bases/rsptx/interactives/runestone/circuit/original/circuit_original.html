@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logic Circuit Generator</title>
+    <link rel="stylesheet" href="circuit.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/1.6.7/go-debug.js"></script>
+    <script src="https://gojs.net/latest/extensions/PortShiftingTool.js"></script>
+</head>
+<body onload="generateCircuit()">
+    <div class="container">
+        <h1>Fill in Truth Table</h1>
+        <div id="circuitOutput"></div>
+        <pre id="astOutput"></pre>
+        <div id="myDiagramDiv"></div>
+        <table id="truthTable"></table><br></br>
+        <button id="generateButton">Generate Circuit</button>
+    </div>
+    <script src="circuit.js"></script>
+</body>
+</html>

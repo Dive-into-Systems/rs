@@ -77,6 +77,7 @@ const module_map = {
     cachetable: () => import("./runestone/cache/js/cachetable.js"),
     cacheinfo: () => import("./runestone/cache/js/cacheinfo.js"),
     cachepartition: () => import("./runestone/cache/js/cachepartition.js"),
+    circuittruth: () => import("./runestone/circuit/js/circuittruth.js"),
     vo: () => import("./runestone/virtualmemory/js/vo.js"),
     vmtable: () => import("./runestone/virtualmemory/js/vmtable.js"),
     vminfo: () => import("./runestone/virtualmemory/js/vminfo.js"),
