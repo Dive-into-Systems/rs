@@ -1,4 +1,8 @@
-
+/**
+ * @file build.js
+ * @brief Utilities for constructing and simulating process hierarchies
+ *        with fork, wait, and exit operations.
+ */
 const INDENT_SPC = 2;
 const DASH = "─";
 // const BAR = "|";
@@ -10,9 +14,70 @@ export const EXIT_CHAR = "X";
 const PRINT_CHAR = "-";
 const nullChar = "\\";
 
+// Generate a uniform random float in [0, 1) using crypto.getRandomValues for strong randomness.
 function randomFloat32() {
     return window.crypto.getRandomValues(new Uint32Array(1))[0]/(2**32);
     // return Math.random();
+}
+
+// Selects a random index from an array using uniform distribution
+function unifPickId(arr) {
+    return Math.floor(randomFloat32() * arr.length);
+}
+
+// Selects a random item from one or more arrays using uniform distribution
+function unifPickItem(...items) {
+    const combinedArray = items.flat();
+    if (!combinedArray.length) throw new Error("No arrays provided or all are empty.");
+    return combinedArray[unifPickId(combinedArray)];
+}
+
+// Randomly weave two arrays:
+// Example: randomWeave(123456, abcdef) = 1ab2cd345ef6
+// This utility helps weave prints in concurrent parts of fork
+function randomWeave(arr1, arr2) {
+    // Ensure the inputs are arrays.
+    arr1 = arr1 || [];
+    arr2 = arr2 || [];
+    const result = [];
+    let i = 0, j = 0;
+  
+    while (i < arr1.length || j < arr2.length) {
+      if (i < arr1.length && j < arr2.length) {
+        if (Math.random() < 0.5) {
+          result.push(arr1[i]);
+          i++;
+        } else {
+          result.push(arr2[j]);
+          j++;
+        }
+      } else if (i < arr1.length) {
+        result.push(arr1[i]);
+        i++;
+      } else if (j < arr2.length) {
+        result.push(arr2[j]);
+        j++;
+      }
+    }
+    return result;
+  }
+
+// merge two dictionaries (objects)
+// This utility helps us merge printing constraints for dictionaries
+// that specifies previous prints
+// example: merge({a: b}, {c:d, a:e}) = {a:be, c:d}
+function mergeDicts(...dicts) {
+    const result = {};
+    for (const dict of dicts) {
+        for (const key in dict) {
+            if (result.hasOwnProperty(key)) {
+                result[key].push(...dict[key]);
+            } else {
+                result[key] = dict[key];
+            }
+        }
+    }
+    return result;
 }
 
 function parseForkArgs(code, forkIndex) {
@@ -35,6 +100,40 @@ function parseForkArgs(code, forkIndex) {
     ];
 }
 
+function parseForkWait(code) {
+    let balance = 0;
+    let start = 0, i = 0, wait = -1;
+    while (i < code.length) {
+        if (code[i] === '(') balance++;
+        if (code[i] === ')') balance--;
+        if (balance === 0 && code[i] === WAIT_CHAR) {
+            wait = i;
+            break
+        };
+        i++;
+    }
+
+    if (wait === -1) return [code, ''];
+    return [
+        code.substring(start, wait),
+        code.substring(wait + 1, code.length)
+    ];
+}
+
+function parseForkExit(code) {
+    let balance = 0;
+    let start = 0, end = 0;
+    while (end < code.length) {
+        if (code[end] === '(') balance++;
+        if (code[end] === ')') balance--;
+        if (balance === 0 && code[end] === EXIT_CHAR) {
+            break
+        };
+        end++;
+    }
+    return code.substring(start, end);
+}
+
 function blankInfo() {
     return {
         cCode: [],
@@ -48,8 +147,22 @@ function concat(...arrays) {
     return arrays.reduce((acc, curr) => [...acc, ...curr], []);
 }
 
+// ProcessGraph records fork- and wait-edges
+class ProcessGraph {
+    constructor() {
+      this.forkEdges = [];
+      this.waitEdges = [];
+    }
+    addForkEdge(parentID, childID) {
+      this.forkEdges.push({ parentID, childID });
+    }
+    addWaitEdge(fromExitID, toWaitID) {
+      this.waitEdges.push({ fromExitID, toWaitID });
+    }
+  }
+
 class ForkNode {
-    constructor(id = 0, childCt = 0, active = true, value = "", left = null, right = null) {
+    constructor(id = 0, childCt = 0, active = true, value = "", left = null, right = null, graph = null) {
         this.id = id;
         this.childCt = childCt;
         this.active = active;
@@ -57,6 +170,11 @@ class ForkNode {
         this.left = left;
         this.right = right;
         this.waited = false;
+        if (graph === null) {
+            this.graph = new ProcessGraph();
+        } else {
+            this.graph = graph;
+        }
     }
 
     getChildrenInfo() {
@@ -134,7 +252,7 @@ class ForkNode {
         let temp2 = blankInfo();
         let exitingProc;
         if (!this.active) {
-            [left, temp1] = (new ForkNode()).fork(leftCode, rightCode, indent, terminate);
+            [left, temp1] = (new ForkNode(0, 0, true, "", null, null, this.graph)).fork(leftCode, rightCode, indent, terminate);
             purge(left);
             purge(temp1); // basically, make no changes to current tree
         }
@@ -145,7 +263,7 @@ class ForkNode {
                 // self exec, BASE CASE
                 let leftTerm = terminate-1; // adjust for F(
                 const [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
-                this.left = new ForkNode(leftID, leftCt);
+                this.left = new ForkNode(leftID, leftCt, true, "", null, null, this.graph);
                 left = this.left.pushCode(leftCode, indent, leftTerm);
 
                 let rightTerm = leftTerm;
@@ -153,7 +271,7 @@ class ForkNode {
                     rightTerm = leftTerm - 1 - left.cCode.length;
                 }
                 // ordering matters here! , left.right can only be created after left push is done
-                this.left.right = new ForkNode(rightID, rightCt);
+                this.left.right = new ForkNode(rightID, rightCt, true, "", null, null, this.graph);
                 temp1 = this.left.right.pushCode(rightCode, indent, rightTerm);
                 exitingProc = this.left.right;
                 while (exitingProc.left) {
@@ -205,8 +323,9 @@ class ForkNode {
             }
             if (code[ptr] == WAIT_CHAR) {
                 addLine(`wait(NULL);`, this.active);
-                // this.wait(exitingProc);
-                // this.exit();
+                if (this.active && exitingProc) {
+                    this.graph.addWaitEdge(exitingProc.id, this.id);
+                }
                 continue;
             }
             if (code[ptr]!= "F") {
@@ -243,6 +362,8 @@ class ForkNode {
                     // hist.push(...liveProcesses, ...leftResult.hist);
                     hist.push(...liveProcesses);
                     liveProcesses = concat(leftResult.proc, rightResult.proc);
+                    this.graph.addForkEdge(this.id, this.left.id);
+                    this.graph.addForkEdge(this.id, this.left.right.id);
                 }
             }
             // - end
@@ -278,6 +399,163 @@ class ForkNode {
     }
 }
 
+// Processes the code recursively and builds a structure of print constraints.
+// The process print structure may be nested (like how forks are nested)
+// example {beforeWait: ab, afterWait: c{beforeWait:, afterWait:d, child: e}, child: f}
+export function printSequenceConstraints(code) {
+    let sequenceList = [];
+    let ptr = 0;
+    while (ptr < code.length) {
+    if (code[ptr] !== "F") {
+        sequenceList.push(code[ptr]);
+    } else {
+        // Assume these helper functions return the expected values.
+        let [leftCode, rightCode, newPtr] = parseForkArgs(code, ptr);
+        ptr = newPtr;
+        let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode);
+        rightCode = parseForkExit(rightCode);
+
+        let currProcessPrint = {
+        beforeWait: printSequenceConstraints(leftWaitCode),
+        afterWait: printSequenceConstraints(rightWaitCode),
+        child: printSequenceConstraints(rightCode)
+        };
+
+        sequenceList.push(currProcessPrint);
+    }
+    ptr++;
+    }
+    return sequenceList;
+}
+
+// This function always generate ONE correct print sequence
+// This function does not give exhausive results
+// One correct print sequence is returned as an array
+export function getPrintSequence(sequenceList) {
+    if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
+        return [];
+    }
+    let correctPrint = [];
+    for (let i = 0; i < sequenceList.length; i++) {
+        if (typeof sequenceList[i] === 'string') {
+            correctPrint.push(sequenceList[i]);
+        } else if (typeof sequenceList[i] === 'object') {
+            let beforeWait = getPrintSequence(sequenceList[i].beforeWait);
+            let afterWait = getPrintSequence(sequenceList[i].afterWait);
+            let child = getPrintSequence(sequenceList[i].child);
+            
+            let temp = [
+                ...randomWeave(beforeWait, child),
+                ...afterWait
+            ];
+
+            correctPrint.push(...temp);
+        }
+    }
+    return correctPrint;
+}
+
+// This function generates print sequence: may be correct or incorrect
+// wrong parts are generated by probability
+// Returns a tuple: [array of print sequence, whether error is injected (incorrect)]
+export function getPrintSequenceIncorrect(sequenceList) {
+    let error_injected = false;
+    if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
+        return [[], error_injected];
+    }
+    let print = [];
+    for (let i = 0; i < sequenceList.length; i++) {
+        if (typeof sequenceList[i] === 'string') {
+            print.push(sequenceList[i]);
+        } else if (typeof sequenceList[i] === 'object') {
+            let beforeWait, afterWait, child, temp_injected, temp;
+            [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait);
+            error_injected ||= temp_injected;
+            [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait);
+            error_injected ||= temp_injected;
+            [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child);
+            error_injected ||= temp_injected;
+            
+            if ((!error_injected || Math.random() < 0.25) && afterWait.length > 0 && child.length > 0 && Math.random() < 0.5) {
+                // inject error
+                error_injected = true;
+                let beforePreweave = [...beforeWait, afterWait[0]]
+                temp = [...randomWeave(beforePreweave, child.slice(0, -1)),
+                            child[child.length - 1],
+                            ...afterWait.slice(1)
+                ]
+            } else {
+                // no error
+                temp = [
+                    ...randomWeave(beforeWait, child),
+                    ...afterWait
+                ];
+            }
+
+            print.push(...temp);
+        }
+    }
+    return [print, error_injected];
+}
+
+// returns a dictionary
+// key is a char, item is a list of chars that needs to come before key
+// dict[after_char] = [before_char1, before_char2]
+// Not used for now, thought would be used for topological sort
+export function getPrintDirection(sequenceList) {
+    if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
+        return {};
+    }
+    let printDirection = [];
+    for (let i = 0; i < sequenceList.length; i++) {
+        if (typeof sequenceList[i] === 'string') {
+            temp = {};
+            temp[sequenceList[i]] = [];
+            printDirection.push(temp);
+        } else if (typeof sequenceList[i] === 'object') {
+            let beforeWait = getPrintDirection(sequenceList[i].beforeWait);
+            let afterWait = getPrintDirection(sequenceList[i].afterWait);
+            let child = getPrintDirection(sequenceList[i].child);
+            
+            let temp = mergeDicts(beforeWait, afterWait, child);
+            for (const keyB in beforeWait) {
+                for (const keyA in afterWait) {
+                    if (temp.hasOwnProperty(keyA)) {
+                        temp[keyA].push(keyB);
+                    } else {
+                        temp[keyA] = [keyB];
+                    }
+                }
+            }
+
+            for (const keyB in child) {
+                for (const keyA in afterWait) {
+                    if (temp.hasOwnProperty(keyA)) {
+                        temp[keyA].push(keyB);
+                    } else {
+                        temp[keyA] = [keyB];
+                    }
+                }
+            }
+
+            printDirection.push(...temp);
+        }
+        if (i > 0) {
+            for (const keyB in printDirection[i-1]) {
+                for (const keyA in printDirection[i]) {
+                    if (printDirection[i].hasOwnProperty(keyA)) {
+                        printDirection[i][keyA].push(keyB);
+                    } else {
+                        printDirection[i][keyA] = [keyB];
+                    }
+                }
+
+            }
+        }
+    }
+    return mergeDicts(...printDirection);
+}
+
 function output(node) {
     if (!node) return "";
     return node.value + output(node.left) + output(node.right);
@@ -297,6 +575,40 @@ export function getAnswer(node, numPrints) {
         else { map[answer[i]] = 1; }
     }
     return map;
+}
+
+// Generate the options for our question
+// Return at least 1 correct and at least 1 incorrect
+// returned options <= 4
+// If there are two few options returned (1/2), the case would be handled
+// in fork-timeline genQuestionInfo function
+export function getAnswerSequence(source) {
+    let constraints = printSequenceConstraints(source);
+    let map = {};
+    let incorrect_cnt = 0;
+    for (let i = 0; i < 20; i++) {
+        let [sequence, bool_incorrect] = getPrintSequenceIncorrect(constraints);
+        let sequenceStr = sequence.join("");
+        if (!(sequenceStr in map)) {
+            if (bool_incorrect) {
+                incorrect_cnt++;
+            } else if (Object.keys(map).length === 3 && incorrect_cnt === 0) {
+                continue;
+            }
+            map[sequenceStr] = bool_incorrect;
+        }
+        if (Object.keys(map).length >= 4) {
+            break;
+        } else if (Object.keys(map).length >= 3 && (incorrect_cnt === Object.keys(map).length)) {
+            let sequence = getPrintSequence(constraints);
+            let sequenceStr = sequence.join("");
+            if (!(sequenceStr in map)) {
+                map[sequenceStr] = false;
+            }
+            break;
+        }
+    }
+    return [map, Object.keys(map)];
 }
 
 const formatNode = (node) => `${node.id}.${node.childCt}`+ ":"+(node.value?node.value:nullChar);
@@ -373,6 +685,66 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset 
     return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
 }
 
+// A variation of randInsert
+// We do not want to fork before wait because for the sake of fork timeline,
+// there would be abiguity between which one of the two concurrent children exits.
+function randInsertFork_notBeforeWait(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset = 0) {
+    let validPositions = [];
+    let pastParanthesisLevel = 0, pastWaitLevel = 0, waited = false;
+
+    for (let i = minSlot; i < (mainStr.length+1-maxOffset); i++) {
+        // console.log("i", i, "pastParanthesisLevel", pastParanthesisLevel, "pastWaitLevel", pastWaitLevel, "waited", waited);
+        if (mainStr[i] == WAIT_CHAR) {
+            waited = true;
+        } else if (mainStr[i] !== '(' && pastParanthesisLevel === pastWaitLevel) {
+            // do not insert before left paranthesis or wait
+            if (anySlot || (mainStr[i-1] !== EXIT_CHAR)) {
+                validPositions.push(i);
+            }
+        }
+        switch (mainStr[i]) {
+            case '(': pastParanthesisLevel += 1; break;
+            case WAIT_CHAR: pastWaitLevel += 1; break;
+            case ',': pastWaitLevel += (waited ? 0 : 1); waited = false; break;
+            case ')': pastParanthesisLevel -= 1; pastWaitLevel -= 1; break;
+        }
+    }
+    // console.log("valid positions", validPositions, "mainStr len", mainStr.length);
+    const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
+    return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
+}
+
+// Adjust the number of prints
+function adjustPrints(str, targetCount) {
+    let currentCount = (str.match(/-/g) || []).length;
+    let result = str;
+  
+    if (currentCount > targetCount) {
+      // Remove excess hyphens one by one at random positions
+      const removals = currentCount - targetCount;
+      for (let i = 0; i < removals; i++) {
+        // Collect indices of all hyphens
+        const positions = [];
+        for (let j = 0; j < result.length; j++) {
+          if (result[j] === '-') positions.push(j);
+        }
+        // Pick a random index from positions
+        const randIdx = Math.floor(Math.random() * positions.length);
+        const removePos = positions[randIdx];
+        // Remove the hyphen at removePos
+        result = result.slice(0, removePos) + result.slice(removePos + 1);
+      }
+    } else if (currentCount < targetCount) {
+      // Add hyphens via callback until reaching the target
+      const additions = targetCount - currentCount;
+      for (let i = 0; i < additions; i++) {
+        result = randInsert(result, PRINT_CHAR, true, 0, 1);
+      }
+    }
+  
+    return result;
+  }
+
 function exitInsert(mainStr) {
     let validPositions = [];
     // console.log(mainStr);
@@ -425,7 +797,7 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
     }
     
     if (numPrints > 0) {
-        code += PRINT_CHAR; // lzf changes
+        code += PRINT_CHAR;
     }
 
     let i = 0;
@@ -438,26 +810,29 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
     return t;
 }
 
-export function genSimpleWaitCode(numForks, numPrints, numWaits) {
-    // lzf changes
+// Generate a sumple wait code
+// Output have exact number of forks and prints
+// It is assumed that every fork has a wait: numForks = numWaits
+// Example output: F(aWbF(c,d)e,f)
+export function genSimpleWaitCode(numForks, numPrints) {
     let code = ""; // so that main parent does not exit
-    const fork = `F(${WAIT_CHAR},${EXIT_CHAR})`; // assumed here: parents need to wait and child need to exit
-
-    // Nested Fork ?
+    const fork = `${PRINT_CHAR}F(${PRINT_CHAR}${WAIT_CHAR}${PRINT_CHAR},${PRINT_CHAR}${EXIT_CHAR})${PRINT_CHAR}`
+    
+    // Nested Fork
     for (let i = 0; i < numForks; i++) {
-        code = randInsert(code, fork, false);
+        code = randInsertFork_notBeforeWait(code, fork, false, 2, 0);
+        code = code.replace(/-+/g, '-');
     }
 
-    // Insert prints
-    for (let i = 0; i < numPrints; i++) {
-        code = randInsert(code, PRINT_CHAR, false, 0, 1);
-    }
+    code = adjustPrints(code, numPrints);
+
     let i = 0;
     const replaceChar = () => {
         const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
         i++;
         return char;
     };
+
     code = code.replace(new RegExp("-", 'g'), replaceChar);
 
     return code;

@@ -153,10 +153,16 @@ To write the `source` string:
   - To modify odds of certain if-else structures, I recommend changing how often F() and F(,) occur. You could also
   make changes to the insertion of a dash which will cause it to turn into a print() line.
 
-### timeline (deprecated for now)
-  - we could draw a timeline based on the data structure using the timelineDraw.js and serialize() method from build.js.
-  - there are support for path highlighting but this seemed quite confusing (and tricky to get the recursion right to highlight which code
-  block cause which processes) so we disable it for now.
+### timeline (sequence generation & QA works; graphing deprecated)
+  - fork-timeline.js is the same as fork-hierachy.js on the structure level and for basic functions like question rendering. We inherent the same F(,) code structure.
+  - Code generation part:
+    - The code generation part works, but may demand stress testing.
+    - The code generation randomization and variability are empirically ideal, but may demand stress testing.
+    - Please refer to `genSimpleWaitCode` for code generation, and `getPrintSequenceIncorrect` for answer generation.
+  - Graphing part
+    - we could draw a timeline based on the data structure using the timelineDraw.js and serialize() method from build.js.
+    - there are support for path highlighting but this seemed quite confusing (and tricky to get the recursion right to highlight which code block cause which processes) so we disable it for now.
+    - A separate attempt is also made with `this.graph = new ProcessGraph()` in `build.js`. This is attempting to build a algorithm graph (`G = {V, E}`). Due to limited time, however, this part is not fully implemented, nor the current part is robustly tested.
 #### FUTURE
   - this could be a good backbone for exit-wait problems
   - My recommendations from trying to do this is generate code with no forks inside forks (which will cause grandchildrens)

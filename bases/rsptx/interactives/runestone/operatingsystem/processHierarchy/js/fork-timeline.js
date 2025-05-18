@@ -63,9 +63,12 @@ export default class ProcTimeline extends RunestoneBase {
             if (params["instruction"] != undefined) {
                 this.instructionText = params["instruction"];
             } else {
-                this.instructionText = (`This question intends to guide you through understanding parent-child relationships between processes. 
-                    For the code snippet shown below (assuming all calls to <code>fork()</code> succeed),
-                    answer <strong>how many times</strong> each letter is printed with <code>printf()</code>.`);
+                this.instructionText = (`
+                    In this exercise, you’ll analyze a C program that utilizes <code>fork()</code>, 
+                    <code>wait()</code>, and <code>exit()</code> system calls to manage process creation and synchronization.
+                    Your task is to determine which of the provided output sequences could be produced by the program, 
+                    considering the possible interleavings of parent and child process executions.<br>
+                    Please tick all of the possible output sequences that could be produced by the program.`);
             }
             if (params["source"] != undefined) { // If you want to pass in a source code string for generating the C-code. 
                 this.hardCodedCCode = true;
@@ -110,9 +113,8 @@ export default class ProcTimeline extends RunestoneBase {
                 `<span style='font-weight:bold'><u>Configure question</u></span>: 
                 You can generate the C code block from several modes:<br>
                 <ul style='line-height:90%'> 
-                    <li>Mode 1 creates a small number of processes with if structures.</li> 
-                    <li>Mode 2 has more processes with if-else structures and nested conditions.</li>
-                    <li>Mode 3 has everything in mode 2 and introduces exits.</li> 
+                    <li>Mode 1 simpler with 2 forks.</li> 
+                    <li>Mode 2 more complex with 3 forks.</li>
                 </ul>`
             );
             this.label = $("<label>").addClass("fork-inline").html("<span>Select a mode</span>:&ensp;");
@@ -132,19 +134,36 @@ export default class ProcTimeline extends RunestoneBase {
         /* Generate initial question and answers */
         this.genNewQuestionNAnswer();
 
-        /* C-code and input boxes */
+        /* C-code and input checkboxes */
         this.codeDiv = $("<div>").addClass("code-div-inline").html(this.cCode);
 
         this.inputDiv = $("<div>").addClass("input-div-inline");
-        for (var i = 0; i < this.numPrints; i++) {
-            this.inputBox = $("<input>").attr({
-                'placeholder': 'Enter your answer here',
-                'id' : this.divid + '_input_' + i
-            }).addClass("form-control input-box");
 
-            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
-            this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i).append(this.subPrompt, this.inputBox);
-            this.inputDiv.append(this.subQuestionDiv);
+        this.codeDiv.html(this.cCode);
+        for (let i = 0; i < this.printSeqs.length; i++) {
+            let printSeq = this.printSeqs[i];
+            if (!this.answerMap.hasOwnProperty(printSeq)) {
+                continue;
+            }
+            
+            // Create a checkbox input element.
+            let $inputCheck = $("<input>").attr({
+                type: 'checkbox',
+                id: `${this.divid}_input_${i}`
+            });
+            
+            // Create a label associated with the checkbox.
+            let $label = $("<label>")
+                .attr("for", `${this.divid}_input_${i}`)
+                .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
+            
+            // Create a div to contain the checkbox and label.
+            let $questionDiv = $("<div>")
+                .attr("id", `${this.divid}_question_${i}`)
+                .append($inputCheck, $label);
+            
+            // Append the div to the parent container.
+            this.inputDiv.append($questionDiv, $("<br>"));
         }
 
         /* Combine all elements into the container */
@@ -164,56 +183,18 @@ export default class ProcTimeline extends RunestoneBase {
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
         if (this.hardCodedCCode == false) { this.updateSourceCode(); }
+        this.forkEdges = [];    // will hold { parentID, childID }
+        this.waitEdges = [];    // will hold { fromExitID, toWaitID }
         console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         console.log(this.source);
         this.genQuestionInfo();
     }
 
-    // testCodeGen() {
-    //     let code, tree, ccode, i;
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(2, 4, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(2, 6, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(3, 6, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(3, 9, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(4, 8, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    //     for (i = 0; i < 3; i++) {
-    //         code = build.genSimpleWaitCode(4, 12, -1);
-    //         console.log(code);
-    //         [tree, ccode] = build.buildAndTranspile(code);
-    //         console.log(ccode);
-    //     }
-    // }
-
     updateSourceCode() {
         // this.testCodeGen();
         console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
-            const ret = build.genSimpleWaitCode(this.numForks, this.numPrints, this.numWaits);
+            const ret = build.genSimpleWaitCode(this.numForks, this.numPrints);
             return ret;
         };
 
@@ -222,27 +203,15 @@ export default class ProcTimeline extends RunestoneBase {
             switch (mode) {
                 case "2":
                     this.numForks = 3;
-                    this.numPrints = this.pick([5, 6]);
-                    this.hasNest = true;
-                    this.hasExit = false;
-                    this.hasElse = true;
-                    this.hasLoop = false;
+                    this.numPrints = this.pick([8, 9, 10]);
                     break;
                 case "3":
                     this.numForks = 4;
-                    this.numPrints = 7;
-                    this.hasNest = true;
-                    this.hasExit = true;
-                    this.hasElse = true;
-                    this.hasLoop = true;
+                    this.numPrints = this.pick([9, 10, 11]);
                     break;
                 default:
                     this.numForks = 2;
-                    this.numPrints = this.pick([4, 5]);
-                    this.hasNest = false;
-                    this.hasExit = false;
-                    this.hasElse = false;
-                    this.hasLoop = false;
+                    this.numPrints = this.pick([6, 7]);
                     break;
             }
             let prev = this.source || "";
@@ -265,7 +234,15 @@ export default class ProcTimeline extends RunestoneBase {
         const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
         this.csvTree = c;
         this.labels = l;
-        this.answerMap = build.getAnswer(this.fullTree, this.numPrints);
+        [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source);
+        while (this.printSeqs.length <= 2) {
+            this.updateSourceCode();
+            [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
+            const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
+            this.csvTree = c;
+            this.labels = l;
+            [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source);
+        }
     }
     
     // Randomly pick one item in list
@@ -365,15 +342,30 @@ export default class ProcTimeline extends RunestoneBase {
     loadAnotherQuestion(){
         this.genNewQuestionNAnswer();
         this.codeDiv.html(this.cCode);
-        for (var i = 0; i < this.numPrints; i++) {
-            this.inputBox = $("<input>").attr({
-                'placeholder': 'Enter your answer here',
-                'id' : this.divid + '_input_' + i
-            }).addClass("form-control input-box");
-
-            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
-            this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i).append(this.subPrompt, this.inputBox);
-            this.inputDiv.append(this.subQuestionDiv);
+        for (let i = 0; i < this.printSeqs.length; i++) {
+            let printSeq = this.printSeqs[i];
+            if (!this.answerMap.hasOwnProperty(printSeq)) {
+                continue;
+            }
+            
+            // Create a checkbox input element.
+            let $inputCheck = $("<input>").attr({
+                type: 'checkbox',
+                id: `${this.divid}_input_${i}`
+            });
+            
+            // Create a label associated with the checkbox.
+            let $label = $("<label>")
+                .attr("for", `${this.divid}_input_${i}`)
+                .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
+            
+            // Create a div to contain the checkbox and label.
+            let $questionDiv = $("<div>")
+                .attr("id", `${this.divid}_question_${i}`)
+                .append($inputCheck, $label);
+            
+            // Append the div to the parent container.
+            this.inputDiv.append($questionDiv, $("<br>"));
         }
     }
 
@@ -381,15 +373,19 @@ export default class ProcTimeline extends RunestoneBase {
         this.feedback_msg = []; // Clear feedback_msg.
         this.correct = true; // Initialize answer first as true, only update when incorrect choice occurs. 
 
-        for (let i = 0; i < this.numPrints; i++) {
-            let currAnswer = $("#" + this.divid + "_input_" + i).val().toString();
-            if (currAnswer !== this.answerMap[this.printContent[i]].toString()) {
+        for (let i = 0; i < this.printSeqs.length; i++) {
+            if (!this.answerMap.hasOwnProperty(this.printSeqs[i])) {
+                continue;
+            }
+            let currAnswer = $("#" + this.divid + "_input_" + i).prop("checked");
+            let currSolution = !this.answerMap[this.printSeqs[i]]; // map stores whether the answer is incorrect or not
+            console.log("Current answer is", currAnswer, "and solution is", currSolution);
+            if (currAnswer !== currSolution) {
                 this.correct = false;
-                if (! currAnswer) { this.feedback_msg.push(`Incomplete answer for <code>${this.printContent[i]}</code>.<br>`); }
-                else { this.feedback_msg.push(`Incorrect answer for how many times <code>${this.printContent[i]}</code> will print.<br>`); }
             }
         }
         if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
+        else { this.feedback_msg.push(`Feedback TBD<br>`); }
         this.updateFeedbackDiv();
     }
 
@@ -431,6 +427,13 @@ export default class ProcTimeline extends RunestoneBase {
 
         $('#timeline_graph').html(timeline.drawTimeline(this.fullTree, tl_width, tl_height, margin, traceArray, extra_trace, refreshCode));
         console.log("Real ones", this.csvTree, this.labels);
+        let constraints = build.printSequenceConstraints(this.source)
+        console.log("print seq for ", this.source, "\n", constraints);
+        console.log(build.getPrintSequence(constraints));
+        for (let i = 0; i < 10; i++) {
+            let [seq, inc] = build.getPrintSequenceIncorrect(constraints);
+            // console.log(seq, "incorrect?: ", inc);
+        }
         this.bindCodeBlockEvents();
     }
 

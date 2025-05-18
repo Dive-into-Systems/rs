@@ -53,3 +53,11 @@
     stroke-dasharray: 0;
 }
 
+label code.candidate-print-sequence {
+    background-color: #f8f8f8;
+    color: #000;
+    padding: 2px 4px;
+    font-family: monospace;
+    font-style: normal; font-weight: normal;
+    font-size: large;
+  }
