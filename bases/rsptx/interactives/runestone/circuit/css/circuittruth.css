@@ -1,0 +1,70 @@
+.selectwidthauto {
+  width:95% !important;
+  display: inline-block !important;
+  margin: 0px;
+}
+
+/* — output/result text — */
+div[id$="_circuitOutput"],
+div[id$="_result"] {
+  margin-bottom: 10px;
+  font-size: large;
+  margin: 10px;
+  visibility: hidden;
+}
+
+/* - all buttons - */
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;    /* space between buttons */
+}
+
+/* — GoJS diagram container — */
+div[id$="_myDiagramDiv"] {
+  width: 100% !important;
+  height: 400px !important;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+/* — Truth table — */
+table[id$="_truthTable"] {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-bottom: 10px;
+}
+table[id$="_truthTable"] th,
+table[id$="_truthTable"] td {
+  border: 1px solid #ccc !important;
+  padding: 8px !important;
+  text-align: center !important;
+}
+
+/* — Answer input cells — */
+.answer-input {
+  width: 3ch !important;
+  padding: 2px !important;
+  text-align: center !important;
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  size: 1;
+}
+
+/* — Buttons — */
+button[id$="_generateButton"],
+button[id$="_checkButton"] {
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  transition: all 200ms;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
+}
