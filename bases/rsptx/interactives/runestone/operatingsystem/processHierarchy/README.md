@@ -59,12 +59,32 @@ If you want to customize the instructions, you can add it to the `instruction` f
 ```html
 <div class="ptx-runestone-container">
   <div class="runestone">
-    <div data-component="fork" data-question_label="1" id="test_fork">
+    <div data-component="processHierarchy" data-question_label="1" id="test_fork">
       <script type="application/json">
       </script>
     </div>
   </div>
 </div>
+```
+
+```html
+<div class="ptx-runestone-container">
+  <div class="runestone">
+    <div data-component="processTimeline" data-question_label="3" id="fork_timeline_default">
+      <script type="application/json">
+        {
+          "preset-params": false
+        }
+      </script>
+    </div> <!-- this component -->
+  </div> <!--runestone-->
+  <style>
+    body{
+      overflow-y: hidden;
+      overflow-x: hidden;
+    }
+  </style>
+</div> <!--ptx-runestone-container--> 
 ```
 
 You don't even need the `<script>` section. It will generate the default complexity level menu and options from which users can choose.
@@ -76,7 +96,7 @@ You don't even need the `<script>` section. It will generate the default complex
 ```html
 <div class="ptx-runestone-container">
   <div class="runestone">
-    <div data-component="fork" data-question_label="2" id="fork_preset_params">
+    <div data-component="processHierarchy" data-question_label="2" id="fork_preset_params">
       <script type="application/json">
         {
           "preset-params": true,
