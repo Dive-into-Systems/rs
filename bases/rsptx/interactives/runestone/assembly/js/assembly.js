@@ -217,7 +217,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 "background-color": "white",
                 "color": "black"
             });
-            textNode.css({ "font-size": "large", height: "25px" });
+            textNode.css({ "font-size": "large", height: "25px", "margin-left": "3px", });
             this.textNodes.push(textNode);
 
             // start appending the letter, the prompt, the feedback for the first line
