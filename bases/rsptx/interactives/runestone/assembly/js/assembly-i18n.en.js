@@ -5,7 +5,7 @@ $.i18n().load({
         msg_asm_check_me: "Check",
         msg_asm_incorrect: "Incorrect. Please think again.",
         msg_asm_correct: "Correct. Good job!",
-        msg_asm_generate_another: "Ask me another",
+        msg_asm_generate_another: "Generate another question",
         msg_asm_imcomplete_answer: "Your selection is incomplete",
     }
 }).done(function() {
