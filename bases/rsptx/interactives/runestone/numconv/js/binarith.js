@@ -270,6 +270,7 @@ export default class BA extends RunestoneBase {
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.checkCurrentAnswer();
+                    this.checkCurrentAnswerPt2();
                     this.logCurrentAnswer();
                 }
             }.bind(this),
@@ -387,49 +388,79 @@ export default class BA extends RunestoneBase {
 
         this.answerDiv2.append(this.instruction3)
 
+        const fieldset = document.createElement("FIELDSET")
+
         this.radioButtons = [];
-        // const btnYes = $(document.createElement("input"))
-        //     .attr({
-        //         type: "radio",
-        //         value: true,
-        //         name:"YN",
-        //         id: "Yes",
-        //     })
-        //     .on("change", function () {
-        //         $(this).removeClass("highlightWrong");
-        //         $(this).next("label").removeClass("highlightWrong");
-        //         $(this).removeClass("highlightRight");
-        //         $(this).next("label").removeClass("highlightRight");
-        //     })
-        //     .addClass("centerplease");
-        const lblYes = $("<label>").text("Yes");
+        const yesBtnS = document.createElement("INPUT");
+        yesBtnS.setAttribute("type", "radio");
+        yesBtnS.setAttribute("id", "yesBtnS")
+        yesBtnS.setAttribute("name", "overflowS")
+        const yesLabelS = document.createElement("LABEL");
+        yesLabelS.textContent = "Yes"
+        yesLabelS.setAttribute("for", "yesBtnS")
 
-        // Add a label and radio button for the "Invalid" answer option
-        // const btnNo = $(document.createElement("input"))
-        //     .attr({
-        //         type: "radio",
-        //         value: false,
-        //         name: "YN",
-        //         id: "No",
-        //     })
-        //     .on("change", function () {
-        //         $(this).removeClass("highlightWrong");
-        //         $(this).prev("label").removeClass("highlightWrong");
-        //         $(this).removeClass("highlightRight");
-        //         $(this).next("label").removeClass("highlightRight");
-        //     })
-        //     .addClass("centerplease");
-        const lblNo = $("<label>").text("No")
+        const noBtnS = document.createElement("INPUT");
+        noBtnS.setAttribute("type", "radio");
+        noBtnS.setAttribute("id", "noBtnS")
+        noBtnS.setAttribute("name", "overflowS")
+        noBtnS.setAttribute("Checked", "overflow")
+
+        const noLabelS = document.createElement("LABEL");
+        noLabelS.textContent = "No"
+        noLabelS.setAttribute("for", "noBtnS")
 
 
-        // console.log(btnYes);
+        fieldset.append(yesBtnS);
+        fieldset.append(yesLabelS);
 
-        // Append the radio buttons and labels to the question div
-        this.answerDiv2.append(lblYes);
-        // this.answerDiv2.append(btnYes);
-        this.answerDiv2.append(lblNo);
-        // this.answerDiv2.append(btnNo);
+        fieldset.append(noBtnS);
+        fieldset.append(noLabelS);
 
+        //bind 
+        this.yesBtnS = yesBtnS;
+        this.noBtnS = noBtnS;
+
+        this.answerDiv2.append(fieldset)
+
+        ///////////////////////Again for unsigned
+
+
+        this.answerDiv2.append(document.createElement("br"));
+
+
+        const fieldset2 = document.createElement("FIELDSET")
+
+        this.radioButtons = [];
+        const yesBtnU = document.createElement("INPUT");
+        yesBtnU.setAttribute("type", "radio");
+        yesBtnU.setAttribute("id", "yesBtnU")
+        yesBtnU.setAttribute("name", "overflowU")
+        const yesLabelU = document.createElement("LABEL");
+        yesLabelU.textContent = "Yes"
+        yesLabelU.setAttribute("for", "yesBtnU")
+
+        const noBtnU = document.createElement("INPUT");
+        noBtnU.setAttribute("type", "radio");
+        noBtnU.setAttribute("id", "noBtnU")
+        noBtnU.setAttribute("name", "overflowU")
+        noBtnU.setAttribute("Checked", "overflow")
+
+        const noLabelU = document.createElement("LABEL");
+        noLabelU.textContent = "No"
+        noLabelU.setAttribute("for", "noBtnU")
+
+
+        fieldset.append(yesBtnU);
+        fieldset.append(yesLabelU);
+
+        fieldset.append(noBtnU);
+        fieldset.append(noLabelU);
+
+        //bind 
+        this.yesBtnU = yesBtnU;
+        this.noBtnU = noBtnU;
+
+        this.answerDiv2.append(fieldset2)
 
         this.containerDiv.append(this.answerDiv2);
 
@@ -485,6 +516,7 @@ export default class BA extends RunestoneBase {
             return(target_num.toString(10));
         }
     }
+    
     
 
     // generate a random number or two random numbers from 0 to 2^(this.num_bits)-1 based
@@ -600,6 +632,104 @@ export default class BA extends RunestoneBase {
             this.contWrong = 0;
        }
        if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
+   }
+
+
+   displayCorrectAnswerUnsigned(){
+    this.feedback_msg += ($.i18n("msg_NC_correct"));
+    this.correctpt2 = true;
+    this.contWrong = 0;
+   }
+   displayIncorrectAnswerUnsigned(){
+    this.feedback_msg += ($.i18n("msg_NC_incorrect"));
+    this.contWrong ++;
+    this.conrrectpt2 = false;
+   }
+   displayCorrectAnswerSigned(){
+    this.feedback_msg += ($.i18n("msg_NC_correct"));
+    this.correctpt2 = true;
+    this.contWrong = 0;
+   }
+   displayIncorrectAnswerSigned(){
+    this.feedback_msg += ($.i18n("msg_NC_incorrect"));
+    this.contWrong ++;
+    this.conrrectpt2 = false;
+   }
+
+   checkCurrentAnswerPt2(){
+    const USValue = (this.USInput.value.toLocaleLowerCase());
+    const SValue = (this.SInput.value.toLowerCase())
+    const yesBtnValueS = this.yesBtnS.checked;
+    const noBtnValueS = this.noBtnS.checked;
+    const yesBtnValueU = this.yesBtnU.checked;
+    const noBtnValueU = this.noBtnU.checked;
+
+    // const debugP = document.createElement("div")
+    // this.containerDiv.append(debugP);
+    // debugP.innerHTML = (`${USValue},  ${SValue}, ${yesBtnValue}, ${noBtnValue}`);
+    if(USValue == ""){
+        this.feedback_msg = ($.i18n("msg_no_answer"));
+        this.correctpt2 = false;
+    }
+    else if(this.target_num_string != USValue){
+        this.feedback_msg = ($.i18n("msg_NC_incorrect"));
+        this.contWrong ++;
+        this.conrrectpt2 = false;
+    }
+    else{
+        this.feedback_msg = ($.i18n("msg_NC_correct"));
+        this.correctpt2 = true;
+        this.contWrong = 0;
+    }
+
+
+    //Check the signed value
+    if(SValue == ""){
+        this.feedback_msg = ($.i18n("msg_no_answer"));
+        this.correctpt2 = false;
+    }
+    else if(this.toSignedDecimal(this.target_num_string, this.num_bits) != SValue){
+        this.feedback_msg = ($.i18n("msg_NC_incorrect"));
+        this.contWrong ++;
+        this.conrrectpt2 = false;
+    }
+    else{
+        this.feedback_msg = ($.i18n("msg_NC_correct"));
+        this.correctpt2 = true;
+        this.contWrong = 0;
+    }
+
+    ///find out if there's unsigned overflow
+    
+    //grab first digit of target answer
+    const carryOut = this.toBinary(this.target_num).toString()[0]
+    if(this.randomItem == "ADDITION" && carryOut == 1 && yesBtnValueU == true && noBtnValueU == false){
+        this.displayCorrectAnswerUnsigned()
+    }
+    else if(this.randomItem == "ADDITION" && carryOut == 0 && yesBtnValueU == false && noBtnValueU == true){
+        this.displayCorrectAnswerUnsigned()
+    }
+    else if(this.randomItem == "SUBTRACTION" && carryOut == 0 &&  yesBtnValueU == true && noBtnValueU == false){
+        this.displayCorrectAnswerUnsigned();
+    }
+    else if(this.randomItem == "SUBTRACTION" && carryOut == 1 &&  yesBtnValueU == false && noBtnValueU == true){
+        this.displayCorrectAnswerUnsigned();
+    }
+    else{
+        this.displayIncorrectAnswerUnsigned();
+    }
+
+    //find out if there's signed overflow
+    const largestNegNum = -2^(this.numBits);
+    const largestPosNum = 2^(this.numBits)-1;
+
+    const overflow = (this.target_num < largestNegNum || this.target_num > largestPosNum);
+    if(overflow && yesBtnValueS && !noBtnValueS){
+        this.displayCorrectAnswerSigned();
+    }
+    else{
+        this.displayIncorrectAnswerSigned();
+    }
    }
 
     // log the answer and other info to the server (in the future)
