@@ -34,7 +34,8 @@ export default class BA extends RunestoneBase {
         this.divid = orig.id;
 
         // Default configuration settings
-        this.correct = null;
+        this.correctpt1 = null;
+        this.correctpt2 = null;
         this.num_bits = 4;
         this.fromOpt = ["ADDITION", "SUBTRACTION"];
         this.toOpt = ["4", "6", "8"];
@@ -208,6 +209,8 @@ export default class BA extends RunestoneBase {
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
 
+        this.renderSecondSection();
+
         // create the feedback div
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
@@ -320,6 +323,118 @@ export default class BA extends RunestoneBase {
         this.containerDiv.appendChild(this.feedbackDiv);
     }
 
+    renderSecondSection(){
+
+        this.containerDiv.append(document.createElement("br"));
+
+        this.instruction2 = document.createElement("div");
+        this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
+            "Convert the answer to unsigned and signed integers. Then, indicate whether or not there is overflow.";
+        //We got rid of the padding for styling purposes
+        this.instruction2.style.padding = "0px";
+
+        this.containerDiv.append(this.instruction2)
+
+
+        //This sets up the input for the unsigned decimal input
+        this.answerDiv2 = document.createElement("div");
+        this.USInput = document.createElement("input");
+        this.USInput.setAttribute('type', 'text');
+        this.USInput.setAttribute("size", "20");
+        this.USInput.setAttribute("id", this.divid + "_input");
+        this.USInput.className = "form form-control selectwidthauto";
+        this.statementNode11US = document.createTextNode("Unsigned Decimal:");
+        this.answerDiv2.appendChild(this.statementNode11US);
+        this.answerDiv2.appendChild(this.USInput);
+
+        var placeholder;
+        placeholder = "Unsigned Decimal:";
+        this.USInput.setAttribute("placeholder", placeholder);
+        this.USInput.setAttribute("size", placeholder.length + 1);
+        this.USInput.setAttribute("maxlength", this.num_bits + 5);
+        this.USInput.setAttribute('style', 'width: 50ptx;');
+
+        //This sets up the input for the decimal input
+        this.SInput = document.createElement("input");
+        this.SInput.setAttribute('type', 'text');
+        this.SInput.setAttribute("size", "20");
+        this.SInput.setAttribute("id", this.divid + "_input");
+        this.SInput.className = "form form-control selectwidthauto";
+        this.statementNode11S = document.createTextNode("Signed Decimal:");
+
+        this.containerDiv.append(document.createElement("br"));
+
+        this.answerDiv2.appendChild(this.statementNode11S);
+        this.answerDiv2.appendChild(this.SInput);
+
+        var placeholder;
+        placeholder = "Signed Decimal:";
+        this.SInput.setAttribute("placeholder", placeholder);
+        this.SInput.setAttribute("size", placeholder.length + 1);
+        this.SInput.setAttribute("maxlength", this.num_bits + 5);
+        this.SInput.setAttribute('style', 'width: 50ptx;');
+
+
+
+        //Adding the Yes/No radio buttons for overflow
+        this.answerDiv2.append(document.createElement("br"));
+
+        
+        this.instruction3 = document.createElement("div");
+        this.instruction3.innerHTML = "Is there overflow?";
+        //We got rid of the padding for styling purposes
+        this.instruction3.style.padding = "0px";
+
+        this.answerDiv2.append(this.instruction3)
+
+        this.radioButtons = [];
+        // const btnYes = $(document.createElement("input"))
+        //     .attr({
+        //         type: "radio",
+        //         value: true,
+        //         name:"YN",
+        //         id: "Yes",
+        //     })
+        //     .on("change", function () {
+        //         $(this).removeClass("highlightWrong");
+        //         $(this).next("label").removeClass("highlightWrong");
+        //         $(this).removeClass("highlightRight");
+        //         $(this).next("label").removeClass("highlightRight");
+        //     })
+        //     .addClass("centerplease");
+        const lblYes = $("<label>").text("Yes");
+
+        // Add a label and radio button for the "Invalid" answer option
+        // const btnNo = $(document.createElement("input"))
+        //     .attr({
+        //         type: "radio",
+        //         value: false,
+        //         name: "YN",
+        //         id: "No",
+        //     })
+        //     .on("change", function () {
+        //         $(this).removeClass("highlightWrong");
+        //         $(this).prev("label").removeClass("highlightWrong");
+        //         $(this).removeClass("highlightRight");
+        //         $(this).next("label").removeClass("highlightRight");
+        //     })
+        //     .addClass("centerplease");
+        const lblNo = $("<label>").text("No")
+
+
+        // console.log(btnYes);
+
+        // Append the radio buttons and labels to the question div
+        this.answerDiv2.append(lblYes);
+        // this.answerDiv2.append(btnYes);
+        this.answerDiv2.append(lblNo);
+        // this.answerDiv2.append(btnNo);
+
+
+        this.containerDiv.append(this.answerDiv2);
+
+    }
+
     // clear the input field
     clearAnswer() {
         this.inputNode.value = "";
@@ -363,6 +478,13 @@ export default class BA extends RunestoneBase {
         return str;
     }
     
+    toSignedDecimal(target_num, num_bits){
+        if ( target_num & ( 1 << (num_bits - 1) )) {
+            return((target_num - (1 << num_bits)).toString(10)); 
+        } else {
+            return(target_num.toString(10));
+        }
+    }
     
 
     // generate a random number or two random numbers from 0 to 2^(this.num_bits)-1 based
@@ -455,12 +577,12 @@ export default class BA extends RunestoneBase {
        var input_value = this.inputNode.value.toLowerCase();
        if ( input_value == "" ) {
            this.feedback_msg = ($.i18n("msg_no_answer"));
-           this.correct = false;
+           this.correctpt1 = false;
        } 
        else if ( input_value != this.target_num_string ) {
            this.feedback_msg = ($.i18n("msg_NC_incorrect"));
            this.contWrong ++;
-           this.correct = false;
+           this.correctpt1 = false;
            // Give the user a hint if number of wrong attemps reaches 3
             if (this.contWrong >= 3){
                 switch(this.randomItem) {
@@ -474,10 +596,10 @@ export default class BA extends RunestoneBase {
             }          
        } else {
             this.feedback_msg = ($.i18n("msg_NC_correct"));
-            this.correct = true;
+            this.correctpt1 = true;
             this.contWrong = 0;
        }
-       if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
+       if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
    }
 
     // log the answer and other info to the server (in the future)
@@ -492,7 +614,7 @@ export default class BA extends RunestoneBase {
             event: "numconv",
             act: answer || "",
             answer: answer || "",
-            correct: this.correct ? "T" : "F",
+            correct: this.correctpt1 ? "T" : "F",
             div_id: this.divid,
         };
         if (typeof sid !== "undefined") {
@@ -567,7 +689,7 @@ export default class BA extends RunestoneBase {
 
         // only the feedback message needs to display
         var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
-        if (this.correct) {
+        if (this.correctpt1) {
             $(this.feedbackDiv).attr("class", "alert alert-info");
         } else {
             $(this.feedbackDiv).attr("class", "alert alert-danger");
