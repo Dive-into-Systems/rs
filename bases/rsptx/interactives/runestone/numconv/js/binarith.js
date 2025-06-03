@@ -470,6 +470,9 @@ export default class BA extends RunestoneBase {
     clearAnswer() {
         this.inputNode.value = "";
         this.feedbackDiv.remove();
+        if(this.feedbackDiv2 != undefined && this.feedbackDiv2 == null){
+            this.feedbackDiv2.remove();
+        }
     }
 
     // Select an item among the operators selected
@@ -636,22 +639,22 @@ export default class BA extends RunestoneBase {
 
 
    displayCorrectAnswerUnsigned(){
-    this.feedback_msg += ($.i18n("msg_NC_correct"));
+    this.feedback_msg2 += ($.i18n("msg_NC_correct"));
     this.correctpt2 = true;
     this.contWrong = 0;
    }
    displayIncorrectAnswerUnsigned(){
-    this.feedback_msg += ($.i18n("msg_NC_incorrect"));
+    this.feedback_msg2 += ($.i18n("msg_NC_incorrect"));
     this.contWrong ++;
     this.conrrectpt2 = false;
    }
    displayCorrectAnswerSigned(){
-    this.feedback_msg += ($.i18n("msg_NC_correct"));
+    this.feedback_msg2 += ($.i18n("msg_NC_correct"));
     this.correctpt2 = true;
     this.contWrong = 0;
    }
    displayIncorrectAnswerSigned(){
-    this.feedback_msg += ($.i18n("msg_NC_incorrect"));
+    this.feedback_msg2 += ($.i18n("msg_NC_incorrect"));
     this.contWrong ++;
     this.conrrectpt2 = false;
    }
@@ -668,16 +671,16 @@ export default class BA extends RunestoneBase {
     // this.containerDiv.append(debugP);
     // debugP.innerHTML = (`${USValue},  ${SValue}, ${yesBtnValue}, ${noBtnValue}`);
     if(USValue == ""){
-        this.feedback_msg = ($.i18n("msg_no_answer"));
+        this.feedback_msg2 = ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
     else if(this.target_num_string != USValue){
-        this.feedback_msg = ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.conrrectpt2 = false;
     }
     else{
-        this.feedback_msg = ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 = ($.i18n("msg_NC_correct"));
         this.correctpt2 = true;
         this.contWrong = 0;
     }
@@ -685,16 +688,16 @@ export default class BA extends RunestoneBase {
 
     //Check the signed value
     if(SValue == ""){
-        this.feedback_msg = ($.i18n("msg_no_answer"));
+        this.feedback_msg2 = ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
     else if(this.toSignedDecimal(this.target_num_string, this.num_bits) != SValue){
-        this.feedback_msg = ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.conrrectpt2 = false;
     }
     else{
-        this.feedback_msg = ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 = ($.i18n("msg_NC_correct"));
         this.correctpt2 = true;
         this.contWrong = 0;
     }
@@ -753,6 +756,7 @@ export default class BA extends RunestoneBase {
         }
         // render the feedback
         this.renderFeedback();
+        this.renderFeedback2();
         return data;
     }
 
@@ -810,7 +814,9 @@ export default class BA extends RunestoneBase {
    displayFeedback() {
        this.feedbackDiv.style.visibility = "visible";
    }
-
+   displayFeedback2() {
+    this.feedbackDiv2.style.visibility = "visible";
+    }
    // Update the feedback message
    renderFeedback() {
        this.feedbackDiv = document.createElement("div");
@@ -831,6 +837,25 @@ export default class BA extends RunestoneBase {
             this.queueMathJax(document.body);
         }
    }
+   renderFeedback2() {
+    this.feedbackDiv2 = document.createElement("div");
+    this.feedbackDiv2.setAttribute("id", this.divid + "_feedback");
+    this.containerDiv.appendChild(this.feedbackDiv);
+
+     // only the feedback message needs to display
+     var feedback_html = "<dev>" + this.feedback_msg2 + "</dev>";
+     if (this.correctpt2) {
+         $(this.feedbackDiv2).attr("class", "alert alert-info");
+     } else {
+         $(this.feedbackDiv2).attr("class", "alert alert-danger");
+     }
+   
+     this.feedbackDiv2.innerHTML = feedback_html;
+     this.displayFeedback2();
+     if (typeof MathJax !== "undefined") {
+         this.queueMathJax(document.body);
+     }
+}
 }
 
 
