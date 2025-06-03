@@ -22,6 +22,8 @@ $.i18n().load({
         msg_hint_xor: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_XOR' target = '_blank'>4.6.3</a>.",
         msg_hint_not: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_NOT' target = '_blank'>4.6.4</a>.",
         msg_hint_shift: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_bit_shifting' target = '_blank'>4.6.5</a>.",
+        msg_hint_addition: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_addition.html' target = '_blank'>4.4.1</a>.",
+        msg_hint_subtraction: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_subtraction.html' target = '_blank'>4.4.2</a>.",
 
     },
 

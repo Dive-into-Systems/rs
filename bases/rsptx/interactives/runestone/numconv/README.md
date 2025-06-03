@@ -141,3 +141,48 @@ You don't have to have the `<script>` section, like in this example. It will gen
 
 Making these changes in `<script>` allows you to generate one 8-bit binary number, with `Left shift (<<)`, `Logical right shift (>>)`, and `Arithmetic right shift (>>)` appearing as allowed operations in the menu, where you can explore the results by shifting the binary number by 2, 3, or 4.
 
+
+# binarith
+This tool helps the user to test their knowledge on binary arithmetic operation. The user will be given random problems with selected bitwise operators and check their answer. 
+
+## How to get it built
+
+You can use the keyword `binarith` to refer to this tool in a `.ptx` file. (An example is provided below).
+
+## Tunable parameters
+
+- `num_bits`: An integer that controls the length of numbers generated in the prompt. (default: 4)
+- `fromOpt`: A list of bitwise operators among which the user can select. We currently support `ADDITION` and `SUBTRACTION`. You can only choose a sub-array from them.
+- `toOpt`: A list that contains different numbers of bits the numbers in the prompt can be. We currently support `4`, `6`, `8`. You can choose integers other than the three listed.
+
+## Usage example
+
+### A basic example
+
+```html
+<div class="ptx-runestone-container">
+  <div class="runestone">
+    <!--the 'binarith' keyword below is what you need to refer to the tool-->
+    <div data-component="binarith" data-question_label="1" id="test_bitwise_arithmetic"></div>
+  </div> <!--runestone-->
+</div> <!--ptx-runestone-container-->
+```
+
+### An example with tunable parameters
+
+```html
+<div class="ptx-runestone-container">
+  <div class="runestone">
+    <div data-component="binarith" data-question_label="1" id="test_bitwise_arithmetic"></div>
+    <script type="application/json">
+      {
+        "num_bits": 6,
+        "fromOpt": [`ADDITION`, `SUBTRACTION`],
+        "toOpt": [4, 5, 6]
+      }
+    </script>
+  </div> <!--runestone-->
+</div> <!--ptx-runestone-container-->
+```
+
+

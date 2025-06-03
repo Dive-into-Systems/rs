@@ -74,6 +74,7 @@ const module_map = {
     assembly_flag: () => import("./runestone/assembly/js/assembly_flag.js"),
     binops: () => import("./runestone/numconv/js/binops.js"),
     bincalc: () => import("./runestone/numconv/js/bincalc.js"),
+    binarith: () => import("./runestone/numconv/js/binarith.js"),
     cachetable: () => import("./runestone/cache/js/cachetable.js"),
     cacheinfo: () => import("./runestone/cache/js/cacheinfo.js"),
     cachepartition: () => import("./runestone/cache/js/cachepartition.js"),
