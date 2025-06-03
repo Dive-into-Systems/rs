@@ -808,6 +808,9 @@ export default class BA extends RunestoneBase {
    // Make the feedback hidden
    hideFeedback() {
        this.feedbackDiv.remove();
+       if(this.feedbackDiv2 != undefined && this.feedbackDiv2 != null){
+        this.feedbackDiv2.remove();
+       }
    }
 
    // Make the feedback visible
@@ -840,7 +843,7 @@ export default class BA extends RunestoneBase {
    renderFeedback2() {
     this.feedbackDiv2 = document.createElement("div");
     this.feedbackDiv2.setAttribute("id", this.divid + "_feedback");
-    this.containerDiv.appendChild(this.feedbackDiv);
+    this.containerDiv.appendChild(this.feedbackDiv2);
 
      // only the feedback message needs to display
      var feedback_html = "<dev>" + this.feedback_msg2 + "</dev>";
