@@ -215,7 +215,7 @@ export default class BA extends RunestoneBase {
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
 
-        this.renderSecondSection();
+        //this.renderSecondSection();
 
         // create the feedback div
         this.feedbackDiv = document.createElement("div");
@@ -276,8 +276,8 @@ export default class BA extends RunestoneBase {
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.checkCurrentAnswer();
-                    this.checkCurrentAnswerPt2();
                     this.logCurrentAnswer();
+                    this.renderFeedback();
                     this.correctpt2 = true;
 
                 }
@@ -303,6 +303,7 @@ export default class BA extends RunestoneBase {
                 if (this.checkedValues.length != 0){
                     this.generateNumber();
                     this.generateAnswer();
+                    this.clearSecondPart();
                 } 
                 this.checkValidConversion();
                 this.sendData(3);
@@ -326,6 +327,74 @@ export default class BA extends RunestoneBase {
             );
    }
 
+   renderSecondPartButtons(){
+    this.submitButton2 = document.createElement("button");
+    this.submitButton2.textContent = $.i18n("msg_NC_check_me");
+    $(this.submitButton2).attr({
+        class: "btn btn-success",
+        name: "do answer",
+        type: "button",
+    });
+    // check the answer
+    this.submitButton2.addEventListener(
+        "click",
+        function () {
+            this.checkValidConversion();
+            if ( this.valid_conversion ) {
+                this.checkCurrentAnswerPt2();
+                this.logCurrentAnswer();
+                this.renderFeedback2();
+                this.correctpt2 = true;
+
+            }
+        }.bind(this),
+        false
+    );
+
+    // "try another" button
+    this.submitButton.remove();
+    this.generateButton.remove();
+    this.generateButton = document.createElement("button");
+    this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
+    $(this.generateButton).attr({
+        class: "btn btn-success",
+        name: "generate a number",
+        type: "button",
+    });
+    // Generate a new prompt
+    this.generateButton.addEventListener(
+        "click",
+        function () {
+            this.clearAnswer();
+            this.getCheckedValues();
+            // only generate new prompt when there is item selected
+            if (this.checkedValues.length != 0){
+                this.generateNumber();
+                this.generateAnswer();
+                this.clearSecondPart();
+            } 
+            this.checkValidConversion();
+            this.sendData(3);
+        }.bind(this),
+        false
+    );
+
+    // Add the buttons in the container
+    this.answerDiv2.appendChild(document.createElement("br"));
+    this.answerDiv2.appendChild(this.generateButton);
+    this.answerDiv2.appendChild(this.submitButton);
+
+    // Check answer when pressing "Enter"
+    this.inputNode.addEventListener(
+        "keypress",
+        function(event) {
+        if (event.key === "Enter") {
+                this.submitButton.click();
+            }
+        }.bind(this), false
+        );
+   }
+
     // Add the feedback in the container
     renderBAFeedbackDiv() {
         this.containerDiv.appendChild(document.createElement("br"));
@@ -334,7 +403,9 @@ export default class BA extends RunestoneBase {
 
     renderSecondSection(){
 
-        this.containerDiv.append(document.createElement("br"));
+        this.answerDiv2 = document.createElement("div");
+
+
 
         this.instruction2 = document.createElement("div");
         this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
@@ -342,11 +413,10 @@ export default class BA extends RunestoneBase {
         //We got rid of the padding for styling purposes
         this.instruction2.style.padding = "0px";
 
-        this.containerDiv.append(this.instruction2)
+        this.answerDiv2.append(this.instruction2)
 
 
         //This sets up the input for the unsigned decimal input
-        this.answerDiv2 = document.createElement("div");
         this.USInput = document.createElement("input");
         this.USInput.setAttribute('type', 'text');
         this.USInput.setAttribute("size", "20");
@@ -371,7 +441,7 @@ export default class BA extends RunestoneBase {
         this.SInput.className = "form form-control selectwidthauto";
         this.statementNode11S = document.createTextNode("Signed Decimal:");
 
-        this.containerDiv.append(document.createElement("br"));
+        this.answerDiv2.append(document.createElement("br"));
 
         this.answerDiv2.appendChild(this.statementNode11S);
         this.answerDiv2.appendChild(this.SInput);
@@ -386,7 +456,6 @@ export default class BA extends RunestoneBase {
 
 
         //Adding the Yes/No radio buttons for overflow
-        this.answerDiv2.append(document.createElement("br"));
 
         
         this.instruction3 = document.createElement("div");
@@ -431,12 +500,10 @@ export default class BA extends RunestoneBase {
         this.noBtnS = noBtnS;
 
         this.answerDiv2.append(fieldset)
-        this.answerDiv2.append(document.createElement("br"))
 
         ///////////////////////Again for unsigned
 
 
-        this.answerDiv2.append(document.createElement("br"));
 
 
         const fieldset2 = document.createElement("FIELDSET")
@@ -477,6 +544,12 @@ export default class BA extends RunestoneBase {
 
         this.containerDiv.append(this.answerDiv2);
 
+    }
+
+    clearSecondPart(){
+        if(this.answerDiv2 != undefined && this.answerDiv2 != null){
+            this.answerDiv2.remove();
+        }
     }
 
     // clear the input field
@@ -701,6 +774,10 @@ export default class BA extends RunestoneBase {
             this.contWrong = 0;
        }
        if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
+       if(this.correctpt1 === true){
+        this.renderSecondSection();
+        this.renderSecondPartButtons();
+       }
    }
 
 
@@ -803,7 +880,6 @@ export default class BA extends RunestoneBase {
     const decimalAns = this.toSignedDecimalWithOverflow()
     const overflow = (decimalAns < largestNegNum || decimalAns> largestPosNum);
 
-    this.debugFunc(`${decimalAns},  ${overflow},  ${largestNegNum}, ${largestPosNum}, ${yesBtnValueS}, ${noBtnValueS}`)
     if(overflow && yesBtnValueS && !noBtnValueS){
         this.displayCorrectAnswerSigned();
     }
@@ -835,8 +911,7 @@ export default class BA extends RunestoneBase {
             feedback = false;
         }
         // render the feedback
-        this.renderFeedback();
-        this.renderFeedback2();
+
         return data;
         
     }
@@ -905,7 +980,7 @@ export default class BA extends RunestoneBase {
    renderFeedback() {
        this.feedbackDiv = document.createElement("div");
        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-       this.containerDiv.appendChild(this.feedbackDiv);
+       this.answerDiv.appendChild(this.feedbackDiv);
 
         // only the feedback message needs to display
         var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
@@ -924,7 +999,7 @@ export default class BA extends RunestoneBase {
    renderFeedback2() {
     this.feedbackDiv2 = document.createElement("div");
     this.feedbackDiv2.setAttribute("id", this.divid + "_feedback");
-    this.containerDiv.appendChild(this.feedbackDiv2);
+    this.answerDiv2.appendChild(this.feedbackDiv2);
 
      // only the feedback message needs to display
      var feedback_html = "<dev>" + this.feedback_msg2 + "</dev>";
