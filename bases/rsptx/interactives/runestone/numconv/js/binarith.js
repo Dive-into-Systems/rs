@@ -34,7 +34,8 @@ export default class BA extends RunestoneBase {
         this.divid = orig.id;
 
         // Default configuration settings
-        this.correctpt1 = null;
+        //changed correct pt2 and pt2 to flags
+        this.correctpt1 = true;
         this.correctpt2 = true;
         this.num_bits = 4;
         this.fromOpt = ["ADDITION", "SUBTRACTION"];
@@ -88,7 +89,7 @@ export default class BA extends RunestoneBase {
 
    // Generate the layout of the prompt and input
    renderBAPromptAndInput() {
-        // Create the parent div which contains everything
+        // Create the parent div which contains everything        
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
@@ -205,8 +206,18 @@ export default class BA extends RunestoneBase {
         this.inputNode.setAttribute("id", this.divid + "_input");
         this.inputNode.className = "form form-control selectwidthauto";
         this.statementNode11 = document.createTextNode("Your answer (include carry-out): ");
+
+        this.answerDiv.append(document.createElement("br"))
+        this.inputNode2 = document.createElement("input");
+        this.inputNode2.setAttribute('type', 'text');
+        this.inputNode2.setAttribute("size", "20");
+        this.inputNode2.setAttribute("id", this.divid + "_input");
+        this.inputNode2.className = "form form-control selectwidthauto";
+
         this.answerDiv.appendChild(this.statementNode11);
+        this.answerDiv.appendChild(this.inputNode2);
         this.answerDiv.appendChild(this.inputNode);
+
         // this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.promptDiv);
         this.containerDiv.appendChild(document.createElement("br"));
@@ -328,15 +339,16 @@ export default class BA extends RunestoneBase {
    }
 
    renderSecondPartButtons(){
-    this.submitButton2 = document.createElement("button");
-    this.submitButton2.textContent = $.i18n("msg_NC_check_me");
-    $(this.submitButton2).attr({
+    this.submitButton.remove();
+    this.submitButton = document.createElement("button");
+    this.submitButton.textContent = $.i18n(" Check Part 2");
+    $(this.submitButton).attr({
         class: "btn btn-success",
         name: "do answer",
         type: "button",
     });
     // check the answer
-    this.submitButton2.addEventListener(
+    this.submitButton.addEventListener(
         "click",
         function () {
             this.checkValidConversion();
@@ -344,7 +356,7 @@ export default class BA extends RunestoneBase {
                 this.checkCurrentAnswerPt2();
                 this.logCurrentAnswer();
                 this.renderFeedback2();
-                this.correctpt2 = true;
+                //this.correctpt2 = true;
 
             }
         }.bind(this),
@@ -352,7 +364,6 @@ export default class BA extends RunestoneBase {
     );
 
     // "try another" button
-    this.submitButton.remove();
     this.generateButton.remove();
     this.generateButton = document.createElement("button");
     this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
@@ -372,6 +383,7 @@ export default class BA extends RunestoneBase {
                 this.generateNumber();
                 this.generateAnswer();
                 this.clearSecondPart();
+                this.renderBAButtons();
             } 
             this.checkValidConversion();
             this.sendData(3);
@@ -658,7 +670,16 @@ export default class BA extends RunestoneBase {
 
     }
     
-    
+    getCarryOut(){
+        let carryOut;
+        if(this.target_num_string.length > this.num_bits){
+            carryOut = this.target_num_string[0]
+        }
+        else{
+            carryOut = 0
+        }
+        return carryOut;     
+    }
     
 
     // generate a random number or two random numbers from 0 to 2^(this.num_bits)-1 based
@@ -731,6 +752,13 @@ export default class BA extends RunestoneBase {
             this.inputNode.setAttribute("size", placeholder.length + 1);
             this.inputNode.setAttribute("maxlength", this.num_bits + 2);
             this.inputNode.setAttribute('style', 'width: 50ptx;');
+
+            placeholder = "Carry Out";
+            this.inputNode2.setAttribute("placeholder", placeholder);
+            this.inputNode2.setAttribute("size", placeholder.length + 1);
+            this.inputNode2.setAttribute("maxlength", 1);
+            this.inputNode2.setAttribute('style', 'width: 50ptx;');
+
    }
 
    // check if the prompt is valid 
@@ -747,13 +775,31 @@ export default class BA extends RunestoneBase {
   
    // check if the answer is correct
    checkCurrentAnswer() {
+        let ans = this.target_num_string;
+        if(ans.length > this.num_bits){
+            ans = ans.slice(1);
+        }
+        ans = Number(ans)
        // the answer is correct if it is the same as the string this.target_num_string
-       var input_value = this.inputNode.value.toLowerCase();
+       var input_value = Number(this.inputNode.value.toLowerCase());
+       let input_value_2 = this.inputNode2.value;
+
+
+
+       if(input_value_2 == undefined || input_value_2 == null){
+        input_value_2 = 0
+       }
+       else{
+        input_value_2 = Number(input_value_2.toLowerCase());
+       }
+
+
+
        if ( input_value == "" ) {
            this.feedback_msg = ($.i18n("msg_no_answer"));
            this.correctpt1 = false;
        } 
-       else if ( input_value != this.target_num_string ) {
+       else if ( input_value != ans ) {
            this.feedback_msg = ($.i18n("msg_NC_incorrect"));
            this.contWrong ++;
            this.correctpt1 = false;
@@ -770,14 +816,28 @@ export default class BA extends RunestoneBase {
             }          
        } else {
             this.feedback_msg = ($.i18n("msg_NC_correct"));
-            this.correctpt1 = true;
-            this.contWrong = 0;
+
        }
+       
+       const correctCarryOut = this.getCarryOut();
+       if(input_value_2 != correctCarryOut){
+        this.feedback_msg += "\n Incorrect carry out"
+        correctpt1 = false;
+       }
+       else{
+        this.feedback_msg += '\n Correct carry out!'
+       }
+
+       if(this.correctpt1 == true){
+        this.contWrong = 0;
+       }
+       
        if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
        if(this.correctpt1 === true){
         this.renderSecondSection();
         this.renderSecondPartButtons();
        }
+
    }
 
 
@@ -995,6 +1055,7 @@ export default class BA extends RunestoneBase {
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
+        this.correctpt1 = true;
    }
    renderFeedback2() {
     this.feedbackDiv2 = document.createElement("div");
