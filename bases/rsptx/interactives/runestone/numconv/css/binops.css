@@ -25,6 +25,30 @@ input.input-validation-error {
   padding-right: 10px;
 }
 
+.RadioFieldset{
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  margin-bottom: 1%;
+  text-align: center;
+  align-content: center;
+  margin-top:5%;
+
+}
+
+.InputWRadioSubunit{
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  width:60%;
+}
+.InputWRadio{
+  width: 60%;
+  align-content: center;
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  margin-bottom: 1%;
+}
+
 .prompt-divBA {
   width: 75%;
   align-content:center;

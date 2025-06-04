@@ -438,8 +438,14 @@ export default class BA extends RunestoneBase {
         this.USInput.setAttribute("id", this.divid + "_input");
         this.USInput.className = "form form-control";
         this.statementNode11US = document.createTextNode("Unsigned Decimal:");
-        this.answerDiv2.appendChild(this.statementNode11US);
-        this.answerDiv2.appendChild(this.USInput);
+
+        this.USinputDIV = document.createElement("div");
+        this.USinputDIV.className = "InputWRadioSubunit"
+
+        this.USDiv = document.createElement("div")
+        this.USinputDIV.append(this.statementNode11US);
+        this.USinputDIV.append(this.USInput);
+        this.USDiv.append(this.USinputDIV);
 
         var placeholder;
         placeholder = "Unsigned Decimal:";
@@ -456,10 +462,12 @@ export default class BA extends RunestoneBase {
         this.SInput.className = "form form-control";
         this.statementNode11S = document.createTextNode("Signed Decimal:");
 
-        this.answerDiv2.append(document.createElement("br"));
-
-        this.answerDiv2.appendChild(this.statementNode11S);
-        this.answerDiv2.appendChild(this.SInput);
+        this.SInputDiv = document.createElement('div');
+        this.SInputDiv.className = "InputWRadioSubunit"
+        this.SInputDiv.appendChild(this.statementNode11S);
+        this.SInputDiv.appendChild(this.SInput);
+        this.SDiv = document.createElement("div")
+        this.SDiv.append(this.SInputDiv);
 
         var placeholder;
         placeholder = "Signed Decimal:";
@@ -478,10 +486,11 @@ export default class BA extends RunestoneBase {
         //We got rid of the padding for styling purposes
         this.instruction3.style.padding = "0px";
 
-        this.answerDiv2.append(this.instruction3)
+        //this.answerDiv2.append(this.instruction3)
 
-        const fieldset = document.createElement("FIELDSET")
-        const legend1 = document.createElement("LEGEND")
+        const fieldset = document.createElement("div")
+        fieldset.className = "RadioFieldset"
+        const legend1 = document.createElement("p")
         legend1.textContent = "Select a signed value"
 
         this.radioButtons = [];
@@ -503,26 +512,32 @@ export default class BA extends RunestoneBase {
         noLabelS.textContent = "No"
         noLabelS.setAttribute("for", "noBtnS")
 
-        fieldset.append(legend1)
+        //fieldset.append(legend1)
         fieldset.append(yesBtnS);
-        fieldset.append(yesLabelS);
+        
+        this.SButtonDiv = document.createElement("div");
 
         fieldset.append(noBtnS);
+
+        fieldset.append(yesLabelS);
+
         fieldset.append(noLabelS);
 
         //bind 
         this.yesBtnS = yesBtnS;
         this.noBtnS = noBtnS;
 
-        this.answerDiv2.append(fieldset)
+        this.SDiv.append(fieldset)
 
         ///////////////////////Again for unsigned
 
 
 
 
-        const fieldset2 = document.createElement("FIELDSET")
-        const legend2 = document.createElement("LEGEND")
+        const fieldset2 = document.createElement("div")
+        fieldset2.className = "RadioFieldset"
+
+        const legend2 = document.createElement("p")
         legend2.textContent = "Select an unsigned value"
 
         this.radioButtons = [];
@@ -544,18 +559,47 @@ export default class BA extends RunestoneBase {
         noLabelU.textContent = "No"
         noLabelU.setAttribute("for", "noBtnU")
 
-        fieldset.append(legend2)
-        fieldset.append(yesBtnU);
-        fieldset.append(yesLabelU);
+        //fieldset2.append(legend2)
+        fieldset2.append(yesBtnU);
 
-        fieldset.append(noBtnU);
-        fieldset.append(noLabelU);
+        fieldset2.append(noBtnU);
+
+        fieldset2.append(yesLabelU);
+
+        fieldset2.append(noLabelU);
 
         //bind 
         this.yesBtnU = yesBtnU;
         this.noBtnU = noBtnU;
 
-        this.answerDiv2.append(fieldset2)
+        this.USDiv.append(fieldset2)
+
+        this.SDiv.className = "InputWRadio"
+        this.USDiv.className = "InputWRadio"
+
+        this.overflowRadioPromptDiv = document.createElement("div")
+        this.overflowRadioPromptDiv.className = "InputWRadio"
+        const twoColP = document.createElement("p");
+        twoColP.style = "  grid-column: span 2;";
+        this.overflowRadioPromptDiv.append(twoColP)
+        const overflowRadioText = document.createElement("p")
+        overflowRadioText.style = "text-align: right; margin-right:10%;"
+        overflowRadioText.innerText = "Is there overflow?"
+        this.overflowRadioPromptDiv.append(overflowRadioText)
+        this.overflowRadioPromptDiv.style = "height: 1px; width:88%;"
+
+
+        this.USDiv.style = "width: 50%; margin-left: 25%;"
+        this.SDiv.style = "width: 50%; margin-left: 25%;"
+
+
+        this.answerDiv2.append(this.overflowRadioPromptDiv)
+        this.answerDiv2.append(this.USDiv);
+        this.answerDiv2.append(this.SDiv);
+
+        //WHY XO
+        this.answerDiv2.append(this.USDiv);
+        this.answerDiv2.append(this.SDiv);
 
         this.containerDiv.append(this.answerDiv2);
 
@@ -823,7 +867,7 @@ export default class BA extends RunestoneBase {
        const correctCarryOut = this.getCarryOut();
        if(input_value_2 != correctCarryOut){
         this.feedback_msg += "\n Incorrect carry out"
-        correctpt1 = false;
+        this.correctpt1 = false;
        }
        else{
         this.feedback_msg += '\n Correct carry out!'
