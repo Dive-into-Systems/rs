@@ -177,16 +177,17 @@ export default class cacheinfo extends RunestoneBase {
         this.question1.appendChild(this.inputNode1);
 
         this.question2 = document.createElement("div");
-        this.question2Prompt = document.createTextNode($.i18n("num_rows") + "\t=\t");
+        this.question2Prompt = document.createTextNode($.i18n("num_lines") + "\t=\t");
         this.inputNode2 = document.createElement("input");
         this.question2.appendChild(this.question2Prompt);
         this.question2.appendChild(this.inputNode2);
 
         this.question3 = document.createElement("div");
-        this.question3Prompt = document.createTextNode($.i18n("num_lines") + "\t=\t");
+        this.question3Prompt = document.createTextNode($.i18n("num_rows") + "\t=\t");
         this.inputNode3 = document.createElement("input");
         this.question3.appendChild(this.question3Prompt);
         this.question3.appendChild(this.inputNode3);
+
 
         this.inputNodes = [this.inputNode1, this.inputNode2, this.inputNode3];
         for (var i = 0; i<3; i++) {
@@ -198,8 +199,8 @@ export default class cacheinfo extends RunestoneBase {
             }.bind(this), false);  
         }
         this.questionDiv.appendChild(this.question1);
-        this.questionDiv.appendChild(this.question3);
         this.questionDiv.appendChild(this.question2);
+        this.questionDiv.appendChild(this.question3);
         this.containerDiv.appendChild(this.questionDiv);
         this.containerDiv.appendChild(document.createElement("br"));
         
@@ -374,15 +375,15 @@ export default class cacheinfo extends RunestoneBase {
         switch (this.orgMenuNode.value) {
             case "Direct-Mapped" : 
                 this.num_line_ans = this.entries_ans;           
-                this.question2.style.display = 'none';
+                this.question3.style.display = 'none';
                 break;
             case "2-Way Set Associative" : 
                 this.num_line_ans = (this.entries_ans)*2;
-                this.question2.style.display = 'block';
+                this.question3.style.display = 'block';
                 break;
             case "4-Way Set Associative" : 
                 this.num_line_ans = (this.entries_ans)*4;
-                this.question2.style.display = 'block';
+                this.question3.style.display = 'block';
                 break;
         }
         this.answers = [this.block_size_ans, this.entries_ans, this.num_line_ans];
@@ -451,7 +452,7 @@ export default class cacheinfo extends RunestoneBase {
         let wrongFlag = false;
         for (var i = 0; i < 3; i ++ ) {
             // skip the question for number of sets when in direct-mapped
-            if ( this.orgMenuNode.value === "Direct-Mapped" && i === 1) {
+            if ( this.orgMenuNode.value === "Direct-Mapped" && i === 2) {
                 continue;
             }
             var input_value = this.inputNodes[i].value;
