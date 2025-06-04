@@ -555,6 +555,36 @@ export default class BA extends RunestoneBase {
 
     }
 
+    toSignedDecimalWithOverflow(){
+        // let total = 0;
+        // total = -Number(this.target_num_string[0]) * 2^(this.num_bits);
+        // for(let i = 0; i < this.num_bits; i++){
+        //     total += Number(this.target_num_string[i]) * 2^(this.num_bits-i);
+        // }
+        // return total;
+            //grab first digit of target answer
+        let carryOut;
+        if(this.target_num_string.length > this.num_bits){
+            carryOut = this.target_num_string[0]
+        }
+        else{
+            carryOut = 0
+        }
+        
+
+
+        const new_binary = this.target_num_string.slice(1, this.num_bits);
+
+        const parsedInt = parseInt(new_binary, 2)
+        
+        let ans = parseInt(new_binary, 2);
+        ans -= Number(carryOut)*2**(this.num_bits)
+
+        return ans;
+
+
+    }
+    
     
     
 
@@ -770,10 +800,10 @@ export default class BA extends RunestoneBase {
     //find out if there's signed overflow
     const largestNegNum = -(2**(this.num_bits-1));
     const largestPosNum = 2**(this.num_bits-1)-1;
-    const decimalAns = this.toSignedDecimal()
+    const decimalAns = this.toSignedDecimalWithOverflow()
     const overflow = (decimalAns < largestNegNum || decimalAns> largestPosNum);
 
-    this.debugFunc(`${overflow},  ${largestNegNum}, ${largestPosNum}, ${yesBtnValueS}, ${noBtnValueS}`)
+    this.debugFunc(`${decimalAns},  ${overflow},  ${largestNegNum}, ${largestPosNum}, ${yesBtnValueS}, ${noBtnValueS}`)
     if(overflow && yesBtnValueS && !noBtnValueS){
         this.displayCorrectAnswerSigned();
     }
