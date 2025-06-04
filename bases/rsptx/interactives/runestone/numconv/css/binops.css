@@ -25,6 +25,27 @@ input.input-validation-error {
   padding-right: 10px;
 }
 
+.prompt-divBA {
+  width: 75%;
+  align-content:center;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  font-size: x-large;
+  text-align: right;
+  /* padding: 2px 0px !important; */
+  padding-right: 10px;
+  text-align:right;
+}
+
+.firstquestion { 
+  width: 75%;
+  align-content:center;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  margin-bottom: 2%;
+}
+
+
 .result-div {
   text-align: right;
 }

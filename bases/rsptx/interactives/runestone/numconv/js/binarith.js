@@ -189,38 +189,44 @@ export default class BA extends RunestoneBase {
         this.containerDiv.appendChild(document.createElement("br"));
         // create the div node for the prompt
         this.promptDiv = document.createElement("div");
-        this.promptDiv.className = "prompt-div";
+        this.promptDiv.className = "prompt-divBA";
         this.promptDiv.style.paddingRight = '0px';
 
         // create the node for the number being displayed
         this.promptDivTextNode = document.createElement("code");
+        this.promptDivTextNode.style = "margin:auto"
         // this.promptDivTextNode.className = "binops-inline code";
+        this.promptDiv.appendChild(document.createElement("p"))
         this.promptDiv.appendChild(this.promptDivTextNode);
         this.promptDiv.appendChild(document.createElement("br"));
         
         // render the input field
         this.answerDiv = document.createElement("div");
+        this.nodesDiv = document.createElement("div");
         this.inputNode = document.createElement("input");
+        this.inputNode.style = "margin:auto; font-size: 90%; width:50%; margin-left:12%"
         this.inputNode.setAttribute('type', 'text');
-        this.inputNode.setAttribute("size", "20");
+        this.inputNode.setAttribute("size", "5");
         this.inputNode.setAttribute("id", this.divid + "_input");
-        this.inputNode.className = "form form-control selectwidthauto";
-        this.statementNode11 = document.createTextNode("Your answer (include carry-out): ");
+        this.inputNode.className = "form form-control";
 
-        this.answerDiv.append(document.createElement("br"))
+
         this.inputNode2 = document.createElement("input");
+        this.inputNode2.style = "margin: auto; font-size: 89%; width: 50%; visibility: visible;margin-left: 55%;"
         this.inputNode2.setAttribute('type', 'text');
         this.inputNode2.setAttribute("size", "20");
         this.inputNode2.setAttribute("id", this.divid + "_input");
-        this.inputNode2.className = "form form-control selectwidthauto";
+        this.inputNode2.className = "form form-control";
 
-        this.answerDiv.appendChild(this.statementNode11);
-        this.answerDiv.appendChild(this.inputNode2);
-        this.answerDiv.appendChild(this.inputNode);
+        this.nodesDiv.appendChild(this.inputNode2);
+        this.nodesDiv.appendChild(this.inputNode);
 
         // this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.promptDiv);
         this.containerDiv.appendChild(document.createElement("br"));
+
+        this.nodesDiv.className = "firstquestion"
+        this.answerDiv.append(this.nodesDiv);
         this.containerDiv.appendChild(this.answerDiv);
 
         // prompt is invisible by default
@@ -323,7 +329,6 @@ export default class BA extends RunestoneBase {
         );
 
         // Add the buttons in the container
-        this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
 
@@ -392,7 +397,6 @@ export default class BA extends RunestoneBase {
     );
 
     // Add the buttons in the container
-    this.answerDiv2.appendChild(document.createElement("br"));
     this.answerDiv2.appendChild(this.generateButton);
     this.answerDiv2.appendChild(this.submitButton);
 
@@ -409,7 +413,6 @@ export default class BA extends RunestoneBase {
 
     // Add the feedback in the container
     renderBAFeedbackDiv() {
-        this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.feedbackDiv);
     }
 
@@ -433,7 +436,7 @@ export default class BA extends RunestoneBase {
         this.USInput.setAttribute('type', 'text');
         this.USInput.setAttribute("size", "20");
         this.USInput.setAttribute("id", this.divid + "_input");
-        this.USInput.className = "form form-control selectwidthauto";
+        this.USInput.className = "form form-control";
         this.statementNode11US = document.createTextNode("Unsigned Decimal:");
         this.answerDiv2.appendChild(this.statementNode11US);
         this.answerDiv2.appendChild(this.USInput);
@@ -442,7 +445,7 @@ export default class BA extends RunestoneBase {
         placeholder = "Unsigned Decimal:";
         this.USInput.setAttribute("placeholder", placeholder);
         this.USInput.setAttribute("size", placeholder.length + 1);
-        this.USInput.setAttribute("maxlength", this.num_bits + 5);
+        this.USInput.setAttribute("maxlength", this.num_bits);
         this.USInput.setAttribute('style', 'width: 50ptx;');
 
         //This sets up the input for the decimal input
@@ -450,7 +453,7 @@ export default class BA extends RunestoneBase {
         this.SInput.setAttribute('type', 'text');
         this.SInput.setAttribute("size", "20");
         this.SInput.setAttribute("id", this.divid + "_input");
-        this.SInput.className = "form form-control selectwidthauto";
+        this.SInput.className = "form form-control";
         this.statementNode11S = document.createTextNode("Signed Decimal:");
 
         this.answerDiv2.append(document.createElement("br"));
@@ -747,17 +750,15 @@ export default class BA extends RunestoneBase {
 
        // the placeholder tells what the desired input should be like
         var placeholder;
-            placeholder = "binary value";
+            placeholder = "Result";
             this.inputNode.setAttribute("placeholder", placeholder);
             this.inputNode.setAttribute("size", placeholder.length + 1);
             this.inputNode.setAttribute("maxlength", this.num_bits + 2);
-            this.inputNode.setAttribute('style', 'width: 50ptx;');
 
             placeholder = "Carry Out";
             this.inputNode2.setAttribute("placeholder", placeholder);
             this.inputNode2.setAttribute("size", placeholder.length + 1);
             this.inputNode2.setAttribute("maxlength", 1);
-            this.inputNode2.setAttribute('style', 'width: 50ptx;');
 
    }
 
