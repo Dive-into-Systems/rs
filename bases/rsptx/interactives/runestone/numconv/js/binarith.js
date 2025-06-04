@@ -397,6 +397,8 @@ export default class BA extends RunestoneBase {
         this.answerDiv2.append(this.instruction3)
 
         const fieldset = document.createElement("FIELDSET")
+        const legend1 = document.createElement("LEGEND")
+        legend1.textContent = "Select a signed value"
 
         this.radioButtons = [];
         const yesBtnS = document.createElement("INPUT");
@@ -417,7 +419,7 @@ export default class BA extends RunestoneBase {
         noLabelS.textContent = "No"
         noLabelS.setAttribute("for", "noBtnS")
 
-
+        fieldset.append(legend1)
         fieldset.append(yesBtnS);
         fieldset.append(yesLabelS);
 
@@ -429,6 +431,7 @@ export default class BA extends RunestoneBase {
         this.noBtnS = noBtnS;
 
         this.answerDiv2.append(fieldset)
+        this.answerDiv2.append(document.createElement("br"))
 
         ///////////////////////Again for unsigned
 
@@ -437,6 +440,8 @@ export default class BA extends RunestoneBase {
 
 
         const fieldset2 = document.createElement("FIELDSET")
+        const legend2 = document.createElement("LEGEND")
+        legend2.textContent = "Select an unsigned value"
 
         this.radioButtons = [];
         const yesBtnU = document.createElement("INPUT");
@@ -457,7 +462,7 @@ export default class BA extends RunestoneBase {
         noLabelU.textContent = "No"
         noLabelU.setAttribute("for", "noBtnU")
 
-
+        fieldset.append(legend2)
         fieldset.append(yesBtnU);
         fieldset.append(yesLabelU);
 
@@ -532,7 +537,7 @@ export default class BA extends RunestoneBase {
             new_binary = this.target_num_string.slice(2);
         }
         else{
-            new_binary = this.target_num_string.slice(1, numBits);
+            new_binary = this.target_num_string.slice(1, this.num_bits);
         }
         const parsedInt = parseInt(new_binary, 2)
 
@@ -545,13 +550,11 @@ export default class BA extends RunestoneBase {
             ans -= Number(this.target_num_string[0])*2**(this.num_bits-1)
         }
 
-        this.debugFunc(`Parse int returns ${parsedInt}, new Binary is ${new_binary},
-            long number thing is ${-Number(this.target_num_string[0])*2**(this.num_bits-1)}, 
-            target num string is ${this.target_num_string[0]}, strLen-1 is ${this.num_bits-1}<br/>`)
         return ans;
 
 
     }
+
     
     
 
@@ -672,20 +675,20 @@ export default class BA extends RunestoneBase {
 
 
    displayCorrectAnswerUnsigned(){
-    this.feedback_msg2 += ($.i18n("msg_NC_correct"));
+    this.feedback_msg2 += ($.i18n("Unsigned Correct \n"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerUnsigned(){
-    this.feedback_msg2 += ($.i18n("msg_NC_incorrect"));
+    this.feedback_msg2 += ($.i18n("Unsigned incorrect \n"));
     this.contWrong ++;
     this.conrrectpt2 = false;
    }
    displayCorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("msg_NC_correct"));
+    this.feedback_msg2 += ($.i18n("Signed correct \n"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("msg_NC_incorrect"));
+    this.feedback_msg2 += ($.i18n("Signed incorrect \n"));
     this.contWrong ++;
     this.conrrectpt2 = false;
    }
@@ -704,7 +707,6 @@ export default class BA extends RunestoneBase {
     // this.containerDiv.append(debugP);
     // debugP.innerHTML = (`${USValue},  ${SValue}, ${yesBtnValue}, ${noBtnValue}`);
 
-    this.debugFunc(`${ans} ,  ${this.toSignedDecimal()}, ${this.target_num_string}`);
 
     if(USValue == ""){
         this.feedback_msg2 = ($.i18n("msg_no_answer"));
@@ -739,7 +741,16 @@ export default class BA extends RunestoneBase {
     ///find out if there's unsigned overflow
     
     //grab first digit of target answer
-    const carryOut = this.target_num_string[0]
+    let carryOut;
+    if(this.target_num_string.length > this.num_bits){
+        carryOut = this.target_num_string[0]
+    }
+    else{
+        carryOut = 0
+    }
+    
+
+
     if(this.randomItem == "ADDITION" && carryOut == 1 && yesBtnValueU == true && noBtnValueU == false){
         this.displayCorrectAnswerUnsigned()
     }
@@ -757,11 +768,16 @@ export default class BA extends RunestoneBase {
     }
 
     //find out if there's signed overflow
-    const largestNegNum = -(2**(this.numBits-1));
-    const largestPosNum = 2**(this.numBits-1)-1;
+    const largestNegNum = -(2**(this.num_bits-1));
+    const largestPosNum = 2**(this.num_bits-1)-1;
+    const decimalAns = this.toSignedDecimal()
+    const overflow = (decimalAns < largestNegNum || decimalAns> largestPosNum);
 
-    const overflow = (this.target_num < largestNegNum || this.target_num > largestPosNum);
+    this.debugFunc(`${overflow},  ${largestNegNum}, ${largestPosNum}, ${yesBtnValueS}, ${noBtnValueS}`)
     if(overflow && yesBtnValueS && !noBtnValueS){
+        this.displayCorrectAnswerSigned();
+    }
+    else if(!overflow && !yesBtnValueS && noBtnValueS){
         this.displayCorrectAnswerSigned();
     }
     else{
