@@ -346,15 +346,15 @@ export default class BA extends RunestoneBase {
 
    renderSecondPartButtons(){
     this.submitButton.remove();
-    this.submitButton = document.createElement("button");
-    this.submitButton.textContent = $.i18n(" Check Part 2");
-    $(this.submitButton).attr({
+    this.submitButton2 = document.createElement("button");
+    this.submitButton2.textContent = $.i18n(" Check Part 2");
+    $(this.submitButton2).attr({
         class: "btn btn-success",
         name: "do answer",
         type: "button",
     });
     // check the answer
-    this.submitButton.addEventListener(
+    this.submitButton2.addEventListener(
         "click",
         function () {
             this.checkValidConversion();
@@ -399,7 +399,7 @@ export default class BA extends RunestoneBase {
 
     // Add the buttons in the container
     this.answerDiv2.appendChild(this.generateButton);
-    this.answerDiv2.appendChild(this.submitButton);
+    this.answerDiv2.appendChild(this.submitButton2);
 
     // Check answer when pressing "Enter"
 
@@ -476,7 +476,7 @@ export default class BA extends RunestoneBase {
             "keyup",
             function(event) {
             if (event.key === "Enter") {
-                    this.submitButton.click();
+                    this.submitButton2.click();
                 }
             }.bind(this), false
             );
@@ -485,7 +485,7 @@ export default class BA extends RunestoneBase {
         "keyup",
         function(event) {
         if (event.key === "Enter") {
-                this.submitButton.click();
+                this.submitButton2.click();
             }
         }.bind(this), false
         );
@@ -808,7 +808,7 @@ export default class BA extends RunestoneBase {
             placeholder = "Result";
             this.inputNode.setAttribute("placeholder", placeholder);
             this.inputNode.setAttribute("size", placeholder.length + 1);
-            this.inputNode.setAttribute("maxlength", this.num_bits + 2);
+            this.inputNode.setAttribute("maxlength", this.num_bits);
 
             placeholder = "Carry Out";
             this.inputNode2.setAttribute("placeholder", placeholder);
