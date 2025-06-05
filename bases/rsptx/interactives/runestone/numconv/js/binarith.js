@@ -583,7 +583,7 @@ export default class BA extends RunestoneBase {
         twoColP.style = "  grid-column: span 2;";
         this.overflowRadioPromptDiv.append(twoColP)
         const overflowRadioText = document.createElement("p")
-        overflowRadioText.style = "text-align: right; margin-right:10%;"
+        overflowRadioText.style = "text-align: right; margin-right:17%;"
         overflowRadioText.innerText = "Is there overflow?"
         this.overflowRadioPromptDiv.append(overflowRadioText)
         this.overflowRadioPromptDiv.style = "height: 1px; width:88%;"
@@ -598,8 +598,7 @@ export default class BA extends RunestoneBase {
         this.answerDiv2.append(this.SDiv);
 
         //WHY XO
-        this.answerDiv2.append(this.USDiv);
-        this.answerDiv2.append(this.SDiv);
+
 
         this.containerDiv.append(this.answerDiv2);
 
@@ -826,7 +825,7 @@ export default class BA extends RunestoneBase {
         }
         ans = Number(ans)
        // the answer is correct if it is the same as the string this.target_num_string
-       var input_value = Number(this.inputNode.value.toLowerCase());
+       var input_value = (this.inputNode.value).toString().toLowerCase();
        let input_value_2 = this.inputNode2.value;
 
 
@@ -839,8 +838,8 @@ export default class BA extends RunestoneBase {
        }
 
 
-
-       if ( input_value == "" ) {
+       //0.toString() will return "", so need to add an exra check
+       if ( input_value === "" ) {
            this.feedback_msg = ($.i18n("msg_no_answer"));
            this.correctpt1 = false;
        } 
