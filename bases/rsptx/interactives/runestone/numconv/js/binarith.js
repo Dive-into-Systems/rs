@@ -334,10 +334,11 @@ export default class BA extends RunestoneBase {
 
         // Check answer when pressing "Enter"
         this.inputNode.addEventListener(
-            "keypress",
+            "keyup",
             function(event) {
             if (event.key === "Enter") {
                     this.submitButton.click();
+
                 }
             }.bind(this), false
             );
@@ -401,14 +402,7 @@ export default class BA extends RunestoneBase {
     this.answerDiv2.appendChild(this.submitButton);
 
     // Check answer when pressing "Enter"
-    this.inputNode.addEventListener(
-        "keypress",
-        function(event) {
-        if (event.key === "Enter") {
-                this.submitButton.click();
-            }
-        }.bind(this), false
-        );
+
    }
 
     // Add the feedback in the container
@@ -477,6 +471,24 @@ export default class BA extends RunestoneBase {
         this.SInput.setAttribute('style', 'width: 50ptx;');
 
 
+        //enter event handler
+        this.USInput.addEventListener(
+            "keyup",
+            function(event) {
+            if (event.key === "Enter") {
+                    this.submitButton.click();
+                }
+            }.bind(this), false
+            );
+       
+       this.SInput.addEventListener(
+        "keyup",
+        function(event) {
+        if (event.key === "Enter") {
+                this.submitButton.click();
+            }
+        }.bind(this), false
+        );
 
         //Adding the Yes/No radio buttons for overflow
 
