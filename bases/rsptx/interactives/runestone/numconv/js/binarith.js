@@ -83,13 +83,43 @@ export default class BA extends RunestoneBase {
         this.renderBAPromptAndInput();
         this.renderBAButtons();
         this.renderBAFeedbackDiv();
+        
+        const addBox = this.menuNode1.getElementsByClassName("addBox")
+        const subBox = this.menuNode1.getElementsByClassName("subBox")
+
+        addBox[0].addEventListener("change", (e) => {
+            
+            if(e.target.checked == false){
+                this.addOrSubChecked[0] = false;
+            }
+            if(e.target.checked == true){
+            this.addOrSubChecked[0] = true;
+            }
+            if(this.addOrSubChecked[0] == false && this.addOrSubChecked[1] == false){
+                e.target.checked = true;
+                this.addOrSubChecked[0] = true;
+            }
+        })
+        subBox[0].addEventListener("change", (e) => {
+            if(e.target.checked == false){
+                this.addOrSubChecked[1] = false;
+            }
+            if(e.target.checked == true){
+            this.addOrSubChecked[1] = true;
+            }
+            if(this.addOrSubChecked[0] == false && this.addOrSubChecked[1] == false){
+                e.target.checked = true;
+                this.addOrSubChecked[1] = true;
+            }
+        })
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
    // Generate the layout of the prompt and input
    renderBAPromptAndInput() {
-        // Create the parent div which contains everything        
+        // Create the parent div which contains everything
+                
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
@@ -117,12 +147,38 @@ export default class BA extends RunestoneBase {
         // Inner HTML defines the items in the dropdown
         var html =   "<span class='anchor'>Select Operators</span>"+
         "<ul class='items'>"+
-        "  <li><input type='checkbox' value='ADDITION' checked/>ADDITION </li>"+ //pre checked item
-        "  <li><input type='checkbox' value='SUBTRACTION' checked/>SUBTRACTION </li>"+
+        "  <li><input class='addBox' type='checkbox' value='ADDITION' checked/>ADDITION </li>"+ //pre checked item
+        "  <li><input class='subBox' type='checkbox' value='SUBTRACTION' checked/>SUBTRACTION </li>"+
         "</ul>";
 
+        // this.pSpan = document.createElement("span");
+        // this.pSpan.className = "anchor"
+        // this.pSpan.textContent = "Select Operators"
+        // this.operationUl = document.createElement("ul")
+        // this.operationUl.className = "items"
+        // this.addLi = document.createElement("li")
+        // this.addLi.className = "addBox"
+        // this.addLi.type = "checkbox"
+        // this.addLi.value = "ADDITION"
+        // this.addLi.checked = true;
+        // this.addLi.textContent = "ADDITION"
+        // this.subLi = document.createElement("li")
+        // this.subLi.className = "subBox"
+        // this.subLi.type = "checkbox"
+        // this.subLi.value = "SUBTRACTION"
+        // this.subLi.checked = false;
+        // this.subLi.textContent = "SUBTRACTION"
+        // this.operationUl.append(this.addLi);
+        // this.operationUl.append(this.subLi);
+        // this.pSpan.append(this.operationUl);
+        // this.menuNode1.append(this.pSpan)
+
+        
         // Assign the built HTML to innerHTML of the this.menuNode1 container
         this.menuNode1.innerHTML = html;
+       
+        this.addOrSubChecked = [true, true];
+
 
         // Access the anchor for adding click event
         var anchor = this.menuNode1.getElementsByClassName('anchor')[0];
@@ -162,16 +218,10 @@ export default class BA extends RunestoneBase {
         this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
         // When the value of menuNode2 is changed, do these...
         this.menuNode2.addEventListener("change",
-            function () {
-                    var random = this.randomItem;
-                    this.getCheckedValues();
-                    this.randomItem = random;
-                    this.generateNumber();
-                    this.clearAnswer();
-                    this.generateAnswer();
-                    this.checkValidConversion();
-                    this.contWrong = 0;
-            }.bind(this),
+            () => {
+                this.generateButton.click();
+
+            },
             false);
 
         // Render the statement
@@ -182,6 +232,8 @@ export default class BA extends RunestoneBase {
         this.configDiv.appendChild(this.menuNode2);
         this.configDiv.appendChild(this.statementNode1);
         this.configDiv.appendChild(this.menuNode1);
+
+
 
         // Append configDiv to statementDiv
         this.statementDiv.appendChild(this.configDiv);
@@ -256,6 +308,7 @@ export default class BA extends RunestoneBase {
         for (let blank of this.blankArray) {
             $(blank).change(this.recordAnswered.bind(this));
         }
+
    }
 
     // Get the list of operators being checked
@@ -269,6 +322,8 @@ export default class BA extends RunestoneBase {
         if (this.checkedValues.length > 0){
             this.getRandomItem(this.checkedValues);
         }
+
+        
     }
 
     // Keep track whether the user answer the question
@@ -293,9 +348,10 @@ export default class BA extends RunestoneBase {
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.checkCurrentAnswer();
+                    console.log(this.target_num_string);
                     this.logCurrentAnswer();
                     this.renderFeedback();
-                    this.correctpt2 = true;
+                    this.correctpt1 = true;
 
                 }
             }.bind(this),
@@ -359,12 +415,13 @@ export default class BA extends RunestoneBase {
         function () {
             this.checkValidConversion();
             if ( this.valid_conversion ) {
+                this.correctpt2 = true;
                 this.checkCurrentAnswerPt2();
                 this.logCurrentAnswer();
                 this.renderFeedback2();
-                //this.correctpt2 = true;
-
+                console.log(this.correctpt2);
             }
+
         }.bind(this),
         false
     );
@@ -445,7 +502,7 @@ export default class BA extends RunestoneBase {
         placeholder = "Unsigned Decimal:";
         this.USInput.setAttribute("placeholder", placeholder);
         this.USInput.setAttribute("size", placeholder.length + 1);
-        this.USInput.setAttribute("maxlength", this.num_bits);
+        this.USInput.setAttribute("maxlength", this.num_bits+2);
         this.USInput.setAttribute('style', 'width: 50ptx;');
 
         //This sets up the input for the decimal input
@@ -697,36 +754,6 @@ export default class BA extends RunestoneBase {
 
 
     }
-
-    toSignedDecimalWithOverflow(){
-        // let total = 0;
-        // total = -Number(this.target_num_string[0]) * 2^(this.num_bits);
-        // for(let i = 0; i < this.num_bits; i++){
-        //     total += Number(this.target_num_string[i]) * 2^(this.num_bits-i);
-        // }
-        // return total;
-            //grab first digit of target answer
-        let carryOut;
-        if(this.target_num_string.length > this.num_bits){
-            carryOut = this.target_num_string[0]
-        }
-        else{
-            carryOut = 0
-        }
-        
-
-
-        const new_binary = this.target_num_string.slice(1, this.num_bits);
-
-        const parsedInt = parseInt(new_binary, 2)
-        
-        let ans = parseInt(new_binary, 2);
-        ans -= Number(carryOut)*2**(this.num_bits)
-
-        return ans;
-
-
-    }
     
     getCarryOut(){
         let carryOut;
@@ -780,11 +807,17 @@ export default class BA extends RunestoneBase {
                 break;
             case "SUBTRACTION":
                 let diff = this.target_num - this.target_num2;
+                let temp = diff;
                 if (diff < 0) {
-                    diff = (1 << (this.num_bits + 1)) + diff; // allow extra bit for borrow
+                    temp = (1 << (this.num_bits + 1)) + diff; // allow extra bit for borrow
                 }
-                this.target_num_string = this.toBinary(diff);                
+                this.target_num_string = this.toBinary(temp);
+                if (diff <0){    
+                    this.target_num_string = this.target_num_string.slice(1);
+                }
+                     
                 break;
+
        }
        // update the prompt
        this.generatePrompt();
@@ -808,7 +841,7 @@ export default class BA extends RunestoneBase {
             placeholder = "Result";
             this.inputNode.setAttribute("placeholder", placeholder);
             this.inputNode.setAttribute("size", placeholder.length + 1);
-            this.inputNode.setAttribute("maxlength", this.num_bits);
+            this.inputNode.setAttribute("maxlength", this.num_bits+2);
 
             placeholder = "Carry Out";
             this.inputNode2.setAttribute("placeholder", placeholder);
@@ -855,6 +888,10 @@ export default class BA extends RunestoneBase {
            this.feedback_msg = ($.i18n("msg_no_answer"));
            this.correctpt1 = false;
        } 
+       else if (input_value == `0b${ans}`){
+        this.feedback_msg = ($.i18n("msg_NC_correct"));
+
+       }
        else if ( input_value != ans ) {
            this.feedback_msg = ($.i18n("msg_NC_incorrect"));
            this.contWrong ++;
@@ -898,7 +935,8 @@ export default class BA extends RunestoneBase {
 
 
    displayCorrectAnswerUnsigned(){
-    this.feedback_msg2 += ($.i18n("Unsigned Correct \n"));
+    // il8n autoconverts < into &lt
+    this.feedback_msg2 += ($.i18n("Unsigned Correct <br/>"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerUnsigned(){
@@ -917,13 +955,13 @@ export default class BA extends RunestoneBase {
    }
 
    checkCurrentAnswerPt2(){
-    const USValue = (this.USInput.value.toLocaleLowerCase());
-    const SValue = (this.SInput.value.toLowerCase())
-    const ans = parseInt(this.target_num_string, 2);
-    const yesBtnValueS = this.yesBtnS.checked;
-    const noBtnValueS = this.noBtnS.checked;
-    const yesBtnValueU = this.yesBtnU.checked;
-    const noBtnValueU = this.noBtnU.checked;
+    this.USValue = (this.USInput.value.toLocaleLowerCase());
+    this.SValue = (this.SInput.value.toLowerCase())
+    this.ans = parseInt(this.target_num_string, 2);
+    this.yesBtnValueS = this.yesBtnS.checked;
+    this.noBtnValueS = this.noBtnS.checked;
+    this.yesBtnValueU = this.yesBtnU.checked;
+    this.noBtnValueU = this.noBtnU.checked;
 
     
     // const debugP = document.createElement("div")
@@ -931,11 +969,11 @@ export default class BA extends RunestoneBase {
     // debugP.innerHTML = (`${USValue},  ${SValue}, ${yesBtnValue}, ${noBtnValue}`);
 
 
-    if(USValue == ""){
+    if(this.USValue == ""){
         this.feedback_msg2 = ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
-    else if(ans != USValue){
+    else if(this.ans != this.USValue){
         this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.conrrectpt2 = false;
@@ -947,11 +985,11 @@ export default class BA extends RunestoneBase {
 
 
     //Check the signed value
-    if(SValue == ""){
+    if(this.SValue == ""){
         this.feedback_msg2 = ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
-    else if(this.toSignedDecimal() != SValue){
+    else if(this.toSignedDecimal() != this.SValue){
         this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.conrrectpt2 = false;
@@ -962,7 +1000,16 @@ export default class BA extends RunestoneBase {
     }
 
     ///find out if there's unsigned overflow
-    
+
+      this.checkUnsignedOverflow();
+      this.checkSignedOverflow();
+    }
+
+
+
+   //This function checks whether the answer has unsigned overflow.
+   checkUnsignedOverflow() {
+
     //grab first digit of target answer
     let carryOut;
     if(this.target_num_string.length > this.num_bits){
@@ -971,40 +1018,98 @@ export default class BA extends RunestoneBase {
     else{
         carryOut = 0
     }
+
+    if(this.randomItem == "ADDITION" && carryOut == 1 && this.yesBtnValueU == true && this.noBtnValueU == false){
+        this.displayCorrectAnswerUnsigned()
+    }
+    else if(this.randomItem == "ADDITION" && carryOut == 0 && this.yesBtnValueU == false && this.noBtnValueU == true){
+        this.displayCorrectAnswerUnsigned()
+    }
+    else if(this.randomItem == "SUBTRACTION" && carryOut == 0 && this.yesBtnValueU == true && this.noBtnValueU == false){
+        this.displayCorrectAnswerUnsigned();
+    }
+    else if(this.randomItem == "SUBTRACTION" && carryOut == 1 &&  this.yesBtnValueU == false && this.noBtnValueU == true){
+        this.displayCorrectAnswerUnsigned();
+    }
+    else{
+        this.correctpt2 = false;
+
+        this.displayIncorrectAnswerUnsigned();
+        
+    }
+   }
+
+   //This function checks whether the answer has signed overflow.
+   checkSignedOverflow() {
+
+    // const largestNegNum = -(2**(this.num_bits-1));
+    // const largestPosNum = 2**(this.num_bits-1)-1;
+    // const decimalAns = this.toSignedDecimalWithOverflow();
+    // const overflow = (decimalAns < largestNegNum || decimalAns> largestPosNum);
+
+    // if(overflow && this.yesBtnValueS && !this.noBtnValueS){
+    //     this.displayCorrectAnswerSigned();
+    // }
+    // else if(!overflow && !this.yesBtnValueS && this.noBtnValueS){
+    //     this.displayCorrectAnswerSigned();
+    // }
+    // else{
+    //     this.displayIncorrectAnswerSigned();
+    // }
+    let operand1_digit;
+    let operand2_digit;
+    let overflow;
+
+    if(this.randomItem == "ADDITION"){
+        operand1_digit = this.displayed_num_string[0]
+        operand2_digit = this.displayed_num_string2[0];
+    }
+    if(this.randomItem == "SUBTRACTION"){
+        operand1_digit = this.displayed_num_string[0];
+        const operand2 = ~this.target_num2 + 1;
+        operand2_digit = this.toBinary(operand2, this.num_bits)[0];
+    }
+
+    if(operand1_digit != operand2_digit){
+            overflow = false;
+        } 
+    else if (this.target_num_string.length > this.num_bits){
+        if(operand1_digit != this.target_num_string[1]) {
+            overflow = true;
+            } 
+        else {
+            overflow = false;
+        }
+    }
+    else {
+        if(operand1_digit != this.target_num_string[0]){
+            overflow = true;
+        } 
+        else {
+            overflow = false;
+        }
+    }
+
+    if(overflow){
+        if(this.yesBtnValueS == true && this.noBtnValueS == false){
+            this.displayCorrectAnswerSigned();
+        }
+        else{
+            this.displayIncorrectAnswerSigned();
+        }
+    }else if(!overflow){
+        if(this.noBtnValueS == true && this.yesBtnValueS == false){
+            this.displayCorrectAnswerSigned();
+        }
+        else{
+            this.correctpt2 = false;
+
+            this.displayIncorrectAnswerSigned();
+        }
+    }
     
 
-
-    if(this.randomItem == "ADDITION" && carryOut == 1 && yesBtnValueU == true && noBtnValueU == false){
-        this.displayCorrectAnswerUnsigned()
-    }
-    else if(this.randomItem == "ADDITION" && carryOut == 0 && yesBtnValueU == false && noBtnValueU == true){
-        this.displayCorrectAnswerUnsigned()
-    }
-    else if(this.randomItem == "SUBTRACTION" && carryOut == 0 &&  yesBtnValueU == true && noBtnValueU == false){
-        this.displayCorrectAnswerUnsigned();
-    }
-    else if(this.randomItem == "SUBTRACTION" && carryOut == 1 &&  yesBtnValueU == false && noBtnValueU == true){
-        this.displayCorrectAnswerUnsigned();
-    }
-    else{
-        this.displayIncorrectAnswerUnsigned();
-    }
-
-    //find out if there's signed overflow
-    const largestNegNum = -(2**(this.num_bits-1));
-    const largestPosNum = 2**(this.num_bits-1)-1;
-    const decimalAns = this.toSignedDecimalWithOverflow()
-    const overflow = (decimalAns < largestNegNum || decimalAns> largestPosNum);
-
-    if(overflow && yesBtnValueS && !noBtnValueS){
-        this.displayCorrectAnswerSigned();
-    }
-    else if(!overflow && !yesBtnValueS && noBtnValueS){
-        this.displayCorrectAnswerSigned();
-    }
-    else{
-        this.displayIncorrectAnswerSigned();
-    }
+    
    }
 
     // log the answer and other info to the server (in the future)
@@ -1121,9 +1226,11 @@ export default class BA extends RunestoneBase {
      // only the feedback message needs to display
      var feedback_html = "<dev>" + this.feedback_msg2 + "</dev>";
      if (this.correctpt2) {
-         $(this.feedbackDiv2).attr("class", "alert alert-info");
+        //  $(this.feedbackDiv2).attr("class", "alert alert-info");
+        this.feedbackDiv2.className = "alert alert-info";
      } else {
-         $(this.feedbackDiv2).attr("class", "alert alert-danger");
+         //$(this.feedbackDiv2).attr("class", "alert alert-danger");
+         this.feedbackDiv2.className = "alert alert-danger"
      }
    
      this.feedbackDiv2.innerHTML = feedback_html;
@@ -1131,6 +1238,7 @@ export default class BA extends RunestoneBase {
      if (typeof MathJax !== "undefined") {
          this.queueMathJax(document.body);
      }
+
 }
 }
 
