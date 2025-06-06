@@ -15,18 +15,15 @@
 */
 "use strict";
 
-import RunestoneBase from "../../common/js/runestonebase.js";
+//Need to change the import statements here
+
+import RunestoneBase from "../../../common/js/runestonebase.js";
 import { nanoid } from 'nanoid/non-secure';
-import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
-import "../css/binops.css"; //css file that describes formatting of the component
+import "../../nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
+import "../../../../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
 
-//Don't Change This!!
-//MJS COPY POINT
-
 export var BAList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
-
-
 
 
 // BitwiseArithmetic constructor
@@ -811,22 +808,25 @@ export default class BA extends RunestoneBase {
                 this.target_num_string = this.toBinary(sum);
                 break;
             case "SUBTRACTION":
-                // let diff = this.target_num - this.target_num2;
+                let diff = this.target_num - this.target_num2;
                 // if (diff < 0) {
                 //     diff = (1 << (this.num_bits + 1)) + diff; // allow extra bit for borrow
                 // }
                 // this.target_num_string = this.toBinary(diff);
                      
                 // break;
-                
-                this.target_num_converted = this.toBinary(~this.target_num2 + 1);
+                if (diff < 0) {
+                    diff = ~diff+1;
+                    this.target_num_string = this.toBinary(diff);
+                }
+
        }
        // update the prompt
        this.generatePrompt();
    }
 
    addBinary(){
-
+    
    }
    // Update the prompt to display
    // Use innerHTML to deal with prompts of different number of lines

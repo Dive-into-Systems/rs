@@ -1,5 +1,7 @@
 ///generate every possible binary number for 0000 to 1111
 // this doewsn't work
+import BA from "./moduleFiles/binarith.mjs"
+
 let FourBitNums = []
 
 generateAllMatchings = (arr1, arr2) => {
@@ -32,5 +34,5 @@ NBitNums = (n=4) => {
     return temp
 }
 
-console.log(NBitNums())
+testBA = new BA();
 
