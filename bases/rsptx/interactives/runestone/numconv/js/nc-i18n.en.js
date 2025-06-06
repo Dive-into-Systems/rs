@@ -6,7 +6,7 @@ $.i18n().load({
         msg_NC_compare_me: "Compare me",
         msg_NC_generate_a_number: "Generate another question",
         msg_NC_incorrect: "Incorrect. Please try again.",
-        msg_NC_correct: "Correct. Good job!",
+        msg_NC_correct: "Correct. Good job! ",
         msg_NC_same_exp: "There's no point to convert between two same type. Please choose two different expressions.",
         msg_NC_two02dec: "Signed binary can only convert with decimal.",
         msg_NC_not_divisible_by_4: "Error: number of bits should be multiple of 4",

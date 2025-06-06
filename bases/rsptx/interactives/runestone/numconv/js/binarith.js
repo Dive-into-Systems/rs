@@ -21,8 +21,7 @@ import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in f
 import "../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
 
-//Don't Change This!!
-//MJS COPY POINT
+
 
 export var BAList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -40,6 +39,10 @@ export default class BA extends RunestoneBase {
 
         // Default configuration settings
         //changed correct pt2 and pt2 to flags
+
+        //THIS ENABLES UNIT TESTS
+        this.runUnitTest = false;
+
         this.correctpt1 = true;
         this.correctpt2 = true;
         this.num_bits = 4;
@@ -133,8 +136,8 @@ export default class BA extends RunestoneBase {
         this.statementDiv.className = "statement-div";
         
         this.instruction = document.createElement("div");
-        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
-            "Please do the bitwise arithmetic operation based on the operator and the number of bits you select.";
+        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Part 1 Instructions</u></span>: " +
+            "Please do the bitwise arithmetic operation based on the operator and the number of bits you select. Give you answer as a binary number in the result box and the carry out bit as either 0 or 1 in the Carry Out box.";
         this.instruction.style.padding = "10px";
 
         this.configHelperText = document.createElement("div");
@@ -336,6 +339,35 @@ export default class BA extends RunestoneBase {
         this.isAnswered = true;
     }
 
+    renderUnitTestButton(){
+        if(this.runUnitTest){
+        this.UTButton = document.createElement("button")
+        this.UTButton.textContent = "Run Unit Tests"
+        this.containerDiv.appendChild(this.UTButton);
+
+        this.UT01 = document.createElement("input");
+        this.UT01.textContent = "First Input"
+        this.UT01.placeholder = "First Operand"
+        this.UT02 = document.createElement("input")
+        this.UT02.textContent = "Second Input"
+        this.UT02.placeholder = "Second Input"
+
+        this.containerDiv.appendChild(this.UT01);
+        this.containerDiv.appendChild(this.UT02);
+
+        this.UTButton.addEventListener("click", ()=>this.unitTest())
+        }
+
+    }
+
+    clearUnitTestButton(){
+        if(this.runUnitTest){
+            this.UTButton.remove();
+            this.UT01.remove();
+            this.UT02.remove();
+        }
+    }
+
     // Create the buttons
     renderBAButtons() {
         // "check answer" button
@@ -382,6 +414,12 @@ export default class BA extends RunestoneBase {
                     this.generateNumber();
                     this.generateAnswer();
                     this.clearSecondPart();
+                    if(this.runUnitTest && this.UTButton){
+                        this.clearUnitTestButton()
+                    }
+                    if(this.runUnitTest){
+                        this.renderUnitTestButton()
+                    }
                 } 
                 this.checkValidConversion();
                 this.sendData(3);
@@ -392,6 +430,9 @@ export default class BA extends RunestoneBase {
         // Add the buttons in the container
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
+        if(this.runUnitTest){
+            this.renderUnitTestButton();
+        }
 
         // Check answer when pressing "Enter"
         this.inputNode.addEventListener(
@@ -403,6 +444,8 @@ export default class BA extends RunestoneBase {
                 }
             }.bind(this), false
             );
+
+
    }
 
    renderSecondPartButtons(){
@@ -451,10 +494,16 @@ export default class BA extends RunestoneBase {
                 this.generateNumber();
                 this.generateAnswer();
                 this.clearSecondPart();
+                if(this.runUnitTest){
+                    this.clearUnitTestButton()
+                }
+
                 this.renderBAButtons();
+
             } 
             this.checkValidConversion();
             this.sendData(3);
+
         }.bind(this),
         false
     );
@@ -479,8 +528,8 @@ export default class BA extends RunestoneBase {
 
 
         this.instruction2 = document.createElement("div");
-        this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
-            "Convert the answer to unsigned and signed integers. Then, indicate whether or not there is overflow.";
+        this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Part 2 Instructions</u></span>: " +
+            "Interpret the operation as signed and unsigned, then convert the result of the operation to decimal. Finally, indicate whether or not there is overflow.";
         //We got rid of the padding for styling purposes
         this.instruction2.style.padding = "0px";
 
@@ -660,7 +709,7 @@ export default class BA extends RunestoneBase {
         overflowRadioText.style = "text-align: right; margin-right:17%;"
         overflowRadioText.innerText = "Is there overflow?"
         this.overflowRadioPromptDiv.append(overflowRadioText)
-        this.overflowRadioPromptDiv.style = "height: 1px; width:88%;"
+        this.overflowRadioPromptDiv.style = "height: 1px; width:88%; margin-top: 4%;"
 
 
         this.USDiv.style = "width: 50%; margin-left: 25%;"
@@ -775,6 +824,7 @@ export default class BA extends RunestoneBase {
     // generate a random number or two random numbers from 0 to 2^(this.num_bits)-1 based
     // on different operators and set the number to display
     generateNumber() {
+
         this.num_bits = parseInt(this.menuNode2.value);
         this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
         this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
@@ -786,6 +836,9 @@ export default class BA extends RunestoneBase {
         if (this.target_num2 === (1 << this.num_bits)) {
             this.target_num2 --;
         }
+
+
+        //why is the exact same thing in both switch cases?
         switch (this.randomItem) {
             case "ADDITION":
                 this.displayed_num_string = this.toBinary(this.target_num, this.num_bits);
@@ -796,6 +849,16 @@ export default class BA extends RunestoneBase {
                 this.displayed_num_string2 = this.toBinary(this.target_num2, this.num_bits);
                 break;
         }
+
+        //adding the +1 to avoid 0 being interpreted as ""; I hope this doesn't cause any problems later on
+
+        if(this.runUnitTest && this.UT01 && this.UT02 && this.UT01.value && this.UT02.value){
+            this.target_num = parseInt((this.UT01.value), 2);
+            this.displayed_num_string = this.UT01.value.toString();
+            this.target_num2 = parseInt((this.UT02.value), 2)
+            this.displayed_num_string2 = this.UT02.value.toString();
+        }
+        
         this.generatePrompt();
     }
 
@@ -818,14 +881,33 @@ export default class BA extends RunestoneBase {
                 // this.target_num_string = this.toBinary(diff);
                      
                 // break;
-                
-                this.target_num_converted = this.toBinary(~this.target_num2 + 1);
+                this.target_num_converted = this.toBinary((~this.target_num2+1)>>>0, this.num_bits);
+                this.addBinary();
        }
        // update the prompt
        this.generatePrompt();
    }
 
+
    addBinary(){
+    
+        let carryOut = 0
+        this.target_num_string = ""
+        let i = this.toBinary(this.target_num).length-1;
+        let j = this.target_num_converted.length-1;
+
+
+        while((i>=0 && j >= 0) || carryOut > 0){
+            const dig_a = i>=0 ? parseInt(this.toBinary(this.target_num)[i]) : 0;
+            const dig_b = i>=0 ? parseInt(this.target_num_converted[j]) : 0;
+            let sum = dig_a + dig_b + carryOut;
+
+            carryOut = ((sum >= 2) ? 1:0)
+            this.target_num_string = (sum % 2).toString() + this.target_num_string;
+
+            i--;
+            j--;
+        }
 
    }
    // Update the prompt to display
@@ -941,22 +1023,22 @@ export default class BA extends RunestoneBase {
 
    displayCorrectAnswerUnsigned(){
     // il8n autoconverts < into &lt
-    this.feedback_msg2 += ($.i18n("Unsigned Correct <br/>"));
+    this.feedback_msg2 += ($.i18n("Overflow for unsigned correct. "));
     this.contWrong = 0;
    }
    displayIncorrectAnswerUnsigned(){
-    this.feedback_msg2 += ($.i18n("Unsigned incorrect \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for unsigned incorrect. \n"));
     this.contWrong ++;
-    this.conrrectpt2 = false;
+    this.correctpt2 = false;
    }
    displayCorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("Signed correct \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for signed correct. \n"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("Signed incorrect \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for signed correct. \n"));
     this.contWrong ++;
-    this.conrrectpt2 = false;
+    this.correctpt2 = false;
    }
 
    checkCurrentAnswerPt2(){
@@ -981,7 +1063,7 @@ export default class BA extends RunestoneBase {
     else if(this.ans != this.USValue){
         this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
-        this.conrrectpt2 = false;
+        this.correctpt2 = false;
     }
     else{
         this.feedback_msg2 = ($.i18n("msg_NC_correct"));
@@ -997,7 +1079,7 @@ export default class BA extends RunestoneBase {
     else if(this.toSignedDecimal() != this.SValue){
         this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
-        this.conrrectpt2 = false;
+        this.correctpt2 = false;
     }
     else{
         this.feedback_msg2 = ($.i18n("msg_NC_correct"));
@@ -1245,6 +1327,45 @@ export default class BA extends RunestoneBase {
      }
 
 }
+
+
+
+//Unit Testing Functions
+
+generateAllMatchings = (arr1, arr2) => {
+    let target = [];
+    arr1.forEach(e1 => {
+        arr2.forEach(e2 => {
+            if(e1.length > 1 && e2.length > 1){
+                target.push([...e1,...e2])
+            }
+            else if(e1.length > 1){
+                target.push([...e1, e2])
+            }
+            if(e2.length > 1){
+                target.push([e1,...e2])
+            }
+            else{
+                target.push([e1,e2])
+            }
+            
+        })
+    });
+    return target;
+}
+
+NBitNums = (n=4) => {
+    let temp = [1,0]
+    for(let i = 0; i < (n-1);  i++){
+        temp = this.generateAllMatchings([1,0], temp)
+    }
+    return temp
+}
+
+unitTest(){
+    this.generateButton.click();
+}
+
 }
 
 
