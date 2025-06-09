@@ -75,6 +75,7 @@ const module_map = {
     binops: () => import("./runestone/numconv/js/binops.js"),
     bincalc: () => import("./runestone/numconv/js/bincalc.js"),
     binarith: () => import("./runestone/numconv/js/binarith.js"),
+    binselect: () => import("./runestone/numconv/js/binselect.js"),
     cachetable: () => import("./runestone/cache/js/cachetable.js"),
     cacheinfo: () => import("./runestone/cache/js/cacheinfo.js"),
     cachepartition: () => import("./runestone/cache/js/cachepartition.js"),

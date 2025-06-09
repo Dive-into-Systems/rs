@@ -25,6 +25,10 @@ $.i18n().load({
         msg_hint_addition: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_addition.html' target = '_blank'>4.4.1</a>.",
         msg_hint_subtraction: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_subtraction.html' target = '_blank'>4.4.2</a>.",
 
+        msg_incorrect_not_enough: "There are other operands that could generate this result.",
+        msg_incorrect_too_many: "You have selected too many operands, some of them cannot generate this result.",
+        msg_incorrect_not_match: "The operator(s) you have chosen is incorrect, please try again."
+
     },
 
 });

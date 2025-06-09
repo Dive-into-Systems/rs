@@ -42,7 +42,7 @@ export default class BA extends RunestoneBase {
 
         //THIS ENABLES UNIT TESTS
         this.runUnitTest = true;
-        this.runUnitTestLog = true;
+        this.runUnitTestLog = false;
         
 
         this.correctpt1 = true;
@@ -67,12 +67,13 @@ export default class BA extends RunestoneBase {
         this.logUnitTestInput1 = 0;
         this.logUnitTestInput2 = 0;
         this.UTbinaryAnswer;
-        this.UTcarryOut
+        this.UTcarryOut = 0;
         this.UTsignedDecimalAnswer;
         this.UTunsignedDecimalAnswer;
         this.UTunsignedOverflow;
         this.UTsignedOverflow;
         this.resultLog = ""
+        this.unitTestRandomItem = "ADDITION"
 
 
         // Only generate new prompt when there are items selected
@@ -307,7 +308,6 @@ export default class BA extends RunestoneBase {
         // prompt is invisible by default
         this.promptDiv.style.visibility = "hidden";
 
-        //this.renderSecondSection();
 
         // create the feedback div
         this.feedbackDiv = document.createElement("div");
@@ -455,15 +455,19 @@ export default class BA extends RunestoneBase {
         }
 
         // Check answer when pressing "Enter"
-        this.inputNode.addEventListener(
-            "keyup",
-            function(event) {
-            if (event.key === "Enter") {
+        const inputNodeEnterFunc = (e) => {
+            if(e.repeat){
+                return
+            }
+
+            if (e.key === "Enter") {
                     this.submitButton.click();
 
                 }
-            }.bind(this), false
-            );
+            this.inputNode.removeEventListener("keyup", inputNodeEnterFunc, true)
+            
+        }
+        this.inputNode.addEventListener("keyup", inputNodeEnterFunc, true)
 
 
    }
@@ -491,7 +495,7 @@ export default class BA extends RunestoneBase {
             }
 
         }.bind(this),
-        false
+        true
     );
 
     // "try another" button
@@ -609,7 +613,7 @@ export default class BA extends RunestoneBase {
             if (event.key === "Enter") {
                     this.submitButton2.click();
                 }
-            }.bind(this), false
+            }.bind(this), true
             );
        
        this.SInput.addEventListener(
@@ -618,7 +622,7 @@ export default class BA extends RunestoneBase {
         if (event.key === "Enter") {
                 this.submitButton2.click();
             }
-        }.bind(this), false
+        }.bind(this), true
         );
 
         //Adding the Yes/No radio buttons for overflow
@@ -770,6 +774,9 @@ export default class BA extends RunestoneBase {
         }
         var index = Math.floor(Math.random() * array.length);
         this.randomItem = array[index];
+        if(this.runUnitTestLog){
+            this.randomItem = this.unitTestRandomItem;
+        }
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
@@ -837,6 +844,7 @@ export default class BA extends RunestoneBase {
         else{
             carryOut = 0
         }
+        this.UTcarryOut = carryOut
         return carryOut;     
     }
     
@@ -1062,7 +1070,7 @@ export default class BA extends RunestoneBase {
     this.contWrong = 0;
    }
    displayIncorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("Overflow for signed correct. \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for signed incorrect. \n"));
     this.contWrong ++;
     this.correctpt2 = false;
    }
@@ -1072,7 +1080,7 @@ export default class BA extends RunestoneBase {
         this.USValue = 0;
     }
     else{
-        this.USValue = (this.USInput.value.toLocaleLowerCase());
+        this.USValue = (this.USInput.value.toLowerCase());
     }
 
     if(this.runUnitTestLog && this.SInput == undefined){
@@ -1081,7 +1089,12 @@ export default class BA extends RunestoneBase {
     else{
         this.SValue = (this.SInput.value.toLowerCase())
     }
-    this.ans = parseInt(this.target_num_string, 2);
+    if(this.target_num_string.length > 4){
+        this.ans = parseInt(this.target_num_string.slice(1), 2)
+    }
+    else{
+        this.ans = parseInt(this.target_num_string,2 );
+    }
     if(this.runUnitTestLog && this.yesBtnS == undefined){
         this.yesBtnValueS = false;
         this.noBtnValueS = false;
@@ -1101,34 +1114,36 @@ export default class BA extends RunestoneBase {
     // this.containerDiv.append(debugP);
     // debugP.innerHTML = (`${USValue},  ${SValue}, ${yesBtnValue}, ${noBtnValue}`);
 
-
+    console.log("ANS:")
+    console.log(`${this.ans}, targetnumstring: ${this.target_num_string}, USI: ${this.USValue}`)
     if(this.USValue == ""){
-        this.feedback_msg2 = ($.i18n("msg_no_answer"));
+        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
     else if(this.ans != this.USValue){
-        this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.correctpt2 = false;
     }
     else{
-        this.feedback_msg2 = ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_NC_correct"));
         this.contWrong = 0;
+
     }
 
 
     //Check the signed value
     if(this.SValue == ""){
-        this.feedback_msg2 = ($.i18n("msg_no_answer"));
+        this.feedback_msg2 += "Signed: " + ($.i18n("msg_no_answer"));
         this.correctpt2 = false;
     }
     else if(this.toSignedDecimal() != this.SValue){
-        this.feedback_msg2 = ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 += "Signed: " + ($.i18n("msg_NC_incorrect"));
         this.contWrong ++;
         this.correctpt2 = false;
     }
     else{
-        this.feedback_msg2 = ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 += "Signed: " + ($.i18n("msg_NC_correct"));
         this.contWrong = 0;
     }
 
@@ -1449,7 +1464,7 @@ unitTest(){
 unitTestAndLog(){
     const fourBitNums = this.NBitNums()
     const operandsArr = this.generateAllMatchings(fourBitNums,fourBitNums,false);
-    this.resultLog = "First_Num_Binary, Operation, Second_Num_Binary, Answer, Unsigned_Answer, Signed_Answer, Unsigned_Overflow, Signed_Overflow \n"
+    this.resultLog = "First_Num_Binary, Operation, Second_Num_Binary, Answer, Carry Out, Unsigned_Answer, Signed_Answer, Unsigned_Overflow, Signed_Overflow \n"
     //this.logUnitTestInput1.value
     operandsArr.forEach(elem => {
         const e1 = elem[0]
@@ -1463,11 +1478,27 @@ unitTestAndLog(){
         // `Answer: ${this.UTbinaryAnswer}, Unsigned Answer: ${this.UTunsignedDecimalAnswer}, Signed Answer: ${this.UTsignedDecimalAnswer} \n` +
         // `Unsigned Overflow: ${this.UTunsignedOverflow}, Signed Overflow: ${this.UTsignedOverflow} `;
         const resultStringCSV = `${this.toBinary(this.target_num)}, ${this.randomItem}, ${this.toBinary(this.target_num2)},` +
-        `${this.UTbinaryAnswer},${this.UTunsignedDecimalAnswer},${this.UTsignedDecimalAnswer},` +
+        `${this.UTbinaryAnswer}, ${this.UTcarryOut}, ${this.UTunsignedDecimalAnswer},${this.UTsignedDecimalAnswer},` +
         `${this.UTunsignedOverflow},${this.UTsignedOverflow}\n`;
         this.resultLog += (resultStringCSV)
     })
-    
+    this.unitTestRandomItem = "SUBTRACTION"
+    operandsArr.forEach(elem => {
+        const e1 = elem[0]
+        const e2 = elem[1]
+        this.logUnitTestInput1 = e1;
+        this.logUnitTestInput2 = e2;
+        this.generateButton.click();
+        this.checkCurrentAnswer();
+        this.checkCurrentAnswerPt2();
+        // const resultString = `${this.target_num} ${this.randomItem} ${this.target_num2} \n: ` +
+        // `Answer: ${this.UTbinaryAnswer}, Unsigned Answer: ${this.UTunsignedDecimalAnswer}, Signed Answer: ${this.UTsignedDecimalAnswer} \n` +
+        // `Unsigned Overflow: ${this.UTunsignedOverflow}, Signed Overflow: ${this.UTsignedOverflow} `;
+        const resultStringCSV = `${this.toBinary(this.target_num)}, ${this.randomItem}, ${this.toBinary(this.target_num2)},` +
+        `${this.UTbinaryAnswer}, ${this.UTcarryOut}, ${this.UTunsignedDecimalAnswer},${this.UTsignedDecimalAnswer},` +
+        `${this.UTunsignedOverflow},${this.UTsignedOverflow}\n`;
+        this.resultLog += (resultStringCSV)
+    })
 
     const blob = new Blob([this.resultLog], {type: "text/csv;charset=utf-8"});
     const blobUrl = URL.createObjectURL(blob);
