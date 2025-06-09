@@ -41,7 +41,9 @@ export default class BA extends RunestoneBase {
         //changed correct pt2 and pt2 to flags
 
         //THIS ENABLES UNIT TESTS
-        this.runUnitTest = false;
+        this.runUnitTest = true;
+        this.runUnitTestLog = true;
+        
 
         this.correctpt1 = true;
         this.correctpt2 = true;
@@ -59,6 +61,19 @@ export default class BA extends RunestoneBase {
         this.createBAElement();
         this.clearAnswer();
         this.getCheckedValues();
+
+
+        //Unit Test debug values
+        this.logUnitTestInput1 = 0;
+        this.logUnitTestInput2 = 0;
+        this.UTbinaryAnswer;
+        this.UTcarryOut
+        this.UTsignedDecimalAnswer;
+        this.UTunsignedDecimalAnswer;
+        this.UTunsignedOverflow;
+        this.UTsignedOverflow;
+        this.resultLog = ""
+
 
         // Only generate new prompt when there are items selected
         if (this.checkedValues.length != 0){
@@ -342,8 +357,11 @@ export default class BA extends RunestoneBase {
     renderUnitTestButton(){
         if(this.runUnitTest){
         this.UTButton = document.createElement("button")
+        this.UTRunButton = document.createElement("button")
         this.UTButton.textContent = "Run Unit Tests"
+        this.UTRunButton.textContent = "Run Unit Tests and Log answers"
         this.containerDiv.appendChild(this.UTButton);
+        this.containerDiv.append(this.UTRunButton)
 
         this.UT01 = document.createElement("input");
         this.UT01.textContent = "First Input"
@@ -356,6 +374,7 @@ export default class BA extends RunestoneBase {
         this.containerDiv.appendChild(this.UT02);
 
         this.UTButton.addEventListener("click", ()=>this.unitTest())
+        this.UTRunButton.addEventListener("click", ()=>this.unitTestAndLog())
         }
 
     }
@@ -363,6 +382,7 @@ export default class BA extends RunestoneBase {
     clearUnitTestButton(){
         if(this.runUnitTest){
             this.UTButton.remove();
+            this.UTRunButton.remove()
             this.UT01.remove();
             this.UT02.remove();
         }
@@ -654,7 +674,7 @@ export default class BA extends RunestoneBase {
 
         ///////////////////////Again for unsigned
 
-
+        
 
 
         const fieldset2 = document.createElement("div")
@@ -852,13 +872,18 @@ export default class BA extends RunestoneBase {
 
         //adding the +1 to avoid 0 being interpreted as ""; I hope this doesn't cause any problems later on
 
-        if(this.runUnitTest && this.UT01 && this.UT02 && this.UT01.value && this.UT02.value){
+        if(this.runUnitTest && !this.runUnitTestLog && this.UT01 && this.UT02 && this.UT01.value && this.UT02.value){
             this.target_num = parseInt((this.UT01.value), 2);
             this.displayed_num_string = this.UT01.value.toString();
             this.target_num2 = parseInt((this.UT02.value), 2)
             this.displayed_num_string2 = this.UT02.value.toString();
         }
-        
+        else if(this.runUnitTest && this.runUnitTestLog && this.UT01 && this.UT02 && this.UT01.value && this.UT02.value){
+            this.target_num = parseInt((this.logUnitTestInput1), 2);
+            this.displayed_num_string = this.logUnitTestInput1.toString();
+            this.target_num2 = parseInt((this.logUnitTestInput2), 2)
+            this.displayed_num_string2 = this.logUnitTestInput2.toString();
+        }
         this.generatePrompt();
     }
 
@@ -959,7 +984,8 @@ export default class BA extends RunestoneBase {
        // the answer is correct if it is the same as the string this.target_num_string
        var input_value = (this.inputNode.value).toString().toLowerCase();
        let input_value_2 = this.inputNode2.value;
-
+        
+       this.UTbinaryAnswer = ans;
 
 
        if(input_value_2 == undefined || input_value_2 == null){
@@ -1042,13 +1068,33 @@ export default class BA extends RunestoneBase {
    }
 
    checkCurrentAnswerPt2(){
-    this.USValue = (this.USInput.value.toLocaleLowerCase());
-    this.SValue = (this.SInput.value.toLowerCase())
+    if(this.runUnitTestLog && this.USInput == undefined){
+        this.USValue = 0;
+    }
+    else{
+        this.USValue = (this.USInput.value.toLocaleLowerCase());
+    }
+
+    if(this.runUnitTestLog && this.SInput == undefined){
+        this.SValue = 0;
+    }
+    else{
+        this.SValue = (this.SInput.value.toLowerCase())
+    }
     this.ans = parseInt(this.target_num_string, 2);
-    this.yesBtnValueS = this.yesBtnS.checked;
-    this.noBtnValueS = this.noBtnS.checked;
-    this.yesBtnValueU = this.yesBtnU.checked;
-    this.noBtnValueU = this.noBtnU.checked;
+    if(this.runUnitTestLog && this.yesBtnS == undefined){
+        this.yesBtnValueS = false;
+        this.noBtnValueS = false;
+        this.yesBtnValueU = false;
+        this.noBtnValueU = false;
+    }
+    else{
+        this.yesBtnValueS = this.yesBtnS.checked;
+        this.noBtnValueS = this.noBtnS.checked;
+        this.yesBtnValueU = this.yesBtnU.checked;
+        this.noBtnValueU = this.noBtnU.checked;
+    }
+
 
     
     // const debugP = document.createElement("div")
@@ -1086,6 +1132,9 @@ export default class BA extends RunestoneBase {
         this.contWrong = 0;
     }
 
+    this.UTunsignedDecimalAnswer = this.ans;
+    this.UTsignedDecimalAnswer = this.toSignedDecimal();
+
     ///find out if there's unsigned overflow
 
       this.checkUnsignedOverflow();
@@ -1106,17 +1155,42 @@ export default class BA extends RunestoneBase {
         carryOut = 0
     }
 
+    //for testing purposes only
+    const setUTOverflowVariables = () => {
+        if(this.randomItem == "ADDITION" && carryOut == 1){
+            this.UTunsignedOverflow = true;
+        }
+        else if(this.randomItem == "ADDITION"){
+            this.UTunsignedOverflow = false;
+        }
+        else if(this.randomItem == "SUBTRACTION"){
+            this.UTunsignedOverflow = true;
+        }
+        else if(this.randomItem == "SUBTRACTION"){
+            this.UTunsignedOverflow = false;
+        }  
+    }
+    setUTOverflowVariables();
+
+
     if(this.randomItem == "ADDITION" && carryOut == 1 && this.yesBtnValueU == true && this.noBtnValueU == false){
         this.displayCorrectAnswerUnsigned()
+        this.UTunsignedOverflow = true;
     }
     else if(this.randomItem == "ADDITION" && carryOut == 0 && this.yesBtnValueU == false && this.noBtnValueU == true){
         this.displayCorrectAnswerUnsigned()
+        this.UTunsignedOverflow = false;
+
     }
     else if(this.randomItem == "SUBTRACTION" && carryOut == 0 && this.yesBtnValueU == true && this.noBtnValueU == false){
         this.displayCorrectAnswerUnsigned();
+        this.UTunsignedOverflow = true;
+
     }
     else if(this.randomItem == "SUBTRACTION" && carryOut == 1 &&  this.yesBtnValueU == false && this.noBtnValueU == true){
         this.displayCorrectAnswerUnsigned();
+        this.UTunsignedOverflow = false;
+
     }
     else{
         this.correctpt2 = false;
@@ -1194,6 +1268,8 @@ export default class BA extends RunestoneBase {
             this.displayIncorrectAnswerSigned();
         }
     }
+
+    this.UTsignedOverflow = overflow;
     
 
     
@@ -1332,18 +1408,23 @@ export default class BA extends RunestoneBase {
 
 //Unit Testing Functions
 
-generateAllMatchings = (arr1, arr2) => {
+generateAllMatchings = (arr1, arr2, spread=true) => {
     let target = [];
     arr1.forEach(e1 => {
         arr2.forEach(e2 => {
-            if(e1.length > 1 && e2.length > 1){
-                target.push([...e1,...e2])
-            }
-            else if(e1.length > 1){
-                target.push([...e1, e2])
-            }
-            if(e2.length > 1){
-                target.push([e1,...e2])
+            if(spread){
+                if(e1.length > 1 && e2.length > 1){
+                    target.push([...e1,...e2])
+                }
+                else if(e1.length > 1){
+                    target.push([...e1, e2])
+                }
+                if(e2.length > 1){
+                    target.push([e1,...e2])
+                }
+                else{
+                    target.push([e1,e2])
+                }
             }
             else{
                 target.push([e1,e2])
@@ -1364,6 +1445,41 @@ NBitNums = (n=4) => {
 
 unitTest(){
     this.generateButton.click();
+}
+unitTestAndLog(){
+    const fourBitNums = this.NBitNums()
+    const operandsArr = this.generateAllMatchings(fourBitNums,fourBitNums,false);
+    this.resultLog = "First_Num_Binary, Operation, Second_Num_Binary, Answer, Unsigned_Answer, Signed_Answer, Unsigned_Overflow, Signed_Overflow \n"
+    //this.logUnitTestInput1.value
+    operandsArr.forEach(elem => {
+        const e1 = elem[0]
+        const e2 = elem[1]
+        this.logUnitTestInput1 = e1;
+        this.logUnitTestInput2 = e2;
+        this.generateButton.click();
+        this.checkCurrentAnswer();
+        this.checkCurrentAnswerPt2();
+        // const resultString = `${this.target_num} ${this.randomItem} ${this.target_num2} \n: ` +
+        // `Answer: ${this.UTbinaryAnswer}, Unsigned Answer: ${this.UTunsignedDecimalAnswer}, Signed Answer: ${this.UTsignedDecimalAnswer} \n` +
+        // `Unsigned Overflow: ${this.UTunsignedOverflow}, Signed Overflow: ${this.UTsignedOverflow} `;
+        const resultStringCSV = `${this.toBinary(this.target_num)}, ${this.randomItem}, ${this.toBinary(this.target_num2)},` +
+        `${this.UTbinaryAnswer},${this.UTunsignedDecimalAnswer},${this.UTsignedDecimalAnswer},` +
+        `${this.UTunsignedOverflow},${this.UTsignedOverflow}\n`;
+        this.resultLog += (resultStringCSV)
+    })
+    
+
+    const blob = new Blob([this.resultLog], {type: "text/csv;charset=utf-8"});
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Create a link to download the file
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = "data.csv";
+    link.innerHTML = "Click here to download the file";
+    this.containerDiv.appendChild(link);
+    
+    console.log(this.resultLog);
 }
 
 }
