@@ -72,6 +72,7 @@ const module_map = {
     assembly_syntax: () => import("./runestone/assembly/js/assembly.js"),
     assembly_state: () => import("./runestone/assembly/js/assembly_state.js"),
     assembly_flag: () => import("./runestone/assembly/js/assembly_flag.js"),
+    assembly_jump: () => import("./runestone/assembly/js/assembly_jump.js"),
     binops: () => import("./runestone/numconv/js/binops.js"),
     bincalc: () => import("./runestone/numconv/js/bincalc.js"),
     binarith: () => import("./runestone/numconv/js/binarith.js"),
