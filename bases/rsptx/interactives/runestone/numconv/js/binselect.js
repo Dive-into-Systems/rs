@@ -40,6 +40,15 @@ export default class BS extends RunestoneBase {
         this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
         this.toOpt = ["4", "6", "8"];
 
+
+        //Unit Testing Values
+        this.runUT = false;
+        this.UTAnswers
+        this.UTOperand1 = 0
+        this.UTOperand2 = 0
+        this.UTOp = "ADDITION"
+
+
         // Fields for logging data
         this.componentId = "4.2";
         this.questionId = 1;
@@ -111,11 +120,11 @@ export default class BS extends RunestoneBase {
         // Inner HTML defines the items in the dropdown
         var html =   "<span class='anchor'>Select Operators</span>"+
         "<ul class='items'>"+
-        "  <li><input class='addBoxSelect' type='checkbox' value='ADDITION' checked/>ADDITION </li>"+ //pre checked item
-        "  <li><input  class='subBoxSelect' type='checkbox' value='SUBTRACTION' checked/>SUBTRACTION </li>"+
-        "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>AND </li>"+
-        "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>OR </li>"+
-        "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>XOR </li>"+
+        "  <li><input class='addBoxSelect' type='checkbox' value='ADDITION' checked/>Addition </li>"+ //pre checked item
+        "  <li><input  class='subBoxSelect' type='checkbox' value='SUBTRACTION' checked/>Subtraction </li>"+
+        "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>And </li>"+
+        "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>Or </li>"+
+        "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>Exclusive Or </li>"+
         "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' checked/>Left Shift</li>"+
         "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' checked/>Logical Right Shift</li>"+
         "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' checked/>Arithmetic Right Shift</li>"+
@@ -201,7 +210,6 @@ export default class BS extends RunestoneBase {
             function () {
                     var random = this.randomItem;
                     this.getCheckedValues();
-                    this.randomItem = random;
                     this.generateOperands();
                     this.clearAnswer();
                     this.generateTargNum();
@@ -231,6 +239,7 @@ export default class BS extends RunestoneBase {
 
         // create the node for the number being displayed
         this.promptDivTextNode = document.createElement("code");
+        this.promptDivTextNode.style = "margin: auto";
         // this.promptDivTextNode.className = "binops-inline code";
 
         const appendEl = (mainDiv, elType) => {mainDiv.append(document.createElement(elType))}
@@ -404,8 +413,13 @@ export default class BS extends RunestoneBase {
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
 
-        // Check answer when pressing "Enter"
-
+        if(this.runUT){
+            this.UTButton = document.createElement("button")
+            this.UTButton.textContent = "Run unit tests"
+            this.containerDiv.append(this.UTButton)
+            this.UTButton.addEventListener("click", () => this.UnitTest())
+        }
+        
    }
 
     // Add the feedback in the container
@@ -435,6 +449,9 @@ export default class BS extends RunestoneBase {
         }
         var index = Math.floor(Math.random() * array.length);
         this.randomItem = array[index];
+        if(this.runUT){
+            this.randomItem = this.UTOp
+        }
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
@@ -501,7 +518,11 @@ export default class BS extends RunestoneBase {
                 this.displayed_num_string2 = this.toBinary(this.target_num2);
                 break;
         }
-        this.generatePrompt();
+
+        if(this.runUT){
+            this.target_num = parseInt((this.UTOperand1), 2);
+            this.target_num2 = parseInt((this.UTOperand2), 2);
+        }
     }
     
     // This function generates two random numbers from 0 to 2^(this.num_bits)-1 based
@@ -537,7 +558,10 @@ export default class BS extends RunestoneBase {
                 if (this.toBinary(this.target_num)[0] === "1"){
                     let con = this.target_num>>>this.target_num2;
                     if (con === 0){
-                        con = "1111"
+                        con = "";
+                        for(let i = 0; i<this.num_bits; i++){
+                            con = "1" + con;
+                        }
                     } else{
                         con = con.toString(2).padStart(this.num_bits, '1');
                     }
@@ -578,6 +602,7 @@ export default class BS extends RunestoneBase {
    // Update the prompt to display
    // Use innerHTML to deal with prompts of different number of lines
    generatePrompt() {
+        this.target_num_string = this.target_num_string.slice((this.target_num_string.length-this.num_bits));
         const operatorHTML = `<br> <div class="operands" >`
             +`<div class="mysteryOp" >?</div><div style="text-decoration:underline">0b${this.displayed_num_string2}</div></div>`
             +`<div>0b${this.target_num_string}</div>`
@@ -673,7 +698,10 @@ export default class BS extends RunestoneBase {
             this.feedback_msg = ($.i18n("msg_NC_correct"));
         }
         
+        if(this.runUT){
+            this.UTAnswers = this.answers;
 
+        }
 
    }
 
@@ -729,7 +757,10 @@ export default class BS extends RunestoneBase {
             // this.arshift = ((this.target_num >> this.target_num2) & ((1 << this.num_bits)-1)).toString(2).padStart(this.num_bits, '1');
             let con = this.target_num>>>this.target_num2;
             if (con === 0){
-                con = "1111"
+                con = ""
+                for(let i = 0; i<this.num_bits; i++){
+                    con = "1" + con;
+                }
             } else{
                 con = con.toString(2).padStart(this.num_bits, '1');
             }
@@ -850,6 +881,95 @@ export default class BS extends RunestoneBase {
             this.queueMathJax(document.body);
         }
    }
+
+
+//Unit Testing Functions
+
+generateAllMatchings(arr1, arr2, spread=true){
+    let target = [];
+    arr1.forEach(e1 => {
+        arr2.forEach(e2 => {
+            if(spread){
+                if(e1.length > 1 && e2.length > 1){
+                    target.push([...e1,...e2])
+                }
+                else if(e1.length > 1){
+                    target.push([...e1, e2])
+                }
+                if(e2.length > 1){
+                    target.push([e1,...e2])
+                }
+                else{
+                    target.push([e1,e2])
+                }
+            }
+            else{
+                target.push([e1,e2])
+            }
+            
+        })
+    });
+    return target;
+}
+
+NBitNums(n=4){
+    let temp = [1,0]
+    for(let i = 0; i < (n-1);  i++){
+        temp = this.generateAllMatchings([1,0], temp)
+    }
+    return temp
+}
+
+
+UnitTest() {
+    const fourBitNums = this.NBitNums(this.num_bits)
+    const operandsArr = this.generateAllMatchings(fourBitNums,fourBitNums,false);
+    this.resultLog = "Operand 1, Operand 2, Operation, Result, Add, Subtract, And, Or, Xor, LS, LRS, ARS\n"
+
+    const operations = ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"]
+    
+    const singleOpUTFunc = (operation) => operandsArr.forEach(elem => {
+            
+        const e1 = Number(elem[0].join(""))
+        const e2 = Number(elem[1].join(""))
+        this.UTOp = operation;
+        this.UTOperand1 = e1;
+        this.UTOperand2 = e2;
+        this.generateButton.click();
+        this.checkCurrentAnswer();
+        // const resultString = `${this.target_num} ${this.randomItem} ${this.target_num2} \n: ` +
+        // `Answer: ${this.UTbinaryAnswer}, Unsigned Answer: ${this.UTunsignedDecimalAnswer}, Signed Answer: ${this.UTsignedDecimalAnswer} \n` +
+        // `Unsigned Overflow: ${this.UTunsignedOverflow}, Signed Overflow: ${this.UTsignedOverflow} `;
+        // const resultStringCSV = `${this.toBinary(this.target_num)}, ${this.randomItem}, ${this.toBinary(this.target_num2)},` +
+        // `${this.UTbinaryAnswer}, ${this.UTcarryOut}, ${this.UTunsignedDecimalAnswer},${this.UTsignedDecimalAnswer},` +
+        // `${this.UTunsignedOverflow},${this.UTsignedOverflow}\n`;
+        this.resultLog += `${this.UTOperand1}, ${this.UTOperand2}, ${this.UTOp}, ${this.target_num_string}, `;
+        let resultString = ""
+        this.UTAnswers.forEach(e => resultString+=` ${e},`)
+
+        this.resultLog += (resultString)
+        this.resultLog = this.resultLog.slice(0, -1); 
+        this.resultLog += "\n"
+    })
+
+    
+    operations.forEach(op => singleOpUTFunc(op))
+    
+
+    const blob = new Blob([this.resultLog], {type: "text/csv;charset=utf-8"});
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Create a link to download the file
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = "data.csv";
+    link.innerHTML = "Click here to download the file";
+    this.containerDiv.appendChild(link);
+    
+        console.log(this.resultLog);
+}
+
+
 }
 
 

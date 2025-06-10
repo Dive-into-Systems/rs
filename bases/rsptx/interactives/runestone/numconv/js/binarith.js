@@ -41,7 +41,7 @@ export default class BA extends RunestoneBase {
         //changed correct pt2 and pt2 to flags
 
         //THIS ENABLES UNIT TESTS
-        this.runUnitTest = true;
+        this.runUnitTest = false;
         this.runUnitTestLog = false;
         
 
@@ -1478,7 +1478,7 @@ unitTest(){
     this.generateButton.click();
 }
 unitTestAndLog(){
-    const fourBitNums = this.NBitNums()
+    const fourBitNums = this.NBitNums(this.num_bits)
     const operandsArr = this.generateAllMatchings(fourBitNums,fourBitNums,false);
     this.resultLog = "First_Num_Binary, Operation, Second_Num_Binary, Answer, Carry Out, Unsigned_Answer, Signed_Answer, Unsigned_Overflow, Signed_Overflow \n"
     //this.logUnitTestInput1.value
