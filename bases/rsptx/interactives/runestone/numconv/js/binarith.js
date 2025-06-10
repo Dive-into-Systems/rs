@@ -388,6 +388,18 @@ export default class BA extends RunestoneBase {
         }
     }
 
+
+    inputNodeEnterFunc = (e) => {
+        if(e.repeat){
+            return
+        }
+
+        if (e.key === "Enter") {
+                this.submitButton.click();
+                console.log("enter key up submit")
+            }
+        
+    }
     // Create the buttons
     renderBAButtons() {
         // "check answer" button
@@ -454,20 +466,7 @@ export default class BA extends RunestoneBase {
             this.renderUnitTestButton();
         }
 
-        // Check answer when pressing "Enter"
-        const inputNodeEnterFunc = (e) => {
-            if(e.repeat){
-                return
-            }
 
-            if (e.key === "Enter") {
-                    this.submitButton.click();
-
-                }
-            this.inputNode.removeEventListener("keyup", inputNodeEnterFunc, true)
-            
-        }
-        this.inputNode.addEventListener("keyup", inputNodeEnterFunc, true)
 
 
    }
@@ -612,6 +611,7 @@ export default class BA extends RunestoneBase {
             function(event) {
             if (event.key === "Enter") {
                     this.submitButton2.click();
+                    
                 }
             }.bind(this), true
             );
@@ -751,9 +751,21 @@ export default class BA extends RunestoneBase {
 
     }
 
+    addInputEventListener(){
+        // Check answer when pressing "Enter"
+        console.log("e")
+        this.inputNode.addEventListener("keyup", this.inputNodeEnterFunc, true)
+    }
+
+    removeInputEventListener(){
+        console.log("el removed")
+        this.inputNode.removeEventListener("keyup", this.inputNodeEnterFunc, true)
+    }
+
     clearSecondPart(){
         if(this.answerDiv2 != undefined && this.answerDiv2 != null){
             this.answerDiv2.remove();
+
         }
     }
 
@@ -967,6 +979,10 @@ export default class BA extends RunestoneBase {
             this.inputNode2.setAttribute("placeholder", placeholder);
             this.inputNode2.setAttribute("size", placeholder.length + 1);
             this.inputNode2.setAttribute("maxlength", 1);
+
+
+        this.removeInputEventListener()
+        this.addInputEventListener()
 
    }
 
