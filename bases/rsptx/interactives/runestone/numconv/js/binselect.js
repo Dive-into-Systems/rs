@@ -39,7 +39,7 @@ export default class BS extends RunestoneBase {
         this.num_bits = 4;
         this.fromOpt = ["AND", "OR", "XOR", "NOT", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"];
         this.toOpt = ["4", "6", "8"];
-
+        this.checkedValues = [];
 
         //Unit Testing Values
         this.runUT = false;
@@ -57,6 +57,7 @@ export default class BS extends RunestoneBase {
         
         // Behaviors when page is loaded
         this.createBSElement();
+        this.controlAnswerVisibillity()
         this.clearAnswer();
         this.getCheckedValues();
 
@@ -125,9 +126,9 @@ export default class BS extends RunestoneBase {
         "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>And </li>"+
         "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>Or </li>"+
         "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>Exclusive Or </li>"+
-        "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' checked/>Left Shift</li>"+
-        "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' checked/>Logical Right Shift</li>"+
-        "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' checked/>Arithmetic Right Shift</li>"+
+        "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' uncheck/>Left Shift</li>"+
+        "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' uncheck/>Logical Right Shift</li>"+
+        "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' uncheck/>Arithmetic Right Shift</li>"+
 
         "</ul>"
         
@@ -258,27 +259,40 @@ export default class BS extends RunestoneBase {
         
         this.checkListDiv = document.createElement("div")
         const checkListDivHTML = "<ul class='items'>"+
-        "  <li><input class='addBoxResult' type='checkbox' value='ADDITION' uncheck/>Addition </li>"+ //pre checked item
-        "  <li><input  class='subBoxResult' type='checkbox' value='SUBTRACTION' uncheck/>Subtraction </li>"+
-        "  <li><input class='andBoxResult' type='checkbox' value='AND' uncheck/>And </li>"+
-        "  <li><input class='orBoxResult' type='checkbox' value='OR' uncheck/>Or </li>"+
-        "  <li><input class='xorBoxResult' type='checkbox' value='XOR' uncheck/>Exclusive Or </li>"+
-        "  <li><input class='lShiftBoxResult' type='checkbox' value='lShift' uncheck/>Left Shift </li>"+
-        "  <li><input class='lrShiftBoxResult' type='checkbox' value='lrShift' uncheck/>Logical Right Shift </li>"+
-        "  <li><input class='arShiftBoxResult' type='checkbox' value='arShift' uncheck/>Arithmetic Right Shift </li>"+
+        "  <div class='resultBo'><input class='addBoxResult' type='checkbox' value='ADDITION' uncheck>Addition</input> <br></div> "+ //pre checked item
+        "  <div><input  class='subBoxResult' type='checkbox' value='SUBTRACTION' uncheck>Subtraction </input>  <br></div>"+
+        "  <div><input class='andBoxResult' type='checkbox' value='AND' uncheck>And </input>  <br></div>"+
+        "  <div><input class='orBoxResult' type='checkbox' value='OR' uncheck>Or  </input> <br></div>"+
+        "  <div><input class='xorBoxResult' type='checkbox' value='XOR' uncheck>Exclusive Or </input>  <br></div>"+
+        "  <div><input class='lShiftBoxResult' type='checkbox' value='lShift' uncheck>Left Shift </input>  <br></div>"+
+        "  <div><input class='lrShiftBoxResult' type='checkbox' value='lrShift' uncheck>Logical Right Shift </input>  <br></div>"+
+        "  <div><input class='arShiftBoxResult' type='checkbox' value='arShift' uncheck>Arithmetic Right Shift </input>  <br></div>"+
 
         "</ul>";
         this.checkListDiv.innerHTML = checkListDivHTML;
         this.answerDiv.append(this.checkListDiv)
-            
-        //this.addbox.checked gets you the value 
+        //this.addbox.checked gets you the value
         this.addBoxResult = this.checkListDiv.getElementsByClassName("addBoxResult")[0]
+
+
         this.subBoxResult = this.checkListDiv.getElementsByClassName("subBoxResult")[0]
+
+
         this.andBoxResult = this.checkListDiv.getElementsByClassName("andBoxResult")[0]
+
+
         this.orBoxResult = this.checkListDiv.getElementsByClassName("orBoxResult")[0]
+
+
         this.xorBoxResult = this.checkListDiv.getElementsByClassName("xorBoxResult")[0]
+
+
         this.lShiftBoxResult = this.checkListDiv.getElementsByClassName("lShiftBoxResult")[0]
+
+        
         this.lrShiftBoxResult = this.checkListDiv.getElementsByClassName("lrShiftBoxResult")[0]
+
+
         this.arShiftBoxResult = this.checkListDiv.getElementsByClassName("arShiftBoxResult")[0]
 
 
@@ -354,6 +368,28 @@ export default class BS extends RunestoneBase {
         this.isAnswered = true;
     }
 
+    controlAnswerVisibillity(){
+        if(!this.addBoxSelect.checked){this.addBoxResult.parentElement.style.display = "none"}
+        else{this.addBoxResult.parentElement.style.display = 'revert'}
+        if(!this.subBoxSelect.checked){this.subBoxResult.parentElement.style.display = "none"}
+        else{this.subBoxResult.parentElement.style.display = 'revert'}
+        if(!this.andBoxSelect.checked){this.andBoxResult.parentElement.style.display = "none"}
+        else{this.andBoxResult.parentElement.style.display = 'revert'}
+        if(!this.orBoxSelect.checked){this.orBoxResult.parentElement.style.display = "none"}
+        else{this.orBoxResult.parentElement.style.display = 'revert'}
+        if(!this.xorBoxSelect.checked){this.xorBoxResult.parentElement.style.display = "none"}
+        else{this.xorBoxResult.parentElement.style.display = 'revert'}
+        if(!this.lShiftBoxSelect.checked){this.lShiftBoxResult.parentElement.style.display = "none"}
+        else{this.lShiftBoxResult.parentElement.style.display = 'revert'}
+        if(!this.lrShiftBoxSelect.checked){this.lrShiftBoxResult.parentElement.style.display = "none"}
+        else{this.lrShiftBoxResult.parentElement.style.display = 'revert'}
+        if(!this.arShiftBoxSelect.checked){this.arShiftBoxResult.parentElement.style.display = "none"}
+        else{this.arShiftBoxResult.parentElement.style.display = 'revert'}
+
+        this.countSelected = this.checkedValues.length;
+
+    }
+
     // Create the buttons
     renderBSButtons() {
         // "check answer" button
@@ -397,7 +433,8 @@ export default class BS extends RunestoneBase {
                     this.generateOperands();
                     this.generateTargNum();
                     this.generateAnswer();
-                } 
+                }
+                this.controlAnswerVisibillity()
                 console.log(this.randomItem);
                 console.log("target_num_string:" + this.target_num_string);
                 console.log("op1: " + this.displayed_num_string);
@@ -639,8 +676,8 @@ export default class BS extends RunestoneBase {
         this.hideFeedback();
         this.valid_conversion = true;
         if (this.checkedValues.length == 0){
-            this.promptOLDiv.style.visibility = "hidden";
-            this.promptDiv.style.visibility = "hidden";
+            // this.promptOLDiv.style.visibility = "hidden";
+            // this.promptDiv.style.visibility = "hidden";
             return;
         }
         this.promptDiv.style.visibility = "visible";
@@ -649,28 +686,28 @@ export default class BS extends RunestoneBase {
    // check if the answer is correct
    checkCurrentAnswer() {
         let inputs = [false,false,false,false,false, false, false, false];
-        if(this.addBoxResult.checked){
+        if(this.addBoxResult.checked || !this.checkedValues.includes("ADDITION")){
             inputs[0] = true;
         }  
-        if(this.subBoxResult.checked){
+        if(this.subBoxResult.checked || !this.checkedValues.includes("SUBTRACTION")){
             inputs[1] = true;
         }
-        if(this.andBoxResult.checked){
+        if(this.andBoxResult.checked || !this.checkedValues.includes("ADD")){
             inputs[2] = true;
         }
-        if(this.orBoxResult.checked){
+        if(this.orBoxResult.checked || !this.checkedValues.includes("OR")){
             inputs[3] = true;
         }
-        if(this.xorBoxResult.checked) {
+        if(this.xorBoxResult.checked || !this.checkedValues.includes("XOR")) {
             inputs[4] = true;
         }
-        if(this.lShiftBoxResult.checked){
+        if(this.lShiftBoxResult.checked || !this.checkedValues.includes("Left Shift")){
             inputs[5] = true;
         }
-        if(this.lrShiftBoxResult.checked){
+        if(this.lrShiftBoxResult.checked || !this.checkedValues.includes("Right Shift(Logical)")){
             inputs[6] = true;
         }
-        if(this.arShiftBoxResult.checked){
+        if(this.arShiftBoxResult.checked || !this.checkedValues.includes("Right Shift(Arithmetic)")){
             inputs[7] = true;
         }
 
@@ -711,32 +748,32 @@ export default class BS extends RunestoneBase {
         this.getAllOutputs();
         this.answers = [false,false,false,false,false,false,false,false];
 
-        if(this.addR == this.target_num_string){
+        if(this.addR == this.target_num_string || !this.checkedValues.includes("ADDITION")){
             this.answers[0] = true;
         }
-        if(this.subR == this.target_num_string){
+        if(this.subR == this.target_num_string || !this.checkedValues.includes("SUBTRACTION")){
             this.answers[1] = true;
         }
 
-        if(this.andR == this.target_num_string){
+        if(this.andR == this.target_num_string || !this.checkedValues.includes("ADD")){
             this.answers[2] = true;
         }
 
-        if(this.orR == this.target_num_string){
+        if(this.orR == this.target_num_string || !this.checkedValues.includes("OR")){
             this.answers[3] = true;
         }
 
-        if(this.xorR == this.target_num_string){
+        if(this.xorR == this.target_num_string || !this.checkedValues.includes("XOR")){
             this.answers[4] = true;
         }
 
-        if(this.lshift == this.target_num_string){
+        if(this.lshift == this.target_num_string || !this.checkedValues.includes("Left Shift")){
             this.answers[5] = true;
         }
-        if(this.lrshift == this.target_num_string){
+        if(this.lrshift == this.target_num_string || !this.checkedValues.includes("Right Shift(Logical)")){
             this.answers[6] = true;
         }
-        if(this.arshift == this.target_num_string){
+        if(this.arshift == this.target_num_string || !this.checkedValues.includes("Right Shift(Arithmetic)")){
             this.answers[7] = true;
         }
 
@@ -990,7 +1027,7 @@ $(document).on("runestone:login-complete", function () {
             } catch (err) {
                 console.log(
                     `Error rendering Bitwise Operation Problem ${this.id}
-                        Details: ${err}`
+                        Details: ${err}, Stack: ${err.stack}`
                 );
             }
         }

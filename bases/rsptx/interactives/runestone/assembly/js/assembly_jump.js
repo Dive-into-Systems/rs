@@ -25,6 +25,7 @@ export default class AJ extends RunestoneBase {
         this.jumpList = ["jmp", "je", "jne", "js", "jns", "jg", "jge", "jl", "jle"]
 
         
+        
         // Default configuration settings
         this.correct = null;
         this.num_bits = 8;
@@ -118,9 +119,7 @@ export default class AJ extends RunestoneBase {
         this.promptDiv = document.createElement("div");
         this.promptDiv.style.fontSize = "x-large";
 
-        // create the node for the number being displayed (conversion from)
-        this.promptDivTextNode = document.createElement("code");
-        this.promptDiv.appendChild(this.promptDivTextNode);
+
         
 
         this.containerDiv.appendChild(this.promptDiv);
@@ -138,7 +137,44 @@ export default class AJ extends RunestoneBase {
         this.codeBox.textContent('I am code! \n I am code! \n  I am code! \n  ')
         this.codeDiv.append(this.codeBox);
         
-        this.codeDiv.append(this.codeBox)
+        this.radioButtonsDiv = document.createElement("div")
+        this.answerDiv.append(this.radioButtonsDiv);
+        
+        const fieldset = document.createElement("div")
+        fieldset.className = "RadioFieldset"
+        const legend1 = document.createElement("p")
+        legend1.textContent = "Is the jump taken?"
+
+        const yesBtnS = document.createElement("INPUT");
+        yesBtnS.setAttribute("type", "radio");
+        yesBtnS.setAttribute("id", "yesBtnS")
+        yesBtnS.setAttribute("name", "overflowS")
+        const yesLabelS = document.createElement("LABEL");
+        yesLabelS.textContent = "Yes"
+        yesLabelS.setAttribute("for", "yesBtnS")
+
+        const noBtnS = document.createElement("INPUT");
+        noBtnS.setAttribute("type", "radio");
+        noBtnS.setAttribute("id", "noBtnS")
+        noBtnS.setAttribute("name", "overflowS")
+        noBtnS.setAttribute("Checked", "overflow")
+
+        const noLabelS = document.createElement("LABEL");
+        noLabelS.textContent = "No"
+        noLabelS.setAttribute("for", "noBtnS")
+
+        //fieldset.append(legend1)
+        fieldset.append(yesBtnS);
+        
+
+        fieldset.append(noBtnS);
+
+        fieldset.append(yesLabelS);
+
+        fieldset.append(noLabelS);
+
+        this.radioButtonsDiv.append(fieldset)
+
 
 
         this.feedbackDiv = document.createElement("div");
@@ -266,7 +302,7 @@ export default class AJ extends RunestoneBase {
     }
 
     generateCode() {
-        //TODO
+        
     }
 
     

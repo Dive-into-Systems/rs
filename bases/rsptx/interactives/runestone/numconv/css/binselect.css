@@ -96,6 +96,11 @@
     grid-template-columns: auto auto;
     margin-bottom: 2%;
   }
+
+  .resultBox{
+    margin-top:1%;
+    margin-bottom: 1%;
+  }
   
   
   .result-div {
