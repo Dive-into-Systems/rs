@@ -57,9 +57,9 @@ export default class BS extends RunestoneBase {
         
         // Behaviors when page is loaded
         this.createBSElement();
+        this.getCheckedValues();
         this.controlAnswerVisibillity()
         this.clearAnswer();
-        this.getCheckedValues();
 
         // Only generate new prompt when there are items selected
         if (this.checkedValues.length != 0){
@@ -145,7 +145,7 @@ export default class BS extends RunestoneBase {
         this.arShiftBoxSelect = this.menuNode1.getElementsByClassName("arShiftBoxSelect")[0]
 
 
-        this.countSelected = 8;
+        this.countSelected = 5;
         
         
         const boxCheckHandler = (box) => {
@@ -692,7 +692,7 @@ export default class BS extends RunestoneBase {
         if(this.subBoxResult.checked || !this.checkedValues.includes("SUBTRACTION")){
             inputs[1] = true;
         }
-        if(this.andBoxResult.checked || !this.checkedValues.includes("ADD")){
+        if(this.andBoxResult.checked || !this.checkedValues.includes("AND")){
             inputs[2] = true;
         }
         if(this.orBoxResult.checked || !this.checkedValues.includes("OR")){
@@ -755,7 +755,7 @@ export default class BS extends RunestoneBase {
             this.answers[1] = true;
         }
 
-        if(this.andR == this.target_num_string || !this.checkedValues.includes("ADD")){
+        if(this.andR == this.target_num_string || !this.checkedValues.includes("AND")){
             this.answers[2] = true;
         }
 
