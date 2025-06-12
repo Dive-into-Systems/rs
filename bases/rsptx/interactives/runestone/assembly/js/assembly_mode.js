@@ -12,12 +12,12 @@ import aj_ia32 from "./AJ_ISAs/aj_ia32class.js"
 import { nanoid } from 'nanoid/non-secure';
 import "./assembly-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
-import "../css/assembly_jump.css";
+import "../css/assembly_mode.css";
 import { Pass } from "codemirror";
-export var AJList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
+export var AMList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
 // NC constructor
-export default class AJ extends RunestoneBase {
+export default class AM extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig; // entire <p> element
@@ -40,7 +40,7 @@ export default class AJ extends RunestoneBase {
         this.questionId = 1;
         this.userId = this.getUserId();
 
-        this.createAJElement();
+        this.createAMElement();
 
         // this.addCaption("runestone");
         // this.checkServer("nc", true);
@@ -59,16 +59,16 @@ export default class AJ extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
     // Create the NC Element
-    createAJElement() {
-        this.renderAJPromptAndInput();
+    createAMElement() {
+        this.renderAMPromptAndInput();
         this.renderAnswerDiv();
-        this.renderAJButtons();
-        this.renderAJFeedbackDiv();
+        this.renderAMButtons();
+        this.renderAMFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
-    renderAJPromptAndInput() {
+    renderAMPromptAndInput() {
         // parse options from the JSON script inside
         var currOption = JSON.parse(
             this.scriptSelector(this.origElem).html()
@@ -171,52 +171,98 @@ export default class AJ extends RunestoneBase {
     }
 
     renderAnswerDiv(){
-        const tableHTML =
-        "<div class='tables-container'><div class='table-wrapper'>" +
-        "<table class='register-table'><caption>Registers:</caption><thead>"+
-        "<tr><th>Register</th><th>Current Value</th><th>Post Instruction Value</th></tr>"+
-        "</thead>" +
-        `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
-        `<td><input class="raxInput" type='text' placeholder='${this.arch.rax}'></td></tr>`+
-        `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
-        `<td><input class="rcxInput" type='text' placeholder='${this.arch.rcx}'></td></tr>`+
-        `</tbody></table>`+
-        "</div></div>"
+        // const tableHTML =
+        // "<div class='tables-container'><div class='table-wrapper'>" +
+        // "<table class='register-table'><caption>Registers:</caption><thead>"+
+        // "<tr><th>Register</th><th>Current Value</th><th>Post Instruction Value</th></tr>"+
+        // "</thead>" +
+        // `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
+        // `<td><input class="raxInput" type='text' placeholder='${this.arch.rax}'></td></tr>`+
+        // `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
+        // `<td><input class="rcxInput" type='text' placeholder='${this.arch.rcx}'></td></tr>`+
+        // `</tbody></table>`+
+        // "</div></div>"
 
         
         this.answerDiv = document.createElement('div')
         this.answerDiv.className = "answerDiv"
 
 
-        this.codeDiv = document.createElement('div')
-        this.codeDiv.className = "codeDiv"
-        this.answerDiv.append(this.codeDiv);
+        this.answerTable = document.createElement("div")
+        this.answerTable.className = "tables-container"
+        this.tableWrapper = document.createElement("div")
+        this.tableWrapper.className = "table-wrapper"
 
-        this.codeBox = document.createElement('code')
+        this.table = document.createElement("table")
+        this.table.class = "register-table"
+
+        this.tableHeadRow = document.createElement("tr")
+        this.tableHeadRow.innerHTML = "<th>Instruction</th> <th>Memory Access?</th> <th> Read or Write </th>"
+        this.table.append(this.tableHeadRow)
+
+        this.questions = [];
+        this.answers = [];
+
+        this.generateAnswer();
+        this.questions.map((q,i)=>{
+            const tableRow = document.createElement("tr")
+            const iTd = document.createElement("td")
+            const maTd = document.createElement("td")
+            const rwTd = document.createElement("td")
+
+            iTd.innerHTML = `<code>${q.code}</code>`
+            
+            //radio buttons
+            const rYes = document.createElement("input")
+            rYes.type = "radio"
+            rYes.className = `radioYes${i}`
+            rYes.value = `radioYes${i}`
+            rYes.name = `ma${i}`
+            const rYesLabel = document.createElement("label")
+            rYesLabel.setAttribute("for", `radioYes${i}`)
+            rYesLabel.textContent = "yes"
+
+            const rNo = document.createElement("input")
+            rNo.value = `radioNo${i}`
+            rNo.type = "radio"
+            rYes.className = `radioNo${i}`
+            rNo.name = `ma${i}`
+            const rNoLabel = document.createElement("label")
+            rNoLabel.setAttribute("for", `radioNo${i}`)
+            rNoLabel.textContent = "no"
+
+            maTd.append(rYes)
+            maTd.append(rYesLabel)
+            maTd.append(document.createElement("br"))
+            maTd.append(rNo)
+            maTd.append(rNoLabel)
+
+            const select = document.createElement("select")
+            select.className = `rwSelect${i}`
+            const readOption = document.createElement('option')
+            readOption.value = "read"
+            readOption.textContent = "read"
+            const writeOption = document.createElement('option')
+            writeOption.value = "write"
+            writeOption.textContent = "write"
+            select.append(readOption)
+            select.append(writeOption)
+
+            rwTd.append(select)
+
+            tableRow.append(iTd)
+            tableRow.append(maTd)
+            tableRow.append(rwTd)
+            
+            this.table.append(tableRow)
+        })
+
         
-        this.codeBox.innerHTML = this.generateCode();
-        this.codeDiv.append(this.codeBox);
-        
-        this.inputsDiv = document.createElement("div")
-        this.inputsDiv.className = "inputsDiv"
-        this.inputsDiv.innerHTML = tableHTML;
 
 
-        this.RAXInput = this.inputsDiv.getElementsByClassName("raxInput")[0]
-        this.RAXInput.name = "rax"
-        this.RAXInput.placeholder = "%rax's value"
-        this.RAXInput.style = " margin-bottom: 3%;"
-
-
-        this.RCXInput = this.inputsDiv.getElementsByClassName("rcxInput")[0]
-        this.RCXInput.name = "rcx"
-        this.RCXInput.placeholder = "%rcx's value"
-
-
-        
-
-
-        this.answerDiv.append(this.inputsDiv)
+        this.tableWrapper.append(this.table)
+        this.answerTable.append(this.tableWrapper)
+        this.answerDiv.append(this.answerTable)
 
         this.containerDiv.append(this.answerDiv)
     }
@@ -230,7 +276,7 @@ export default class AJ extends RunestoneBase {
         this.isAnswered = true;
     }
 
-    renderAJButtons() {
+    renderAMButtons() {
         // "check me" button and "generate a number" button
         this.submitButton = document.createElement("button");
         this.submitButton.textContent = $.i18n("Check Answer");
@@ -259,24 +305,9 @@ export default class AJ extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
             this.clearAnswer();
-            if(this.ISASelect){
-                this.archSelect = this.ISASelect.value;
-            }
-            if (this.archSelect == "X86_64"){
-                this.arch = new aj_x86();
-                this.regA = "rax";
-                this.regB = "rcx";
-            } else if (this.archSelect == "ia_32"){
-                this.arch = new aj_ia32();
-                this.regA = "eax";
-                this.regB = "ecx";
-            } else if (this.archSelect == "arm_64"){
-                this.arch = new aj_arm64();
-                this.regA = "X0";
-                this.regB = "X1";
-            }
+
             this.renderAnswerDiv();
-            this.renderAJButtons()
+            this.renderAMButtons()
             
         });
 
@@ -286,7 +317,7 @@ export default class AJ extends RunestoneBase {
 
     }
 
-    renderAJFeedbackDiv() {
+    renderAMFeedbackDiv() {
         // this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.feedbackDiv);
     }
@@ -326,59 +357,85 @@ export default class AJ extends RunestoneBase {
         return str;
     }
 
+    generateAnswer() {
+        for (let i = 0; i<4; i++){
+            const questionInfo = this.generateCode();
+            this.questions.push(questionInfo);
+            console.log("pushing to this.questions:" + this.questions)
+            this.answers.push(questionInfo.result);
+        }
 
+    }
+    
     generateCode() {
-        let codeBlock = "";
-        let CmpOrTst = Math.floor(Math.random() * 2);
-        let AddOrSub = Math.floor(Math.random() * 2);
-        this.rax = this.arch.rax;
-        this.rcx = this.arch.rcx;
+        let text = "";
+        this.instructionList = ["mov", "add", "sub", "imul", "idiv"];
+        this.registerList = ["rax", "rcx", "rsp", "rbp"];
+        if(this.ISASelect == "X86_64"){
+            this.registerList = ["rax", "rcx", "rsp", "rbp"];
+        } else if (this.ISASelect == "ia_32"){
+            this.registerList = ["eax", "ecx", "esp", "ebp"];
+        }
+            
+        const RWAns = Math.floor(Math.random()*3);
 
-        if(CmpOrTst == 0){
-            codeBlock += this.arch.compare();
-            codeBlock += "<br>";
-        }else{
-            codeBlock += this.arch.test();
-            codeBlock += "<br>";
+        if(RWAns == 0){
+            text = this.generateRead();
+        } else if (RWAns == 1){
+            text = this.generateWrite();
+        } else {
+            text = this.generateNoAccess();
         }
-        
-        this.jumpInfo = this.arch.jumps();
-        codeBlock += this.jumpInfo.code;
-        codeBlock += "<br>";
-        
-        if (AddOrSub == 0){
-            codeBlock += this.arch.operations["add"]();
-            codeBlock += "<br>";
-        }else{
-            codeBlock += this.arch.operations["sub"]();
-            codeBlock += "<br>";
-        }
-        
-        codeBlock += "jmp label2 <br>";
-        
-        if(this.jumpInfo.result == true){
-            this.arch.rax = this.rax;
-            this.arch.rcx = this.rcx;
-        }
-        
-        codeBlock += "<br>label1: <br>";
 
-        AddOrSub = Math.floor(Math.random() * 2);
-
-        if (AddOrSub == 0){
-            codeBlock += this.arch.operations["add"]();
-            codeBlock += "<br>";
-        }else{
-            codeBlock += this.arch.operations["sub"]();
-            codeBlock += "<br>";
-        }
-        
-        codeBlock += "<br>label2: <br>"
-        
-        return codeBlock
-        
+        return {code: text, result: RWAns};
     }
 
+    generateRead() {
+        const operation = this.instructionList[Math.floor(Math.random()*5)];
+        const start = Math.floor(Math.random()*(16+15)-15)
+        const offset = (start != 0) ? start.toString(16): "";
+        let reg1 = this.registerList[Math.floor(Math.random()*4)];
+        let reg2 = `${offset}(%${this.registerList[Math.floor(Math.random()*4)]})`;
+        
+        
+        const text = `${operation} ${reg2}, ${reg1}`;
+        console.log("reg1:" + reg1);
+        console.log("reg2:" + reg2);
+        console.log("text: " + text)
+        
+        return text;
+    }
+    
+    generateWrite() {
+        const operation = this.instructionList[Math.floor(Math.random()*5)];
+        const start = Math.floor(Math.random()*(16+15)-15)
+        const offset = (start != 0) ? start.toString(16): "";
+        let reg1 = this.registerList[Math.floor(Math.random()*4)];
+        let reg2 = `${offset}(%${this.registerList[Math.floor(Math.random()*4)]})`;
+        
+        const text = `${operation} ${reg1}, ${reg2}`;
+        console.log("reg1:" + reg1);
+        console.log("reg2:" + reg2);
+        console.log("text: " + text)
+        
+        return text;
+
+    }
+
+    generateNoAccess() {
+
+        const operation = this.instructionList[Math.floor(Math.random()*5)];
+
+        let reg1 = this.registerList[Math.floor(Math.random()*4)];
+        let reg2 = this.registerList[Math.floor(Math.random()*4)];
+        
+        const text = `${operation} ${reg1}, ${reg2}`;
+        console.log("reg1:" + reg1);
+        console.log("reg2:" + reg2);
+        console.log("text: " + text)
+        
+        return text;
+    }
 
     // check if the conversion is valid  
     checkValidConversion() {
@@ -475,7 +532,7 @@ export default class AJ extends RunestoneBase {
 ==   execute our code on them    ==
 =================================*/
 $(document).on("runestone:login-complete", function () {
-    $("[data-component=assembly_jump]").each(function (index) {
+    $("[data-component=assembly_mode]").each(function (index) {
         var opts = {
             orig: this,
             useRunestoneServices: eBookConfig.useRunestoneServices,
@@ -483,7 +540,7 @@ $(document).on("runestone:login-complete", function () {
         if ($(this).closest("[data-component=timedAssessment]").length == 0) {
             // If this element exists within a timed component, don't render it here
             try {
-                AJList[this.id] = new AJ(opts);
+                AMList[this.id] = new AM(opts);
             } catch (err) {
                 console.log(
                     `Error rendering Number Conversion Problem ${this.id}

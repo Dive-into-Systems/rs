@@ -9,6 +9,7 @@ input.input-validation-error {
 }
 
 .statement-div {
+    display:flex;
     border-width: 1px;
     border-radius: 5px;
     border-style: solid;
@@ -18,8 +19,41 @@ input.input-validation-error {
   }
   .answerDiv {
     display:grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 40% 60%;
+    margin-bottom: 2%;
   }
+
   .codeDiv{
-    
+    background-color: #f9f2f4;
+    padding: 2% 2% 2% 6%;
+    font-size: large;
   }
+
+  .inputsDiv{
+    padding: 5% 10% 5% 7%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+th {
+    background-color: #f7f7f7;
+    font-weight: bold;
+    text-align: center;
+}
+
+.tables-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.table-wrapper {
+    flex: 1 1 45%;
+}
