@@ -9,7 +9,6 @@ input.input-validation-error {
 }
 
 .statement-div {
-    display:flex;
     border-width: 1px;
     border-radius: 5px;
     border-style: solid;
@@ -56,4 +55,37 @@ th {
 
 .table-wrapper {
     flex: 1 1 45%;
+}
+.radioDiv{
+  display: flex;
+  justify-content: center;
+  margin: 0 auto auto 0;
+  padding-top: 0;
+  flex-direction: column;
+}
+
+.rLabel{
+  margin:auto;
+}
+.radioInputDiv{
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: left;
+  padding: 8%;
+  font-size: large;
+  
+}
+.mode1questionDiv{
+  grid-column: span 2;
+  height: 40%;
+}
+
+.radioLocation {
+  padding:4%;
+}
+
+.subRadioLocation {
+  display:flex;
+  padding: 2% 5% 2% 5%;
+  margin-left: 5%
 }

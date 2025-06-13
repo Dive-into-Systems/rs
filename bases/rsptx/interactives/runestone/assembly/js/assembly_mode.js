@@ -6,9 +6,7 @@
 
 
 import RunestoneBase from "../../common/js/runestonebase.js";
-import aj_x86 from "./AJ_ISAs/aj_x86class.js";
-import aj_arm64 from "./AJ_ISAs/aj_arm64class.js";
-import aj_ia32 from "./AJ_ISAs/aj_ia32class.js"
+import am_x86 from "./AM_ISAs/am_x86class.js";
 import { nanoid } from 'nanoid/non-secure';
 import "./assembly-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
@@ -25,7 +23,7 @@ export default class AM extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.archSelect == "X86_64";
-        this.arch = new aj_x86;
+        this.arch = new am_x86();
         this.regA = "rax";
         this.regB = "rcx";
 
@@ -358,82 +356,109 @@ export default class AM extends RunestoneBase {
     }
 
     generateAnswer() {
+        this.instructionList = ["add", "mov"];
+        this.genMov = 0;
+        this.genAdd = 0;
+        this.genLea = 0;
+
+        let selectHistory = [];
+        let select;
+
         for (let i = 0; i<4; i++){
-            const questionInfo = this.generateCode();
-            this.questions.push(questionInfo);
-            console.log("pushing to this.questions:" + this.questions)
-            this.answers.push(questionInfo.result);
+            select = Math.floor(Math.random()*3)
+            if (i == 3 && !selectHistory.includes(2)){
+                select = 2;
+            }
+            selectHistory.push(select);
+            this.questions.push(this.generateCode(select));
         }
 
     }
     
-    generateCode() {
-        let text = "";
-        this.instructionList = ["mov", "add", "sub", "imul", "idiv"];
-        this.registerList = ["rax", "rcx", "rsp", "rbp"];
-        if(this.ISASelect == "X86_64"){
-            this.registerList = ["rax", "rcx", "rsp", "rbp"];
-        } else if (this.ISASelect == "ia_32"){
-            this.registerList = ["eax", "ecx", "esp", "ebp"];
-        }
-            
-        const RWAns = Math.floor(Math.random()*3);
-
-        if(RWAns == 0){
+    generateCode(select) {
+        this.arch = new am_x86();
+        let text;
+        if(select == 0){
             text = this.generateRead();
-        } else if (RWAns == 1){
+        } else if (select == 1){
             text = this.generateWrite();
         } else {
             text = this.generateNoAccess();
         }
 
-        return {code: text, result: RWAns};
+        return {code: text};
     }
 
     generateRead() {
-        const operation = this.instructionList[Math.floor(Math.random()*5)];
-        const start = Math.floor(Math.random()*(16+15)-15)
-        const offset = (start != 0) ? start.toString(16): "";
-        let reg1 = this.registerList[Math.floor(Math.random()*4)];
-        let reg2 = `${offset}(%${this.registerList[Math.floor(Math.random()*4)]})`;
         
-        
-        const text = `${operation} ${reg2}, ${reg1}`;
-        console.log("reg1:" + reg1);
-        console.log("reg2:" + reg2);
-        console.log("text: " + text)
-        
+        let ans;
+        if(this.genMov == 0){
+            ans = this.arch.ReadInstructions["mov"]();
+            this.answers.push[ans];
+            this.genMov++;
+            
+        } else if (this.genAdd == 0) {
+            ans = this.arch.ReadInstructions["add"]();
+            this.answers.push[ans];
+            this.genAdd++;
+        } else{
+            const inst = this.instructionList[Math.floor(Math.random()*2)]
+            ans = this.arch.ReadInstructions[inst]()
+            this.answers.push[ans];
+        }
+
+        const text = ans.code;
         return text;
+        
     }
     
     generateWrite() {
-        const operation = this.instructionList[Math.floor(Math.random()*5)];
-        const start = Math.floor(Math.random()*(16+15)-15)
-        const offset = (start != 0) ? start.toString(16): "";
-        let reg1 = this.registerList[Math.floor(Math.random()*4)];
-        let reg2 = `${offset}(%${this.registerList[Math.floor(Math.random()*4)]})`;
-        
-        const text = `${operation} ${reg1}, ${reg2}`;
-        console.log("reg1:" + reg1);
-        console.log("reg2:" + reg2);
-        console.log("text: " + text)
-        
+
+        let ans;
+
+        if(this.genMov == 0){
+            ans = this.arch.WriteInstructions["mov"]();
+            this.answers.push[ans];
+            this.genMov++;
+            
+        } else if (this.genAdd == 0) {
+            ans = this.arch.WriteInstructions["add"]();
+            this.answers.push[ans];
+            this.genAdd++;
+        } else{
+            const inst = this.instructionList[Math.floor(Math.random()*2)]
+            ans = this.arch.WriteInstructions[inst]()
+            this.answers.push[ans];
+        }
+
+        const text = ans.code;
         return text;
 
     }
 
     generateNoAccess() {
 
-        const operation = this.instructionList[Math.floor(Math.random()*5)];
+        let ans;
 
-        let reg1 = this.registerList[Math.floor(Math.random()*4)];
-        let reg2 = this.registerList[Math.floor(Math.random()*4)];
-        
-        const text = `${operation} ${reg1}, ${reg2}`;
-        console.log("reg1:" + reg1);
-        console.log("reg2:" + reg2);
-        console.log("text: " + text)
-        
+        if(this.genLea == 0){
+            ans = this.arch.NAInstructions["lea"]();
+            this.answers.push[ans];
+            this.genLea++;
+            
+        } else if (this.genAdd == 0) {
+            ans = this.arch.NAInstructions["add"]();
+            this.answers.push[ans];
+            this.genAdd++;
+        } else if (this.genMov == 0) {
+            ans = this.arch.NAInstructions["add"]();
+            this.answers.push[ans];
+            this.genMov++;
+        } else{
+            ans = this.arch.NAInstructions["lea"]()
+            this.answers.push[ans];
+        }
+
+        const text = ans.code;
         return text;
     }
 

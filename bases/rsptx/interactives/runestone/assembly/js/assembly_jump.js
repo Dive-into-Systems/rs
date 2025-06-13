@@ -15,6 +15,7 @@ import "./assembly-i18n.en.js";
 import "../css/assembly_jump.css";
 import { Pass } from "codemirror";
 export var AJList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
+import {MinSelectBox} from "../../../utils/MinSelectBox.js";
 
 // NC constructor
 export default class AJ extends RunestoneBase {
@@ -25,7 +26,7 @@ export default class AJ extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.archSelect == "X86_64";
-        this.arch = new aj_x86;
+        this.arch = new aj_x86();
         this.regA = "rax";
         this.regB = "rcx";
 
@@ -96,23 +97,30 @@ export default class AJ extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Determine whether as a jump is taken based on the operation and the jump instruction."
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Based on the starting data and the assmebly instructions, complete the table."
 
         // // specify the number of bits in the statement
         // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
 
 
 
+        // Build the inner HTML using template literals
+        // Inner HTML defines the items in the dropdown
+
+        // Assign the built HTML to innerHTML of the this.menuNode1 container
+       
+
         
         this.configHelperText = document.createElement("div");
-        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>: Choose an ISA";
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
         this.statementDiv.appendChild(this.configHelperText);
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
 
-
+        this.ISAStatementNode = document.createTextNode("Choose an ISA:")
+        this.statementDiv.appendChild(this.ISAStatementNode)
         this.ISASelect = document.createElement("select")
         this.X86Option = document.createElement("option")
         this.X86Option.value = "X86_64"
@@ -131,9 +139,39 @@ export default class AJ extends RunestoneBase {
         this.ISASelect.append(this.ARM64Option)
 
         this.statementDiv.append(this.ISASelect);
+        this.statementDiv.appendChild(document.createElement("br"))
 
         this.statementDiv.className = "statement-div";
 
+        console.log("MSB " + MinSelectBox)
+        this.cmpTestStatementNode = document.createTextNode("Select types of conditional statements:")
+        this.statementDiv.appendChild(this.cmpTestStatementNode)
+        const checkBoxes = MinSelectBox(this.statementDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Type of Conditional");
+        this.statementDiv.appendChild(document.createElement("br"))
+
+        const modeDiv= document.createElement('div')
+        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li> Mode 1: Simple compare then jump </li> <li>Mode 2: If-Else patterns </li></ul>'
+        this.statementDiv.appendChild(modeDiv)
+
+        this.modeStatementNode = document.createTextNode("Select which mode you'd like to use:")
+        this.statementDiv.appendChild(this.modeStatementNode);
+        // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        this.modeSelect = document.createElement("select")
+        this.modeSelect.className = "form-control fork-inline mode"
+        this.mode1Option = document.createElement("option")
+        this.mode1Option.value = "1"
+        this.mode1Option.textContent = "1"
+        this.modeSelect.append(this.mode1Option)
+
+        this.mode2Option = document.createElement("option")
+        this.mode2Option.value = "2"
+        this.modeSelect.append(this.mode2Option)
+        this.mode2Option.textContent = "2"
+
+        this.mode2Option.selected = "selected"
+
+
+        this.statementDiv.append(this.modeSelect)
 
         // create the node for the prompt
         this.promptDiv = document.createElement("div");
@@ -171,59 +209,140 @@ export default class AJ extends RunestoneBase {
     }
 
     renderAnswerDiv(){
-        const tableHTML =
-        "<div class='tables-container'><div class='table-wrapper'>" +
-        "<table class='register-table'><caption>Registers:</caption><thead>"+
-        "<tr><th>Register</th><th>Current Value</th><th>Post Instruction Value</th></tr>"+
-        "</thead>" +
-        `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
-        `<td><input class="raxInput" type='text' placeholder='${this.arch.rax}'></td></tr>`+
-        `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
-        `<td><input class="rcxInput" type='text' placeholder='${this.arch.rcx}'></td></tr>`+
-        `</tbody></table>`+
-        "</div></div>"
+        console.log(this.modeSelect.value)
+        if(this.modeSelect.value == 2){
+            const tableHTML ="<div class='tables-container'><div class='table-wrapper'>" +
+            "<table class='register-table'><caption>Registers:</caption><thead>"+
+            "<tr><th>Register</th><th>Current Value</th><th>Post Instruction Value</th></tr>"+
+            "</thead>" +
+            `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
+            `<td><input class="raxInput" type='text' placeholder='${this.arch.rax}'></td></tr>`+
+            `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
+            `<td><input class="rcxInput" type='text' placeholder='${this.arch.rcx}'></td></tr>`+
+            `</tbody></table>`+
+            "</div></div>"
+    
+            
+            this.answerDiv = document.createElement('div')
+            this.answerDiv.className = "answerDiv"
+    
+    
+            this.codeDiv = document.createElement('div')
+            this.codeDiv.className = "codeDiv"
+            this.answerDiv.append(this.codeDiv);
+    
+            this.codeBox = document.createElement('code')
+            
+            this.codeBox.innerHTML = this.generateCode();
+            this.codeDiv.append(this.codeBox);
+            
+            this.inputsDiv = document.createElement("div")
+            this.inputsDiv.className = "inputsDiv"
+            this.inputsDiv.innerHTML = tableHTML;
+    
+    
+            this.RAXInput = this.inputsDiv.getElementsByClassName("raxInput")[0]
+            this.RAXInput.name = "rax"
+            this.RAXInput.placeholder = "%rax's value"
+            this.RAXInput.style = " margin-bottom: 3%;"
+    
+    
+            this.RCXInput = this.inputsDiv.getElementsByClassName("rcxInput")[0]
+            this.RCXInput.name = "rcx"
+            this.RCXInput.placeholder = "%rcx's value"
+    
+    
+            
+    
+    
+            this.answerDiv.append(this.inputsDiv)
+    
+            this.containerDiv.append(this.answerDiv)
+        }
+        else{
 
+            const tableHTML ="<div class='tables-container'><div class='table-wrapper'>" +
+            "<table class='register-table'><caption>Registers:</caption><thead>"+
+            "<tr><th>Register</th><th>Current Value</th><th><em>Jump Taken?</em></th></tr>"+
+            "</thead>" +
+            `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
+            `<td rowspan='2' class="radioLocation"></td></tr>`+
+            `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
+            `</tr>`+
+            `</tbody></table>`+
+            "</div></div>"
+
+            this.inputsDiv = document.createElement("div")
+            this.inputsDiv.className = "inputsDiv"
+            this.inputsDiv.innerHTML = tableHTML;
+
+            this.answerDiv = document.createElement('div')
+            this.answerDiv.className = "answerDiv"
+
+                
+            this.codeDiv = document.createElement('div')
+            this.codeDiv.className = "codeDiv"
+            this.answerDiv.append(this.codeDiv);
+    
+            this.codeBox = document.createElement('code')
+            
+            this.codeBox.innerHTML = this.generateCodeMode1();
+            this.codeDiv.append(this.codeBox);
+            
+
+
+
+            this.radioLocation = this.inputsDiv.getElementsByClassName("radioLocation")[0]
+            this.subRadioLocation = document.createElement("div")
+            this.subRadioLocation.className = "subRadioLocation"
+            this.yesDiv = document.createElement("div")
+            this.yesDiv.className = "radioDiv"
+            this.rYes = document.createElement("input")
+            this.rYes.type = "radio"
+            this.rYes.className = `radioYes`
+            this.rYes.value = `radioYes`
+            this.rYes.name = `radio`
+            this.rYesLabel = document.createElement("label")
+            this.rYesLabel.setAttribute("for", `radioYes`)
+            this.rYesLabel.textContent = "yes"
+            this.rYesLabel.className = "rLabel"
+
+
+            this.noDiv = document.createElement("div")
+            this.noDiv.className = "radioDiv"
+            this.rNo = document.createElement("input")
+            this.rNo.value = `radioNo`
+            this.rNo.type = "radio"
+            this.rYes.className = `radioNo`
+            this.rNo.name = `radio`
+            this.rNoLabel = document.createElement("label")
+            this.rNoLabel.setAttribute("for", `radioNo`)
+            this.rNoLabel.textContent = "no"
+            this.rNoLabel.className = "rLabel"
+
+            this.yesDiv.append(this.rYesLabel)
+            this.yesDiv.append(this.rYes)
+            this.noDiv.append(this.rNoLabel)
+            this.noDiv.append(this.rNo)
+
+            this.subRadioLocation.append(this.yesDiv)
+            this.subRadioLocation.append(this.noDiv)
+
+            this.radioLocation.append(this.subRadioLocation)
+
+            this.inputsDiv.className = "radioInputDiv"
+
+            this.answerDiv.append(this.inputsDiv)
+            this.containerDiv.append(this.answerDiv)
+        }
         
-        this.answerDiv = document.createElement('div')
-        this.answerDiv.className = "answerDiv"
 
-
-        this.codeDiv = document.createElement('div')
-        this.codeDiv.className = "codeDiv"
-        this.answerDiv.append(this.codeDiv);
-
-        this.codeBox = document.createElement('code')
-        
-        this.codeBox.innerHTML = this.generateCode();
-        this.codeDiv.append(this.codeBox);
-        
-        this.inputsDiv = document.createElement("div")
-        this.inputsDiv.className = "inputsDiv"
-        this.inputsDiv.innerHTML = tableHTML;
-
-
-        this.RAXInput = this.inputsDiv.getElementsByClassName("raxInput")[0]
-        this.RAXInput.name = "rax"
-        this.RAXInput.placeholder = "%rax's value"
-        this.RAXInput.style = " margin-bottom: 3%;"
-
-
-        this.RCXInput = this.inputsDiv.getElementsByClassName("rcxInput")[0]
-        this.RCXInput.name = "rcx"
-        this.RCXInput.placeholder = "%rcx's value"
-
-
-        
-
-
-        this.answerDiv.append(this.inputsDiv)
-
-        this.containerDiv.append(this.answerDiv)
     }
 
     clearButtons(){
         this.generateButton.remove()
         this.submitButton.remove()
+        this.helpButton.remove()
     }
 
     recordAnswered() {
@@ -244,6 +363,7 @@ export default class AJ extends RunestoneBase {
             if(this.feedbackDiv){
                 this.feedbackDiv.remove()
             }
+            this.clearHelp()
             this.checkCurrentAnswer();
             this.logCurrentAnswer();
     
@@ -280,7 +400,20 @@ export default class AJ extends RunestoneBase {
             
         });
 
+
+
+        this.helpButton = document.createElement("button");
+        this.helpButton.textContent = $.i18n("Get Help");
+        $(this.helpButton).attr({
+            class: "btn btn-success",
+            name: "Get Help",
+            type: "button",
+        });
+        this.helpButton.addEventListener("click", ()=>{this.renderHelp()})
+
+
         this.containerDiv.appendChild(this.generateButton);
+        this.containerDiv.appendChild(this.helpButton)
         this.containerDiv.appendChild(this.submitButton);
 
 
@@ -295,6 +428,7 @@ export default class AJ extends RunestoneBase {
     clearAnswer() {
         this.feedbackDiv.remove();
         this.answerDiv.remove();
+        this.clearHelp()
         this.clearButtons()
     }
 
@@ -326,45 +460,75 @@ export default class AJ extends RunestoneBase {
         return str;
     }
 
-
-    generateCode() {
+    generateCodeMode1 (){
         let codeBlock = "";
-        let CmpOrTst = Math.floor(Math.random() * 2);
-        let AddOrSub = Math.floor(Math.random() * 2);
-        this.rax = this.arch.rax;
-        this.rcx = this.arch.rcx;
-
+        let CmpOrTst = 0;
+        // if(this.cmpBox.checked && this.testBox.checked){
+        //     CmpOrTst = Math.floor(Math.random() * 2);
+        // } else if (!this.cmpBox.checked){
+        //     CmpOrTst = 1;
+        // }
         if(CmpOrTst == 0){
             codeBlock += this.arch.compare();
             codeBlock += "<br>";
         }else{
             codeBlock += this.arch.test();
             codeBlock += "<br>";
-        }
-        
+        }  
         this.jumpInfo = this.arch.jumps();
         codeBlock += this.jumpInfo.code;
-        codeBlock += "<br>";
+        codeBlock += " label1<br>"; 
+
+        return codeBlock;
         
+    }
+    generateCode() {
+        let codeBlock = "";
+        let CmpOrTst = 0;
+        // if(this.cmpBox.checked && this.testBox.checked){
+        //     CmpOrTst = Math.floor(Math.random() * 2);
+        // } else if (!this.cmpBox.checked){
+        //     CmpOrTst = 1;
+        // }
+
+        let AddOrSub = Math.floor(Math.random() * 2);
+        let IfElseOrder = Math.floor(Math.random()*2)
+        this.rax = this.arch.rax;
+        this.rcx = this.arch.rcx;
+
+        
+        if(CmpOrTst == 0){
+            codeBlock += this.arch.compare();
+            codeBlock += "<br>";
+        }else{
+            codeBlock += this.arch.test();
+            codeBlock += "<br>";
+        }  
+        this.jumpInfo = this.arch.jumps();
+        codeBlock += this.jumpInfo.code;
+        if(IfElseOrder == 0){
+            codeBlock += " label1<br>"; 
+        } else{
+            codeBlock += " label2<br><br>label1:<br>"
+        }
         if (AddOrSub == 0){
             codeBlock += this.arch.operations["add"]();
             codeBlock += "<br>";
         }else{
             codeBlock += this.arch.operations["sub"]();
             codeBlock += "<br>";
-        }
-        
-        codeBlock += "jmp label2 <br>";
-        
+        }  
         if(this.jumpInfo.result == true){
             this.arch.rax = this.rax;
             this.arch.rcx = this.rcx;
         }
-        
-        codeBlock += "<br>label1: <br>";
-
+        codeBlock += "jmp DONE"
+        if(IfElseOrder == 0){
+            codeBlock += " <br><br>label1: <br>"; 
+        } else{
+            codeBlock += " <br><br>label2: <br>"
+        }
         AddOrSub = Math.floor(Math.random() * 2);
-
         if (AddOrSub == 0){
             codeBlock += this.arch.operations["add"]();
             codeBlock += "<br>";
@@ -372,9 +536,8 @@ export default class AJ extends RunestoneBase {
             codeBlock += this.arch.operations["sub"]();
             codeBlock += "<br>";
         }
-        
-        codeBlock += "<br>label2: <br>"
-        
+        codeBlock += "DONE";
+    
         return codeBlock
         
     }
@@ -390,32 +553,54 @@ export default class AJ extends RunestoneBase {
     // check if the answer is correct
     checkCurrentAnswer() {
         this.correct = false;
-        this.feedback_msg = "";
-        let linkISA = "x86_64";
 
-        if(this.archSelect == "X86_64"){
-            linkISA = "x86_64"
+        if(this.modeSelect.value == "2"){
+            this.feedback_msg = "";
+
+            if(this.RAXInput.value == this.arch.rax && this.RCXInput.value == this.arch.rcx){
+                this.correct = true;
+                this.feedback_msg += $.i18n("msg_asm_correct");
+            } else{
+                this.feedback_msg += $.i18n("msg_asm_incorrect");
+
+                
+            }
+            this.renderFeedback();
         }
-        else if(this.archSelect == "ia_32"){
-            linkISA = "x86"
+        else{
+            this.feedback_msg = "";
+            let linkISA = "x86_64";
+
+            if(this.archSelect == "X86_64"){
+                linkISA = "x86_64"
+            }
+            else if(this.archSelect == "ia_32"){
+                linkISA = "x86"
+            }
+            else if(this.archSelect == "arm_64"){
+                linkISA = "arm64"
+            }
+            if(this.jumpInfo.value && this.rYes.checked && !this.rNo.checked){
+                this.correct = true;
+                this.feedback_msg += $.i18n("msg_asm_correct");
+            }
+            else if(!this.jumpInfo.value && !this.rYes.checked  && this.rNo.checked){
+                this.correct = true;
+                this.feedback_msg += $.i18n("msg_asm_correct");
+            }
+            else{
+                this.feedback_msg += $.i18n("msg_asm_incorrect");
+                let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
+                // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
+                asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
+                asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
+                console.log(asmLink)
+                this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+                
+            }
+            this.renderFeedback();
         }
-        else if(this.archSelect == "arm_64"){
-            linkISA = "arm64"
-        }
-        if(this.RAXInput.value == this.arch.rax && this.RCXInput.value == this.arch.rcx){
-            this.correct = true;
-            this.feedback_msg += $.i18n("msg_asm_correct");
-        } else{
-            this.feedback_msg += $.i18n("msg_asm_incorrect");
-            let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
-            // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
-            asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
-            asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
-            console.log(asmLink)
-            this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
-            
-        }
-        this.renderFeedback();
+        
         
 
     }
@@ -466,6 +651,47 @@ export default class AJ extends RunestoneBase {
         this.displayFeedback();
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
+        }
+    }
+
+    renderHelp(){
+        this.clearHelp()
+        this.helpDiv = document.createElement("div");
+        this.helpDiv.setAttribute("id", this.divid + "_helpDiv");
+        this.containerDiv.appendChild(this.helpDiv);
+
+        let linkISA = "x86_64";
+    
+        if(this.archSelect == "X86_64"){
+            linkISA = "x86_64"
+        }
+        else if(this.archSelect == "ia_32"){
+            linkISA = "x86"
+        }
+        else if(this.archSelect == "arm_64"){
+            linkISA = "arm64"
+        }
+
+        let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
+        // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
+        asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
+        asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
+        this.helpmsg = `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+        
+        var help_html = "<dev>" + this.helpmsg + "</dev>";
+
+        $(this.helpDiv).attr("class", "alert alert-info");
+
+
+        this.helpDiv.innerHTML = help_html;
+        if (typeof MathJax !== "undefined") {
+            this.queueMathJax(document.body);
+        }
+    }
+
+    clearHelp(){
+        if(this.helpDiv){
+            this.helpDiv.remove()
         }
     }
 }

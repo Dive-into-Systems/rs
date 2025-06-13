@@ -106,34 +106,30 @@ export default class aj_x86{
     jumps = () => {
         
         const obj = {
-            ["jmp"] : () => {
-                return {code: "jmp label1", result: true}
-            },
-
             ["je"] : () => {
-                return {code: "je label1", result : this.ZF == 1 }
+                return {code: "je", result : this.ZF == 1 }
             },
 
             ["jne"] : () => {
-                return {code: "jne label1", result: (this.ZF == 0)}
+                return {code: "jne", result: (this.ZF == 0)}
             },
             ["js"] : () => {
-                return {code : "js label1", result: (this.SF == 1)}
+                return {code : "js", result: (this.SF == 1)}
             },
             ["jns"] : () => {
-                return {code : "jns label1", result : (this.SF == 0)}
+                return {code : "jns", result : (this.SF == 0)}
             },
             ["jg"] : () => {
-                return {code: "jg label1", result: (this.ZF == 0 && this.SF == 0)}
+                return {code: "jg", result: (this.ZF == 0 && this.SF == 0)}
             },
             ["jge"] : () => {
-                return {code: "jge label1", result: (this.SF == 0)}
+                return {code: "jge", result: (this.SF == 0)}
             },
             ["jl"] : () => {
-                return {code : "jl label1", result: (this.SF == 1 && this.ZF == 0)}
+                return {code : "jl", result: (this.SF == 1 && this.ZF == 0)}
             },
             ["jle"] : () => {
-                return {code : "jle label1", result : this.SF == 1}
+                return {code : "jle", result : this.SF == 1}
             }
         }
         let arr = Object.keys(obj);
