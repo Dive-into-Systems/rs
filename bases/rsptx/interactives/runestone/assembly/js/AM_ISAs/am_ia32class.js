@@ -231,7 +231,7 @@ export default class am_x86{
             
             const text = `lea ${information.sourceText}, ${information.destinationText}`;
 
-            return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: information.answer};
+            return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: null};
         }, 
     }
 }

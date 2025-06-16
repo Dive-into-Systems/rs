@@ -146,7 +146,7 @@ export default class AJ extends RunestoneBase {
         console.log("MSB " + MinSelectBox)
         this.cmpTestStatementNode = document.createTextNode("Select types of conditional statements:")
         this.statementDiv.appendChild(this.cmpTestStatementNode)
-        const checkBoxes = MinSelectBox(this.statementDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Type of Conditional");
+        this.checkBoxes = MinSelectBox(this.statementDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Type of Conditional");
         this.statementDiv.appendChild(document.createElement("br"))
 
         const modeDiv= document.createElement('div')
@@ -169,6 +169,8 @@ export default class AJ extends RunestoneBase {
         this.mode2Option.textContent = "2"
 
         this.mode2Option.selected = "selected"
+
+        this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
 
 
         this.statementDiv.append(this.modeSelect)
@@ -463,11 +465,11 @@ export default class AJ extends RunestoneBase {
     generateCodeMode1 (){
         let codeBlock = "";
         let CmpOrTst = 0;
-        // if(this.cmpBox.checked && this.testBox.checked){
-        //     CmpOrTst = Math.floor(Math.random() * 2);
-        // } else if (!this.cmpBox.checked){
-        //     CmpOrTst = 1;
-        // }
+        if(this.checkBoxes[0].checked && this.checkBoxes[1].checked){
+            CmpOrTst = Math.floor(Math.random() * 2);
+        } else if (!this.checkBoxes[0].checked){
+            CmpOrTst = 1;
+        }
         if(CmpOrTst == 0){
             codeBlock += this.arch.compare();
             codeBlock += "<br>";
@@ -477,7 +479,7 @@ export default class AJ extends RunestoneBase {
         }  
         this.jumpInfo = this.arch.jumps();
         codeBlock += this.jumpInfo.code;
-        codeBlock += " label1<br>"; 
+        codeBlock += " label1<br><br>label1: "; 
 
         return codeBlock;
         
@@ -485,11 +487,11 @@ export default class AJ extends RunestoneBase {
     generateCode() {
         let codeBlock = "";
         let CmpOrTst = 0;
-        // if(this.cmpBox.checked && this.testBox.checked){
-        //     CmpOrTst = Math.floor(Math.random() * 2);
-        // } else if (!this.cmpBox.checked){
-        //     CmpOrTst = 1;
-        // }
+        if(this.checkBoxes[0].checked && this.checkBoxes[1].checked){
+            CmpOrTst = Math.floor(Math.random() * 2);
+        } else if (!this.checkBoxes[0].checked){
+            CmpOrTst = 1;
+        }
 
         let AddOrSub = Math.floor(Math.random() * 2);
         let IfElseOrder = Math.floor(Math.random()*2)
@@ -536,7 +538,7 @@ export default class AJ extends RunestoneBase {
             codeBlock += this.arch.operations["sub"]();
             codeBlock += "<br>";
         }
-        codeBlock += "DONE";
+        codeBlock += "DONE:";
     
         return codeBlock
         

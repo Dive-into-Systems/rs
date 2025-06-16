@@ -24,9 +24,8 @@ export default class AM extends RunestoneBase {
         this.divid = orig.id;
         this.archSelect == "X86_64";
         this.arch = new am_x86();
-        this.regA = "rax";
-        this.regB = "rcx";
-
+        this.MAarray = [];
+        this.checkButtonsDict = {};
         
         // Default configuration settings
         this.correct = null;
@@ -61,7 +60,6 @@ export default class AM extends RunestoneBase {
         this.renderAMPromptAndInput();
         this.renderAnswerDiv();
         this.renderAMButtons();
-        this.renderAMFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
@@ -145,8 +143,7 @@ export default class AM extends RunestoneBase {
 
 
 
-        this.feedbackDiv = document.createElement("div");
-        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
+
 
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
@@ -186,88 +183,225 @@ export default class AM extends RunestoneBase {
         this.answerDiv.className = "answerDiv"
 
 
-        this.answerTable = document.createElement("div")
-        this.answerTable.className = "tables-container"
-        this.tableWrapper = document.createElement("div")
-        this.tableWrapper.className = "table-wrapper"
-
-        this.table = document.createElement("table")
-        this.table.class = "register-table"
-
-        this.tableHeadRow = document.createElement("tr")
-        this.tableHeadRow.innerHTML = "<th>Instruction</th> <th>Memory Access?</th> <th> Read or Write </th>"
-        this.table.append(this.tableHeadRow)
 
         this.questions = [];
         this.answers = [];
+        this.feedback_msg = ["", "", "", ""];
+
+        const largeOl = document.createElement("ol")
 
         this.generateAnswer();
         this.questions.map((q,i)=>{
-            const tableRow = document.createElement("tr")
-            const iTd = document.createElement("td")
+
+            const index = i
+
+            const li = document.createElement('li')
+            
+            const codeDiv = document.createElement('div')
+            
+            const registerData = this.generateRegisterState(i)
+            codeDiv.innerHTML = (registerData.names[0] == "rax") ?
+            `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
+            `<li> <em>rax</em>: <m>${registerData.values[0]}</m>; <em>rcx</em>: <m>${registerData.values[1]}</m>; </li>`
+            +`</ul>` :
+            `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
+            `<li> <em>rax</em>: <m>${registerData.values[1]}</m>; <em>rcx</em>: <m>${registerData.values[0]}</m>; </li>`
+            +`</ul>`;
+            
+            codeDiv.style = "font-size: large;"
+            li.append(codeDiv)
+
+            
+            li.append(document.createElement("br"))
+
+            const answerTable = document.createElement("div")
+            answerTable.className = "tables-container"
+            const tableWrapper = document.createElement("div")
+            tableWrapper.className = "table-wrapper"
+    
+            const table = document.createElement("table")
+            table.class = "register-table"
+    
+            const tableHeadRow = document.createElement("tr")
+            tableHeadRow.innerHTML = "<th>Memory Access?</th> <th> Read or Write </th> <th>Address Value</th> <th>Check Answer</th>"
+            table.append(tableHeadRow)
+    
+
+            const tableRow2 = document.createElement("tr")
+
+
+
             const maTd = document.createElement("td")
             const rwTd = document.createElement("td")
+            const iTd = document.createElement("td")
+            const checkTd = document.createElement("td")
 
-            iTd.innerHTML = `<code>${q.code}</code>`
             
             //radio buttons
-            const rYes = document.createElement("input")
-            rYes.type = "radio"
-            rYes.className = `radioYes${i}`
-            rYes.value = `radioYes${i}`
-            rYes.name = `ma${i}`
-            const rYesLabel = document.createElement("label")
-            rYesLabel.setAttribute("for", `radioYes${i}`)
-            rYesLabel.textContent = "yes"
+            const rYesMA = document.createElement("input")
+            rYesMA.type = "radio"
+            rYesMA.className = `radioMAYes${i}`
+            rYesMA.value = `radioMAYes${i}`
+            rYesMA.name = `ma${i}`
+            const rYesMALabel = document.createElement("label")
+            rYesMALabel.setAttribute("for", `radioMAYes${i}`)
+            rYesMALabel.textContent = "yes"
 
-            const rNo = document.createElement("input")
-            rNo.value = `radioNo${i}`
-            rNo.type = "radio"
-            rYes.className = `radioNo${i}`
-            rNo.name = `ma${i}`
-            const rNoLabel = document.createElement("label")
-            rNoLabel.setAttribute("for", `radioNo${i}`)
-            rNoLabel.textContent = "no"
+            const rNoMA = document.createElement("input")
+            rNoMA.value = `radioNo${i}`
+            rNoMA.type = "radio"
+            rNoMA.className = `radioMANo${i}`
+            rNoMA.name = `ma${i}`
+            const rNoMALabel = document.createElement("label")
+            rNoMALabel.setAttribute("for", `radioMANo${i}`)
+            rNoMALabel.textContent = "no"
 
-            maTd.append(rYes)
-            maTd.append(rYesLabel)
+            maTd.append(rYesMA)
+            maTd.append(rYesMALabel)
             maTd.append(document.createElement("br"))
-            maTd.append(rNo)
-            maTd.append(rNoLabel)
+            maTd.append(rNoMA)
+            maTd.append(rNoMALabel)
 
-            const select = document.createElement("select")
-            select.className = `rwSelect${i}`
-            const readOption = document.createElement('option')
-            readOption.value = "read"
-            readOption.textContent = "read"
-            const writeOption = document.createElement('option')
-            writeOption.value = "write"
-            writeOption.textContent = "write"
-            select.append(readOption)
-            select.append(writeOption)
 
-            rwTd.append(select)
 
-            tableRow.append(iTd)
-            tableRow.append(maTd)
-            tableRow.append(rwTd)
+
+
             
-            this.table.append(tableRow)
+            //memory access labels
+            const rYesRW = document.createElement("input")
+            rYesRW.type = "radio"
+            rYesRW.className = `radioRWYes${i}`
+            rYesRW.value = `radioRWYes${i}`
+            rYesRW.name = `rw${i}`
+            const rYesRWLabel = document.createElement("label")
+            rYesRWLabel.setAttribute("for", `radioRWYes${i}`)
+            rYesRWLabel.textContent = "Read"
+
+            const rNoRW = document.createElement("input")
+            rNoRW.value = `radioRWNo${i}`
+            rNoRW.type = "radio"
+            rNoRW.className = `radioRWNo${i}`
+            rNoRW.name = `rw${i}`
+            const rNoRWLabel = document.createElement("label")
+            rNoRWLabel.setAttribute("for", `radioRWNo${i}`)
+            rNoRWLabel.textContent = "Write"
+
+            rwTd.append(rYesRW)
+            rwTd.append(rYesRWLabel)
+            rwTd.append(document.createElement("br"))
+            rwTd.append(rNoRW)
+            rwTd.append(rNoRWLabel)
+
+            
+
+            const input1 = document.createElement("input")
+            input1.placeholder = "Address Value"
+            iTd.append(input1)
+            input1.className = `addressInput${i}`
+
+            const cButton = document.createElement("button")
+            cButton.textContent = "check answer"
+            cButton.id = `check${i}`
+
+            $(cButton).attr({
+                class: "btn btn-success",
+                name: "answer",
+                type: "button",
+            });
+
+
+
+            checkTd.append(cButton)
+
+            tableRow2.append(maTd)
+            tableRow2.append(rwTd)
+            tableRow2.append(iTd)
+            tableRow2.append(checkTd)
+            
+            table.append(tableRow2)
+
+
+            tableWrapper.append(table)
+            answerTable.append(tableWrapper)
+            li.append(answerTable)
+            largeOl.append(li)
+
+
+            const feedbackDiv = document.createElement("div")
+            feedbackDiv.style = "display: none;"
+            feedbackDiv.id = `feedbackDiv${i}`
+
+            li.append(feedbackDiv)
+
+            this.checkButtonsDict[`${cButton.id}`] = i
+            
+            cButton.addEventListener("click", (e)=>{
+                console.log(this.checkButtonsDict)
+                const index = this.checkButtonsDict[`${e.target.id}`]
+                console.log(index)
+                this.checkCurrentAnswer(index)
+            })
+
+            
+            //adding event listeners
+
+
+
+            rYesMA.addEventListener("click", e => {
+                console.log("click")
+                if(rYesMA.checked){
+                    input1.style = "opacity: 1;"
+                    input1.disabled = false;
+                    rwTd.style = "opacity: 1;"
+                    rwTd.disabled = false;
+
+                    rNoRW.disabled = false;
+                    rYesRW.disabled = false;
+                    
+                }
+                
+            })
+            rNoMA.addEventListener("click", e => {
+                console.log(this.MAarray, i)
+                if(rNoMA.checked && this.MAarray[i] == "NAlea"){
+                    rwTd.style = "opacity: 0.4;"
+                    rwTd.disabled = true;
+
+                    rNoRW.disabled = true;
+                    rYesRW.disabled = true;
+
+
+                }
+                else if(rNoMA.checked){
+                    input1.style = "opacity: 0.4;"
+                    input1.disabled = true;
+                    rwTd.style = "opacity: 0.4;"
+                    rwTd.disabled = true;
+
+                    rNoRW.disabled = true;
+                    rYesRW.disabled = true;
+
+                    rNoRW.checked = false
+                    rYesRW.checked = false
+                    input1.value = ""
+                    
+                }
+
+
+            })
+
         })
 
         
 
 
-        this.tableWrapper.append(this.table)
-        this.answerTable.append(this.tableWrapper)
-        this.answerDiv.append(this.answerTable)
-
+        this.answerDiv.append(largeOl)
         this.containerDiv.append(this.answerDiv)
     }
 
     clearButtons(){
         this.generateButton.remove()
-        this.submitButton.remove()
+        // this.submitButton.remove()
     }
 
     recordAnswered() {
@@ -276,22 +410,22 @@ export default class AM extends RunestoneBase {
 
     renderAMButtons() {
         // "check me" button and "generate a number" button
-        this.submitButton = document.createElement("button");
-        this.submitButton.textContent = $.i18n("Check Answer");
-        $(this.submitButton).attr({
-            class: "btn btn-success",
-            name: "answer",
-            type: "button",
-        });
-        // check the answer when the conversion is valid
-        this.submitButton.addEventListener("click", () => {
-            if(this.feedbackDiv){
-                this.feedbackDiv.remove()
-            }
-            this.checkCurrentAnswer();
-            this.logCurrentAnswer();
+        // this.submitButton = document.createElement("button");
+        // this.submitButton.textContent = $.i18n("Check Answer");
+        // $(this.submitButton).attr({
+        //     class: "btn btn-success",
+        //     name: "answer",
+        //     type: "button",
+        // });
+        // // check the answer when the conversion is valid
+        // this.submitButton.addEventListener("click", () => {
+        //     if(this.feedbackDiv){
+        //         this.feedbackDiv.remove()
+        //     }
+        //     this.checkCurrentAnswer();
+        //     this.logCurrentAnswer();
     
-        });
+        // });
 
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("Generate another question");
@@ -310,21 +444,19 @@ export default class AM extends RunestoneBase {
         });
 
         this.containerDiv.appendChild(this.generateButton);
-        this.containerDiv.appendChild(this.submitButton);
+        // this.containerDiv.appendChild(this.submitButton);
 
 
     }
 
-    renderAMFeedbackDiv() {
-        // this.containerDiv.appendChild(document.createElement("br"));
-        this.containerDiv.appendChild(this.feedbackDiv);
-    }
+
 
     // clear the input field
     clearAnswer() {
-        this.feedbackDiv.remove();
         this.answerDiv.remove();
         this.clearButtons()
+
+
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
@@ -362,6 +494,7 @@ export default class AM extends RunestoneBase {
         this.genLea = 0;
 
         let selectHistory = [];
+        this.MAarray = [];
         let select;
 
         for (let i = 0; i<4; i++){
@@ -374,7 +507,7 @@ export default class AM extends RunestoneBase {
         }
 
     }
-    
+
     generateCode(select) {
         this.arch = new am_x86();
         let text;
@@ -394,22 +527,24 @@ export default class AM extends RunestoneBase {
         let ans;
         if(this.genMov == 0){
             ans = this.arch.ReadInstructions["mov"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genMov++;
+            this.MAarray.push("A");
             
         } else if (this.genAdd == 0) {
             ans = this.arch.ReadInstructions["add"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genAdd++;
+            this.MAarray.push("A");
         } else{
             const inst = this.instructionList[Math.floor(Math.random()*2)]
             ans = this.arch.ReadInstructions[inst]()
-            this.answers.push[ans];
+            this.answers.push(ans);
+            this.MAarray.push("A");
         }
 
         const text = ans.code;
-        return text;
-        
+        return text;   
     }
     
     generateWrite() {
@@ -418,17 +553,20 @@ export default class AM extends RunestoneBase {
 
         if(this.genMov == 0){
             ans = this.arch.WriteInstructions["mov"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genMov++;
+            this.MAarray.push("A");
             
         } else if (this.genAdd == 0) {
             ans = this.arch.WriteInstructions["add"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genAdd++;
+            this.MAarray.push("A");
         } else{
             const inst = this.instructionList[Math.floor(Math.random()*2)]
             ans = this.arch.WriteInstructions[inst]()
-            this.answers.push[ans];
+            this.answers.push(ans);
+            this.MAarray.push("A");
         }
 
         const text = ans.code;
@@ -437,68 +575,154 @@ export default class AM extends RunestoneBase {
     }
 
     generateNoAccess() {
-
         let ans;
-
         if(this.genLea == 0){
             ans = this.arch.NAInstructions["lea"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genLea++;
+            this.MAarray.push("NAlea");
             
         } else if (this.genAdd == 0) {
             ans = this.arch.NAInstructions["add"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genAdd++;
+            this.MAarray.push("NA");
         } else if (this.genMov == 0) {
             ans = this.arch.NAInstructions["add"]();
-            this.answers.push[ans];
+            this.answers.push(ans);
             this.genMov++;
+            this.MAarray.push("NA");
         } else{
             ans = this.arch.NAInstructions["lea"]()
-            this.answers.push[ans];
+            this.answers.push(ans);
+            this.MAarray.push("NAlea");
         }
-
         const text = ans.code;
         return text;
     }
 
-    // check if the conversion is valid  
-    checkValidConversion() {
-        this.hideFeedback();
-
+    generateRegisterState(index){
+        const baseName = this.answers[index].baseReg;
+        const offsetName = this.answers[index].offsetReg;
+        const baseValDisplay = this.answers[index].baseVal;
+        const offsetValDisplay = this.answers[index].offsetVal;
         
+        return {names: [baseName, offsetName], values: [baseValDisplay, offsetValDisplay]}
     }
     
     // check if the answer is correct
-    checkCurrentAnswer() {
+    checkCurrentAnswer(index) {
         this.correct = false;
-        this.feedback_msg = "";
-        let linkISA = "x86_64";
-
-        if(this.archSelect == "X86_64"){
-            linkISA = "x86_64"
-        }
-        else if(this.archSelect == "ia_32"){
-            linkISA = "x86"
-        }
-        else if(this.archSelect == "arm_64"){
-            linkISA = "arm64"
-        }
-        if(this.RAXInput.value == this.arch.rax && this.RCXInput.value == this.arch.rcx){
-            this.correct = true;
-            this.feedback_msg += $.i18n("msg_asm_correct");
-        } else{
-            this.feedback_msg += $.i18n("msg_asm_incorrect");
-            let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
-            // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
-            asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
-            asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
-            console.log(asmLink)
-            this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
-            
-        }
-        this.renderFeedback();
         
+        // let linkISA = "x86_64";
+
+        // if(this.archSelect == "X86_64"){
+        //     linkISA = "x86_64"
+        // }
+        // else if(this.archSelect == "ia_32"){
+        //     linkISA = "x86"
+        // }
+        // else if(this.archSelect == "arm_64"){
+        //     linkISA = "arm64"
+        // }
+        // if(this.RAXInput.value == this.arch.rax && this.RCXInput.value == this.arch.rcx){
+        //     this.correct = true;
+        //     this.feedback_msg += $.i18n("msg_asm_correct");
+        // } else{
+        //     this.feedback_msg += $.i18n("msg_asm_incorrect");
+        //     let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
+        //     // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
+        //     asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
+        //     asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
+        //     console.log(asmLink)
+        //     this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+            
+        // }
+        const memCorrect = this.checkMemAccess(index);
+        const RWCorrect = this.checkReadWrite(index);
+        const addressCorrect = this.checkMemAddress(index);
+        console.log(this.answers[index].answer);
+
+        if(memCorrect == null || RWCorrect == null || addressCorrect == null){
+            this.feedback_msg[index] = $.i18n("msg_asm_imcomplete_answer");
+            this.renderFeedback(index);
+            return 0;
+        }
+
+        if (memCorrect && RWCorrect && addressCorrect){
+            this.correct = true;
+            this.feedback_msg[index] = $.i18n("msg_asm_correct");
+        } else if (!memCorrect){
+            this.feedback_msg[index] = $.i18n("msg_asm_memIncorrect");
+        } else if (!RWCorrect){
+            this.feedback_msg[index] = $.i18n("msg_asm_RWIncorrect");
+        } else if (!addressCorrect){
+            this.feedback_msg[index] = $.i18n("msg_asm_memAddressIncorrect");
+        }
+        this.renderFeedback(index);
+        return 0;
+    }
+    
+    //checks whether there was memory access
+    checkMemAccess(index){
+        
+        const yesBtn = this.answerDiv.getElementsByClassName(`radioMAYes${index}`)[0];
+        const noBtn = this.answerDiv.getElementsByClassName(`radioMANo${index}`)[0];
+        
+        if(!yesBtn.checked&&!noBtn.checked){
+            return null;
+        }
+
+        if(yesBtn.checked && this.MAarray[index] === "A"){
+            return true;
+        } else if (noBtn.checked && this.MAarray[index] != "A"){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    //checks whether it was a read or a write
+    checkReadWrite(index){
+
+        if(this.MAarray[index] != "A"){
+            return true;
+        }
+        const yesBtn = this.answerDiv.getElementsByClassName(`radioRWYes${index}`)[0];
+        const noBtn = this.answerDiv.getElementsByClassName(`radioRWNo${index}`)[0];
+
+        if(!yesBtn.checked&&!noBtn.checked){
+            return null;
+        }
+
+        if(yesBtn.checked && this.answers[index].RW === "read"){
+            return true;
+        } else if (noBtn.checked && this.answers[index].RW === "write"){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    //checks the user input to see if correct
+    checkMemAddress(index){
+        
+        if(this.MAarray[index] == "NA"){
+            return true;
+        }
+
+        let answer = this.answerDiv.getElementsByClassName(`addressInput${index}`)[0].value;
+        console.log("input:" + answer);
+
+        if (answer === "") {
+            return null;
+        } else if (answer == `0x${this.answers[index].answer}`){
+            return true;
+        } else if(answer == this.answers[index].answer){
+            return true;
+        } else{
+            return false;
+        }
 
     }
 
@@ -523,29 +747,29 @@ export default class AM extends RunestoneBase {
     setLocalStorage(data) {
         // pass;
     }
-    hideFeedback() {
-        this.feedbackDiv.remove();
+    hideFeedback(index) {
+        const feedbackDiv = document.getElementById(`feedbackDiv${index}`)
+        feedbackDiv.style = "display: none"
+        this.feedback_msg = ["", "", "", ""]
     }
 
-    displayFeedback() {
-        this.feedbackDiv.style.visibility = "visible";
-    }
 
-    renderFeedback() {
-        this.feedbackDiv = document.createElement("div");
-        this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
-        this.containerDiv.appendChild(this.feedbackDiv);
 
+    renderFeedback(index) {
+        
+        const idname = `feedbackDiv${index}`
+        const feedbackDiv = document.getElementById(`feedbackDiv${index}`)
+        
         // only the feedback message needs to display
-        var feedback_html = "<dev>" + this.feedback_msg + "</dev>";
+        var feedback_html = "<dev>" + this.feedback_msg[index] + "</dev>";
         if (this.correct) {
-            $(this.feedbackDiv).attr("class", "alert alert-info");
+            $(feedbackDiv).attr("class", "alert alert-info");
         } else {
-            $(this.feedbackDiv).attr("class", "alert alert-danger");
+            $(feedbackDiv).attr("class", "alert alert-danger");
         }
         
-        this.feedbackDiv.innerHTML = feedback_html;
-        this.displayFeedback();
+        feedbackDiv.innerHTML = feedback_html;
+        feedbackDiv.style = "display: block;"
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
