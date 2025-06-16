@@ -123,13 +123,13 @@ export default class aj_x86{
                 return {code: "jg", result: (this.ZF == 0 && this.SF == 0)}
             },
             ["jge"] : () => {
-                return {code: "jge", result: (this.SF == 0)}
+                return {code: "jge", result: (this.SF == 0 || this.ZF == 1)}
             },
             ["jl"] : () => {
                 return {code : "jl", result: (this.SF == 1 && this.ZF == 0)}
             },
             ["jle"] : () => {
-                return {code : "jle", result : this.SF == 1}
+                return {code : "jle", result : (this.SF == 1 ||this.ZF == 1) }
             }
         }
         let arr = Object.keys(obj);

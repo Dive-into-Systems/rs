@@ -498,6 +498,9 @@ export default class AJ extends RunestoneBase {
         this.rax = this.arch.rax;
         this.rcx = this.arch.rcx;
 
+        let locrax = this.arch.rax;
+        let locrcx = this.arch.rcx;
+
         
         if(CmpOrTst == 0){
             codeBlock += this.arch.compare();
@@ -521,8 +524,12 @@ export default class AJ extends RunestoneBase {
             codeBlock += "<br>";
         }  
         if(this.jumpInfo.result == true){
-            this.arch.rax = this.rax;
-            this.arch.rcx = this.rcx;
+            this.arch.rax = locrax;
+            this.arch.rcx = locrcx;
+        }
+        if(this.jumpInfo.result == false){
+            locrax = this.arch.rax ;
+            locrcx = this.arch.rcx;
         }
         codeBlock += "jmp DONE"
         if(IfElseOrder == 0){
@@ -539,6 +546,11 @@ export default class AJ extends RunestoneBase {
             codeBlock += "<br>";
         }
         codeBlock += "DONE:";
+
+        if(this.jumpInfo.result == false){
+            this.arch.rax = locrax ;
+            this.arch.rcx = locrcx ;
+        }
     
         return codeBlock
         
@@ -555,7 +567,8 @@ export default class AJ extends RunestoneBase {
     // check if the answer is correct
     checkCurrentAnswer() {
         this.correct = false;
-
+        console.log("rax:" + this.arch.rax);
+        console.log("rcx:" + this.arch.rcx);
         if(this.modeSelect.value == "2"){
             this.feedback_msg = "";
 
