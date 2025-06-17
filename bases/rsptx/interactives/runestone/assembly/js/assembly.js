@@ -91,7 +91,9 @@ export default class ASM_EXCERCISE extends RunestoneBase {
     }
 
     renderHeader() {
+
         this.instruction = $("<div>").html(
+            "<span style='font-weight:bold'><u>Instructions</u></span>: For each of the following " +
             "For each of the following " +
             this.architecture_str +
             " instructions, indicate whether the instruction " +
@@ -130,7 +132,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             "id",
             this.divid + "_instruction_types",
         );
-        instructionTypeDiv.append($("<div>").text("Select Instruction Types:"));
+        instructionTypeDiv.append($("<div>").html("<strong><u>Configure Questions:</u></strong>" + " Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt." + "<br></br>"));
+
 
         instructionTypes.forEach((family) => {
             let checkbox = $("<input>").attr({
@@ -182,7 +185,10 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         });
 
         instructionTypeDiv.append("<br>");
-        this.containerDiv.append(instructionTypeDiv);
+
+        const customizationDiv = $("<div>").addClass("customization-container")
+        customizationDiv.append(instructionTypeDiv);
+        this.containerDiv.append(customizationDiv);
     }
 
     renderQuestions() {
@@ -211,7 +217,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 "background-color": "white",
                 "color": "black"
             });
-            textNode.css({ "font-size": "large", height: "25px" });
+            textNode.css({ "font-size": "large", height: "25px", "margin-left": "3px", });
             this.textNodes.push(textNode);
 
             // start appending the letter, the prompt, the feedback for the first line
@@ -314,7 +320,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             const feedbackDiv = $("<span>")
                 .attr("id", this.divid + "feedback" + i)
                 .addClass("feedback")
-                .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "flex-end", "align-items": "center" });
+                .css({ width: "300px", "text-wrap": "pretty", display: "flex", "justify-content": "center", "align-items": "center" });
 
             // creation of new div
             this.newDiv = $("<div>").attr("id", this.divid + "div" + i);

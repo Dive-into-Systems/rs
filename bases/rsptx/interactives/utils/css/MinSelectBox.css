@@ -25,6 +25,33 @@ input.input-validation-error {
   padding-right: 10px;
 }
 
+.threeColGrid {
+  display:grid;
+  grid-template-columns: auto 16% auto;
+  width: 100%;
+}
+
+.operands{
+  display: flex;
+  align-content: end;
+  justify-content: end;
+}
+.codeWidth {
+  width:25%;
+}
+.mysteryOp {
+  color:black;
+  font-size: x-large;
+  margin-right: 3%;
+  padding: 0% 2% 0% 2%;
+  border: 2px gray;
+  border-top-style: none;
+  border-right-style: none;
+  border-bottom-style: none;
+  border-left-style: none;
+  border-style: dashed;
+
+}
 
 .RadioFieldset{
   display: inline-grid;
@@ -68,6 +95,11 @@ input.input-validation-error {
   display: inline-grid;
   grid-template-columns: auto auto;
   margin-bottom: 2%;
+}
+
+.resultBox{
+  margin-top:1%;
+  margin-bottom: 1%;
 }
 
 
@@ -156,4 +188,13 @@ input.input-validation-error {
 .dropdown-check-list ul.items li.active a {
   color: #fff;
   background-color: #337ab7;
+}
+
+.itemText{
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.itemLi{
+  display:flex;
 }

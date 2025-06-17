@@ -35,6 +35,15 @@ button[disabled] {
 .highlightWrong {
     accent-color: brown;
 }
+.customization-container {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 
 .highlightRight {
     accent-color: green;
@@ -86,6 +95,8 @@ button[disabled] {
 
 .feedbackCorrect > span {
     background-color: lightgreen;
+    margin: 4px;
+    padding: 4px;
 }
 
 .feedbackError {
@@ -97,6 +108,8 @@ button[disabled] {
 
 .feedbackError > span {
     background-color: var(--dangerAlerts);
+    margin: 4px;
+    padding: 4px;
 }
 
 .centerplease {

@@ -6,7 +6,7 @@ $.i18n().load({
         msg_NC_compare_me: "Compare me",
         msg_NC_generate_a_number: "Generate another question",
         msg_NC_incorrect: "Incorrect. Please try again.",
-        msg_NC_correct: "Correct. Good job!",
+        msg_NC_correct: "Correct. Good job! ",
         msg_NC_same_exp: "There's no point to convert between two same type. Please choose two different expressions.",
         msg_NC_two02dec: "Signed binary can only convert with decimal.",
         msg_NC_not_divisible_by_4: "Error: number of bits should be multiple of 4",
@@ -22,6 +22,12 @@ $.i18n().load({
         msg_hint_xor: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_XOR' target = '_blank'>4.6.3</a>.",
         msg_hint_not: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_NOT' target = '_blank'>4.6.4</a>.",
         msg_hint_shift: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/bitwise.html#_bitwise_bit_shifting' target = '_blank'>4.6.5</a>.",
+        msg_hint_addition: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_addition.html' target = '_blank'>4.4.1</a>.",
+        msg_hint_subtraction: "<br>You may refer to Dive Into Systems <a href = 'https://diveintosystems.org/book/C4-Binary/arithmetic_subtraction.html' target = '_blank'>4.4.2</a>.",
+
+        msg_incorrect_not_enough: "There are other operands that could generate this result.",
+        msg_incorrect_too_many: "You have selected too many operands, some of them cannot generate this result.",
+        msg_incorrect_not_match: "The operator(s) you have chosen is incorrect, please try again."
 
     },
 
