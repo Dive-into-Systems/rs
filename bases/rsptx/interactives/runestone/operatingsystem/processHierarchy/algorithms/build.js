@@ -84,12 +84,23 @@ function parseForkArgs(code, forkIndex) {
     let balance = 1;
     let topLevelComma = null; // position of first top-level comma
     let [start, end] = [forkIndex + 2, forkIndex + 2]; // after 'f('
-    while (end < code.length) {
+    
+    // Add protection against infinite loops
+    const maxIterations = code.length + 100; // Safety margin
+    let iterationCount = 0;
+    
+    while (end < code.length && iterationCount < maxIterations) {
         if (code[end] === '(') balance++;
         if (code[end] === ')') balance--;
         if (balance === 0) break; // found closing bracket
         if (balance === 1 && code[end] === ',') topLevelComma ??= end; // only assigns top comma once
         end++;
+        iterationCount++;
+    }
+    
+    // Log warning if we hit the safety limit
+    if (iterationCount >= maxIterations) {
+        console.warn("Potential infinite loop detected in parseForkArgs - breaking after", maxIterations, "iterations");
     }
 
     if (!topLevelComma) return [code.substring(start, end), '', end];
@@ -274,8 +285,16 @@ class ForkNode {
                 this.left.right = new ForkNode(rightID, rightCt, true, "", null, null, this.graph);
                 temp1 = this.left.right.pushCode(rightCode, indent, rightTerm);
                 exitingProc = this.left.right;
-                while (exitingProc.left) {
+                // Add protection against infinite loops
+                let maxIterations = 1000; // Safety limit to prevent infinite loops
+                let iterationCount = 0;
+                while (exitingProc.left && iterationCount < maxIterations) {
                     exitingProc = exitingProc.left;
+                    iterationCount++;
+                }
+                // Log warning if we hit the safety limit
+                if (iterationCount >= maxIterations) {
+                    console.warn("Potential infinite loop detected in exitingProc chain - breaking after", maxIterations, "iterations");
                 }
             }
 
@@ -402,7 +421,14 @@ class ForkNode {
 // Processes the code recursively and builds a structure of print constraints.
 // The process print structure may be nested (like how forks are nested)
 // example {beforeWait: ab, afterWait: c{beforeWait:, afterWait:d, child: e}, child: f}
-export function printSequenceConstraints(code) {
+export function printSequenceConstraints(code, depth = 0) {
+    // Add protection against infinite recursion
+    const MAX_RECURSION_DEPTH = 100;
+    if (depth > MAX_RECURSION_DEPTH) {
+        console.warn("Maximum recursion depth reached in printSequenceConstraints - preventing infinite recursion");
+        return [];
+    }
+
     let sequenceList = [];
     let ptr = 0;
     while (ptr < code.length) {
@@ -416,9 +442,9 @@ export function printSequenceConstraints(code) {
         rightCode = parseForkExit(rightCode);
 
         let currProcessPrint = {
-        beforeWait: printSequenceConstraints(leftWaitCode),
-        afterWait: printSequenceConstraints(rightWaitCode),
-        child: printSequenceConstraints(rightCode)
+        beforeWait: printSequenceConstraints(leftWaitCode, depth + 1),
+        afterWait: printSequenceConstraints(rightWaitCode, depth + 1),
+        child: printSequenceConstraints(rightCode, depth + 1)
         };
 
         sequenceList.push(currProcessPrint);
@@ -431,7 +457,14 @@ export function printSequenceConstraints(code) {
 // This function always generate ONE correct print sequence
 // This function does not give exhausive results
 // One correct print sequence is returned as an array
-export function getPrintSequence(sequenceList) {
+export function getPrintSequence(sequenceList, depth = 0) {
+    // Add protection against infinite recursion
+    const MAX_RECURSION_DEPTH = 100;
+    if (depth > MAX_RECURSION_DEPTH) {
+        console.warn("Maximum recursion depth reached in getPrintSequence - preventing infinite recursion");
+        return [];
+    }
+    
     if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
         return [];
     }
@@ -440,9 +473,9 @@ export function getPrintSequence(sequenceList) {
         if (typeof sequenceList[i] === 'string') {
             correctPrint.push(sequenceList[i]);
         } else if (typeof sequenceList[i] === 'object') {
-            let beforeWait = getPrintSequence(sequenceList[i].beforeWait);
-            let afterWait = getPrintSequence(sequenceList[i].afterWait);
-            let child = getPrintSequence(sequenceList[i].child);
+            let beforeWait = getPrintSequence(sequenceList[i].beforeWait, depth + 1);
+            let afterWait = getPrintSequence(sequenceList[i].afterWait, depth + 1);
+            let child = getPrintSequence(sequenceList[i].child, depth + 1);
             
             let temp = [
                 ...randomWeave(beforeWait, child),
@@ -458,7 +491,14 @@ export function getPrintSequence(sequenceList) {
 // This function generates print sequence: may be correct or incorrect
 // wrong parts are generated by probability
 // Returns a tuple: [array of print sequence, whether error is injected (incorrect)]
-export function getPrintSequenceIncorrect(sequenceList) {
+export function getPrintSequenceIncorrect(sequenceList, depth = 0) {
+    // Add protection against infinite recursion
+    const MAX_RECURSION_DEPTH = 100;
+    if (depth > MAX_RECURSION_DEPTH) {
+        console.warn("Maximum recursion depth reached in getPrintSequenceIncorrect - preventing infinite recursion");
+        return [[], false];
+    }
+    
     let error_injected = false;
     if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
         return [[], error_injected];
@@ -469,11 +509,11 @@ export function getPrintSequenceIncorrect(sequenceList) {
             print.push(sequenceList[i]);
         } else if (typeof sequenceList[i] === 'object') {
             let beforeWait, afterWait, child, temp_injected, temp;
-            [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait);
+            [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait, depth + 1);
             error_injected ||= temp_injected;
-            [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait);
+            [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
             error_injected ||= temp_injected;
-            [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child);
+            [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child, depth + 1);
             error_injected ||= temp_injected;
             
             if ((!error_injected || Math.random() < 0.25) && afterWait.length > 0 && child.length > 0 && Math.random() < 0.5) {
@@ -688,30 +728,59 @@ function randInsert(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset 
 // A variation of randInsert
 // We do not want to fork before wait because for the sake of fork timeline,
 // there would be abiguity between which one of the two concurrent children exits.
-function randInsertFork_notBeforeWait(mainStr, insertStr, anySlot = false, minSlot = 0, maxOffset = 0) {
-    let validPositions = [];
-    let pastParanthesisLevel = 0, pastWaitLevel = 0, waited = false;
+function randInsertFork_notBeforeWait(
+    mainStr,
+    insertStr,
+    anySlot = false,
+    minSlot = 0,
+    maxOffset = 0
+) {
+    const validPositions = [];
+    let pastParanthesisLevel = 0;
+    let pastWaitLevel = 0;
+    let waited = false;
 
-    for (let i = minSlot; i < (mainStr.length+1-maxOffset); i++) {
-        // console.log("i", i, "pastParanthesisLevel", pastParanthesisLevel, "pastWaitLevel", pastWaitLevel, "waited", waited);
-        if (mainStr[i] == WAIT_CHAR) {
-            waited = true;
-        } else if (mainStr[i] !== '(' && pastParanthesisLevel === pastWaitLevel) {
-            // do not insert before left paranthesis or wait
-            if (anySlot || (mainStr[i-1] !== EXIT_CHAR)) {
+    const upperBound = mainStr.length + 1 - maxOffset;   // “+1” lets us insert at the very end
+    for (let i = 0; i < upperBound; i++) {
+
+        /* ---------- 1. record a valid slot (only after minSlot) ---------- */
+        if (i >= minSlot) {
+            if (
+                mainStr[i] !== WAIT_CHAR &&           // never put it *on* the W
+                mainStr[i] !== '(' &&                 // never before an opening “(”
+                pastParanthesisLevel === pastWaitLevel &&
+                (anySlot || mainStr[i - 1] !== EXIT_CHAR)
+            ) {
                 validPositions.push(i);
             }
         }
+
+        /* ---------- 2. update bookkeeping counters ---------- */
         switch (mainStr[i]) {
-            case '(': pastParanthesisLevel += 1; break;
-            case WAIT_CHAR: pastWaitLevel += 1; break;
-            case ',': pastWaitLevel += (waited ? 0 : 1); waited = false; break;
-            case ')': pastParanthesisLevel -= 1; pastWaitLevel -= 1; break;
+            case '(':  pastParanthesisLevel++; break;
+            case WAIT_CHAR:
+                pastWaitLevel++;
+                waited = true;
+                break;
+            case ',':
+                pastWaitLevel += waited ? 0 : 1;
+                waited = false;
+                break;
+            case ')':
+                pastParanthesisLevel--;
+                pastWaitLevel--;
+                break;
         }
     }
-    // console.log("valid positions", validPositions, "mainStr len", mainStr.length);
-    const insertPosition = validPositions[Math.floor(randomFloat32() * validPositions.length)]; // Pick a valid position
-    return mainStr.slice(0, insertPosition) + insertStr + mainStr.slice(insertPosition);
+
+    /* ---------- 3. pick a slot (or fall back to end) ---------- */
+    if (validPositions.length === 0) {
+        return mainStr + insertStr;
+    }
+    const insertPos =
+        validPositions[Math.floor(randomFloat32() * validPositions.length)];
+
+    return mainStr.slice(0, insertPos) + insertStr + mainStr.slice(insertPos);
 }
 
 // Adjust the number of prints
@@ -816,7 +885,7 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
 // Example output: F(aWbF(c,d)e,f)
 export function genSimpleWaitCode(numForks, numPrints) {
     let code = ""; // so that main parent does not exit
-    const fork = `${PRINT_CHAR}F(${PRINT_CHAR}${WAIT_CHAR}${PRINT_CHAR},${PRINT_CHAR}${EXIT_CHAR})${PRINT_CHAR}`
+    const fork = `F(${PRINT_CHAR}${WAIT_CHAR}${PRINT_CHAR},${PRINT_CHAR}${EXIT_CHAR})`
     
     // Nested Fork
     for (let i = 0; i < numForks; i++) {
