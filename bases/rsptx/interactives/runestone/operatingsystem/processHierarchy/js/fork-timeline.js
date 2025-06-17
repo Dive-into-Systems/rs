@@ -11,6 +11,7 @@ import "../css/timeline.css";
 import * as build from "../algorithms/build.js";
 import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import * as timeline from "../algorithms/timelineDraw.js"
+import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
@@ -64,7 +65,7 @@ export default class ProcTimeline extends RunestoneBase {
                 this.instructionText = params["instruction"];
             } else {
                 this.instructionText = (`
-                    In this exercise, you’ll analyze a C program that utilizes <code>fork()</code>, 
+                    In this exercise, you'll analyze a C program that utilizes <code>fork()</code>, 
                     <code>wait()</code>, and <code>exit()</code> system calls to manage process creation and synchronization.
                     Your task is to determine which of the provided output sequences could be produced by the program, 
                     considering the possible interleavings of parent and child process executions.<br>
@@ -185,9 +186,21 @@ export default class ProcTimeline extends RunestoneBase {
         if (this.hardCodedCCode == false) { this.updateSourceCode(); }
         this.forkEdges = [];    // will hold { parentID, childID }
         this.waitEdges = [];    // will hold { fromExitID, toWaitID }
-        console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        console.log(this.source);
         this.genQuestionInfo();
+        let i = 0;
+        for (i = 0; i < 100; i++) {
+            if (this.printSeqs.length > 2) {
+                break;
+            }
+            this.updateSourceCode();
+            this.genQuestionInfo();
+        }
+        console.log("numForks and numPrints are", this.numForks, this.numPrints);
+        console.log("source code is", this.source);
+        console.log("printSeqs are", this.printSeqs);
+        if (i == 100) {
+            console.error("Failed to generate a question with more than 2 print sequences after 100 attempts.");
+        }
     }
 
     updateSourceCode() {
@@ -207,7 +220,7 @@ export default class ProcTimeline extends RunestoneBase {
                     break;
                 case "3":
                     this.numForks = 4;
-                    this.numPrints = this.pick([9, 10, 11]);
+                    this.numPrints = this.pick([11, 12, 13, 14]);
                     break;
                 default:
                     this.numForks = 2;
@@ -216,17 +229,29 @@ export default class ProcTimeline extends RunestoneBase {
             }
             let prev = this.source || "";
             this.source = generateNewSourceCode();
-            while (this.source == prev) {
+            let i = 0;
+            while (this.source == prev && i < 100) {
                 this.source = generateNewSourceCode();
+                i++;
+            }
+            if (i == 100) {
+                console.error("Failed to generate a new source code after 100 attempts.");
             }
         }
         else {
             let prev = this.source || "";
             this.source = generateNewSourceCode();
-            while (this.source == prev) {
+            let i = 0;
+            while (this.source == prev && i < 100) {
                 this.source = generateNewSourceCode();
+                i++;
+            }
+            if (i == 100) {
+                console.error("Failed to generate a new source code after 100 attempts.");
             }
         }
+        console.log("Timeline Parameters: numForks and numPrints are", this.numForks, this.numPrints);
+        console.log("Timeline Source code is", this.source);
     }
 
     genQuestionInfo() {
@@ -235,14 +260,6 @@ export default class ProcTimeline extends RunestoneBase {
         this.csvTree = c;
         this.labels = l;
         [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source);
-        while (this.printSeqs.length <= 2) {
-            this.updateSourceCode();
-            [this.fullTree, this.cCode] = build.buildAndTranspile(this.source);
-            const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
-            this.csvTree = c;
-            this.labels = l;
-            [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source);
-        }
     }
     
     // Randomly pick one item in list
@@ -333,6 +350,11 @@ export default class ProcTimeline extends RunestoneBase {
         $('input').val("");
         this.inputDiv.html("");
 
+        // Properly unbind all event handlers before clearing
+        $(this.codeDiv).off('mouseover', 'span[data-block]');
+        $(this.codeDiv).off('mouseout', 'span[data-block]');
+        $(this.codeDiv).off('click', 'span[data-block]');
+
         $(this.feedbackDiv).css("display", "none");
         $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none").empty();
@@ -416,33 +438,34 @@ export default class ProcTimeline extends RunestoneBase {
             "<br>" +
             "<div id='timeline_graph'></div>"
         );
-        
+        let constraints = build.printSequenceConstraints(this.source)
         // some params
         const tl_width = 0.9 * $(this.timelineDiv).width();
-        const tl_height = 0.7 * $(this.timelineDiv).width();
+        const fork_depth = analyzeSequenceList(constraints).maxDepth;
+        const fork_width = analyzeSequenceList(constraints).maxWidth;
+        const tl_height = tl_width * fork_depth / fork_width * 1.2;
         const margin = { top: 20, right: 20, bottom: 20, left: 20 };
         const traceArray = [];
         const extra_trace = { value: "" };
         const refreshCode = () => console.log("Refreshed");
 
-        $('#timeline_graph').html(timeline.drawTimeline(this.fullTree, tl_width, tl_height, margin, traceArray, extra_trace, refreshCode));
+        
+        $('#timeline_graph').html(timeline.drawTimeline(constraints, tl_width, tl_height, margin));
         console.log("Real ones", this.csvTree, this.labels);
-        let constraints = build.printSequenceConstraints(this.source)
         console.log("print seq for ", this.source, "\n", constraints);
-        console.log(build.getPrintSequence(constraints));
-        for (let i = 0; i < 10; i++) {
-            let [seq, inc] = build.getPrintSequenceIncorrect(constraints);
-            // console.log(seq, "incorrect?: ", inc);
-        }
         this.bindCodeBlockEvents();
     }
 
     hideProcessHierarchy() {
+        // Remove all SVG and D3 elements completely before hiding
+        $(this.hierarchyTreeDiv).find('svg').remove();
         $(this.hierarchyTreeDiv).html("");
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
     hideProcessTimeline() {
+        // Remove all SVG and D3 elements completely before hiding
+        $(this.timelineDiv).find('svg').remove();
         $(this.timelineDiv).html("");
         $(this.timelineDiv).css("display", "none");
     }
@@ -483,7 +506,12 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     bindCodeBlockEvents() {
-        if ($(this.hierarchyTreeDiv).css('display') == 'block') {
+        // First, unbind any existing handlers to prevent accumulation
+        $(this.codeDiv).off('mouseover', 'span[data-block]');
+        $(this.codeDiv).off('mouseout', 'span[data-block]');
+        $(this.codeDiv).off('click', 'span[data-block]');
+        
+        if ($(this.hierarchyTreeDiv).css('display') == 'block' || $(this.timelineDiv).css('display') == 'block') {
             /* Highlight code line on mouseover */
             $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
@@ -492,18 +520,86 @@ export default class ProcTimeline extends RunestoneBase {
     
             /* Remove highlight line on mouseout */
             $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
-                const blockId = $(event.this).data('block');
+                const blockId = $(event.target).data('block');
                 $(`span[data-block="${blockId}"]`).removeClass('highlight');
             });
     
-            /* Re-draw tree on click */
+            /* Handle click for both hierarchy and timeline */
             $(this.codeDiv).on('click', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
-                const traceRoot = build.traceTree(this.source, blockId);
-                const { csv: csvTree, valuesList : labels} = build.getTreeCSV(traceRoot);
-                this.updateTreeGraph(csvTree, labels);
+                
+                // Update hierarchy if visible
+                if ($(this.hierarchyTreeDiv).css('display') == 'block') {
+                    const traceRoot = build.traceTree(this.source, blockId);
+                    const { csv: csvTree, valuesList: labels } = build.getTreeCSV(traceRoot);
+                    this.updateTreeGraph(csvTree, labels);
+                }
+                
+                // Update timeline if visible
+                if ($(this.timelineDiv).css('display') == 'block') {
+                    const constraints = build.printSequenceConstraints(this.source);
+                    const tl_width = 0.9 * $(this.timelineDiv).width();
+                    const tl_height = 0.7 * $(this.timelineDiv).width();
+                    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+                    
+                    // Get the node/edge to highlight based on blockId
+                    const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId);
+                    
+                    // Redraw timeline with highlight
+                    $('#timeline_graph').html(timeline.drawTimeline(
+                        constraints, 
+                        tl_width, 
+                        tl_height, 
+                        margin,
+                        highlightInfo  // Pass highlight information
+                    ));
+                }
             });
         }
+    }
+
+    getTimelineHighlightInfo(constraints, blockId) {
+        // Convert blockId to a position in the sequence
+        const position = parseInt(blockId);
+        
+        // Find the node/edge that corresponds to this position
+        let currentPos = 0;
+        let highlightInfo = {
+            nodeId: null,
+            edgeId: null
+        };
+        
+        // Recursively search through constraints to find the matching position
+        const findPosition = (constraint, parentNode = null) => {
+            if (typeof constraint === 'string') {
+                if (currentPos === position) {
+                    highlightInfo.nodeId = currentPos;
+                    return true;
+                }
+                currentPos++;
+                return false;
+            }
+            
+            // Check beforeWait
+            if (findPosition(constraint.beforeWait, currentPos)) {
+                return true;
+            }
+            
+            // Check child
+            if (findPosition(constraint.child, currentPos)) {
+                return true;
+            }
+            
+            // Check afterWait
+            if (findPosition(constraint.afterWait, currentPos)) {
+                return true;
+            }
+            
+            return false;
+        };
+        
+        findPosition(constraints);
+        return highlightInfo;
     }
 
     /*===================================

@@ -61,3 +61,69 @@ label code.candidate-print-sequence {
     font-style: normal; font-weight: normal;
     font-size: large;
   }
+
+.link {
+    fill: none;
+    stroke: #4e81bd;
+    stroke-width: 2px;
+}
+
+.link.fork {
+    stroke: #ffd700;
+}
+
+.link.sequential {
+    stroke: #999;
+}
+
+.node circle {
+    cursor: pointer;
+}
+
+.node text {
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+}
+
+.link-group:hover .link {
+    stroke-width: 3px;
+}
+
+.node:hover circle {
+    stroke-width: 3px;
+}
+
+/* Style for arrow head markers */
+marker path {
+    fill: #4e81bd;
+}
+
+/* Style for fork arrow heads */
+.link.fork + marker path {
+    fill: #ffd700;
+}
+
+/* Style for sequential arrow heads */
+.link.sequential + marker path {
+    fill: #999;
+}
+
+/* Style for printsAfter labels */
+.linkLabel {
+    fill: red;
+    font-family: Consolas, monospace;
+}
+
+/* Style for node labels */
+.node text, .nodeLabel {
+    font-size: 12px;
+    font-family: Consolas, monospace;
+    fill: black;
+}
+
+/* Add white border to node labels for better visibility */
+.nodeLabel {
+    stroke: white;
+    stroke-width: 3px;
+    paint-order: stroke;
+}
