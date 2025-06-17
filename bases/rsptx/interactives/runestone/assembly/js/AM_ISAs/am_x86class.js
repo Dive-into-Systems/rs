@@ -42,7 +42,10 @@ export default class am_x86{
             let DestinationText = "";
 
             if(this.randomZeroOrOne()){
-                if(start<0){
+                if (start == 0){
+                    DestinationText = `(%${reg1})`
+                    Address = this.getRegs().base
+                }else if(start<0){
                     DestinationText = `-0x${offset.slice(1)}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 } else {
@@ -51,7 +54,10 @@ export default class am_x86{
                 }
 
             }else{
-                if(start<0){
+                if (start == 0){
+                    DestinationText = `(%${reg1}, %${reg2}, ${scale})`;
+                    Address = this.getRegs().base +this.getRegs().offset*scale
+                }else if(start<0){
                     DestinationText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
                     Address = this.getRegs().base +this.getRegs().offset*scale + start;
                 }
@@ -100,7 +106,10 @@ export default class am_x86{
             let SourceText = "";
 
             if(this.randomZeroOrOne()){
-                if(start<0){
+                if (start == 0){
+                    SourceText = `(%${reg1})`
+                    Address = this.getRegs().base
+                } else if(start<0){
                     SourceText = `-0x${offset.slice(1)}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 } else {
@@ -109,7 +118,10 @@ export default class am_x86{
                 }
 
             }else{
-                if(start<0){
+                if (start == 0){
+                    SourceText = `(%${reg1}, %${reg2}, ${scale})`;
+                    Address = this.getRegs().base +this.getRegs().offset*scale
+                }else if(start<0){
                     SourceText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
                     Address = this.getRegs().base +this.getRegs().offset*scale + start;
                 }

@@ -1,10 +1,10 @@
-export default class am_x86{
+export default class am_ia32{
     MaxOffset = 14;
     MinOffset = 1;
     randomZeroOrOne = ()=> {return Math.floor(Math.random()*2)};
     regBase = (Math.floor(Math.random()*(100-60))+60)*100;
     regOffset = (Math.floor((Math.random()*(this.MaxOffset-this.MinOffset+1)))+this.MinOffset);
-    registerList = ["rax", "rcx"];
+    registerList = ["eax", "ecx"];
     
     getRegs = ()=> {
         while(this.regBase%16 != 0){
@@ -42,7 +42,10 @@ export default class am_x86{
             let DestinationText = "";
 
             if(this.randomZeroOrOne()){
-                if(start<0){
+                if (start == 0){
+                    DestinationText = `(%${reg1})`
+                    Address = this.getRegs().base
+                }else if(start<0){
                     DestinationText = `-0x${offset.slice(1)}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 } else {
@@ -51,7 +54,10 @@ export default class am_x86{
                 }
 
             }else{
-                if(start<0){
+                if (start == 0){
+                    DestinationText = `(%${reg1}, %${reg2}, ${scale})`;
+                    Address = this.getRegs().base +this.getRegs().offset*scale
+                }else if(start<0){
                     DestinationText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
                     Address = this.getRegs().base +this.getRegs().offset*scale + start;
                 }
@@ -100,7 +106,10 @@ export default class am_x86{
             let SourceText = "";
 
             if(this.randomZeroOrOne()){
-                if(start<0){
+                if (start == 0){
+                    SourceText = `(%${reg1})`
+                    Address = this.getRegs().base
+                } else if(start<0){
                     SourceText = `-0x${offset.slice(1)}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 } else {
@@ -109,7 +118,10 @@ export default class am_x86{
                 }
 
             }else{
-                if(start<0){
+                if (start == 0){
+                    SourceText = `(%${reg1}, %${reg2}, ${scale})`;
+                    Address = this.getRegs().base +this.getRegs().offset*scale
+                }else if(start<0){
                     SourceText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
                     Address = this.getRegs().base +this.getRegs().offset*scale + start;
                 }
@@ -170,7 +182,7 @@ export default class am_x86{
             
             const information = this.generateWriteInstruction();
             
-            const text = `mov ${information.sourceText}, ${information.destinationText}`;
+            const text = `movl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, RW: "write", answer: information.answer};
         },
@@ -178,7 +190,7 @@ export default class am_x86{
         ["add"]: ()=>{
             const information = this.generateWriteInstruction();
             
-            const text = `add ${information.sourceText}, ${information.destinationText}`;
+            const text = `addl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, RW: "write", answer: information.answer}
         },
@@ -189,7 +201,7 @@ export default class am_x86{
             
             const information = this.generateReadInsturction();
             
-            const text = `mov ${information.sourceText}, ${information.destinationText}`;
+            const text = `movl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, RW: "read", answer: information.answer};
             
@@ -199,7 +211,7 @@ export default class am_x86{
 
             const information = this.generateReadInsturction();
             
-            const text = `add ${information.sourceText}, ${information.destinationText}`;
+            const text = `addl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, RW: "read", answer: information.answer};
 
@@ -211,7 +223,7 @@ export default class am_x86{
             
             const information = this.generateNAInstruction();
 
-            const text = `mov ${information.sourceText}, ${information.destinationText}`;
+            const text = `movl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: information.answer};
         },
@@ -220,7 +232,7 @@ export default class am_x86{
 
             const information = this.generateNAInstruction();
 
-            const text = `add ${information.sourceText}, ${information.destinationText}`;
+            const text = `addl ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: information.answer};
 
@@ -229,9 +241,9 @@ export default class am_x86{
         ["lea"]: ()=>{
             const information = this.generateReadInsturction();
             
-            const text = `lea ${information.sourceText}, ${information.destinationText}`;
+            const text = `leal ${information.sourceText}, ${information.destinationText}`;
 
-            return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: null};
+            return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, answer: information.answer};
         }, 
     }
 }

@@ -25,12 +25,8 @@ export default class AJ extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
-        this.archSelect == "X86_64";
-        this.arch = new aj_x86();
-        this.regA = "rax";
-        this.regB = "rcx";
+        this.setCustomizedParams();
 
-        
         // Default configuration settings
         this.correct = null;
         this.num_bits = 8;
@@ -60,6 +56,34 @@ export default class AJ extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
     // Create the NC Element
+
+    setCustomizedParams() {
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["architecture"] !== undefined) {
+            this.archSelect = currentOptions["architecture"];
+        }
+
+        switch (this.archSelect) {
+            case "X86_64":
+                this.arch = new aj_x86();
+                this.regA = "rax";
+                this.regB = "rcx";
+                break;
+            case "ia_32":
+                this.arch = new aj_ia32();
+                this.regA = "eax";
+                this.regB = "ecx";
+                break;
+            case "arm_64":
+                this.arch = new aj_arm64();
+                this.regA = "X0";
+                this.regB = "X1";
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
+    };
+
     createAJElement() {
         this.renderAJPromptAndInput();
         this.renderAnswerDiv();
@@ -119,9 +143,6 @@ export default class AJ extends RunestoneBase {
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
 
-        this.ISAStatementNode = document.createTextNode("Choose an ISA:")
-        this.statementDiv.appendChild(this.ISAStatementNode)
-        this.ISASelect = document.createElement("select")
         this.X86Option = document.createElement("option")
         this.X86Option.value = "X86_64"
         this.X86Option.textContent = "X86_64"
@@ -134,11 +155,6 @@ export default class AJ extends RunestoneBase {
         this.ARM64Option.value = "arm_64"
         this.ARM64Option.textContent = "arm_64"
 
-        this.ISASelect.append(this.X86Option)
-        this.ISASelect.append(this.IA32Option)
-        this.ISASelect.append(this.ARM64Option)
-
-        this.statementDiv.append(this.ISASelect);
         this.statementDiv.appendChild(document.createElement("br"))
 
         this.statementDiv.className = "statement-div";
@@ -212,15 +228,19 @@ export default class AJ extends RunestoneBase {
 
     renderAnswerDiv(){
         console.log(this.modeSelect.value)
+
+        const raxInitValue = this.arch.rax ? this.arch.rax : this.rax
+        const rcxInitValue = this.arch.rcx ? this.arch.rcx : this.rcx
+
         if(this.modeSelect.value == 2){
             const tableHTML ="<div class='tables-container'><div class='table-wrapper'>" +
             "<table class='register-table'><caption>Registers:</caption><thead>"+
             "<tr><th>Register</th><th>Current Value</th><th>Post Instruction Value</th></tr>"+
             "</thead>" +
             `<tbody><tr><td>${this.regA}</td><td>${this.arch.rax}</td>`+
-            `<td><input class="raxInput" type='text' placeholder='${this.arch.rax}'></td></tr>`+
+            `<td><input class="raxInput" type='text' placeholder='${raxInitValue}'></td></tr>`+
             `<tr><td>${this.regB}</td><td>${this.arch.rcx}</td>`+ 
-            `<td><input class="rcxInput" type='text' placeholder='${this.arch.rcx}'></td></tr>`+
+            `<td><input class="rcxInput" type='text' placeholder='${rcxInitValue}'></td></tr>`+
             `</tbody></table>`+
             "</div></div>"
     
@@ -234,6 +254,7 @@ export default class AJ extends RunestoneBase {
             this.answerDiv.append(this.codeDiv);
     
             this.codeBox = document.createElement('code')
+            this.codeBox.style = "padding: 0px;"
             
             this.codeBox.innerHTML = this.generateCode();
             this.codeDiv.append(this.codeBox);
@@ -381,9 +402,6 @@ export default class AJ extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
             this.clearAnswer();
-            if(this.ISASelect){
-                this.archSelect = this.ISASelect.value;
-            }
             if (this.archSelect == "X86_64"){
                 this.arch = new aj_x86();
                 this.regA = "rax";
@@ -531,7 +549,12 @@ export default class AJ extends RunestoneBase {
             locrax = this.arch.rax ;
             locrcx = this.arch.rcx;
         }
-        codeBlock += "jmp DONE"
+        if(this.archSelect != "arm_64"){
+            codeBlock += "jmp DONE"
+        }
+        else{
+            codeBlock += "b DONE"
+        }
         if(IfElseOrder == 0){
             codeBlock += " <br><br>label1: <br>"; 
         } else{
@@ -607,7 +630,7 @@ export default class AJ extends RunestoneBase {
                 this.feedback_msg += $.i18n("msg_asm_incorrect");
                 let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
                 // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
-                asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
+                asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
                 asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
                 console.log(asmLink)
                 this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
@@ -689,7 +712,7 @@ export default class AJ extends RunestoneBase {
 
         let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
         // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
-        asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
+        asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
         asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
         this.helpmsg = `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
         

@@ -7,6 +7,8 @@
 
 import RunestoneBase from "../../common/js/runestonebase.js";
 import am_x86 from "./AM_ISAs/am_x86class.js";
+import am_ia32 from "./AM_ISAs/am_ia32class.js";
+import am_arm64 from "./AM_ISAs/am_arm64class.js";
 import { nanoid } from 'nanoid/non-secure';
 import "./assembly-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
@@ -22,8 +24,7 @@ export default class AM extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
-        this.archSelect == "X86_64";
-        this.arch = new am_x86();
+        this.setCustomizedParams();
         this.MAarray = [];
         this.checkButtonsDict = {};
         
@@ -56,6 +57,14 @@ export default class AM extends RunestoneBase {
     ====   Functions generating final HTML   ====
     ===========================================*/
     // Create the NC Element
+
+    setCustomizedParams() {
+            const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+            if (currentOptions["architecture"] !== undefined) {
+                this.archSelect = currentOptions["architecture"];
+            }
+    };
+
     createAMElement() {
         this.renderAMPromptAndInput();
         this.renderAnswerDiv();
@@ -88,47 +97,14 @@ export default class AM extends RunestoneBase {
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
-        this.statementDiv = document.createElement("div");
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
         this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Determine whether as a jump is taken based on the operation and the jump instruction."
 
-        // // specify the number of bits in the statement
-        // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
-
-
-
-        
-        this.configHelperText = document.createElement("div");
-        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>: Choose an ISA";
-        // render the statement
         this.containerDiv.appendChild(this.instructionNode);
-        this.statementDiv.appendChild(this.configHelperText);
-        this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
 
-
-        this.ISASelect = document.createElement("select")
-        this.X86Option = document.createElement("option")
-        this.X86Option.value = "X86_64"
-        this.X86Option.textContent = "X86_64"
-
-        this.IA32Option = document.createElement("option")
-        this.IA32Option.value = "ia_32"
-        this.IA32Option.textContent = "ia_32"
-        
-        this.ARM64Option = document.createElement("option")
-        this.ARM64Option.value = "arm_64"
-        this.ARM64Option.textContent = "arm_64"
-
-        this.ISASelect.append(this.X86Option)
-        this.ISASelect.append(this.IA32Option)
-        this.ISASelect.append(this.ARM64Option)
-
-        this.statementDiv.append(this.ISASelect);
-
-        this.statementDiv.className = "statement-div";
 
 
         // create the node for the prompt
@@ -200,12 +176,25 @@ export default class AM extends RunestoneBase {
             const codeDiv = document.createElement('div')
             
             const registerData = this.generateRegisterState(i)
-            codeDiv.innerHTML = (registerData.names[0] == "rax") ?
+            let regA;
+            let regB;
+            if(this.archSelect == "X86_64"){
+                regA = "rax";
+                regB = "rcx";
+            } else if (this.archSelect == "ia_32"){
+                regA = "eax";
+                regB = "ecx";
+            } else if (this.archSelect == "arm_64"){
+                regA = "X0";
+                regB = "X1";
+            }
+
+            codeDiv.innerHTML = ((registerData.names[0] == "rax")||(registerData.names[0] == "eax")||(registerData.names[0] == "X0")) ?
             `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
-            `<li> <em>rax</em>: <m>${registerData.values[0]}</m>; <em>rcx</em>: <m>${registerData.values[1]}</m>; </li>`
+            `<li> <em>${regA}</em>: <m>${registerData.values[0]}</m>; <em>${regB}</em>: <m>${registerData.values[1]}</m>; </li>`
             +`</ul>` :
             `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
-            `<li> <em>rax</em>: <m>${registerData.values[1]}</m>; <em>rcx</em>: <m>${registerData.values[0]}</m>; </li>`
+            `<li> <em>${regA}</em>: <m>${registerData.values[1]}</m>; <em>${regB}</em>: <m>${registerData.values[0]}</m>; </li>`
             +`</ul>`;
             
             codeDiv.style = "font-size: large;"
@@ -437,9 +426,8 @@ export default class AM extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
             this.clearAnswer();
-
             this.renderAnswerDiv();
-            this.renderAMButtons()
+            this.renderAMButtons();
             
         });
 
@@ -488,29 +476,62 @@ export default class AM extends RunestoneBase {
     }
 
     generateAnswer() {
-        this.instructionList = ["add", "mov"];
         this.genMov = 0;
         this.genAdd = 0;
         this.genLea = 0;
-
         let selectHistory = [];
         this.MAarray = [];
         let select;
 
-        for (let i = 0; i<4; i++){
-            select = Math.floor(Math.random()*3)
-            if (i == 3 && !selectHistory.includes(2)){
-                select = 2;
+        if (this.archSelect != "arm_64"){
+            this.instructionList = ["add", "mov"];
+    
+            for (let i = 0; i<4; i++){
+                select = Math.floor(Math.random()*3)
+                if (i == 3 && !selectHistory.includes(2)){
+                    select = 2;
+                }
+                selectHistory.push(select);
+                this.questions.push(this.generateCode(select));
             }
-            selectHistory.push(select);
-            this.questions.push(this.generateCode(select));
-        }
+        } else{
 
+            for (let i = 0; i<4; i++){
+                if(i<3){
+                    selectHistory.push(i);
+                } else {
+                    selectHistory.push(Math.floor(Math.random()*3))
+                }
+                
+            }
+            
+            for (let i = selectHistory.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [selectHistory[i], selectHistory[j]] = [selectHistory[j], selectHistory[i]];
+            }
+
+            for (let i = 0; i<selectHistory.length; i++){
+                this.questions.push(this.generateCode(selectHistory[i]));
+            }
+
+        }
     }
 
     generateCode(select) {
-        this.arch = new am_x86();
         let text;
+        switch (this.archSelect) {
+            case "X86_64":
+                this.arch = new am_x86();
+                break;
+            case "ia_32":
+                this.arch = new am_ia32();
+                break;
+            case "arm_64":
+                this.arch = new am_arm64();
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
         if(select == 0){
             text = this.generateRead();
         } else if (select == 1){
@@ -523,82 +544,110 @@ export default class AM extends RunestoneBase {
     }
 
     generateRead() {
-        
         let ans;
-        if(this.genMov == 0){
-            ans = this.arch.ReadInstructions["mov"]();
-            this.answers.push(ans);
-            this.genMov++;
-            this.MAarray.push("A");
-            
-        } else if (this.genAdd == 0) {
-            ans = this.arch.ReadInstructions["add"]();
-            this.answers.push(ans);
-            this.genAdd++;
-            this.MAarray.push("A");
+        if (this.archSelect != "arm_64"){
+            if(this.genMov == 0){
+                ans = this.arch.ReadInstructions["mov"]();
+                this.answers.push(ans);
+                this.genMov++;
+                this.MAarray.push("A");
+                
+            } else if (this.genAdd == 0) {
+                ans = this.arch.ReadInstructions["add"]();
+                this.answers.push(ans);
+                this.genAdd++;
+                this.MAarray.push("A");
+            } else{
+                const inst = this.instructionList[Math.floor(Math.random()*2)]
+                ans = this.arch.ReadInstructions[inst]()
+                this.answers.push(ans);
+                this.MAarray.push("A");
+            }
+   
         } else{
-            const inst = this.instructionList[Math.floor(Math.random()*2)]
-            ans = this.arch.ReadInstructions[inst]()
+            ans = this.arch.ReadWriteInstructions["ldr"]();
             this.answers.push(ans);
             this.MAarray.push("A");
         }
-
+        
         const text = ans.code;
-        return text;   
+        return text;
     }
     
     generateWrite() {
-
         let ans;
+        if (this.archSelect!="arm_64"){
 
-        if(this.genMov == 0){
-            ans = this.arch.WriteInstructions["mov"]();
-            this.answers.push(ans);
-            this.genMov++;
-            this.MAarray.push("A");
-            
-        } else if (this.genAdd == 0) {
-            ans = this.arch.WriteInstructions["add"]();
-            this.answers.push(ans);
-            this.genAdd++;
-            this.MAarray.push("A");
-        } else{
-            const inst = this.instructionList[Math.floor(Math.random()*2)]
-            ans = this.arch.WriteInstructions[inst]()
+            if(this.genMov == 0){
+                ans = this.arch.WriteInstructions["mov"]();
+                this.answers.push(ans);
+                this.genMov++;
+                this.MAarray.push("A");
+                
+            } else if (this.genAdd == 0) {
+                ans = this.arch.WriteInstructions["add"]();
+                this.answers.push(ans);
+                this.genAdd++;
+                this.MAarray.push("A");
+            } else{
+                const inst = this.instructionList[Math.floor(Math.random()*2)]
+                ans = this.arch.WriteInstructions[inst]()
+                this.answers.push(ans);
+                this.MAarray.push("A");
+            }
+
+        }else{
+            ans = this.arch.ReadWriteInstructions["str"]();
             this.answers.push(ans);
             this.MAarray.push("A");
         }
-
+        
         const text = ans.code;
         return text;
-
     }
 
     generateNoAccess() {
         let ans;
-        if(this.genLea == 0){
-            ans = this.arch.NAInstructions["lea"]();
-            this.answers.push(ans);
-            this.genLea++;
-            this.MAarray.push("NAlea");
+        if(this.archSelect != "arm_64"){
+            if(this.genLea == 0){
+                ans = this.arch.NAInstructions["lea"]();
+                this.answers.push(ans);
+                this.genLea++;
+                this.MAarray.push("NAlea");
+                
+            } else if (this.genAdd == 0) {
+                ans = this.arch.NAInstructions["add"]();
+                this.answers.push(ans);
+                this.genAdd++;
+                this.MAarray.push("NA");
+            } else if (this.genMov == 0) {
+                ans = this.arch.NAInstructions["mov"]();
+                this.answers.push(ans);
+                this.genMov++;
+                this.MAarray.push("NA");
+            } else{
+                ans = this.arch.NAInstructions["lea"]()
+                this.answers.push(ans);
+                this.MAarray.push("NAlea");
+            }
             
-        } else if (this.genAdd == 0) {
-            ans = this.arch.NAInstructions["add"]();
-            this.answers.push(ans);
-            this.genAdd++;
-            this.MAarray.push("NA");
-        } else if (this.genMov == 0) {
-            ans = this.arch.NAInstructions["add"]();
-            this.answers.push(ans);
-            this.genMov++;
-            this.MAarray.push("NA");
-        } else{
-            ans = this.arch.NAInstructions["lea"]()
-            this.answers.push(ans);
-            this.MAarray.push("NAlea");
+        }else{
+            if(this.genAdd == 0){
+                ans = this.arch.NAInstructions["add"]();
+                this.answers.push(ans);
+                this.MAarray.push("NA");
+                this.genAdd++;
+            } else{
+                ans = this.arch.NAInstructions["sub"]();
+                this.answers.push(ans);
+                this.MAarray.push("NA");
+            }
+        
         }
+        
         const text = ans.code;
         return text;
+        
     }
 
     generateRegisterState(index){
@@ -613,31 +662,6 @@ export default class AM extends RunestoneBase {
     // check if the answer is correct
     checkCurrentAnswer(index) {
         this.correct = false;
-        
-        // let linkISA = "x86_64";
-
-        // if(this.archSelect == "X86_64"){
-        //     linkISA = "x86_64"
-        // }
-        // else if(this.archSelect == "ia_32"){
-        //     linkISA = "x86"
-        // }
-        // else if(this.archSelect == "arm_64"){
-        //     linkISA = "arm64"
-        // }
-        // if(this.RAXInput.value == this.arch.rax && this.RCXInput.value == this.arch.rcx){
-        //     this.correct = true;
-        //     this.feedback_msg += $.i18n("msg_asm_correct");
-        // } else{
-        //     this.feedback_msg += $.i18n("msg_asm_incorrect");
-        //     let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
-        //     // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
-        //     asmLink += encodeURI(this.codeBox.innerHTML.split("<br>").join("\n"))
-        //     asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
-        //     console.log(asmLink)
-        //     this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
-            
-        // }
         const memCorrect = this.checkMemAccess(index);
         const RWCorrect = this.checkReadWrite(index);
         const addressCorrect = this.checkMemAddress(index);
@@ -665,7 +689,6 @@ export default class AM extends RunestoneBase {
     
     //checks whether there was memory access
     checkMemAccess(index){
-        
         const yesBtn = this.answerDiv.getElementsByClassName(`radioMAYes${index}`)[0];
         const noBtn = this.answerDiv.getElementsByClassName(`radioMANo${index}`)[0];
         
