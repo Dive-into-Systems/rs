@@ -75,6 +75,11 @@ export default class BA extends RunestoneBase {
         this.resultLog = ""
         this.unitTestRandomItem = "ADDITION"
 
+        //logging data variables
+        this.sOfAnswer
+        this.usOfAnswer
+        
+
 
         // Only generate new prompt when there are items selected
         if (this.checkedValues.length != 0){
@@ -418,7 +423,8 @@ export default class BA extends RunestoneBase {
                 if ( this.valid_conversion ) {
                     this.checkCurrentAnswer();
                     console.log(this.target_num_string);
-                    this.logCurrentAnswer();
+                    // this.logCurrentAnswer();
+                    this.sendData(1, false)
                     this.renderFeedback();
                     this.correctpt1 = true;
 
@@ -488,7 +494,9 @@ export default class BA extends RunestoneBase {
             if ( this.valid_conversion ) {
                 this.correctpt2 = true;
                 this.checkCurrentAnswerPt2();
-                this.logCurrentAnswer();
+                // this.logCurrentAnswer();
+                this.sendData(1, true)
+                
                 this.renderFeedback2();
                 console.log(this.correctpt2);
             }
@@ -1062,7 +1070,7 @@ export default class BA extends RunestoneBase {
         this.contWrong = 0;
        }
        
-       if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
+    //    if (this.correctpt1 === true) { this.sendData(1); } else { this.sendData(2); }
        if(this.correctpt1 === true){
         this.renderSecondSection();
         this.renderSecondPartButtons();
@@ -1306,43 +1314,36 @@ export default class BA extends RunestoneBase {
     
    }
 
-    // log the answer and other info to the server (in the future)
-    async logCurrentAnswer(sid) {
-        let answer = JSON.stringify(this.inputNode.value);
-        // Save the answer locally.
-        this.setLocalStorage({
-            answer: answer,
-            timestamp: new Date(),
-        });
-        let data = {
-            event: "numconv",
-            act: answer || "",
-            answer: answer || "",
-            correct: this.correctpt1 ? "T" : "F",
-            div_id: this.divid,
-        };
-        if (typeof sid !== "undefined") {
-            data.sid = sid;
-            feedback = false;
-        }
-        // render the feedback
+    // // log the answer and other info to the server (in the future)
+    // async logCurrentAnswer(sid) {
+    //     let answer = JSON.stringify(this.inputNode.value);
+    //     // Save the answer locally.
+    //     this.setLocalStorage({
+    //         answer: answer,
+    //         timestamp: new Date(),
+    //     });
+    //     let data = {
+    //         event: "numconv",
+    //         act: answer || "",
+    //         answer: answer || "",
+    //         correct: this.correctpt1 ? "T" : "F",
+    //         div_id: this.divid,
+    //     };
+    //     if (typeof sid !== "undefined") {
+    //         data.sid = sid;
+    //         feedback = false;
+    //     }
+    //     // render the feedback
 
-        return data;
+    //     return data;
         
-    }
+    // }
 
-    sendData(actionId) {
-        let now = new Date();
-        let bundle = {
-            timestamp: now.toString(),
-            componentId : this.componentId,
-            questionId : this.questionId,
-            actionId : actionId,
-            userId : this.userId
-        }
+    sendData(actionId, part2=false) {
 
-        if (actionId !== 0) {
-            bundle.details = {
+        let details; 
+        if (actionId == 1 || actionId == 2) {
+            details = {
                 config : {
                     numBits : `${this.num_bits}`,
                     checkedOperators : `${this.checkedValues}`,
@@ -1353,13 +1354,38 @@ export default class BA extends RunestoneBase {
                 },
                 eval: {
                     correctAnswer: `${this.target_num_string}`,
-                    userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                    userAnswer : this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null,
+                    correctpt1 : this.correctpt1,
                 }
             }
-        }
-        else { bundle.details = null }
+        
 
-        this.logData(bundle);
+            if(part2){
+                let signedBool = false;
+                let unsignedBool = false
+                if(this.yesBtnS.checked){
+                    signedBool = true
+                }
+                if(this.yesBtnU.checked){
+                    unsignedBool = true;
+                }
+                details.eval.correctpt2 = this.correctpt2;
+                details.eval.userAnswer = [this.USInput.value, this.SInput.value, unsignedBool, signedBool]
+                details.eval.correctAnswer = [this.ans, this.toSignedDecimal(), this.UTunsignedOverflow, this.UTsignedOverflow]
+            }
+        }
+
+        if(actionId == 3 || actionId == 0){
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+            }
+        }
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
    /*===================================

@@ -72,7 +72,6 @@ export default class BS extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -408,6 +407,7 @@ export default class BS extends RunestoneBase {
                 if ( this.valid_conversion ) {
                     this.generateAnswer();
                     this.checkCurrentAnswer();
+                    this.sendData(1)
                     this.logCurrentAnswer();
                 }
             }.bind(this),
@@ -711,6 +711,7 @@ export default class BS extends RunestoneBase {
             inputs[7] = true;
         }
 
+        this.sendUserAns = inputs;
 
         if(!inputs.includes(true)){
             this.feedback_msg = ($.i18n("msg_no_answer"));
@@ -844,17 +845,9 @@ export default class BS extends RunestoneBase {
     }
 
     sendData(actionId) {
-        let now = new Date();
-        let bundle = {
-            timestamp: now.toString(),
-            componentId : this.componentId,
-            questionId : this.questionId,
-            actionId : actionId,
-            userId : this.userId
-        }
-
-        if (actionId !== 0) {
-            bundle.details = {
+        let details; 
+        if (actionId == 1 || actionId == 2) {
+            details = {
                 config : {
                     numBits : `${this.num_bits}`,
                     checkedOperators : `${this.checkedValues}`,
@@ -864,14 +857,23 @@ export default class BS extends RunestoneBase {
                     displayedPrompt: `${this.promptDivTextNode.textContent}`,
                 },
                 eval: {
-                    correctAnswer: `${this.target_num_string}`,
-                    userAnswer : 'PLACEHOLDER'
+                    correctAnswer: this.answers,
+                    userAnswer : this.sendUserAns,
+                    correct : this.correct,
                 }
             }
         }
-        else { bundle.details = null }
+        else if (actionId == 3 || actionId == 0){
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+            }
+        }
 
-        this.logData(bundle);
+        this.logData(null, details, actionId, this.componentId);
     }
 
    /*===================================

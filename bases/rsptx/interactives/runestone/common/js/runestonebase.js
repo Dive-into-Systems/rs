@@ -101,20 +101,24 @@ export default class RunestoneBase {
         console.log("Local Storage is", localStorage.getItem("Dive-into-Systems-user-Id"));
         return userId;
     }
+
+
     
     ///// This function sends data to the Dive in to Systems exercise book database. /////
-    logData(bundle) {
+    logData(bundle=null, details=null, actionId=null, componentId=null) {
+        details = details ? details : bundle.details
+        actionId = actionId ? actionId : bundle.actionId
+        componentId = componentId ? componentId : bundle.componentId
         let data = {
-            TS: bundle.timestamp,
-            CID: bundle.componentId,
-            QID: bundle.questionId,
-            AID: bundle.actionId,
-            UID: bundle.userId,
-            DET: bundle.details
+            Timestamp: JSON.stringify(new Date()),
+            ComponentID: componentId,
+            ActionID: actionId,
+            UserID: this.getUserId(),
+            Details: details
         };
 
         console.log(data);
-
+        
         const url = 'http://127.0.0.1:5000/log';
 
         fetch(url, {
