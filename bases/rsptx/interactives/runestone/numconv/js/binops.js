@@ -41,7 +41,7 @@ export default class BO extends RunestoneBase {
         this.toOpt = ["4", "6", "8"];
 
         // Fields for logging data
-        this.componentId = "4.2";
+        this.componentId = "4.5";
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();

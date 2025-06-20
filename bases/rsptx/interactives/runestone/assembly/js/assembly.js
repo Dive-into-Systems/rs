@@ -37,6 +37,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.bit_checked = true;
         this.memo_checked = true;
 
+
         // number of questions in the excercise
         this.num_q_in_group = 6;
 
@@ -48,6 +49,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.renderCheckboxes();
         this.renderQuestions();
         this.renderTryAgainButton();
+
+        this.sendData(0)
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
@@ -219,6 +222,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             });
             textNode.css({ "font-size": "large", height: "25px", "margin-left": "3px", });
             this.textNodes.push(textNode);
+            
 
             // start appending the letter, the prompt, the feedback for the first line
             this.mainFirstLine.append(String.fromCharCode(i + 97) + ". ");
@@ -395,6 +399,17 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             checkedAnswer.addClass("highlightWrong");
             checkedAnswer.next("label").addClass("highlightWrong");
         }
+
+        this.dataToBeLogged = {
+            UserAnswer: userAnswer,
+            Answer : correctAnswer,
+            Correct : (userAnswer == correctAnswer),
+            QuestionNumber : index,
+            QuestionText : this.promptList[index],
+        }
+
+        this.sendData(1)
+
         feedbackDiv.html($("<span>").text(`${msg}`));
     }
 
@@ -410,6 +425,8 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
+            this.sendData(3)
+            
         });
         this.containerDiv.append("<br>");
         this.containerDiv.append(this.generateButton);
@@ -454,6 +471,72 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 .removeClass("feedbackError")
                 .removeClass("feedbackCorrect"); // empty old feedback div
         }
+    }
+
+    async logCurrentAnswer(sid) {
+        let answer = JSON.stringify(this.inputNode.value);
+        // Save the answer locally.
+        this.setLocalStorage({
+            answer: answer,
+            timestamp: new Date(),
+        });
+        let data = {
+            event: "numconv",
+            act: answer || "",
+            answer: answer || "",
+            correct: this.correct ? "T" : "F",
+            div_id: this.divid,
+        };
+        if (typeof sid !== "undefined") {
+            data.sid = sid;
+            feedback = false;
+        }
+        // render the feedback
+        this.renderFeedback();
+        return data;
+    }
+
+    sendData(actionId) {
+        let now = new Date();
+        
+        let checkedOPs = [];
+        if (this.arith_checked){
+            checkedOPs.push("Arithmetic");
+        }
+        if (this.bit_checked){
+            checkedOPs.push("Bit Operations");
+        }
+        if (this.memo_checked){
+            checkedOPs.push("Memory Manipulation");
+        }
+
+        let details; 
+        if (actionId == 0|| actionId == 3) {
+            details = {
+                config : {
+                    checkedOperations : `${checkedOPs}`,
+                },
+            }
+        }
+        else if (actionId == 1 || actionId == 2){
+            details = {
+                config : {
+                    checkedOperations : `${checkedOPs}`,
+                },
+                prompt: {
+                    displayedPrompt: `${this.dataToBeLogged.QuestionText}`,
+                },
+                eval: {
+                    correctAnswer: `${this.dataToBeLogged.Answer}`,
+                    userAnswer : this.inputNode ? this.dataToBeLogged.UserAnswer.toLowerCase() : null,
+                    correct : this.dataToBeLogged.Correct,
+                    questionNumber : this.dataToBeLogged.QuestionNumber,
+                }
+            }
+        }
+        else { details = null }
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
     /*===================================

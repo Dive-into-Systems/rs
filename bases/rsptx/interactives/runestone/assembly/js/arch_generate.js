@@ -503,6 +503,9 @@ class ArchInstructions {
     executeInstruction(op, args, registers, memory) {
         switch (this.architecture) {
             case 'X86_32':
+                //Jay/Bohou added
+                this.executeX86_32Instruction(op, args, registers, memory);
+                break;
             case 'X86_64':
                 this.executeX86Instruction(op, args, registers, memory);
                 break;
@@ -529,6 +532,24 @@ class ArchInstructions {
                 break;
         }
     }
+
+        // Executes an x86 instruction and updates the state
+    executeX86_32Instruction(op, args, registers, memory) {
+            let destination = args[1], source = args[0]
+            switch (op) {
+                case 'movl':
+                    this.executeMemoryOperation(op, destination, source, registers, memory);
+                    break;
+                case 'addl':
+                case 'subl':
+                    this.executeX86_32ArithmeticOperation(op, destination, destination, source, registers, memory);
+                    break;
+                case 'pushl':
+                case 'popl':
+                    this.executeStackOperation(op, source, source, registers, memory);
+                    break;
+            }
+        }
 
     // Executes an ARM instruction and updates the state
     executeARMInstruction(op, args, registers, memory) {
@@ -569,6 +590,33 @@ class ArchInstructions {
                     result = destValue + srcValue2;
                     break;
                 case 'sub':
+                    result = destValue - srcValue2;
+                    break;
+            }
+        }
+        this.setValue(dest, result, registers, memory);
+    }
+
+    executeX86_32ArithmeticOperation(op, dest, src1, src2, registers, memory) {
+        const destValue = Number(this.getValue(dest, registers, memory));
+        const srcValue1 = Number(this.getValue(src1, registers, memory));
+        const srcValue2 = Number(this.getValue(src2, registers, memory));
+        let result;
+        if (this.architecture === "ARM64") {
+            switch (op) {
+                case 'addl':
+                    result = srcValue1 + srcValue2;
+                    break;
+                case 'subl':
+                    result = srcValue1 - srcValue2;
+                    break;
+            }
+        } else {
+            switch (op) {
+                case 'addl':
+                    result = destValue + srcValue2;
+                    break;
+                case 'subl':
                     result = destValue - srcValue2;
                     break;
             }
@@ -619,6 +667,26 @@ class ArchInstructions {
                 newMemoryLocation.value = value;
                 this.updateStackPointer(registers, newAddress);
             } else if (op === 'pop') {
+                this.setValue(dest, memoryLocation.value, registers, memoryArray);
+                const newAddress = `0x${(parseInt(address, 16) + increment).toString(16).toUpperCase().padStart(3, '0')}`;
+                const newMemoryLocation = memoryArray.find(m => m.address === newAddress);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: ${newAddress}`);
+                }
+                this.updateStackPointer(registers, newAddress);
+            }
+
+            //Jay/Bohou added
+            if (op === 'pushl') {
+                value = this.getValue(src, registers, memoryArray);
+                const newAddress = `0x${(parseInt(address, 16) - increment).toString(16).toUpperCase().padStart(3, '0')}`;
+                const newMemoryLocation = memoryArray.find(m => m.address === newAddress);
+                if (!newMemoryLocation) {
+                    throw new Error(`Memory location not found at address: ${newAddress}`);
+                }
+                newMemoryLocation.value = value;
+                this.updateStackPointer(registers, newAddress);
+            } else if (op === 'popl') {
                 this.setValue(dest, memoryLocation.value, registers, memoryArray);
                 const newAddress = `0x${(parseInt(address, 16) + increment).toString(16).toUpperCase().padStart(3, '0')}`;
                 const newMemoryLocation = memoryArray.find(m => m.address === newAddress);
