@@ -162,7 +162,7 @@ export default class cacheinfo extends RunestoneBase {
 
         this.promptDiv.appendChild(this.addressNode);
         this.promptDiv.appendChild(document.createElement("br"));
-        this.promptDiv.appendChild(this.partitionNode);;
+        this.promptDiv.appendChild(this.partitionNode);
 
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
