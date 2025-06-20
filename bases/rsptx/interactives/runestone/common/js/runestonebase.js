@@ -107,7 +107,7 @@ export default class RunestoneBase {
     ///// This function sends data to the Dive in to Systems exercise book database. /////
     logData(bundle=null, details=null, actionId=null, componentId=null) {
         details = details ? details : bundle.details
-        actionId = actionId ? actionId : bundle.actionId
+        actionId = (actionId != null || actionId != undefined) ? actionId : bundle.actionId
         componentId = componentId ? componentId : bundle.componentId
         let data = {
             Timestamp: JSON.stringify(new Date()),
