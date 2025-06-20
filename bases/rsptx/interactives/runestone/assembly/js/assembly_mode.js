@@ -97,19 +97,64 @@ export default class AM extends RunestoneBase {
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
-
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
         this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Determine whether as a jump is taken based on the operation and the jump instruction."
 
         this.containerDiv.appendChild(this.instructionNode);
-        this.containerDiv.appendChild(document.createElement("br"));
+
+        this.statementDiv = document.createElement("div")
+        this.statementDiv.className = "statement-div";
+
+
+
+        const modeDiv= document.createElement('div')
+        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li> Mode 1: Limited Addressing Modes </li> <li>Mode 2: More Complicated </li></ul>'
+
+        // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        this.modeSelect = document.createElement("select")
+        this.modeSelect.className = "form-control fork-inline mode"
+        this.mode1Option = document.createElement("option")
+        this.mode1Option.value = "1"
+        this.mode1Option.textContent = "1"
+
+        this.mode2Option = document.createElement("option")
+        this.mode2Option.value = "2"
+        this.mode2Option.textContent = "2"
+
+        this.mode2Option.selected = "selected"
+
+        this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
+
+        this.modeSelectText = document.createElement("div")
+        this.modeSelectText.append(document.createTextNode('Plese select a mode:'))
+
+        //DON'T DO IF ARM
+        if(this.archSelect != "arm_64"){
+            this.containerDiv.appendChild(document.createElement("br"));
+
+
+            this.containerDiv.append(this.statementDiv)
+
+            this.statementDiv.appendChild(modeDiv)
+
+            this.statementDiv.append(this.modeSelectText)
+
+
+            this.modeSelect.append(this.mode1Option)
+            this.modeSelect.append(this.mode2Option)
+            this.modeSelectText.append(this.modeSelect)
+
+        }
+
+
 
 
 
         // create the node for the prompt
         this.promptDiv = document.createElement("div");
         this.promptDiv.style.fontSize = "x-large";
+
 
 
         
@@ -212,7 +257,7 @@ export default class AM extends RunestoneBase {
             table.class = "register-table"
     
             const tableHeadRow = document.createElement("tr")
-            tableHeadRow.innerHTML = "<th>Memory Access?</th> <th> Read or Write </th> <th>Address Value</th> <th>Check Answer</th>"
+            tableHeadRow.innerHTML = "<th>Memory Access?</th> <th> Read or Write </th> <th>Address Value (Hexadecimal)</th> <th>Check Answer</th>"
             table.append(tableHeadRow)
     
 
@@ -284,7 +329,7 @@ export default class AM extends RunestoneBase {
             
 
             const input1 = document.createElement("input")
-            input1.placeholder = "Address Value"
+            input1.placeholder = "Address Value (Hex)"
             iTd.append(input1)
             input1.className = `addressInput${i}`
 
@@ -356,6 +401,8 @@ export default class AM extends RunestoneBase {
                     rwTd.style = "opacity: 0.4;"
                     rwTd.disabled = true;
 
+                    rNoRW.checked = false;
+                    rYesRW.checked = false;
                     rNoRW.disabled = true;
                     rYesRW.disabled = true;
 
@@ -547,19 +594,19 @@ export default class AM extends RunestoneBase {
         let ans;
         if (this.archSelect != "arm_64"){
             if(this.genMov == 0){
-                ans = this.arch.ReadInstructions["mov"]();
+                ans = this.arch.ReadInstructions["mov"](Number(this.modeSelect.value));
                 this.answers.push(ans);
                 this.genMov++;
                 this.MAarray.push("A");
                 
             } else if (this.genAdd == 0) {
-                ans = this.arch.ReadInstructions["add"]();
+                ans = this.arch.ReadInstructions["add"](Number(this.modeSelect.value));
                 this.answers.push(ans);
                 this.genAdd++;
                 this.MAarray.push("A");
             } else{
                 const inst = this.instructionList[Math.floor(Math.random()*2)]
-                ans = this.arch.ReadInstructions[inst]()
+                ans = this.arch.ReadInstructions[inst](Number(this.modeSelect.value))
                 this.answers.push(ans);
                 this.MAarray.push("A");
             }
@@ -579,19 +626,19 @@ export default class AM extends RunestoneBase {
         if (this.archSelect!="arm_64"){
 
             if(this.genMov == 0){
-                ans = this.arch.WriteInstructions["mov"]();
+                ans = this.arch.WriteInstructions["mov"](Number(this.modeSelect.value));
                 this.answers.push(ans);
                 this.genMov++;
                 this.MAarray.push("A");
                 
             } else if (this.genAdd == 0) {
-                ans = this.arch.WriteInstructions["add"]();
+                ans = this.arch.WriteInstructions["add"](Number(this.modeSelect.value));
                 this.answers.push(ans);
                 this.genAdd++;
                 this.MAarray.push("A");
             } else{
                 const inst = this.instructionList[Math.floor(Math.random()*2)]
-                ans = this.arch.WriteInstructions[inst]()
+                ans = this.arch.WriteInstructions[inst](Number(this.modeSelect.value))
                 this.answers.push(ans);
                 this.MAarray.push("A");
             }
@@ -610,7 +657,7 @@ export default class AM extends RunestoneBase {
         let ans;
         if(this.archSelect != "arm_64"){
             if(this.genLea == 0){
-                ans = this.arch.NAInstructions["lea"]();
+                ans = this.arch.NAInstructions["lea"](Number(this.modeSelect.value));
                 this.answers.push(ans);
                 this.genLea++;
                 this.MAarray.push("NAlea");
@@ -626,7 +673,7 @@ export default class AM extends RunestoneBase {
                 this.genMov++;
                 this.MAarray.push("NA");
             } else{
-                ans = this.arch.NAInstructions["lea"]()
+                ans = this.arch.NAInstructions["lea"](Number(this.modeSelect.value))
                 this.answers.push(ans);
                 this.MAarray.push("NAlea");
             }

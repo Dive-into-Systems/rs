@@ -1,4 +1,7 @@
 export default class am_x86{
+
+
+
     MaxOffset = 14;
     MinOffset = 1;
     randomZeroOrOne = ()=> {return Math.floor(Math.random()*2)};
@@ -19,7 +22,7 @@ export default class am_x86{
     }
 
 
-    generateWriteInstruction = ()=>{
+    generateWriteInstruction = (mode)=>{
         let regChoice1 = this.randomZeroOrOne();
             let regChoice2 = 0;
 
@@ -34,36 +37,40 @@ export default class am_x86{
 
             let SourceText = `%${reg1}`;
 
-            const start = Math.floor(Math.random()*(16+15))-15
+            const start = Math.floor(Math.random()*(16))
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             
             let Address = 0;
             let DestinationText = "";
 
-            if(this.randomZeroOrOne()){
+            if(mode==1){
                 if (start == 0){
                     DestinationText = `(%${reg1})`
                     Address = this.getRegs().base
-                }else if(start<0){
-                    DestinationText = `-0x${offset.slice(1)}(%${reg1})`;
-                    Address = this.getRegs().base + start;
                 } else {
                     DestinationText = `0x${offset}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 }
 
             }else{
-                if (start == 0){
-                    DestinationText = `(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale
-                }else if(start<0){
-                    DestinationText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale + start;
-                }
-                else{
-                    DestinationText = `0x${offset}(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale + start;
+                if(this.randomZeroOrOne()){
+                    if (start == 0){
+                        DestinationText = `(%${reg1})`
+                        Address = this.getRegs().base
+                    } else {
+                        DestinationText = `0x${offset}(%${reg1})`;
+                        Address = this.getRegs().base + start;
+                    }
+    
+                }else{
+                    if (start == 0){
+                        DestinationText = `(%${reg1}, %${reg2}, ${scale})`;
+                        Address = this.getRegs().base +this.getRegs().offset*scale
+                    } else{
+                        DestinationText = `0x${offset}(%${reg1}, %${reg2}, ${scale})`;
+                        Address = this.getRegs().base +this.getRegs().offset*scale + start;
+                    }
                 }
             }
 
@@ -83,7 +90,7 @@ export default class am_x86{
 
     }
 
-    generateReadInsturction = ()=> {
+    generateReadInsturction = (mode)=> {
         let regChoice1 = this.randomZeroOrOne();
             let regChoice2 = 0;
 
@@ -98,36 +105,40 @@ export default class am_x86{
 
             let DestinationText = `%${reg1}`;
 
-            const start = Math.floor(Math.random()*(16+15))-15
+            const start = Math.floor(Math.random()*(16))
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             
             let Address = 0;
             let SourceText = "";
 
-            if(this.randomZeroOrOne()){
+            if(mode == 1){
                 if (start == 0){
                     SourceText = `(%${reg1})`
                     Address = this.getRegs().base
-                } else if(start<0){
-                    SourceText = `-0x${offset.slice(1)}(%${reg1})`;
-                    Address = this.getRegs().base + start;
                 } else {
                     SourceText = `0x${offset}(%${reg1})`;
                     Address = this.getRegs().base + start;
                 }
 
             }else{
-                if (start == 0){
-                    SourceText = `(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale
-                }else if(start<0){
-                    SourceText = `-0x${offset.slice(1)}(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale + start;
-                }
-                else{
-                    SourceText = `0x${offset}(%${reg1}, %${reg2}, ${scale})`;
-                    Address = this.getRegs().base +this.getRegs().offset*scale + start;
+                if(this.randomZeroOrOne()){
+                    if (start == 0){
+                        SourceText = `(%${reg1})`
+                        Address = this.getRegs().base
+                    } else {
+                        SourceText = `0x${offset}(%${reg1})`;
+                        Address = this.getRegs().base + start;
+                    }
+    
+                }else{
+                    if (start == 0){
+                        SourceText = `(%${reg1}, %${reg2}, ${scale})`;
+                        Address = this.getRegs().base +this.getRegs().offset*scale
+                    } else{
+                        SourceText = `0x${offset}(%${reg1}, %${reg2}, ${scale})`;
+                        Address = this.getRegs().base +this.getRegs().offset*scale + start;
+                    }
                 }
             }
 
@@ -178,17 +189,17 @@ export default class am_x86{
     }
 
     WriteInstructions = {
-        ["mov"]: ()=>{
+        ["mov"]: (mode)=>{
             
-            const information = this.generateWriteInstruction();
+            const information = this.generateWriteInstruction(mode);
             
             const text = `mov ${information.sourceText}, ${information.destinationText}`;
 
             return {code: text, baseReg: information.baseReg, baseVal: information.baseVal, offsetReg: information.offsetReg, offsetVal: information.offsetVal, RW: "write", answer: information.answer};
         },
 
-        ["add"]: ()=>{
-            const information = this.generateWriteInstruction();
+        ["add"]: (mode)=>{
+            const information = this.generateWriteInstruction(mode);
             
             const text = `add ${information.sourceText}, ${information.destinationText}`;
 
@@ -197,9 +208,9 @@ export default class am_x86{
     }
 
     ReadInstructions = {
-        ["mov"]: ()=>{
+        ["mov"]: (mode)=>{
             
-            const information = this.generateReadInsturction();
+            const information = this.generateReadInsturction(mode);
             
             const text = `mov ${information.sourceText}, ${information.destinationText}`;
 
@@ -207,9 +218,9 @@ export default class am_x86{
             
         },
 
-        ["add"]: ()=>{
+        ["add"]: (mode)=>{
 
-            const information = this.generateReadInsturction();
+            const information = this.generateReadInsturction(mode);
             
             const text = `add ${information.sourceText}, ${information.destinationText}`;
 
@@ -238,8 +249,8 @@ export default class am_x86{
 
         },
 
-        ["lea"]: ()=>{
-            const information = this.generateReadInsturction();
+        ["lea"]: (mode)=>{
+            const information = this.generateReadInsturction(mode);
             
             const text = `lea ${information.sourceText}, ${information.destinationText}`;
 

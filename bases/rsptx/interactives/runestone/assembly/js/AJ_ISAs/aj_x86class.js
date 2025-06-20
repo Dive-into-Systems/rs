@@ -1,10 +1,30 @@
 export default class aj_x86{
     
-    max_number = 16;
+    constructor(runUnitTests=null, rax=null, rcx=null, jump=null){
+
+        this.max_number = 16;
+        this.jump = jump;
+
+        if(runUnitTests == null || runUnitTests == undefined){
+            this.runUnitTests = false;
+        }else{
+            this.runUnitTests = runUnitTests;
+        }
+        if(rax == null || rax == undefined){
+            this.rax = Math.floor(Math.random()*this.max_number)
+        }
+        else{
+            this.rax = rax
+        }
+        if(rcx == null || rcx == undefined){
+            this.rcx = Math.floor(Math.random()*this.max_number)
+        }
+        else{
+            this.rcx = rcx
+        }
+    }
     
-    //registers
-    rax = Math.floor(Math.random()*this.max_number);
-    rcx = Math.floor(Math.random()*this.max_number);
+
 
     //flags list
     ZF = 0;
@@ -59,9 +79,12 @@ export default class aj_x86{
     }
 
     compare = () => {
-        const num = this.ZeroOrOne()
+        let num = this.ZeroOrOne()
         let result;
         let text;
+        if(this.runUnitTests){
+            num = 0;
+        }
         // cmp rax, rcx
         if(num == 0){
             result = this.rcx - this.rax;
@@ -82,10 +105,13 @@ export default class aj_x86{
     }
 
     test = () => {
-        const num = this.ZeroOrOne()
+        let num = this.ZeroOrOne()
         let result;
         let text;
         // test rax, rcx
+        if(this.runUnitTests){
+            num = 0;
+        }
         if(num == 0){
             text = "test %rax, %rcx"
         }
@@ -136,6 +162,9 @@ export default class aj_x86{
         let random = Math.floor(Math.random() * arr.length);
         console.log(`${arr}, ${random}, ${obj}`)
         console.log(obj[arr[random]])
+        if(this.runUnitTests){
+            return obj[arr[this.jump]]();
+        }
         return obj[arr[random]]();
     }
 

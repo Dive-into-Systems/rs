@@ -9,7 +9,6 @@ input.input-validation-error {
 }
 
 .statement-div {
-   display:flex;
    border-width: 1px;
    border-radius: 5px;
    border-style: solid;

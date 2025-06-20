@@ -37,6 +37,12 @@ export default class AJ extends RunestoneBase {
         this.questionId = 1;
         this.userId = this.getUserId();
 
+        //unit test stuff
+        this.runUnitTests = false;
+        this.UTRax = 0;
+        this.UTRcx = 0;
+        this.jump = 0;
+
         this.createAJElement();
 
         // this.addCaption("runestone");
@@ -366,6 +372,9 @@ export default class AJ extends RunestoneBase {
         this.generateButton.remove()
         this.submitButton.remove()
         this.helpButton.remove()
+        if(this.runUnitTests && this.unitTestButton){
+            this.unitTestButton.remove()
+        }
     }
 
     recordAnswered() {
@@ -402,19 +411,39 @@ export default class AJ extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
             this.clearAnswer();
-            if (this.archSelect == "X86_64"){
-                this.arch = new aj_x86();
-                this.regA = "rax";
-                this.regB = "rcx";
-            } else if (this.archSelect == "ia_32"){
-                this.arch = new aj_ia32();
-                this.regA = "eax";
-                this.regB = "ecx";
-            } else if (this.archSelect == "arm_64"){
-                this.arch = new aj_arm64();
-                this.regA = "X0";
-                this.regB = "X1";
+            if(!this.runUnitTests){
+                if (this.archSelect == "X86_64"){
+                    this.arch = new aj_x86();
+                    this.regA = "rax";
+                    this.regB = "rcx";
+                } else if (this.archSelect == "ia_32"){
+                    this.arch = new aj_ia32();
+                    this.regA = "eax";
+                    this.regB = "ecx";
+                } else if (this.archSelect == "arm_64"){
+                    this.arch = new aj_arm64();
+                    this.regA = "X0";
+                    this.regB = "X1";
+                }
             }
+            else{
+                if (this.archSelect == "X86_64"){
+                    this.arch = new aj_x86(this.runUnitTests, this.UTRax, this.UTRcx, this.jump);
+                    this.regA = "rax";
+                    this.regB = "rcx";
+                } else if (this.archSelect == "ia_32"){
+                    this.arch = new aj_ia32(this.runUnitTests, this.UTRax, this.UTRcx, this.jump);
+                    this.regA = "eax";
+                    this.regB = "ecx";
+                } else if (this.archSelect == "arm_64"){
+                    this.arch = new aj_arm64(this.runUnitTests, this.UTRax, this.UTRcx, this.jump);
+                    this.regA = "X0";
+                    this.regB = "X1";
+                }
+            }
+
+
+
             this.renderAnswerDiv();
             this.renderAJButtons()
             
@@ -430,6 +459,13 @@ export default class AJ extends RunestoneBase {
             type: "button",
         });
         this.helpButton.addEventListener("click", ()=>{this.renderHelp()})
+
+        this.unitTestButton = document.createElement("button")
+        this.unitTestButton.textContent = "Unit Test!"
+        this.unitTestButton.addEventListener("click", ()=>this.UnitTest())
+        if(this.runUnitTests){
+            this.containerDiv.append(this.unitTestButton)
+        }
 
 
         this.containerDiv.appendChild(this.generateButton);
@@ -497,7 +533,14 @@ export default class AJ extends RunestoneBase {
         }  
         this.jumpInfo = this.arch.jumps();
         codeBlock += this.jumpInfo.code;
-        codeBlock += " label1<br><br>label1: "; 
+        if(this.archSelect == "X86_64"){
+            codeBlock += " label1<br>add $1, %rax<br><br>label1:<br>add $2, %rax "; 
+        } else if (this.archSelect == "ia_32"){
+            codeBlock += " label1<br>add $1, %eax<br><br>label1:<br>add $2, %eax "; 
+        } else {
+            codeBlock += " label1<br>add X0, X0, #1<br><br>label1:<br>add X0, X0, #2"; 
+        }
+        
 
         return codeBlock;
         
@@ -618,11 +661,11 @@ export default class AJ extends RunestoneBase {
             else if(this.archSelect == "arm_64"){
                 linkISA = "arm64"
             }
-            if(this.jumpInfo.value && this.rYes.checked && !this.rNo.checked){
+            if(this.jumpInfo.result && this.rYes.checked && !this.rNo.checked){
                 this.correct = true;
                 this.feedback_msg += $.i18n("msg_asm_correct");
             }
-            else if(!this.jumpInfo.value && !this.rYes.checked  && this.rNo.checked){
+            else if(!this.jumpInfo.result && !this.rYes.checked  && this.rNo.checked){
                 this.correct = true;
                 this.feedback_msg += $.i18n("msg_asm_correct");
             }
@@ -732,6 +775,58 @@ export default class AJ extends RunestoneBase {
             this.helpDiv.remove()
         }
     }
+
+
+
+    UnitTest(){
+        //rax rcx
+
+        // //case 1: negative
+        // this.UTRax = 0
+        // this.UTRcx = -10
+
+        // //case 2: zero
+        // this.UTRax = 0
+        // this.UTRcx = 0
+
+        // //case 3 : positive
+        // this.UTRax = 0
+        // this.UTRcx = 10
+
+        const values = [[0, -10], [0, 0], [0,10]]
+
+        let result = `rax value, rcx value, jump type, jump taken \n`
+        //this.jumpresult.code
+
+        
+        for(let i = 0; i < 7; i++){
+            for(let elem of values){
+                this.UTRax = elem[0]
+                this.UTRcx = elem[1]
+                this.jump = i;
+                this.generateButton.click()
+                this.submitButton.click()
+                let row = `${this.UTRax}, ${this.UTRcx}, ${this.jumpInfo.code}, ${this.jumpInfo.result}\n`
+                result += row;
+
+            }
+        }
+
+        const blob = new Blob([result], {type: "text/csv;charset=utf-8"});
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Create a link to download the file
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = "data.csv";
+        link.innerHTML = "Click here to download the file";
+        this.containerDiv.appendChild(link);
+        
+        console.log(result);
+
+
+    }
+
 }
 
 /*=================================
