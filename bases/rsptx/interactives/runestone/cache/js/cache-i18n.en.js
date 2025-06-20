@@ -1,7 +1,7 @@
 $.i18n().load({
     en: {
         cache_org: "cache organization",
-        block_size: "Block size (in bits)",
+        block_size: "Block size (in bytes)",
         num_rows: "Number of sets",
         num_lines: "Number of lines",
         msg_no_answer: "No answer provided.",
