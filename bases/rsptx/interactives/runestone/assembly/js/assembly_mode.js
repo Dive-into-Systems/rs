@@ -58,6 +58,7 @@ export default class AM extends RunestoneBase {
     ===========================================*/
     // Create the NC Element
 
+
     setCustomizedParams() {
             const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
             if (currentOptions["architecture"] !== undefined) {

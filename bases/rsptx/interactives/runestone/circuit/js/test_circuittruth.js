@@ -63,6 +63,7 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import circuitAST from "./circuit_AST/circuitAST.js";
 import "../css/circuittruth.css";
+import {MinSelectBox} from "../../../utils/MinSelectBox.js";
 
 export var CircuitTruthList = {};
 
@@ -91,6 +92,36 @@ export default class CircuitTruth extends RunestoneBase {
         this.instructionNode.style.padding = "10px";
 
         this.containerDiv.appendChild(this.instructionNode);
+
+        
+        this.statementDiv = document.createElement("div");
+
+        this.statementDiv.className = "statement-div";
+
+        this.configText = document.createElement("div");
+        this.configText.style.display = "flex";
+        this.configText.innerHTML = "Please select the mode: "
+        
+        
+        this.modeSelect = document.createElement("select")
+        this.modeSelect.style.width = "auto";
+        this.modeSelect.className = "form-control fork-inline mode"
+        this.mode1Option = document.createElement("option")
+        this.mode1Option.value = "1"
+        this.mode1Option.textContent = "1"
+        this.modeSelect.append(this.mode1Option)
+
+        this.mode2Option = document.createElement("option")
+        this.mode2Option.value = "2"
+        this.modeSelect.append(this.mode2Option)
+        this.mode2Option.textContent = "2"
+
+        this.modeSelect.setAttribute("id", `${this.divid}_modeSelect`)
+        this.configText.append(this.modeSelect)
+        this.statementDiv.append(this.configText);
+        this.statementDiv.appendChild(document.createElement("br"))
+
+        this.containerDiv.append(this.statementDiv);
 
         this.containerDiv.innerHTML += `
           <div class="container">
@@ -140,11 +171,14 @@ export default class CircuitTruth extends RunestoneBase {
         const container   = this.containerDiv;
         const id          = this.divid;
         const diagramDiv  = `${id}_myDiagramDiv`;
+        let mode = this.modeSelect.value;
 
         // Event listener for the Generate Circuit button
         container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
         container.querySelector(`#${id}_showExpression`).addEventListener('click', showExpression);
         container.querySelector(`#${id}_checkButton`).addEventListener('click', checkAnswers);
+        container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
+        container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
         
         document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
@@ -167,10 +201,19 @@ export default class CircuitTruth extends RunestoneBase {
          */
 
         //TODO: take params min and max num gates and if you want exact number of gates set to be the same.
+
+        function changeMode(){
+            mode = (mode=="1") ? mode = "2": mode = "1";
+        }
+
         function generateCircuit() {
             const inputs = ['A', 'B', 'C']; // possible inputs
-            const gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
-            // const gates2 = ['AND', 'OR', 'XOR']; //maybe use this for the easy level (maybe just AND OR NOT)
+            let gates = [];
+            if(mode == "1"){
+                gates = ['AND', 'OR'];
+            } else{
+                gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
+            }
             const notGate = 'NOT';
             //possibly parameters: maxGates, noGateChance, notChance
             let maxGates = 3;
@@ -188,7 +231,7 @@ export default class CircuitTruth extends RunestoneBase {
             // Recursive helper function that generates a circuit expression.
             //TODO: Could tweak depth for easier and more complicated modes (maybe for easier depth <=2)
             //TODO: More complicated mode could have three inputs and/or two outputs
-
+            let ast;
             function generateSubExpression(depth = 0) {
                 // maximum depth of 3 to avoid too complicated circuit
                 if (depth > 3 || numGates >= maxGates) {
@@ -211,7 +254,7 @@ export default class CircuitTruth extends RunestoneBase {
                     let input1 = generateSubExpression(depth + 1); // get input 1
                     let input2 = generateSubExpression(depth + 1); // get input 2
                     // while loop to avoid same inputs on both side, disregarding NOT.
-                    // So expression like (NOT(A) AND A) woudl be filtered.
+                    // So expression like (NOT(A) AND A) would be filtered.
                     while ((input1.replace(/NOT\(|\)|\(/g, '') === input2.replace(/NOT\(|\)|\(/g, '')) && (input1.replace(/NOT\(|\)|\(/g, '').length==1)) {
                         input2 = generateSubExpression(depth + 1);
                     }
@@ -254,19 +297,20 @@ export default class CircuitTruth extends RunestoneBase {
             
             // update HTML to display the text. This is currently set invisible.
             container.querySelector(`#${id}_circuitOutput`).innerText = circuit
+
+            // build the AST structure to hold information
+            ast = buildAST(circuit)
+            let displayAST = ast.getRoot();
             
             // pass in the circuit expression to display truth table
-            displayTruthTable(circuit);
+            displayTruthTable(ast, circuit);
 
-            // parse the text expression into a tree
-            let ast = parseExpression(circuit).getRoot();
-            console.log(ast);
 
             // Uncomment the next line to see the AST text visualization:
             // visualizeAST(ast);
 
             // assign a JSON to the global variable json
-            json = generateJSON(ast, circuit);
+            json = generateJSON(displayAST, circuit);
 
             // default is to always set the circuit expression invisible
             const exprDiv = container.querySelector(`#${id}_circuitOutput`);
@@ -276,153 +320,6 @@ export default class CircuitTruth extends RunestoneBase {
             load();
         }
 
-        /**
-         * evaluateExpression calculates the answer (0 or 1) that the circuit
-         * will output when the input alternates between 0 and 1. This function
-         * is called in displayTruthTable function. 
-         * The logic of this function is to keep replacing gates in text with
-         * real operator, such as replacing AND with & (single ampersand here 
-         * because all values are binary) and ultimately use the built in 
-         * function eval() to evaluate a circuit such as (A NAND NOT(B)) as 
-         * !(A & !B) imagine A B replaced by certain combinations of 1 and 0.
-         * @param {*} expr: circuit expression
-         * @param {*} values: values 
-         * @returns results: calculation results ready to be displayed in truth table.
-         */
-
-        // Function is called 2^N times with N = number of input nodes. Each time it is called,
-        // function replaces the expression passed in with the values passed in and replaces the
-        // string operations with their equivalent Javascript symbol. 
-        function evaluateExpression(expr, values) {
-            // Replace variables with values. So input A will be replaced by 1 0 etc.
-            for (const [key, value] of Object.entries(values)) {
-                const re = new RegExp(`\\b${key}\\b`, 'g');
-                expr = expr.replace(re, value ? 1 : 0);
-                console.log("replacing terms: " + expr);
-            }
-            // preliminary replacement. NAND NOR not replaced yet because they need to put
-            // '!' in front of the parentheses, so they can't be directly replaced.
-            expr = expr.replace(/NAND/g, 'NAND_PLACEHOLDER')
-                        .replace(/NOR/g, 'NOR_PLACEHOLDER')
-                        .replace(/XOR/g, '^')
-                        .replace(/ AND /g, ' & ')
-                        .replace(/ OR /g, ' | ')
-                        .replace(/NOT(\d+)/g, '!($1)') // many NOT to handle different cases
-                        .replace(/NOT\(([^()]+)\)/g, '!($1)')
-                        .replace(/NOT/g, '!');
-            console.log("replacing expressions:" + expr);
-            /** avoid  extra parentheses such as ((A AND B)) */
-            function removeExtraParentheses(exp) {
-                return exp.replace(/\((\d+)\)/g, '$1');
-            }
-            /** start evaluating the expression from the innermost parentheses as they have
-             *  the highest priority in operation.
-             */
-
-            /** TODO: why not generate the structure as a tree rather than a string?
-             * Add debug statements to figure out what the code is generating
-             * Print out: number of iterations, the replacements for each iteration
-            */
-            function evaluateInnermost(exp) {
-                let prevExp;
-                let iterations = 0;
-                // TODO: what happens when it gets to 100? Where is the infinite loop coming from?
-
-                // Answer: iterations don't go beyond 3 based on checking, usually around 0-1.
-                while (/\(([^()]+)\)/.test(exp) && iterations < 100) {
-                    prevExp = exp;
-                // TODO: verify what this code is doing.
-                // Current specultion:
-                // regex find the inner most paranthesis (e.g. '(1 | 0)')
-                // evaluate the paranthesis and replace it with the value (e.g. '(1 | 0)' => 1)
-                // if the expression is changed, then continue looping, otherwise exit
-                // loop exits when no matches are found, or in one iteration there's no changes
-
-                // speculation confirmed
-                    exp = exp.replace(/\(([^()]+)\)/g, (match, subExpr) => {
-                        try {
-                        const evaluated = eval(subExpr);
-                        console.log("evaluated: " + evaluated);
-                        return evaluated ? 1 : 0;
-                        } catch { // This catch is to be specifically for the NOR and NAND placeholders, since the expressions cannot be evaluated in those cases.
-                                  // The returned code is then passed into replacePlaceholders and handled there. 
-                            console.log("match: " + match);
-                        return match;
-                        }
-                    });
-                    exp = removeExtraParentheses(exp);
-                    console.log("prevExp: " + prevExp);
-                    console.log("exp: " + exp);
-                    if (prevExp === exp) break; // no changes are made means replacement is done.
-                    iterations++; // avoid infinite loop
-                    console.log("iterations: " + iterations);
-                }
-                return exp;
-            }
-            /** separate function to handle NAND and NOR */
-
-            // replaces the NAND and NOR placeholders with !(*&*)/!(*|*), e.g., (1 NAND 0) becomes !(1 & 0).
-            function replacePlaceholders(exp) {
-                let prevExpr;
-                let iterations = 0;
-                do {
-                prevExpr = exp;
-                exp = exp.replace(/(\d+) NAND_PLACEHOLDER (\d+)/g, '!($1 & $2)')
-                        .replace(/(\d+) NOR_PLACEHOLDER (\d+)/g, '!($1 | $2)');
-                console.log("In replacePlaceholders: " + exp);
-                exp = removeExtraParentheses(exp); 
-                iterations++;
-                console.log(iterations);
-                // TODO: why would there be an infinite loop that needs the iteration cap? 
-
-                // Answer: does not exceed 3 iterations based on checking.
-
-                console.log("prevExp: " + prevExpr);
-                console.log("exp: " + exp);
-                if (iterations >= 100) break;
-                } while (prevExpr !== exp);
-                return exp;
-            }
-
-            /** function to handle simple NOT cases such as !A.
-             *  I know it seems kind of strange to separate simple NOT and complex 
-             *  NOT but I tried integrating them but failed.
-             */
-            function handleSimpleNOTs(exp) {
-                exp = exp.replace(/!([01])/g, (match, p1) => {
-                const result = !parseInt(p1, 10) ? 1 : 0;
-                return result;
-                });
-                exp = removeExtraParentheses(exp); 
-                return exp;
-            }
-
-            /** function to handle nested NOT cases such as !(A AND B) */
-            function handleComplexNOTs(exp) {
-                exp = exp.replace(/!\(([^()]+)\)/g, (match, subExpr) => {
-                const result = !eval(subExpr) ? 1 : 0;
-                return result;
-                });
-                exp = removeExtraParentheses(exp);
-                return exp;
-            }
-
-            let prevExpr;
-            do { // loop over those functions until no changes can be made.
-                prevExpr = expr;
-                expr = evaluateInnermost(expr);
-                expr = handleSimpleNOTs(expr);
-                expr = replacePlaceholders(expr);
-                expr = handleComplexNOTs(expr);
-                expr = removeExtraParentheses(expr);
-            } while (prevExpr !== expr);
-            try {
-                const result = eval(expr);
-                return result;
-            } catch (e) {
-                return false; // in case anything goes wrong
-            }
-        }
 
         /**
          * This function helps us keep track of what inputs are generated, so that we know
@@ -447,7 +344,7 @@ export default class CircuitTruth extends RunestoneBase {
          * the output by passing in different values of inputs.
          * @param {*} circuit circuit expression
          */
-        function displayTruthTable(circuit) {
+        function displayTruthTable(ast, circuit) {
             const inputs = extractInputs(circuit);
             const table = container.querySelector(`#${id}_truthTable`);
             table.innerHTML = ''; // Clear previous table
@@ -462,17 +359,13 @@ export default class CircuitTruth extends RunestoneBase {
 
             // Generate truth table rows
             const numRows = Math.pow(2, inputs.length);
+            const expected = ast.getTruthTable(inputs);
             for (let i = 0; i < numRows; i++) {
                 const values = {};
                 for (let j = 0; j < inputs.length; j++) {
                 values[inputs[j]] = Boolean(i & (1 << (inputs.length - 1 - j)));
                 }
 
-                // output generated from evaluateExpression function that calculates
-                // the answer
-                console.log(circuit);
-                // Circuit is being passed in as a string, e.g., "(A OR (C OR NOT(A)))";
-                const expected = evaluateExpression(circuit, values) ? 1 : 0;
 
                 let row = '<tr>';
                 for (const input of inputs) {
@@ -480,7 +373,7 @@ export default class CircuitTruth extends RunestoneBase {
                 }
                 // adjust the style by modifying content in .answer-input{} in circuittruth.css
                 // here the input box only accepts one character as the input.
-                row += `<td><input type="text" size="1" maxlength="1" class="answer-input" data-expected="${expected}" /></td>`;
+                row += `<td><input type="text" size="1" maxlength="1" class="answer-input" data-expected="${+expected[i]}" /></td>`;
                 row += '</tr>';
                 table.innerHTML += row;
             }
@@ -526,70 +419,19 @@ export default class CircuitTruth extends RunestoneBase {
          * @param {*} expression: circuit expression
          * @returns ast[0]: parent node of the tree
          */
-        function parseExpression(expression) {
-        const operators = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
-        const inputs = ['A', 'B', 'C'];
-        // tokens are anything in the expression except space
-        let tokens = expression.match(/\(|\)|\w+|AND|OR|XOR|NAND|NOR|NOT/g);
+        function buildAST(expression) {
         
-        function parse(tokens) {
-            let stack = [];
-            let output = [];
-            let precedence = { // well I personally don't think precedence really makes
-                                // any difference but it works so...
-                'OR': 1,
-                'XOR': 1,
-                'AND': 1,
-                'NOR': 1,
-                'NAND': 1,
-                'NOT': 2
-            };
-            /** peak what the top element is on the stack */
-            function peek(arr) {
-                return arr[arr.length - 1];
-            }
-            /** checks if the token is an operator */
-            function isOperator(token) {
-                return operators.includes(token);
-            }
-            /** checks if the token is an input */
-            function isInput(token){
-                return inputs.includes(token);
-            }
-            /** using stack to determine tree structure by tracking parentheses */
-            tokens.forEach(token => {
-            if (isInput(token)) {
-                output.push({ type: 'INPUT', value: token });
-            } else if (isOperator(token)) {
-                while (stack.length && precedence[peek(stack)] >= precedence[token]) {
-                    output.push(stack.pop());
-                }
-                stack.push(token);
-            } else if (token === '(') {
-                stack.push(token);
-            } else if (token === ')') {
-                while (stack.length && peek(stack) !== '(') {
-                    output.push(stack.pop());
-                }
-                stack.pop();
-            }
-            console.log(output);
-            });
-            // push items from stack to output
-            while (stack.length) {
-                output.push(stack.pop()); 
-            }
-            return output;
-        }
-            let ast = new circuitAST([]);
-            ast.insert(parse(tokens));
-            test_circuitAST(ast)
+            let ast = new circuitAST();
+            ast.insert(expression);
+            test_circuitAST(ast, extractInputs(expression))
             return ast;
         }
 
-        function test_circuitAST(ast){
-            let value = ast.getTruthTable();
+        function test_circuitAST(ast, expr){
+            let value = ast.getTruthTable(expr);
+            console.log("value: " + value);
         }
+
 
         /**
          * Visualizes the tree structure in text. This is used during debugging so it is 
@@ -1124,9 +966,10 @@ export default class CircuitTruth extends RunestoneBase {
         // Start by initializing the diagram and generating a circuit.
         init();
         generateCircuit();
-
+        
+        
     }
-
+    
     recordAnswered() {
         this.isAnswered = true;
     }

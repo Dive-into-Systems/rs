@@ -110,6 +110,7 @@ const module_map = {
     // TODO: since this isn't in a ``data-component``, need to trigger an import of this code manually.
     webwork: () => import("./runestone/webwork/js/webwork.js"),
     youtube: () => import("./runestone/video/js/runestonevideo.js"),
+    drawCircuit: ()=> import("./runestone/circuit/js/drawCircuit.js"),
 };
 
 const module_map_cache = {};
