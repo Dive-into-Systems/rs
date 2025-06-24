@@ -127,3 +127,12 @@ marker path {
     stroke-width: 3px;
     paint-order: stroke;
 }
+
+/* Highlight effects for matching elements */
+.glow-yellow {
+    stroke: #ffff00 !important;
+    stroke-width: 3px !important;
+    font-weight: bold;
+    filter: drop-shadow(0 0 0.6rem #ffff00) drop-shadow(0 0 0.8rem #ffff00);
+    paint-order: stroke;
+}
