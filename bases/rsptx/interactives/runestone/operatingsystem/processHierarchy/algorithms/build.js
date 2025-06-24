@@ -13,6 +13,12 @@ const NEWLINE = "<br>";
 export const EXIT_CHAR = "X";
 const PRINT_CHAR = "-";
 const nullChar = "\\";
+let prev_code_child = false;
+let prev_code_afterwait = false;
+let prev_code_parallel = false;
+let current_code_child = false;
+let current_code_afterwait = false;
+let current_code_parallel = false;
 
 // Generate a uniform random float in [0, 1) using crypto.getRandomValues for strong randomness.
 function randomFloat32() {
@@ -30,6 +36,27 @@ function unifPickItem(...items) {
     const combinedArray = items.flat();
     if (!combinedArray.length) throw new Error("No arrays provided or all are empty.");
     return combinedArray[unifPickId(combinedArray)];
+}
+
+// Selects an index from an array of odds (weights) using weighted random selection
+function weightedPickId(odds) {
+    const total = odds.reduce((sum, a) => sum + a, 0);
+    let seed = randomFloat32() * total;
+    return odds.findIndex((odds, i) => (seed -= odds) < 0);
+}
+
+// Finds unique elements in an array and count them
+// returns a map of element to count
+function findCountElement(arr) {
+    const map = new Map();
+    for (const element of arr) {
+        if (map.has(element)) {
+            map.set(element, map.get(element) + 1);
+        } else {
+            map.set(element, 1);
+        }
+    }
+    return map;
 }
 
 // Randomly weave two arrays:
@@ -158,22 +185,8 @@ function concat(...arrays) {
     return arrays.reduce((acc, curr) => [...acc, ...curr], []);
 }
 
-// ProcessGraph records fork- and wait-edges
-class ProcessGraph {
-    constructor() {
-      this.forkEdges = [];
-      this.waitEdges = [];
-    }
-    addForkEdge(parentID, childID) {
-      this.forkEdges.push({ parentID, childID });
-    }
-    addWaitEdge(fromExitID, toWaitID) {
-      this.waitEdges.push({ fromExitID, toWaitID });
-    }
-  }
-
 class ForkNode {
-    constructor(id = 0, childCt = 0, active = true, value = "", left = null, right = null, graph = null) {
+    constructor(id = 0, childCt = 0, active = true, value = "", left = null, right = null) {
         this.id = id;
         this.childCt = childCt;
         this.active = active;
@@ -181,11 +194,6 @@ class ForkNode {
         this.left = left;
         this.right = right;
         this.waited = false;
-        if (graph === null) {
-            this.graph = new ProcessGraph();
-        } else {
-            this.graph = graph;
-        }
     }
 
     getChildrenInfo() {
@@ -263,7 +271,7 @@ class ForkNode {
         let temp2 = blankInfo();
         let exitingProc;
         if (!this.active) {
-            [left, temp1] = (new ForkNode(0, 0, true, "", null, null, this.graph)).fork(leftCode, rightCode, indent, terminate);
+            [left, temp1] = (new ForkNode(0, 0, true, "", null, null)).fork(leftCode, rightCode, indent, terminate);
             purge(left);
             purge(temp1); // basically, make no changes to current tree
         }
@@ -274,7 +282,7 @@ class ForkNode {
                 // self exec, BASE CASE
                 let leftTerm = terminate-1; // adjust for F(
                 const [leftID, leftCt, rightID, rightCt] = this.getChildrenInfo();
-                this.left = new ForkNode(leftID, leftCt, true, "", null, null, this.graph);
+                this.left = new ForkNode(leftID, leftCt, true, "", null, null);
                 left = this.left.pushCode(leftCode, indent, leftTerm);
 
                 let rightTerm = leftTerm;
@@ -282,7 +290,7 @@ class ForkNode {
                     rightTerm = leftTerm - 1 - left.cCode.length;
                 }
                 // ordering matters here! , left.right can only be created after left push is done
-                this.left.right = new ForkNode(rightID, rightCt, true, "", null, null, this.graph);
+                this.left.right = new ForkNode(rightID, rightCt, true, "", null, null);
                 temp1 = this.left.right.pushCode(rightCode, indent, rightTerm);
                 exitingProc = this.left.right;
                 // Add protection against infinite loops
@@ -342,9 +350,6 @@ class ForkNode {
             }
             if (code[ptr] == WAIT_CHAR) {
                 addLine(`wait(NULL);`, this.active);
-                if (this.active && exitingProc) {
-                    this.graph.addWaitEdge(exitingProc.id, this.id);
-                }
                 continue;
             }
             if (code[ptr]!= "F") {
@@ -381,8 +386,6 @@ class ForkNode {
                     // hist.push(...liveProcesses, ...leftResult.hist);
                     hist.push(...liveProcesses);
                     liveProcesses = concat(leftResult.proc, rightResult.proc);
-                    this.graph.addForkEdge(this.id, this.left.id);
-                    this.graph.addForkEdge(this.id, this.left.right.id);
                 }
             }
             // - end
@@ -418,10 +421,25 @@ class ForkNode {
     }
 }
 
+export class PrintItem {
+    constructor(printChar, executionIndex) {
+        this.printChar = printChar;
+        this.executionIndex = executionIndex;
+    }
+}
+
+export class ForkItem {
+    constructor(forkExecutionIndex) {
+        this.forkExecutionIndex = forkExecutionIndex;
+        this.waitExecutionIndex = null;
+        this.exitExecutionIndex = null;
+    }
+}
+
 // Processes the code recursively and builds a structure of print constraints.
 // The process print structure may be nested (like how forks are nested)
 // example {beforeWait: ab, afterWait: c{beforeWait:, afterWait:d, child: e}, child: f}
-export function printSequenceConstraints(code, depth = 0) {
+export function printSequenceConstraints(code, executionIndex = {index : 0}, depth = 0, isChild = false) {
     // Add protection against infinite recursion
     const MAX_RECURSION_DEPTH = 100;
     if (depth > MAX_RECURSION_DEPTH) {
@@ -432,24 +450,48 @@ export function printSequenceConstraints(code, depth = 0) {
     let sequenceList = [];
     let ptr = 0;
     while (ptr < code.length) {
-    if (code[ptr] !== "F") {
-        sequenceList.push(code[ptr]);
-    } else {
-        // Assume these helper functions return the expected values.
-        let [leftCode, rightCode, newPtr] = parseForkArgs(code, ptr);
-        ptr = newPtr;
-        let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode);
-        rightCode = parseForkExit(rightCode);
+        const char = code[ptr];
+        if (char === "F") {
+            // Assume these helper functions return the expected values.
+            let forkItem = new ForkItem(executionIndex.index++);
+            let [leftCode, rightCode, newPtr] = parseForkArgs(code, ptr);
+            ptr = newPtr;
+            let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode);
+            let hasElse = rightCode.length > 0;
 
-        let currProcessPrint = {
-        beforeWait: printSequenceConstraints(leftWaitCode, depth + 1),
-        afterWait: printSequenceConstraints(rightWaitCode, depth + 1),
-        child: printSequenceConstraints(rightCode, depth + 1)
-        };
+            forkItem.beforeWait = printSequenceConstraints(leftWaitCode, executionIndex, depth + 1, isChild);
+            if (leftCode.includes(WAIT_CHAR)) {
+                forkItem.waitExecutionIndex = executionIndex.index++;
+            }
+            forkItem.afterWait = printSequenceConstraints(rightWaitCode, executionIndex, depth + 1, isChild);
 
-        sequenceList.push(currProcessPrint);
-    }
-    ptr++;
+            if (hasElse) {
+                executionIndex.index++; // for the } else {
+            }
+
+            const childCode = parseForkExit(rightCode);
+            forkItem.child = printSequenceConstraints(childCode, executionIndex, depth + 1, true);
+            if (childCode.length < rightCode.length) {
+                forkItem.exitExecutionIndex = executionIndex.index++;
+                executionIndex.index += (rightCode.length - 1 - childCode.length);
+            }
+
+            if (leftCode || rightCode) {
+                 executionIndex.index++; // for the closing }
+            }
+
+            sequenceList.push(forkItem);
+        } else {
+            if (char === WAIT_CHAR) {
+                executionIndex.index++;
+            } else if (char === EXIT_CHAR) {
+                executionIndex.index++;
+            } else if (char !== ' ') { // Assuming other chars are prints
+                let printItem = new PrintItem(code[ptr], executionIndex.index++);
+                sequenceList.push(printItem);
+            }
+        }
+        ptr++;
     }
     return sequenceList;
 }
@@ -470,9 +512,9 @@ export function getPrintSequence(sequenceList, depth = 0) {
     }
     let correctPrint = [];
     for (let i = 0; i < sequenceList.length; i++) {
-        if (typeof sequenceList[i] === 'string') {
-            correctPrint.push(sequenceList[i]);
-        } else if (typeof sequenceList[i] === 'object') {
+        if (sequenceList[i] instanceof PrintItem) {
+            correctPrint.push(sequenceList[i].printChar);
+        } else if (sequenceList[i] instanceof ForkItem) {
             let beforeWait = getPrintSequence(sequenceList[i].beforeWait, depth + 1);
             let afterWait = getPrintSequence(sequenceList[i].afterWait, depth + 1);
             let child = getPrintSequence(sequenceList[i].child, depth + 1);
@@ -491,7 +533,7 @@ export function getPrintSequence(sequenceList, depth = 0) {
 // This function generates print sequence: may be correct or incorrect
 // wrong parts are generated by probability
 // Returns a tuple: [array of print sequence, whether error is injected (incorrect)]
-export function getPrintSequenceIncorrect(sequenceList, depth = 0) {
+export function getPrintSequenceIncorrect(sequenceList, indexCounter = {count : 0}, depth = 0) {
     // Add protection against infinite recursion
     const MAX_RECURSION_DEPTH = 100;
     if (depth > MAX_RECURSION_DEPTH) {
@@ -505,9 +547,9 @@ export function getPrintSequenceIncorrect(sequenceList, depth = 0) {
     }
     let print = [];
     for (let i = 0; i < sequenceList.length; i++) {
-        if (typeof sequenceList[i] === 'string') {
-            print.push(sequenceList[i]);
-        } else if (typeof sequenceList[i] === 'object') {
+        if (sequenceList[i] instanceof PrintItem) {
+            print.push(sequenceList[i].printChar);
+        } else if (sequenceList[i] instanceof ForkItem) {
             let beforeWait, afterWait, child, temp_injected, temp;
             [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait, depth + 1);
             error_injected ||= temp_injected;
@@ -736,49 +778,93 @@ function randInsertFork_notBeforeWait(
     maxOffset = 0
 ) {
     const validPositions = [];
+    const position_type = [];
     let pastParanthesisLevel = 0;
     let pastWaitLevel = 0;
-    let waited = false;
+    let pastChildLevel = 0;
+    let waitedStack = [false];
 
-    const upperBound = mainStr.length + 1 - maxOffset;   // “+1” lets us insert at the very end
+    const upperBound = mainStr.length + 1 - maxOffset;   // "+" lets us insert at the very end
     for (let i = 0; i < upperBound; i++) {
 
         /* ---------- 1. record a valid slot (only after minSlot) ---------- */
         if (i >= minSlot) {
             if (
                 mainStr[i] !== WAIT_CHAR &&           // never put it *on* the W
-                mainStr[i] !== '(' &&                 // never before an opening “(”
+                mainStr[i] !== '(' &&                 // never before an opening "("
                 pastParanthesisLevel === pastWaitLevel &&
                 (anySlot || mainStr[i - 1] !== EXIT_CHAR)
             ) {
                 validPositions.push(i);
+                if (pastChildLevel === pastParanthesisLevel) {
+                    if (pastParanthesisLevel === 0) {
+                        position_type.push("parallel");
+                    } else {
+                        position_type.push(`child${pastParanthesisLevel}`);
+                    }
+                } else {
+                    position_type.push("afterwait");
+                }
             }
         }
 
         /* ---------- 2. update bookkeeping counters ---------- */
         switch (mainStr[i]) {
-            case '(':  pastParanthesisLevel++; break;
+            case '(':
+                pastParanthesisLevel++;
+                waitedStack.push(false);
+                break;
             case WAIT_CHAR:
                 pastWaitLevel++;
-                waited = true;
+                waitedStack[pastParanthesisLevel] = true;
                 break;
             case ',':
-                pastWaitLevel += waited ? 0 : 1;
-                waited = false;
+                const waitedCurrent = waitedStack[pastParanthesisLevel];
+                pastWaitLevel += waitedCurrent ? 0 : 1;
+                pastChildLevel++;
+                waitedStack[pastParanthesisLevel] = false;
                 break;
             case ')':
                 pastParanthesisLevel--;
                 pastWaitLevel--;
+                pastChildLevel--;
+                waitedStack.pop();
                 break;
         }
     }
+    // TODO
+    const countMap = findCountElement(position_type);
+    console.log(countMap);
+    const oddsMap = {};
+    for (const [key, value] of countMap.entries()) {
+        if (key.startsWith("child")) {
+            oddsMap[key] = 10/value/(prev_code_child?2:1);
+        } else if (key.startsWith("afterwait")) {
+            oddsMap[key] = 8/value/(prev_code_afterwait?2:1)/(current_code_afterwait?2:1);
+        } else if (key.startsWith("parallel")) {
+            oddsMap[key] = 2/value/(prev_code_parallel?2:1)/(current_code_parallel?2:1);
+        }
+    }
+    const position_odds = position_type.map(type => oddsMap[type]);
+    console.log(position_odds);
+    console.log(position_type);
+
 
     /* ---------- 3. pick a slot (or fall back to end) ---------- */
     if (validPositions.length === 0) {
         return mainStr + insertStr;
     }
+    const choiceIndex = weightedPickId(position_odds);
     const insertPos =
-        validPositions[Math.floor(randomFloat32() * validPositions.length)];
+        validPositions[choiceIndex];
+    console.log(choiceIndex, position_type[choiceIndex]);
+    if (position_type[choiceIndex].startsWith("child")) {
+        current_code_child = true;
+    } else if (position_type[choiceIndex] === "afterwait") {
+        current_code_afterwait = true;
+    } else if (position_type[choiceIndex] === "parallel") {
+        current_code_parallel = true;
+    }
 
     return mainStr.slice(0, insertPos) + insertStr + mainStr.slice(insertPos);
 }
@@ -885,7 +971,7 @@ export function genRandSourceCode(numForks, numPrints, hasNest, hasExit, hasElse
 // Example output: F(aWbF(c,d)e,f)
 export function genSimpleWaitCode(numForks, numPrints) {
     let code = ""; // so that main parent does not exit
-    const fork = `F(${PRINT_CHAR}${WAIT_CHAR}${PRINT_CHAR},${PRINT_CHAR}${EXIT_CHAR})`
+    const fork = `F(${PRINT_CHAR}${WAIT_CHAR}${PRINT_CHAR},${PRINT_CHAR}${EXIT_CHAR})`;
     
     // Nested Fork
     for (let i = 0; i < numForks; i++) {
@@ -903,6 +989,14 @@ export function genSimpleWaitCode(numForks, numPrints) {
     };
 
     code = code.replace(new RegExp("-", 'g'), replaceChar);
+
+    prev_code_child = current_code_child;
+    prev_code_afterwait = current_code_afterwait;
+    prev_code_parallel = current_code_parallel;
+
+    current_code_child = false;
+    current_code_afterwait = false;
+    current_code_parallel = false;
 
     return code;
 }

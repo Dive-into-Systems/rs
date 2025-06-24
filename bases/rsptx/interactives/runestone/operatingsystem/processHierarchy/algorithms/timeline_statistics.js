@@ -1,5 +1,6 @@
 // Helper function to analyze a sequence list and collect statistics
-export function analyzeSequenceList(sequenceList, depth = 0) {
+import {PrintItem, ForkItem} from "./build.js"
+export function analyzeSequenceList(constraints, depth = 0) {
     let stats = {
         beforeWaitPrints: 0,
         afterWaitPrints: 0,
@@ -10,12 +11,12 @@ export function analyzeSequenceList(sequenceList, depth = 0) {
         totalForks: 0
     };
 
-    for (const item of sequenceList) {
-        if (typeof item === 'string') {
+    for (const item of constraints) {
+        if (item instanceof PrintItem) {
             // Count prints based on context
             stats.otherPrints++;
             stats.maxWidth ++;
-        } else if (typeof item === 'object') {
+        } else if (item instanceof ForkItem) {
             stats.totalForks++;
             // Recursively analyze nested sequences
             const beforeWaitStats = analyzeSequenceList(item.beforeWait, depth + 1);

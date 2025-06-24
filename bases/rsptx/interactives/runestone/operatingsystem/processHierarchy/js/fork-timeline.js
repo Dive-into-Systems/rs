@@ -1,8 +1,5 @@
-// *********
-// fork.js
-// *********
-// This file contains the process hierarchy component. 
-// It is created by Luyuan Fan and Tony Cao (Summer 2024). 
+// Process hierarchy component for fork/wait/exit visualization
+// Created by Luyuan Fan and Tony Cao (Summer 2024)
 
 import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
@@ -15,7 +12,7 @@ import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 
-export var ProcTimelineList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
+export var ProcTimelineList = {}; // All instances not in timed assessment
 
 export default class ProcTimeline extends RunestoneBase {
     constructor(opts) {
@@ -25,7 +22,7 @@ export default class ProcTimeline extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
 
-        // Fields for logging data
+        // Logging data fields
         this.componentId = "13.6";
         this.questionId = 1;
         this.userId = this.getUserId();
@@ -43,17 +40,13 @@ export default class ProcTimeline extends RunestoneBase {
         return $(root_node).find(`script[type="application/json"]`);
     }
 
-    /*===========================================
-    ====   Functions generating final HTML   ====
-    ===========================================*/
-
     // Create the ProcTimeline Element
     createElements() {
         this.initParams();
         this.initInputField();
         this.initButtons();
         this.initFeedback_Hierarchy_Timeline_Help_Divs();
-        $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
+        $(this.origElem).replaceWith(this.containerDiv); // Replace intermediate HTML with rendered component
     }
 
     initParams() {
@@ -66,12 +59,13 @@ export default class ProcTimeline extends RunestoneBase {
             } else {
                 this.instructionText = (`
                     In this exercise, you'll analyze a C program that utilizes <code>fork()</code>, 
-                    <code>wait()</code>, and <code>exit()</code> system calls to manage process creation and synchronization.
+                    <code>wait()</code>, and <code>exit()</code> system calls to manage process creation and synchronization. <br>
                     Your task is to determine which of the provided output sequences could be produced by the program, 
-                    considering the possible interleavings of parent and child process executions.<br>
-                    Please tick all of the possible output sequences that could be produced by the program.`);
+                    considering the possible concurrency allowed by <code>fork()</code> and synchronization required by
+                    <code>wait()</code>.<br>
+                    Please tick all of the possible output print sequences that could be produced by the program.`);
             }
-            if (params["source"] != undefined) { // If you want to pass in a source code string for generating the C-code. 
+            if (params["source"] != undefined) { // Hard-coded source code
                 this.hardCodedCCode = true;
                 this.source = params["source"];
                 if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
@@ -80,7 +74,7 @@ export default class ProcTimeline extends RunestoneBase {
             }
             else {
                 this.hardCodedCCode = false;
-                if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
+                if (params["preset-params"] != undefined && params["preset-params"] == true) { // Manual parameter setting
                     if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
                     if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
                     if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
@@ -96,7 +90,7 @@ export default class ProcTimeline extends RunestoneBase {
             }
         } catch (error) { console.error("Error loading parameters:", error); }
         this.printContent = [];
-        for (var i = 0; i < 26; i++) { // All letters are available. 
+        for (var i = 0; i < 26; i++) { // All letters available
             this.printContent.push(String.fromCharCode((i + 97)));
         }
     }
@@ -105,10 +99,10 @@ export default class ProcTimeline extends RunestoneBase {
         this.containerDiv = $("<div>").attr("id", this.divid);
         this.configDiv = $("<div>").addClass("config-box");
 
-        /* Instructions */
+        // Instructions
         this.instruction = $("<div>").html("<span style='font-weight:bold'><u>Instructions</u></span>: " + this.instructionText).css("padding", "10px");
 
-        /* Mode menu */
+        // Mode menu
         if (this.showMenu == true) {
             this.configHelperText = $("<div>").html(
                 `<span style='font-weight:bold'><u>Configure question</u></span>: 
@@ -132,12 +126,11 @@ export default class ProcTimeline extends RunestoneBase {
             this.configDiv.append(this.configHelperText, this.label, this.modeMenu);
         }
 
-        /* Generate initial question and answers */
+        // Generate initial question and answers
         this.genNewQuestionNAnswer();
 
-        /* C-code and input checkboxes */
+        // C-code and input checkboxes
         this.codeDiv = $("<div>").addClass("code-div-inline").html(this.cCode);
-
         this.inputDiv = $("<div>").addClass("input-div-inline");
 
         this.codeDiv.html(this.cCode);
@@ -147,27 +140,24 @@ export default class ProcTimeline extends RunestoneBase {
                 continue;
             }
             
-            // Create a checkbox input element.
+            // Create checkbox and label
             let $inputCheck = $("<input>").attr({
                 type: 'checkbox',
                 id: `${this.divid}_input_${i}`
             });
             
-            // Create a label associated with the checkbox.
             let $label = $("<label>")
                 .attr("for", `${this.divid}_input_${i}`)
                 .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
             
-            // Create a div to contain the checkbox and label.
             let $questionDiv = $("<div>")
                 .attr("id", `${this.divid}_question_${i}`)
                 .append($inputCheck, $label);
             
-            // Append the div to the parent container.
             this.inputDiv.append($questionDiv, $("<br>"));
         }
 
-        /* Combine all elements into the container */
+        // Combine all elements
         this.promptDiv = $("<div>").addClass("prompt-div").append(this.codeDiv, this.inputDiv);
         this.containerDiv.append(this.instruction);
         if (this.showMenu == true) {
@@ -175,17 +165,15 @@ export default class ProcTimeline extends RunestoneBase {
         }
         this.containerDiv.append(this.promptDiv);
 
-        /* Some default Runestone things */
-        $(this.origElem).children().clone().appendTo(this.containerDiv); // Copy the original elements to the container holding what the user will see.
-        this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
+        // Default Runestone setup
+        $(this.origElem).children().clone().appendTo(this.containerDiv);
+        this.scriptSelector(this.containerDiv).remove();
     }
 
-
-    // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
+    // Generate new question and answer based on current configuration
     genNewQuestionNAnswer() {
         if (this.hardCodedCCode == false) { this.updateSourceCode(); }
-        this.forkEdges = [];    // will hold { parentID, childID }
-        this.waitEdges = [];    // will hold { fromExitID, toWaitID }
+
         this.genQuestionInfo();
         let i = 0;
         for (i = 0; i < 100; i++) {
@@ -204,7 +192,6 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     updateSourceCode() {
-        // this.testCodeGen();
         console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
             const ret = build.genSimpleWaitCode(this.numForks, this.numPrints);
@@ -270,7 +257,7 @@ export default class ProcTimeline extends RunestoneBase {
     initButtons() {
         this.containerDiv.append($('<br>'));
 
-        /* Ask me another button */
+        // Generate another question button
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_fork_generate_another");
         $(this.generateButton).attr({
@@ -283,7 +270,7 @@ export default class ProcTimeline extends RunestoneBase {
             this.loadAnotherQuestion();
         });
 
-        /* Check answer button */
+        // Check answer button
         this.checkAnswerButton = document.createElement("button");
         this.checkAnswerButton.textContent = $.i18n("msg_fork_check_answer");
         $(this.checkAnswerButton).attr({
@@ -296,7 +283,7 @@ export default class ProcTimeline extends RunestoneBase {
             this.updateFeedbackDiv();
         });
 
-        /* Reveal tree button */
+        // Reveal tree button
         this.revealTreeButton = document.createElement("button");
         this.revealTreeButton.textContent = $.i18n("msg_fork_reveal_tree");
         $(this.revealTreeButton).attr({
@@ -309,7 +296,7 @@ export default class ProcTimeline extends RunestoneBase {
             else { this.hideProcessHierarchy(); }
         });
 
-        /* Reveal timeline button */
+        // Reveal timeline button
         this.revealTimeLineButton = document.createElement("button");
         this.revealTimeLineButton.textContent = $.i18n("msg_fork_reveal_timeline");
         $(this.revealTimeLineButton).attr({
@@ -322,7 +309,7 @@ export default class ProcTimeline extends RunestoneBase {
             else { this.hideProcessTimeline(); }
         });
 
-        /* Reveal help button */
+        // Help button
         this.helpButton = document.createElement("button");
         this.helpButton.textContent = $.i18n("msg_fork_help");
         $(this.helpButton).attr({
@@ -350,7 +337,7 @@ export default class ProcTimeline extends RunestoneBase {
         $('input').val("");
         this.inputDiv.html("");
 
-        // Properly unbind all event handlers before clearing
+        // Unbind event handlers before clearing
         $(this.codeDiv).off('mouseover', 'span[data-block]');
         $(this.codeDiv).off('mouseout', 'span[data-block]');
         $(this.codeDiv).off('click', 'span[data-block]');
@@ -370,37 +357,34 @@ export default class ProcTimeline extends RunestoneBase {
                 continue;
             }
             
-            // Create a checkbox input element.
+            // Create checkbox and label
             let $inputCheck = $("<input>").attr({
                 type: 'checkbox',
                 id: `${this.divid}_input_${i}`
             });
             
-            // Create a label associated with the checkbox.
             let $label = $("<label>")
                 .attr("for", `${this.divid}_input_${i}`)
                 .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
             
-            // Create a div to contain the checkbox and label.
             let $questionDiv = $("<div>")
                 .attr("id", `${this.divid}_question_${i}`)
                 .append($inputCheck, $label);
             
-            // Append the div to the parent container.
             this.inputDiv.append($questionDiv, $("<br>"));
         }
     }
 
     checkCurrentAnswer() {
-        this.feedback_msg = []; // Clear feedback_msg.
-        this.correct = true; // Initialize answer first as true, only update when incorrect choice occurs. 
+        this.feedback_msg = []; // Clear feedback
+        this.correct = true; // Start as correct, update if incorrect
 
         for (let i = 0; i < this.printSeqs.length; i++) {
             if (!this.answerMap.hasOwnProperty(this.printSeqs[i])) {
                 continue;
             }
             let currAnswer = $("#" + this.divid + "_input_" + i).prop("checked");
-            let currSolution = !this.answerMap[this.printSeqs[i]]; // map stores whether the answer is incorrect or not
+            let currSolution = !this.answerMap[this.printSeqs[i]]; // map stores incorrect answers
             console.log("Current answer is", currAnswer, "and solution is", currSolution);
             if (currAnswer !== currSolution) {
                 this.correct = false;
@@ -439,17 +423,17 @@ export default class ProcTimeline extends RunestoneBase {
             "<div id='timeline_graph'></div>"
         );
         let constraints = build.printSequenceConstraints(this.source)
-        // some params
+        // Timeline parameters
         const tl_width = 0.9 * $(this.timelineDiv).width();
-        const fork_depth = analyzeSequenceList(constraints).maxDepth;
-        const fork_width = analyzeSequenceList(constraints).maxWidth;
+        const stats = analyzeSequenceList(constraints);
+        const fork_depth = stats.maxDepth;
+        const fork_width = stats.maxWidth;
         const tl_height = tl_width * fork_depth / fork_width * 1.2;
         const margin = { top: 20, right: 20, bottom: 20, left: 20 };
         const traceArray = [];
         const extra_trace = { value: "" };
         const refreshCode = () => console.log("Refreshed");
 
-        
         $('#timeline_graph').html(timeline.drawTimeline(constraints, tl_width, tl_height, margin));
         console.log("Real ones", this.csvTree, this.labels);
         console.log("print seq for ", this.source, "\n", constraints);
@@ -457,14 +441,14 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     hideProcessHierarchy() {
-        // Remove all SVG and D3 elements completely before hiding
+        // Remove SVG elements before hiding
         $(this.hierarchyTreeDiv).find('svg').remove();
         $(this.hierarchyTreeDiv).html("");
         $(this.hierarchyTreeDiv).css("display", "none");
     }
 
     hideProcessTimeline() {
-        // Remove all SVG and D3 elements completely before hiding
+        // Remove SVG elements before hiding
         $(this.timelineDiv).find('svg').remove();
         $(this.timelineDiv).html("");
         $(this.timelineDiv).css("display", "none");
@@ -506,31 +490,32 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     bindCodeBlockEvents() {
-        // First, unbind any existing handlers to prevent accumulation
+        // Unbind existing handlers to prevent accumulation
         $(this.codeDiv).off('mouseover', 'span[data-block]');
         $(this.codeDiv).off('mouseout', 'span[data-block]');
         $(this.codeDiv).off('click', 'span[data-block]');
         
         if ($(this.hierarchyTreeDiv).css('display') == 'block' || $(this.timelineDiv).css('display') == 'block') {
-            /* Highlight code line on mouseover */
+            // Highlight on mouseover
             $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
                 $(`span[data-block="${blockId}"]`).addClass('highlight');
             });
     
-            /* Remove highlight line on mouseout */
+            // Remove highlight on mouseout
             $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
                 $(`span[data-block="${blockId}"]`).removeClass('highlight');
             });
     
-            /* Handle click for both hierarchy and timeline */
+            // Handle clicks for both hierarchy and timeline
             $(this.codeDiv).on('click', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
                 
                 // Update hierarchy if visible
                 if ($(this.hierarchyTreeDiv).css('display') == 'block') {
                     const traceRoot = build.traceTree(this.source, blockId);
+                    console.log("Trace root is", traceRoot, "and blockId is", blockId);
                     const { csv: csvTree, valuesList: labels } = build.getTreeCSV(traceRoot);
                     this.updateTreeGraph(csvTree, labels);
                 }
@@ -542,16 +527,16 @@ export default class ProcTimeline extends RunestoneBase {
                     const tl_height = 0.7 * $(this.timelineDiv).width();
                     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
                     
-                    // Get the node/edge to highlight based on blockId
-                    const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId);
-                    
+                    // Get highlight info for timeline
+                    // const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId);
+                    console.log("blockId is", blockId);
                     // Redraw timeline with highlight
                     $('#timeline_graph').html(timeline.drawTimeline(
                         constraints, 
                         tl_width, 
                         tl_height, 
                         margin,
-                        highlightInfo  // Pass highlight information
+                        blockId
                     ));
                 }
             });
@@ -559,17 +544,16 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     getTimelineHighlightInfo(constraints, blockId) {
-        // Convert blockId to a position in the sequence
+        // Convert blockId to position in sequence
         const position = parseInt(blockId);
         
-        // Find the node/edge that corresponds to this position
         let currentPos = 0;
         let highlightInfo = {
             nodeId: null,
             edgeId: null
         };
         
-        // Recursively search through constraints to find the matching position
+        // Recursively search constraints for matching position
         const findPosition = (constraint, parentNode = null) => {
             if (typeof constraint === 'string') {
                 if (currentPos === position) {
@@ -578,21 +562,19 @@ export default class ProcTimeline extends RunestoneBase {
                 }
                 currentPos++;
                 return false;
-            }
-            
-            // Check beforeWait
-            if (findPosition(constraint.beforeWait, currentPos)) {
-                return true;
-            }
-            
-            // Check child
-            if (findPosition(constraint.child, currentPos)) {
-                return true;
-            }
-            
-            // Check afterWait
-            if (findPosition(constraint.afterWait, currentPos)) {
-                return true;
+            } else {
+                // Check beforeWait, child, afterWait
+                if (findPosition(constraint.beforeWait, currentPos)) {
+                    return true;
+                }
+                
+                if (findPosition(constraint.child, currentPos)) {
+                    return true;
+                }
+                
+                if (findPosition(constraint.afterWait, currentPos)) {
+                    return true;
+                }
             }
             
             return false;
@@ -602,10 +584,7 @@ export default class ProcTimeline extends RunestoneBase {
         return highlightInfo;
     }
 
-    /*===================================
-    === Checking/loading from storage ===
-    ===================================*/
-    // Note: they are not needed here
+    // Storage methods (unused but required)
     restoreAnswers(data) {
         // pass
     }
@@ -618,11 +597,12 @@ export default class ProcTimeline extends RunestoneBase {
     recordAnswered() {
         this.isAnswered = true;
     }
-    // log the answer and other info to the server (in the future)
+    
+    // Log answer to server
     async logCurrentAnswer(sid) {
         let answer = JSON.stringify(this.inputNodes);
         let feedback = true;
-        // Save the answer locally.
+        // Save locally
         this.setLocalStorage({
             answer: answer,
             timestamp: new Date(),
@@ -638,16 +618,13 @@ export default class ProcTimeline extends RunestoneBase {
             data.sid = sid;
             feedback = false;
         }
-        // render the feedback
+        // Render feedback
         this.updateFeedbackDiv();
         return data;
     }
 }
 
-/*=================================
-== Find the custom HTML tags and ==
-==   execute our code on them    ==
-=================================*/
+// Initialize components on login complete
 $(document).on("runestone:login-complete", function () {
     $("[data-component=processTimeline]").each(function (index) {
         var opts = {
