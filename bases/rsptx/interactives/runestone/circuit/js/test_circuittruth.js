@@ -61,6 +61,7 @@
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
+import circuitAST from "./circuit_AST/circuitAST.js";
 import "../css/circuittruth.css";
 
 export var CircuitTruthList = {};
@@ -258,7 +259,8 @@ export default class CircuitTruth extends RunestoneBase {
             displayTruthTable(circuit);
 
             // parse the text expression into a tree
-            let ast = parseExpression(circuit);
+            let ast = parseExpression(circuit).getRoot();
+            console.log(ast);
 
             // Uncomment the next line to see the AST text visualization:
             // visualizeAST(ast);
@@ -287,11 +289,16 @@ export default class CircuitTruth extends RunestoneBase {
          * @param {*} values: values 
          * @returns results: calculation results ready to be displayed in truth table.
          */
+
+        // Function is called 2^N times with N = number of input nodes. Each time it is called,
+        // function replaces the expression passed in with the values passed in and replaces the
+        // string operations with their equivalent Javascript symbol. 
         function evaluateExpression(expr, values) {
             // Replace variables with values. So input A will be replaced by 1 0 etc.
             for (const [key, value] of Object.entries(values)) {
                 const re = new RegExp(`\\b${key}\\b`, 'g');
                 expr = expr.replace(re, value ? 1 : 0);
+                console.log("replacing terms: " + expr);
             }
             // preliminary replacement. NAND NOR not replaced yet because they need to put
             // '!' in front of the parentheses, so they can't be directly replaced.
@@ -303,7 +310,7 @@ export default class CircuitTruth extends RunestoneBase {
                         .replace(/NOT(\d+)/g, '!($1)') // many NOT to handle different cases
                         .replace(/NOT\(([^()]+)\)/g, '!($1)')
                         .replace(/NOT/g, '!');
-            
+            console.log("replacing expressions:" + expr);
             /** avoid  extra parentheses such as ((A AND B)) */
             function removeExtraParentheses(exp) {
                 return exp.replace(/\((\d+)\)/g, '$1');
@@ -320,29 +327,41 @@ export default class CircuitTruth extends RunestoneBase {
                 let prevExp;
                 let iterations = 0;
                 // TODO: what happens when it gets to 100? Where is the infinite loop coming from?
+
+                // Answer: iterations don't go beyond 3 based on checking, usually around 0-1.
                 while (/\(([^()]+)\)/.test(exp) && iterations < 100) {
                     prevExp = exp;
                 // TODO: verify what this code is doing.
                 // Current specultion:
                 // regex find the inner most paranthesis (e.g. '(1 | 0)')
                 // evaluate the paranthesis and replace it with the value (e.g. '(1 | 0)' => 1)
-                // if the expression is changed, the continue looping, otherwise exit
+                // if the expression is changed, then continue looping, otherwise exit
                 // loop exits when no matches are found, or in one iteration there's no changes
+
+                // speculation confirmed
                     exp = exp.replace(/\(([^()]+)\)/g, (match, subExpr) => {
                         try {
                         const evaluated = eval(subExpr);
+                        console.log("evaluated: " + evaluated);
                         return evaluated ? 1 : 0;
-                        } catch {
+                        } catch { // This catch is to be specifically for the NOR and NAND placeholders, since the expressions cannot be evaluated in those cases.
+                                  // The returned code is then passed into replacePlaceholders and handled there. 
+                            console.log("match: " + match);
                         return match;
                         }
                     });
                     exp = removeExtraParentheses(exp);
+                    console.log("prevExp: " + prevExp);
+                    console.log("exp: " + exp);
                     if (prevExp === exp) break; // no changes are made means replacement is done.
                     iterations++; // avoid infinite loop
+                    console.log("iterations: " + iterations);
                 }
                 return exp;
             }
             /** separate function to handle NAND and NOR */
+
+            // replaces the NAND and NOR placeholders with !(*&*)/!(*|*), e.g., (1 NAND 0) becomes !(1 & 0).
             function replacePlaceholders(exp) {
                 let prevExpr;
                 let iterations = 0;
@@ -350,13 +369,21 @@ export default class CircuitTruth extends RunestoneBase {
                 prevExpr = exp;
                 exp = exp.replace(/(\d+) NAND_PLACEHOLDER (\d+)/g, '!($1 & $2)')
                         .replace(/(\d+) NOR_PLACEHOLDER (\d+)/g, '!($1 | $2)');
+                console.log("In replacePlaceholders: " + exp);
                 exp = removeExtraParentheses(exp); 
                 iterations++;
+                console.log(iterations);
                 // TODO: why would there be an infinite loop that needs the iteration cap? 
+
+                // Answer: does not exceed 3 iterations based on checking.
+
+                console.log("prevExp: " + prevExpr);
+                console.log("exp: " + exp);
                 if (iterations >= 100) break;
                 } while (prevExpr !== exp);
                 return exp;
             }
+
             /** function to handle simple NOT cases such as !A.
              *  I know it seems kind of strange to separate simple NOT and complex 
              *  NOT but I tried integrating them but failed.
@@ -369,6 +396,7 @@ export default class CircuitTruth extends RunestoneBase {
                 exp = removeExtraParentheses(exp); 
                 return exp;
             }
+
             /** function to handle nested NOT cases such as !(A AND B) */
             function handleComplexNOTs(exp) {
                 exp = exp.replace(/!\(([^()]+)\)/g, (match, subExpr) => {
@@ -378,6 +406,7 @@ export default class CircuitTruth extends RunestoneBase {
                 exp = removeExtraParentheses(exp);
                 return exp;
             }
+
             let prevExpr;
             do { // loop over those functions until no changes can be made.
                 prevExpr = expr;
@@ -441,6 +470,8 @@ export default class CircuitTruth extends RunestoneBase {
 
                 // output generated from evaluateExpression function that calculates
                 // the answer
+                console.log(circuit);
+                // Circuit is being passed in as a string, e.g., "(A OR (C OR NOT(A)))";
                 const expected = evaluateExpression(circuit, values) ? 1 : 0;
 
                 let row = '<tr>';
@@ -500,6 +531,7 @@ export default class CircuitTruth extends RunestoneBase {
         const inputs = ['A', 'B', 'C'];
         // tokens are anything in the expression except space
         let tokens = expression.match(/\(|\)|\w+|AND|OR|XOR|NAND|NOR|NOT/g);
+        
         function parse(tokens) {
             let stack = [];
             let output = [];
@@ -541,31 +573,22 @@ export default class CircuitTruth extends RunestoneBase {
                 }
                 stack.pop();
             }
+            console.log(output);
             });
             // push items from stack to output
             while (stack.length) {
                 output.push(stack.pop()); 
             }
-
-            let ast = []; // ast stands for Abstract Syntax Tree
-            output.forEach(token => {
-            if (isOperator(token)) {
-                let node = { type: 'OPERATOR', value: token, children: [] };
-                // Add children depending on operator type
-                if (token === 'NOT') {
-                    node.children.push(ast.pop());
-                } else {
-                    node.children.push(ast.pop());
-                    node.children.push(ast.pop());
-                }
-                ast.push(node);
-            } else {
-                ast.push(token);
-            }
-            });
-            return ast[0];
+            return output;
         }
-        return parse(tokens);
+            let ast = new circuitAST([]);
+            ast.insert(parse(tokens));
+            test_circuitAST(ast)
+            return ast;
+        }
+
+        function test_circuitAST(ast){
+            let value = ast.getTruthTable();
         }
 
         /**
@@ -621,7 +644,7 @@ export default class CircuitTruth extends RunestoneBase {
          *    • For each non-input node in the AST, use its depth to compute an x-position  
          *      (even slices of a fixed canvas width).  
          *    • Distribute multiple gates at the same depth vertically around y=0  
-         *      (so they don’t all overlap).  
+         *      (so they don’t all overlap). 
          * 
          * 4) **Output Node**  
          *    • After placing gates, append a single “output” node at the far right (x = max).  
@@ -1113,7 +1136,7 @@ export default class CircuitTruth extends RunestoneBase {
     ==   execute our code on them    ==
     =================================*/
     $(document).on("runestone:login-complete", function () {
-        $("[data-component=circuittruth]").each(function () {
+        $("[data-component=test_circuittruth]").each(function () {
             var opts = {
                 orig: this,
                 useRunestoneServices: eBookConfig.useRunestoneServices
