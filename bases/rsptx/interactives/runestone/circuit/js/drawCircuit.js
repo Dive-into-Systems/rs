@@ -6,7 +6,8 @@
 
 import RunestoneBase from "../../common/js/runestonebase.js";
 import { Pass } from "codemirror";
-
+import circuitAST from "./circuit_AST/circuitAST.js";
+import circuit_generator from "./circuit_generate.js";
 
 export var DCList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -27,10 +28,10 @@ export default class DC extends RunestoneBase {
 
         //config
 
-        const generateRandom = (n) => (Math.floor(Math.random()*n))
-        this.numInputs = 2 + generateRandom(2);
-        this.numOutputs = 2 + generateRandom(2)
+        this.numInputs;
+        this.numOutputs;
         this.truthTable = []
+        this.loaded = false
 
        // Default configuration settings
         this.red = '#b91c1c';
@@ -47,10 +48,87 @@ export default class DC extends RunestoneBase {
         this.userAnswerTruthTable = []
 
 
+
+
+
+       // Fields for logging data
+
+       this.initDCElement();
+
+       if (typeof Prism !== "undefined") {
+           Prism.highlightAllUnder(this.containerDiv);
+       }
+       this.sendData(0);
+   }
+
+   // Find the script tag containing JSON in a given root DOM node.
+   scriptSelector(root_node) {
+       return $(root_node).find(`script[type="application/json"]`);
+   }
+
+   removeEverything = () => {
+    clearTimeout(this.timeoutId)
+    this.myDiagram = null
+    this.wrapperDiv.remove()
+    this.wrapperDiv = null;
+
+    if(this.feedbackDiv){
+        this.feedbackDiv.remove()
+    }
+    // this.containerDiv.remove()
+   }
+
+   /*===========================================
+   ====   Functions generating final HTML   ====
+   ===========================================*/
+   // Component initialization
+    initDCElement() {
+        const generateRandom = (n) => (Math.floor(Math.random()*n))
+
+        // this.numInputs = 2 + generateRandom(2);
+        // this.numOutputs = 1 + generateRandom(2)
+
+        const c1 = new circuit_generator(["A", "B", "C"], ["AND", "OR", "NOR", "XOR", "NOT"],4,2)
+        const s1 = c1.generateStatement()
+        const a1 = new circuitAST()
+        a1.insert(s1)
+        const tt1 = a1.getTruthTable()
+ 
+        const c2 = new circuit_generator(["A", "B", "C"].slice(0,a1.getInformation().numInputs), ["AND", "OR", "NOR", "XOR", "NOT"], 4,2, true )
+        const s2 = c2.generateStatement()
+        const a2 = new circuitAST()
+        a2.insert(s2)
+        const tt2 = a2.getTruthTable()
+
+
+        
+        this.numOutputs = 1 + generateRandom(2)
+        
+        if(this.numOutputs == 2){
+
+            for(let i = 0; i < tt1.length; i++){
+                tt1[i].push(tt2[i][(tt2[i].length-1)])
+            }
+            this.truthTable = tt1;
+            const d1intputs = a1.getInformation().numInputs
+            const d2inputs = a2.getInformation().numInputs
+            this.numInputs = (d1intputs > d2inputs) ? d1intputs : d2inputs
+
+        }
+        else{
+            this.truthTable = tt1;
+            const d1intputs = a1.getInformation().numInputs
+            this.numInputs = d1intputs
+        }
+
+        console.log(tt1)
+
+
+
         this.startJson = `{ "class": "GraphLinksModel",
-                "linkFromPortIdProperty": "fromPort",
-                "linkToPortIdProperty": "toPort",
-                "nodeDataArray": [`
+        "linkFromPortIdProperty": "fromPort",
+        "linkToPortIdProperty": "toPort",
+        "nodeDataArray": [`
 
         this.letters = ['A','B','C','D','E']
         for(let i = 0; i < this.numInputs; i++){
@@ -72,35 +150,13 @@ export default class DC extends RunestoneBase {
 
         }
         this.startJson += '], "linkDataArray":[]}'
-        
+
         console.log(this.startJson)
 
         console.log(JSON.parse(this.startJson))
 
 
-       // Fields for logging data
-
-       this.initDCElement();
-
-       if (typeof Prism !== "undefined") {
-           Prism.highlightAllUnder(this.containerDiv);
-       }
-       this.sendData(0);
-   }
-
-   // Find the script tag containing JSON in a given root DOM node.
-   scriptSelector(root_node) {
-       return $(root_node).find(`script[type="application/json"]`);
-   }
-
-   /*===========================================
-   ====   Functions generating final HTML   ====
-   ===========================================*/
-   // Component initialization
-    initDCElement() {
-
-
-        this.generateATruthTable()
+        // this.generateATruthTable()
         this.renderDCPromptAndInput();
         
         this.renderDCButtons();
@@ -108,19 +164,47 @@ export default class DC extends RunestoneBase {
 
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
-        $(this.origElem).replaceWith(this.containerDiv);
+        
 
-        this.loadExternalScripts()
+        if(!this.loaded){
+            $(this.origElem).replaceWith(this.containerDiv);
+            this.loadExternalScripts()
+            this.loaded = true;
+        }else{
+            this.init()
+        }
 
 
 
+   }
+
+   checkAnswer(){
+    let correct = true;
+    for(let i = 0; i < this.userAnswerTruthTable.length; i++){
+        for(let j = 0; j < this.userAnswerTruthTable[0].length; j++){
+            if(this.userAnswerTruthTable[i][j] != this.truthTable[i][j]){
+                correct = false;
+            }
+        }
+    }
+
+    const msg = `Anwer is ${correct ? 'correct' : 'incorrect'}`
+    console.log(msg)
+    this.feedbackHTML = `${msg}`
+    this.renderDCFeedbackDiv()
    }
        
     renderDCPromptAndInput() {
     // parse options from the JSON script inside
 
                 // Generate the dropdown menu for bitwise operation
-        this.containerDiv = document.createElement("div");
+        if(!this.containerDiv){
+            this.containerDiv = document.createElement("div"); 
+        }
+
+        this.wrapperDiv = document.createElement("div")
+
+
         this.containerDiv.id = this.divid;
 
         this.gojsDiv = document.createElement("div")
@@ -137,10 +221,10 @@ export default class DC extends RunestoneBase {
 
 
         this.gojsDiv.append(this.circuitDiv)
-        this.containerDiv.append(this.gojsDiv)
+        this.wrapperDiv.append(this.gojsDiv)
 
         this.answerDiv = document.createElement("div")
-        this.containerDiv.append(this.answerDiv)
+        this.wrapperDiv.append(this.answerDiv)
 
         this.checkButton = document.createElement("button")
         this.checkButton.textContent = "Check"
@@ -149,6 +233,17 @@ export default class DC extends RunestoneBase {
 
         this.checkButton.addEventListener("click", ()=>{
             this.getTruthTable()
+            this.checkAnswer()
+        })
+
+        this.generateButton = document.createElement("button")
+        this.generateButton.textContent = "Generate Another QUestion"
+
+        this.answerDiv.appendChild(this.generateButton)
+
+        this.generateButton.addEventListener("click", ()=>{
+            this.removeEverything()
+            this.initDCElement()
         })
 
         this.tableDiv = document.createElement("div")
@@ -157,6 +252,9 @@ export default class DC extends RunestoneBase {
         const th = document.createElement("tr")
         let thInnerHTML = ""
         for(let i = 0; i < this.numInputs; i++){
+            thInnerHTML += `<th>${this.letters[i]}</th>`
+        }
+        for(let i = 0; i < this.numOutputs; i++){
             thInnerHTML += `<th>${this.letters[i]}</th>`
         }
         th.innerHTML = thInnerHTML
@@ -174,10 +272,10 @@ export default class DC extends RunestoneBase {
         table.innerHTML += tableDataHTML
 
         this.tableDiv.appendChild(table)
-        this.answerDiv.append(this.table)
+        this.answerDiv.append(table)
 
 
-
+        this.containerDiv.append(this.wrapperDiv)
 
         $(this.origElem).children().clone().appendTo(this.containerDiv);
 
@@ -185,8 +283,9 @@ export default class DC extends RunestoneBase {
 
 
     generateATruthTable = () => {
-
+        
         let toggleArray = []
+        this.truthTable = []
         //copying this over because can't use pointers in js :(
         const recursiveToggle = (n, param) => {
             n= n;
@@ -210,7 +309,11 @@ export default class DC extends RunestoneBase {
         recursiveToggle(this.numInputs-1, [])
         const ZeroOrOne = () => Math.floor(Math.random() * 2)
         for(let elem of toggleArray){
-            this.truthTable.push([...elem, ZeroOrOne(), ZeroOrOne()])
+            let outputVals = []
+            for(let i = 0; i < this.numOutputs; i++){
+                outputVals.push(ZeroOrOne())
+            }
+            this.truthTable.push([...elem, ...outputVals])
         }
         console.log(this.truthTable)
     }
@@ -230,13 +333,18 @@ export default class DC extends RunestoneBase {
 
 
 
-    generateAnswer() {
 
-
-    }
 
     renderDCFeedbackDiv() {
-        
+        if(this.feedbackDiv){
+            this.feedbackDiv.remove()
+        }
+
+        this.feedbackDiv = document.createElement("div")
+        const msg = this.feedbackHTML ? this.feedbackHTML : 'no msg :('
+        this.feedbackDiv.innerHTML = msg
+
+        this.wrapperDiv.append(this.feedbackDiv)
     }
 
     sendData(actionId) {
@@ -290,7 +398,7 @@ export default class DC extends RunestoneBase {
             "undoManager.isEnabled": true
         });
 
-
+        this.myDiagram.allowClipboard = false
 
         // when the document is modified, add a "*" to the title and enable the "Save" button
         this.myDiagram.addDiagramListener('Modified', (e) => {
@@ -686,7 +794,6 @@ export default class DC extends RunestoneBase {
 
         // add the templates created above to this.myDiagram and palette
         this.myDiagram.nodeTemplateMap.add('input', inputTemplate);
-        this.myDiagram.nodeTemplateMap.add('switch', switchTemplate);
         this.myDiagram.nodeTemplateMap.add('output', outputTemplate);
 
         this.myDiagram.nodeTemplateMap.add('and', andTemplate);
@@ -707,7 +814,6 @@ export default class DC extends RunestoneBase {
         palette.nodeTemplateMap = paletteMap;
 
         palette.model.nodeDataArray = [
-        { category: 'switch', isOn: true },
         { category: 'and' },
         { category: 'or' },
         { category: 'xor' },
@@ -729,7 +835,7 @@ export default class DC extends RunestoneBase {
       }
 
     loop() {
-        setTimeout(() => {
+        this.timeoutId = setTimeout(() => {
         this.updateStates();
         this.loop();
         }, 250);
@@ -864,6 +970,10 @@ load = () => {
 
   
 getTruthTable = () => {
+
+    this.userAnswerLabelledTruthTable = []
+    this.userAnswerTruthTable = []
+
     let inputNodes = [];
     this.myDiagram.nodes.each(n=>{
       if(n.category == "input"){
@@ -915,6 +1025,10 @@ getTruthTable = () => {
       }
       
 
+      this.myDiagram.redraw()
+      this.updateStates()
+      this.myDiagram.redraw()
+      this.updateStates()
       this.myDiagram.redraw()
       this.updateStates()
   

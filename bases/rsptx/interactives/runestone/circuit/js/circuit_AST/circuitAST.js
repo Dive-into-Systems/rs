@@ -5,9 +5,25 @@ export default class circuitAST{
     constructor(){
         this.ast = [];
         this.root = null;
+        this.inputs = null;
+    }
+
+    getInformation = () =>{
+        return {numInputs: this.inputs.length, inputs:this.inputs}
+    }
+
+    extractInputs(circuit) {
+        const inputSet = new Set();
+        const inputPattern = /\b[A-Z]\b/g;
+        let match;
+        while ((match = inputPattern.exec(circuit)) !== null) {
+            inputSet.add(match[0]);
+        }
+        this.inputs = Array.from(inputSet).sort();
     }
 
     insert(expression){
+        this.extractInputs(expression);
         const operators = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
         const inputs = ['A', 'B', 'C'];
         let tokens = expression.match(/\(|\)|\w+|AND|OR|XOR|NAND|NOR|NOT/g);
@@ -85,39 +101,68 @@ export default class circuitAST{
         return operators.includes(token);
     }
 
-    getTruthTable(inputs){
+    getTruthTable(){
         let truthTable = [];
-        let numInputs = inputs.length;
+        let numInputs = this.inputs.length;
 
         switch(numInputs){
-            case 1:
-                for(let i of [0,1]){
-                    this.setInputValue(inputs[0], i);
-                    truthTable.push(this.root.executeAction());
-                }
-                break;
             case 2:
                 for(let i of [0,1]){
-                    this.setInputValue(inputs[0], i);
+                    this.setInputValue(this.inputs[0], i);
                     for(let j of [0,1]){
-                        this.setInputValue(inputs[1], j);
-                        truthTable.push(this.root.executeAction());
+                        this.setInputValue(this.inputs[1], j);
+                        truthTable.push([i, j, +this.root.executeAction()]);
                     }
                 }
                 break;
             case 3:
                 for(let i of [0,1]){
-                    this.setInputValue(inputs[0], i);
+                    this.setInputValue(this.inputs[0], i);
                     for(let j of [0,1]){
-                        this.setInputValue(inputs[1], j);
+                        this.setInputValue(this.inputs[1], j);
                         for(let k of [0,1]){
-                            this.setInputValue(inputs[2], k);
-                            truthTable.push(this.root.executeAction());
+                            this.setInputValue(this.inputs[2], k);
+                            truthTable.push([i, j, k, +this.root.executeAction()]);
                         }
                         
                     }
                 }
                 break;
+            case 4:
+                for(let i of [0,1]){
+                    this.setInputValue(this.inputs[0], i);
+                    for(let j of [0,1]){
+                        this.setInputValue(this.inputs[1], j);
+                        for(let k of [0,1]){
+                            this.setInputValue(this.inputs[2], k);
+                            for(let l of [0,1]){
+                                this.setInputValue(this.inputs[3], l);
+                                truthTable.push([i, j, k, l, +this.root.executeAction()]);
+                            }
+                        }
+                        
+                    }
+                }
+                break;
+            case 5:
+                for(let i of [0,1]){
+                    this.setInputValue(this.inputs[0], i);
+                    for(let j of [0,1]){
+                        this.setInputValue(this.inputs[1], j);
+                        for(let k of [0,1]){
+                            this.setInputValue(this.inputs[2], k);
+                            for(let l of [0,1]){
+                                this.setInputValue(this.inputs[3], l);
+                                for(let m of [0,1]){
+                                    this.setInputValue(this.inputs[4], m);
+                                    truthTable.push([i, j, k, l, m, +this.root.executeAction()]);
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+
         }
         return truthTable;
             

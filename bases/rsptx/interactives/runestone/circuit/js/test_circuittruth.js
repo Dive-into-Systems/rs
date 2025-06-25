@@ -63,6 +63,7 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import circuitAST from "./circuit_AST/circuitAST.js";
 import "../css/circuittruth.css";
+import circuit_generator from "./circuit_generate.js";
 import {MinSelectBox} from "../../../utils/MinSelectBox.js";
 
 export var CircuitTruthList = {};
@@ -207,91 +208,34 @@ export default class CircuitTruth extends RunestoneBase {
         }
 
         function generateCircuit() {
-            const inputs = ['A', 'B', 'C']; // possible inputs
-            let gates = [];
+            let inputs; // possible inputs
+            let gates;  // the gates that are possible to generate
+            let maxGates; // the maximum number of gates that can be generated
+            let minGates; // the minimum number of gates that can be generated
+            // note that maxGates and minGates needs to have a difference of at minimum of 1. If they are both set equal to N,
+            // the range of possible number of gates is between N+1 and N.
             if(mode == "1"){
-                gates = ['AND', 'OR'];
+                gates = ['AND', 'OR', 'NOT'];
+                inputs = ['A', 'B']
+                maxGates = 3;
+                minGates = 2;
             } else{
-                gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
-            }
-            const notGate = 'NOT';
-            //possibly parameters: maxGates, noGateChance, notChance
-            let maxGates = 3;
-            let exactGates = 0;
-            let numGates = 0;
-            let minGates = 2;
-            let noGateChance = 0.5; // Chance of not generating any gates
-            let notChance = 0.08;   // Chance of generating a NOT gate
-
-            // Get a random element from an array.
-            function getRandomElement(arr) {
-                return arr[Math.floor(Math.random() * arr.length)];
+                gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
+                inputs = ['A', 'B', 'C']
+                maxGates = 4;
+                minGates = 2;
             }
 
-            // Recursive helper function that generates a circuit expression.
-            //TODO: Could tweak depth for easier and more complicated modes (maybe for easier depth <=2)
-            //TODO: More complicated mode could have three inputs and/or two outputs
-            let ast;
-            function generateSubExpression(depth = 0) {
-                // maximum depth of 3 to avoid too complicated circuit
-                if (depth > 3 || numGates >= maxGates) {
-                    return getRandomElement(inputs);
-                }
-                const chance = Math.random();
-                if (chance < noGateChance && depth !== 0) { // no gate
-                    return getRandomElement(inputs);
-                } else if (chance < noGateChance + notChance) { // not gate (one input)
-                    numGates++;
-                    let input = generateSubExpression(depth + 1);
-                    if (input.length === 1 || input[2] === 'T') {
-                        return `${notGate}(${input})`;
-                    } else {
-                        return `${notGate}${input}`;
-                    }
-                } else { // all other gates (two inputs)
-                    numGates = numGates + 1;
-                    const gate = getRandomElement(gates); // randomly choose a gate
-                    let input1 = generateSubExpression(depth + 1); // get input 1
-                    let input2 = generateSubExpression(depth + 1); // get input 2
-                    // while loop to avoid same inputs on both side, disregarding NOT.
-                    // So expression like (NOT(A) AND A) would be filtered.
-                    while ((input1.replace(/NOT\(|\)|\(/g, '') === input2.replace(/NOT\(|\)|\(/g, '')) && (input1.replace(/NOT\(|\)|\(/g, '').length==1)) {
-                        input2 = generateSubExpression(depth + 1);
-                    }
-                    return `(${input1} ${gate} ${input2})`;
-                }
-            }
+            let circuit_gen;
 
-            let circuit = generateSubExpression();
-            // TODO: Keep generating circuits until the number of gates is what we what
-            // TODO: Try and get rid of the infinite-loopness
+            circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true);
+            let circuit = circuit_gen.generateStatement();
+            console.log(circuit);
 
-            // TODO: Add console.log to check how many times the loop is occurring, if loop is often not generating circuits
-            // which fit the conditions, figure out how to change generateSubExpression.
-
-            // TODO: Maybe limit to say only generate a certain number of times.
-
-            //Case 1: perscribe a specific number of gates to generate
-            //Case 2: have a minimum and maximum number of gates and generate gates between those vals.
-            if (exactGates != 0){
-                while (numGates !== exactGates) {
-                    numGates = 0;
-                    circuit = generateSubExpression();
-                }
-            } else{
-                while ((numGates > maxGates) || (numGates < minGates)){
-                    numGates=0;
-                    circuit = generateSubExpression();
-                }
-            }
-            // Ensure that A is always in the cicuit. This helps with the logic of
-            // wires not crossing.
-
-            // TODO: figure out how many inputs/outputs there should be for each mode.
             const used = extractInputs(circuit);
             if (!used.includes('A')) {
                 const toReplace = used.includes('B') ? 'B' : used[0];
-                const re = new RegExp(`\\b${toReplace}\\b`, 'g');
+                const re = new RegExp(`\\b${toReplace}\\b`);
                 circuit = circuit.replace(re, 'A');
             }
             
@@ -299,15 +243,12 @@ export default class CircuitTruth extends RunestoneBase {
             container.querySelector(`#${id}_circuitOutput`).innerText = circuit
 
             // build the AST structure to hold information
-            ast = buildAST(circuit)
+            let ast = buildAST(circuit)
             let displayAST = ast.getRoot();
             
             // pass in the circuit expression to display truth table
             displayTruthTable(ast, circuit);
 
-
-            // Uncomment the next line to see the AST text visualization:
-            // visualizeAST(ast);
 
             // assign a JSON to the global variable json
             json = generateJSON(displayAST, circuit);
@@ -318,7 +259,9 @@ export default class CircuitTruth extends RunestoneBase {
 
             // visualize the circuit
             load();
+            updateStates()
         }
+        
 
 
         /**
@@ -359,13 +302,12 @@ export default class CircuitTruth extends RunestoneBase {
 
             // Generate truth table rows
             const numRows = Math.pow(2, inputs.length);
-            const expected = ast.getTruthTable(inputs);
+            let expected = ast.getTruthTable(inputs);
             for (let i = 0; i < numRows; i++) {
                 const values = {};
                 for (let j = 0; j < inputs.length; j++) {
                 values[inputs[j]] = Boolean(i & (1 << (inputs.length - 1 - j)));
                 }
-
 
                 let row = '<tr>';
                 for (const input of inputs) {
@@ -373,7 +315,8 @@ export default class CircuitTruth extends RunestoneBase {
                 }
                 // adjust the style by modifying content in .answer-input{} in circuittruth.css
                 // here the input box only accepts one character as the input.
-                row += `<td><input type="text" size="1" maxlength="1" class="answer-input" data-expected="${+expected[i]}" /></td>`;
+                console.log(expected);
+                row += `<td><input type="text" size="1" maxlength="1" class="answer-input" data-expected="${expected[i].pop()}" /></td>`;
                 row += '</tr>';
                 table.innerHTML += row;
             }
@@ -423,7 +366,7 @@ export default class CircuitTruth extends RunestoneBase {
         
             let ast = new circuitAST();
             ast.insert(expression);
-            test_circuitAST(ast, extractInputs(expression))
+            test_circuitAST(ast, ast.getInformation().inputs)
             return ast;
         }
 

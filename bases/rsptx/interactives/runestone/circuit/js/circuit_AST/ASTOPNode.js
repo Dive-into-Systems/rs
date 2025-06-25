@@ -13,12 +13,12 @@ export default class ASTOPnode{
                 this.val1 = this.children[0].input;
                 this.val2 = this.children[1].input;
                 return this.performOP();
-            } else if (this.children[0].type == "OPERATOR"){
+            } else if (this.children[0].type == "OPERATOR" && this.children[1].type == "INPUT"){
                 this.val1 = this.children[0].executeAction();
                 this.val2 = this.children[1].input;
                 return this.performOP();
 
-            } else if (this.children[1].type == "OPERATOR"){
+            } else if (this.children[1].type == "OPERATOR"&& this.children[0].type == "INPUT"){
                 this.val1 = this.children[0].input;
                 this.val2 = this.children[1].executeAction();
                 return this.performOP();

@@ -60,3 +60,13 @@ th {
    font-size:large;
 
 }
+
+.radioTD{
+
+   justify-content: left;
+}
+
+.radioSpan{
+   display:flex;
+   width: 50%;
+}
