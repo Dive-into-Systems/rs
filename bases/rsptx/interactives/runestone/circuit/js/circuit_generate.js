@@ -1,11 +1,30 @@
+// *****************************************************************
+// circuittruth.js. This file was created by Bohou Zhang in June 2025.
+// *****************************************************************
+/*
+ * - This file contains the class used to generate circuits for all existing
+ *   circuit components.
+ * 
+ * - Methods of this class:
+ *     -constructor(inputs, gateTypes, maxGates, minGates, exactInput=false, prevGen=null):
+ *      The constructor for this class has 4 parameters with 2 additional optional parameters.
+ *       -inputs (an array of strings): the list of names of the input nodes. The class supports
+ *        up to 5 inputs, which should be capitalized letters of the alphabet. For example, a valid
+ *        argument to pass this parameter is ["A", "B", "C"];
+ *       -gateTypes (an array of strings): the list of gates that can be generated. The class supports
+ *        "AND", "OR", "NOT", "XOR", "NAND", "NOR" gates.
+ *    
+*/
+import circuitAST from "./circuit_AST/circuitAST";
 export default class circuit_generator{
-    constructor(inputs, gateTypes, maxGates, minGates, exactInput=false){
+    constructor(inputs, gateTypes, maxGates, minGates, exactInput=false, prevGen=null){
         this.inputs = inputs;
         this.maxGates = maxGates-1;
         this.minGates = minGates-1;
         this.gateTypes = gateTypes;
         this.exactInput = exactInput;
         this.notSelected = false;
+        this.prevGen = prevGen;
         if(this.gateTypes.includes("NOT")){
             this.gateTypes = this.gateTypes.filter(item => item!="NOT")
             this.notSelected = true;
@@ -29,12 +48,60 @@ export default class circuit_generator{
         if(this.exactInput == true){
             this.ensureExactInput();
             if(this.skipped){
-                this.ret = this.generateStatement()
+                this.ret = this.generateStatement();
+            }
+        } else{
+            this.ensureDifferentInput();
+            if(this.badInput){
+                this.ret = this.generateStatement();
             }
         }
 
+        this.new_circuit = new circuitAST();
+        this.new_circuit.insert(this.ret);
+        this.newTruthTable = this.new_circuit.getTruthTable();
+        this.ensureDifferentOutput();
+        
         return this.ret;
         
+    }
+
+    getTruthTable(){
+        return this.newTruthTable;
+    }
+
+    getInformation(){
+        let info = this.new_circuit.getInformation();
+
+        return {inputs: info.inputs, numInputs: info.numInputs, root: info.root, ast: this.new_circuit};
+    }
+
+
+    ensureDifferentOutput = () =>{
+        if(this.prevGen != null){
+            
+            let old_circuit = new circuitAST();
+            old_circuit.insert(this.prevGen);
+            let oldTruthTable = old_circuit.getTruthTable();
+            
+            if(JSON.stringify(oldTruthTable) == JSON.stringify(this.newTruthTable)){
+                this.generateStatement();
+            }
+        }
+    }
+
+    ensureDifferentInput = () =>{
+        const inputSet = new Set();
+        const inputPattern = /\b[A-Z]\b/g;
+        let match;
+        while ((match = inputPattern.exec(this.ret)) !== null) {
+            inputSet.add(match[0]);
+        }
+        let used = Array.from(inputSet).sort();
+        this.badInput = false;
+        if (used.length == 1){
+            this.badInput = true;
+        }
     }
 
     ensureExactInput = () => {
@@ -61,7 +128,7 @@ export default class circuit_generator{
             this.skipped = true;
             unused.forEach((element)=>{
                 const index = matchLetter.findIndex(item=>item > 1);
-                if (index != -1){
+                if (index != -1 && used.length >= (this.inputs.length-1)){
                     this.skipped = false
                 }
                 const toReplace = used[index];

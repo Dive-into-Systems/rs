@@ -168,6 +168,7 @@ export default class CircuitTruth extends RunestoneBase {
         var red = 'orangered';   // Color for false inputs
         var green = 'forestgreen'; // Color for true inputs
         var myDiagram;
+        let prevCircuit=null;
 
         const container   = this.containerDiv;
         const id          = this.divid;
@@ -222,17 +223,17 @@ export default class CircuitTruth extends RunestoneBase {
             } else{
                 gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
                 inputs = ['A', 'B', 'C']
-                maxGates = 4;
+                maxGates = 5;
                 minGates = 2;
             }
 
             let circuit_gen;
 
-            circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true);
+            circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true, prevCircuit);
             let circuit = circuit_gen.generateStatement();
-            console.log(circuit);
+            prevCircuit = circuit;
 
-            const used = extractInputs(circuit);
+            const used = circuit_gen.getInformation().inputs;
             if (!used.includes('A')) {
                 const toReplace = used.includes('B') ? 'B' : used[0];
                 const re = new RegExp(`\\b${toReplace}\\b`);
@@ -243,15 +244,15 @@ export default class CircuitTruth extends RunestoneBase {
             container.querySelector(`#${id}_circuitOutput`).innerText = circuit
 
             // build the AST structure to hold information
-            let ast = buildAST(circuit)
-            let displayAST = ast.getRoot();
+            let ast = circuit_gen.getInformation().ast;
+            let displayAST = circuit_gen.getInformation().root;
             
             // pass in the circuit expression to display truth table
             displayTruthTable(ast, circuit);
 
 
             // assign a JSON to the global variable json
-            json = generateJSON(displayAST, circuit);
+            json = generateJSON(displayAST, ast);
 
             // default is to always set the circuit expression invisible
             const exprDiv = container.querySelector(`#${id}_circuitOutput`);
@@ -260,6 +261,9 @@ export default class CircuitTruth extends RunestoneBase {
             // visualize the circuit
             load();
             updateStates()
+
+
+
         }
         
 
@@ -356,27 +360,6 @@ export default class CircuitTruth extends RunestoneBase {
         }
 
         /**
-         * This function parses the circuit expression into a tree. For example the circuit
-         * ((A AND B) OR C), the parent node is OR and it has children AND and C. The child
-         * AND has children A and C. So the parent node is the node that is going in output.
-         * @param {*} expression: circuit expression
-         * @returns ast[0]: parent node of the tree
-         */
-        function buildAST(expression) {
-        
-            let ast = new circuitAST();
-            ast.insert(expression);
-            test_circuitAST(ast, ast.getInformation().inputs)
-            return ast;
-        }
-
-        function test_circuitAST(ast, expr){
-            let value = ast.getTruthTable(expr);
-            console.log("value: " + value);
-        }
-
-
-        /**
          * Visualizes the tree structure in text. This is used during debugging so it is 
          * commented out in the generateCircuit function.
          * @param {*} node: parent node of the tree
@@ -458,7 +441,7 @@ export default class CircuitTruth extends RunestoneBase {
             // We'll assign negative IDs to each generated node.
             let nodeId = -1;
             // Extract and sort all unique input labels (e.g., A, B, C).
-            let inputNodes = extractInputs(circuit); 
+            let inputNodes = circuit.getInformation().inputs; 
             inputNodes.sort();
             let inputKeyMapping = {};
             // Helper to get a new unique node ID.
@@ -473,7 +456,7 @@ export default class CircuitTruth extends RunestoneBase {
              */
             function generateInputNodes(inputNodes) {
                 // Define vertical ordering for inputs. A on top.
-                const inputOrder = { 'A': 2, 'B': 1, 'C': 0 };
+                const inputOrder = { 'A': 5, 'B': 4, 'C': 3, 'D' : 2, 'E':1, 'F' : 0};
                 inputNodes.sort((a, b) => inputOrder[a] - inputOrder[b]);
                 inputNodes.forEach((input, index) => {
                     let inputId = getNextNodeId();
@@ -487,14 +470,14 @@ export default class CircuitTruth extends RunestoneBase {
                     if (inputNodes.length === 1) {
                         locationY = 0;
                     } else if (inputNodes.length === 2) {
-                        locationY = (index === 0) ? 80 : -80; //I currently set the separation to be 80
+                        locationY = (index === 0) ? 110 : -110; //I currently set the separation to be 110
                     } else if (inputNodes.length === 3) {
                         if (index === 0) {
-                        locationY = 80;
+                        locationY = 110;
                         } else if (index === 1) {
                         locationY = 0;
                         } else {
-                        locationY = -80;
+                        locationY = -110;
                         }
                     }
                     // Add the input node to the array with its position and label.
@@ -534,7 +517,7 @@ export default class CircuitTruth extends RunestoneBase {
                 let width = 400; // Set the width of the canvas to be 400.
                 let numLevels = Object.keys(layers).length; // Number of layers = number of unique depths
                 let interval = width / (numLevels + 1); // Horizontal spacing between layers
-                let xPosition = width - interval * (depth + 1);
+                let xPosition = width - interval * (depth + 1) + 30;
                 let yPosition = 0;
 
                 // Determine vertical slot for this node within its depth
@@ -542,7 +525,21 @@ export default class CircuitTruth extends RunestoneBase {
                 let numGatesAtDepth = layers[depth];
                 let midPoint = Math.floor(numGatesAtDepth / 2);
                 // Spread around zero
-                yPosition = (positions[depth] - midPoint) * 100; 
+                let childrenInputs = []
+                node.children.forEach((child)=>{
+                    if(child.type == "INPUT"){
+                        childrenInputs.push(child.value);
+                    }
+                })
+
+                if(childrenInputs.includes('A')){
+                    yPosition = (positions[depth]-midPoint)* 100; 
+                } else if (childrenInputs.includes('B')){
+                    yPosition = (positions[depth]-midPoint)* 100; 
+                }else if (childrenInputs.includes('C')){
+                    yPosition = (midPoint - positions[depth]) * 100; 
+                }
+                
                 positions[depth]++;
 
                 // Add gate node with its calculated position.
@@ -572,7 +569,7 @@ export default class CircuitTruth extends RunestoneBase {
             });
 
             // Utility to decide port assignment order to minimize wire crossings.
-            const inputOrderMapping = { 'A': 0, 'B': 1, 'C': 2 };
+            const inputOrderMapping = { 'A': 0, 'B': 1, 'C': 2, 'D' : 3, 'E' : 4, 'F' : 5, 'G' : 6};
             /**
              * Finds the lexicographically minimal input label under a subtree,
              * used to decide which child goes to in1 vs in2.
@@ -721,6 +718,12 @@ export default class CircuitTruth extends RunestoneBase {
                     "draggingTool.isGridSnapEnabled": true,
                     "undoManager.isEnabled": true
                 });
+
+            myDiagram.allowRelink = false
+            myDiagram.allowClipboard = false;
+            myDiagram.allowDelete = false;
+            myDiagram.allowLink = false;
+            myDiagram.allowReshape = false;
             // install the PortShiftingTool as a "mouse move" tool
             myDiagram.toolManager.mouseMoveTools.insertAt(0, new PortShiftingTool());
             
@@ -739,8 +742,9 @@ export default class CircuitTruth extends RunestoneBase {
                 routing: go.Link.AvoidsNodes,
                 curve: go.Link.JumpOver,
                 corner: 3,
-                relinkableFrom: true,
-                relinkableTo: true,
+                relinkableFrom: false,
+                relinkableTo: false,
+                deletable: false,
                 selectionAdorned: false,
                 shadowOffset: new go.Point(0, 0),
                 shadowBlur: 5,
@@ -805,24 +809,60 @@ export default class CircuitTruth extends RunestoneBase {
                     const shp=obj.findObject('NODESHAPE');
                     shp.fill=shp.fill===green?red:green;
                     updateStates();
+                    myDiagram.redraw()
+                    updateStates()
+                    myDiagram.redraw()
+                    updateStates()
+                    myDiagram.redraw()
                     e.diagram.commitTransaction('toggle');
                 }
                 }
             );
         
-            var outputTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'Rectangle', shapeStyle(), { fill: green }), $(go.Shape, 'Rectangle', portStyle(true), { portId: '', alignment: new go.Spot(0, 0.5) }));
+            var outputTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'Rectangle', shapeStyle(), { fill: green}), $(go.Shape, 'Rectangle', portStyle(true), { portId: '', alignment: new go.Spot(0, 0.5) }),
+                $(go.TextBlock,
+                    { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                    new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                    ), );
             
-            var andTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'AndGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+                    // .add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+
+                    
+            var andTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'AndGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
-            var orTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'OrGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.16, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.16, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+            var orTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'OrGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.16, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.16, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
-            var xorTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'XorGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.26, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.26, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+            var xorTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'XorGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.26, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.26, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
-            var norTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'NorGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.16, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.16, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+            var norTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'NorGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0.16, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0.16, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
-            var nandTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'NandGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+            var nandTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'NandGate', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in1', alignment: new go.Spot(0, 0.3) }), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in2', alignment: new go.Spot(0, 0.7) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
-            var notTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'Inverter', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in', alignment: new go.Spot(0, 0.5) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }));
+            var notTemplate = $(go.Node, 'Spot', nodeStyle(), $(go.Shape, 'Inverter', shapeStyle()), $(go.Shape, 'Rectangle', portStyle(true), { portId: 'in', alignment: new go.Spot(0, 0.5) }), $(go.Shape, 'Rectangle', portStyle(false), { portId: 'out', alignment: new go.Spot(1, 0.5) }),
+            $(go.TextBlock,
+                { margin: 2, background:'white', alignment: go.Spot.Bottom },            // defines color
+                new go.Binding('text', '', (d) => d.category)   // binds "A","B","C"
+                ), );
             
             myDiagram.nodeTemplateMap.add('input', inputTemplate);
             myDiagram.nodeTemplateMap.add('output', outputTemplate);
@@ -869,7 +909,7 @@ export default class CircuitTruth extends RunestoneBase {
             setOutputLinks(node, node.findObject('NODESHAPE').fill);
         }
         function doAnd(node) {
-            var color = node.findLinksInto().all(linkIsTrue) ? green : red;
+           var color = node.findLinksInto().all(linkIsTrue) ? green : red;
             setOutputLinks(node, color);
         }
         function doNand(node) {

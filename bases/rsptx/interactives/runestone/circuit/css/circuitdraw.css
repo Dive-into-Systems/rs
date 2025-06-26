@@ -1,0 +1,97 @@
+.selectwidthauto {
+    width:auto !important;
+    display: inline-block !important;
+    margin: 5px;
+}
+
+input.input-validation-error {
+   border: 1px solid #e80c4d;
+}
+
+.statement-div {
+   border-width: 1px;
+   border-radius: 5px;
+   border-style: solid;
+   border-color: rgb(234, 234, 234);
+   background-color: rgb(255, 255, 255);
+   padding: 8px;
+ }
+ .answerDiv {
+   display:grid;
+   margin-bottom: 2%;
+ }
+
+ .codeDiv{
+   background-color: #f9f2f4;
+   padding: 2% 2% 2% 6%;
+   font-size: large;
+ }
+
+ .inputsDiv{
+   padding: 5% 10% 5% 7%;
+ }
+ table {
+   width: 100%;
+   border-collapse: collapse;
+   margin-bottom: 20px;
+}
+th {
+    text-align: center;
+}
+
+th, td {
+   border: 1px solid #ddd;
+   text-align: center;
+}
+
+th {
+   background-color: #f7f7f7;
+   font-weight: bold;
+   text-align: center;
+}
+
+.tables-container {
+   display: flex;
+   flex-wrap: wrap;
+}
+
+.table-wrapper {
+   flex: 1 1 45%;
+}
+
+.modeCode{
+   font-size:large;
+
+}
+
+.radioTD{
+
+   justify-content: left;
+}
+
+.radioSpan{
+   display:flex;
+   width: 50%;
+}
+
+.feedbackTable{
+    background: white;
+}
+
+.statement-div {
+    border-width: 1px;
+    border-radius: 5px;
+    border-style: solid;
+    border-color: rgb(234, 234, 234);
+    background-color: rgb(255, 255, 255);
+    padding: 8px;
+  }
+
+.outputSelect {
+    width: auto !important;
+    margin-left:2px !important;
+}
+
+.outputModeDiv{
+    display:flex
+}

@@ -38,6 +38,10 @@ export default class ASTOPnode{
         
     }
 
+    getInputs(){
+        return {operation: this.type, children: this.children};
+    }
+
     performOP(){
         switch(this.value){
             case "AND":

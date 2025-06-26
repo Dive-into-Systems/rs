@@ -9,7 +9,7 @@ export default class circuitAST{
     }
 
     getInformation = () =>{
-        return {numInputs: this.inputs.length, inputs:this.inputs}
+        return {numInputs: this.inputs.length, inputs:this.inputs, root: this.root}
     }
 
     extractInputs(circuit) {
@@ -25,7 +25,7 @@ export default class circuitAST{
     insert(expression){
         this.extractInputs(expression);
         const operators = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
-        const inputs = ['A', 'B', 'C'];
+        const inputs = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
         let tokens = expression.match(/\(|\)|\w+|AND|OR|XOR|NAND|NOR|NOT/g);
         let stack = [];
         let output = [];
@@ -92,10 +92,6 @@ export default class circuitAST{
         this.root = this.ast[0]
     }
     
-    getRoot(){
-        return this.root;
-    }
-
     isOperator(token){
         const operators = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
         return operators.includes(token);
