@@ -189,6 +189,11 @@ export default class CircuitTruth extends RunestoneBase {
         }
         });
 
+
+        function changeMode(){
+            mode = (mode=="1") ? mode = "2": mode = "1";
+        }
+
         /**
          * Main function to randomly generate a circuit.
          * These variables can be made configurable to enable different difficulty levels:
@@ -197,17 +202,9 @@ export default class CircuitTruth extends RunestoneBase {
          *    - minGates: by setting exactGates to 0, the program is able to generate a circuit
          *                with min number of gates determined by minGates variable. Currently
          *                it is set to 2 to avoid boring cases.
-         *    - exactGates: set exactly how many gates will be generated in the circuit. 
-         *                  Doesn't matter what maxGates is set to.
-         *    - numGates: Count how many gates are in the circuit.
+         *    - inputs: array of strings that are used as inputs to the circuit.
+         *    - gates: the gates that can be generated in the circuit.
          */
-
-        //TODO: take params min and max num gates and if you want exact number of gates set to be the same.
-
-        function changeMode(){
-            mode = (mode=="1") ? mode = "2": mode = "1";
-        }
-
         function generateCircuit() {
             let inputs; // possible inputs
             let gates;  // the gates that are possible to generate
@@ -223,8 +220,8 @@ export default class CircuitTruth extends RunestoneBase {
             } else{
                 gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
                 inputs = ['A', 'B', 'C']
-                maxGates = 5;
-                minGates = 2;
+                maxGates = 4;
+                minGates = 3;
             }
 
             let circuit_gen;
@@ -261,8 +258,15 @@ export default class CircuitTruth extends RunestoneBase {
             // visualize the circuit
             load();
             updateStates()
-
-
+            myDiagram.redraw()
+            updateStates()
+            myDiagram.redraw()
+            updateStates()
+            myDiagram.redraw()
+            updateStates()
+            myDiagram.redraw()
+            updateStates()
+            myDiagram.redraw()
 
         }
         
@@ -525,21 +529,7 @@ export default class CircuitTruth extends RunestoneBase {
                 let numGatesAtDepth = layers[depth];
                 let midPoint = Math.floor(numGatesAtDepth / 2);
                 // Spread around zero
-                let childrenInputs = []
-                node.children.forEach((child)=>{
-                    if(child.type == "INPUT"){
-                        childrenInputs.push(child.value);
-                    }
-                })
-
-                if(childrenInputs.includes('A')){
-                    yPosition = (positions[depth]-midPoint)* 100; 
-                } else if (childrenInputs.includes('B')){
-                    yPosition = (positions[depth]-midPoint)* 100; 
-                }else if (childrenInputs.includes('C')){
-                    yPosition = (midPoint - positions[depth]) * 100; 
-                }
-                
+                yPosition = (positions[depth] - midPoint) * 100; 
                 positions[depth]++;
 
                 // Add gate node with its calculated position.
@@ -804,11 +794,17 @@ export default class CircuitTruth extends RunestoneBase {
                 ),
                 $(go.Shape,'Rectangle',portStyle(false),
                 {portId:'',alignment:new go.Spot(1,0.5)}),
-                { doubleClick:(e,obj)=>{
+                { click:(e,obj)=>{
                     e.diagram.startTransaction('toggle');
                     const shp=obj.findObject('NODESHAPE');
                     shp.fill=shp.fill===green?red:green;
                     updateStates();
+                    myDiagram.redraw()
+                    updateStates()
+                    myDiagram.redraw()
+                    updateStates()
+                    myDiagram.redraw()
+                    updateStates()
                     myDiagram.redraw()
                     updateStates()
                     myDiagram.redraw()

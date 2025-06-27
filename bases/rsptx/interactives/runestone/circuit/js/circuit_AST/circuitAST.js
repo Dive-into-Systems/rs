@@ -1,3 +1,30 @@
+// *****************************************************************
+// circuitAST.js. This file was created by Bohou Zhang in June 2025.
+// *****************************************************************
+/*
+ * - This file contains the class used to generate ASTs for all existing circuit components. This class is not
+ *   called outside of the circuit_generator class by exisitng components, but can be used if needed.
+ * 
+ * - Methods of this class:
+ *      -constructor()
+ * 
+ *      !!Public methods that should be called.
+ *      -getInformation(): returns a dictionary.
+ *       -numInputs: the length of the inputs.
+ *       -inputs (array of strings): the inputs used.
+ *       -root: the root of the AST.
+ *      -insert(expression): created the AST object based on a boolean algebra statement. This method uses code written by Yana Yuan.
+ *       -expression: a statement to be parsed into the AST object.
+ *      -getTruthTable: gets the truth table from the AST.
+ * 
+ *      !!Helper methods that should not be called outside this class.
+ *      -extractInputs(circuit): extracts the inputs from a statement passed in. This method was written by Yana Yuan.
+ *      -setInputValue(token, value, currentNode=this.root): recursively traverses the tree and sets the input value based on parameters.
+ *       -token(string): the name of the input whose value needs to be set, e.g., "A".
+ *       -value(integer): the value that the input should be set to.
+ *       -currentNode(ASTINNode or ASTOPNode object): the current node on the tree.
+*/
+
 import ASTOPnode from "./ASTOPNode";
 import ASTINNode from "./ASTINNode";
 

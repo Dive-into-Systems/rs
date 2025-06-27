@@ -34,14 +34,16 @@ input.input-validation-error {
    width: 100%;
    border-collapse: collapse;
    margin-bottom: 20px;
+   background: white !important; 
 }
 th {
     text-align: center;
 }
 
 th, td {
-   border: 1px solid #ddd;
-   text-align: center;
+   border: 1px solid #ccc !important;
+   padding: 8px !important;
+   text-align: center !important;
 }
 
 th {

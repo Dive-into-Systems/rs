@@ -155,10 +155,27 @@ export default class BA extends RunestoneBase {
         // Create the statement div
         this.statementDiv = document.createElement("div");
         this.statementDiv.className = "statement-div";
+        this.menuNode2 = document.createElement("select");
+        for (var i = 0; i < this.toOpt.length; i++) {
+            var option = document.createElement("option");
+            option.value = this.toOpt[i];
+            option.text = this.toOpt[i];
+            this.menuNode2.appendChild(option);
+        }
+
+        // Assign the class of menuNode2. form-control is a class inherited from pretext
+        this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
+        // When the value of menuNode2 is changed, do these...
+        this.menuNode2.addEventListener("change",
+            () => {
+                this.generateButton.click();
+
+            },
+            false);
         
         this.instruction = document.createElement("div");
-        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Part 1 Instructions</u></span>: " +
-            "Please do the bitwise arithmetic operation based on the operator and the number of bits you select. Give you answer as a binary number in the result box and the carry out bit as either 0 or 1 in the Carry Out box.";
+        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Instructions (Part 1)</u></span>: " +
+            `Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
         this.instruction.style.padding = "10px";
 
         this.configHelperText = document.createElement("div");
@@ -235,23 +252,7 @@ export default class BA extends RunestoneBase {
         this.statementNode2 = document.createTextNode(" Select the number of bits: ");
 
         // Assign the items in the menuNode2
-        this.menuNode2 = document.createElement("select");
-        for (var i = 0; i < this.toOpt.length; i++) {
-            var option = document.createElement("option");
-            option.value = this.toOpt[i];
-            option.text = this.toOpt[i];
-            this.menuNode2.appendChild(option);
-        }
-
-        // Assign the class of menuNode2. form-control is a class inherited from pretext
-        this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
-        // When the value of menuNode2 is changed, do these...
-        this.menuNode2.addEventListener("change",
-            () => {
-                this.generateButton.click();
-
-            },
-            false);
+        
 
         // Render the statement
         this.containerDiv.append(this.instruction);
@@ -480,7 +481,7 @@ export default class BA extends RunestoneBase {
    renderSecondPartButtons(){
     this.submitButton.remove();
     this.submitButton2 = document.createElement("button");
-    this.submitButton2.textContent = $.i18n(" Check Part 2");
+    this.submitButton2.textContent = $.i18n("msg_NC_check_me");
     $(this.submitButton2).attr({
         class: "btn btn-success",
         name: "do answer",
@@ -559,8 +560,8 @@ export default class BA extends RunestoneBase {
 
 
         this.instruction2 = document.createElement("div");
-        this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Part 2 Instructions</u></span>: " +
-            "Interpret the operation as signed and unsigned, then convert the result of the operation to decimal. Finally, indicate whether or not there is overflow.";
+        this.instruction2.innerHTML = "<span style='font-weight:bold'><u>Instructions (Part 2)</u></span>: " +
+            "Interpret the result of the arithmetic operation as both an unsigned and signed (two’s complement) decimal number.  For each interpretation, has an overflow occurred?";
         //We got rid of the padding for styling purposes
         this.instruction2.style.padding = "0px";
 
@@ -780,6 +781,7 @@ export default class BA extends RunestoneBase {
     // clear the input field
     clearAnswer() {
         this.inputNode.value = "";
+        this.instruction.innerHTML=`Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
         this.feedbackDiv.remove();
         if(this.feedbackDiv2 != undefined && this.feedbackDiv2 == null){
             this.feedbackDiv2.remove();

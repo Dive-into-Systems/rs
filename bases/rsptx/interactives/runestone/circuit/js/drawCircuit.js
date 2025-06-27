@@ -1,7 +1,4 @@
-// *********
-// binops21.js
-// *********
-// This file contains the JS for the Runestone numberconversion component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
+
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
@@ -10,7 +7,7 @@ import circuitAST from "./circuit_AST/circuitAST.js";
 import circuit_generator from "./circuit_generate.js";
 import "../css/circuitdraw.css"
 
-export var DCList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
+export var DCList = {}; // Object containing all instances of DC that aren't a child of a timed assessment.
 
 
 export default class DC extends RunestoneBase {
@@ -27,17 +24,22 @@ export default class DC extends RunestoneBase {
 
 
 
-        //config
-
+        //config:
+        //Num inputs/outputsgets set by the code, but it's here for convenience
         this.numInputs;
         this.numOutputs;
+        // The proceudrally generated truth table to base the question on
         this.truthTable = []
+        //I'm using this to avoid reloading GoJS nastyness
         this.loaded = false
+        //did the user get it correct
         this.correct;
+        //history/mode stuff
         this.modeOutput = 2;
         this.prevCircuit = null;
 
        // Default configuration settings
+       //For somereason the default code uses colors (and not a separate variable) to update the circuit
         this.red = '#b91c1c';
         this.red2 = '#fca5a5';
         this.green = '#15803d';
@@ -70,6 +72,7 @@ export default class DC extends RunestoneBase {
        return $(root_node).find(`script[type="application/json"]`);
    }
 
+   //Pretty self-explanatory
    removeEverything = () => {
     clearTimeout(this.timeoutId)
     this.myDiagram = null
@@ -86,12 +89,17 @@ export default class DC extends RunestoneBase {
    ====   Functions generating final HTML   ====
    ===========================================*/
    // Component initialization
+
+   //This function sets up everything.
     initDCElement() {
+        //utillity
         const generateRandom = (n) => (Math.floor(Math.random()*n))
 
         // this.numInputs = 2 + generateRandom(2);
         // this.numOutputs = 1 + generateRandom(2)
 
+        //Generate two instances of the circuit class (each instance has only one output)
+        //If there are supposed to be two outputs (mode 2), force the second circuit to have the same number of inputs as the first one
 
         let c1;
         if(this.modeOutput == 1){
@@ -108,10 +116,13 @@ export default class DC extends RunestoneBase {
         const s2 = c2.generateStatement();
         const tt2 = c2.getTruthTable()
 
+        console.log(`Draw Circuits's statements: 1 => ${s1};  2 => ${s2}`)
 
 
+        //Because the modeSelect HTML gets deleted on generate
         this.numOutputs = this.modeOutput
         
+        //Merge the two truth tables into one if necessary
         if(this.numOutputs == 2){
 
             for(let i = 0; i < tt1.length; i++){
@@ -132,12 +143,14 @@ export default class DC extends RunestoneBase {
         console.log(tt1)
 
 
-
+        // This JSON is used initialie the digram.
         this.startJson = `{ "class": "GraphLinksModel",
         "linkFromPortIdProperty": "fromPort",
         "linkToPortIdProperty": "toPort",
         "nodeDataArray": [`
 
+        //This is how I get the inputs to be labelled A B C D and spaced equally
+        //The outputs are number 1 2 3 ...
         this.letters = ['A','B','C','D','E']
         for(let i = 0; i < this.numInputs; i++){
             if(i < this.numInputs - 1){
@@ -165,14 +178,14 @@ export default class DC extends RunestoneBase {
 
 
         // this.generateATruthTable()
+        
+        //Render the main html
         this.renderDCPromptAndInput();
         
 
 
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
-        
-
         if(!this.loaded){
             $(this.origElem).replaceWith(this.containerDiv);
             this.loadExternalScripts()
@@ -186,6 +199,7 @@ export default class DC extends RunestoneBase {
    }
 
    checkAnswer(){
+    //Elem by Elem comparison for the user and answer truth table
     let correct = true;
     for(let i = 0; i < this.userAnswerTruthTable.length; i++){
         for(let j = 0; j < this.userAnswerTruthTable[0].length; j++){
@@ -197,6 +211,7 @@ export default class DC extends RunestoneBase {
 
     this.correct = correct;
 
+    // Feedback stuff
     const msg = `Anwer is ${correct ? 'correct' : 'incorrect'}`
     console.log(msg)
     this.feedbackHTML = `${msg}`
@@ -204,14 +219,12 @@ export default class DC extends RunestoneBase {
    }
        
     renderDCPromptAndInput() {
-    // parse options from the JSON script inside
 
-                // Generate the dropdown menu for bitwise operation
         if(!this.containerDiv){
             this.containerDiv = document.createElement("div"); 
         }
 
-
+        //Creating this div as a subdiv of container div, since deleting container div to generate another question leads to weird problems
         this.wrapperDiv = document.createElement("div")
 
 
@@ -221,7 +234,7 @@ export default class DC extends RunestoneBase {
         this.containerDiv.id = this.divid;
 
 
-
+        //HTML stuff
         this.statementDiv = document.createElement("div")
         this.statementDiv.className = "statement-div";
 
@@ -278,7 +291,7 @@ export default class DC extends RunestoneBase {
 
 
 
-
+        //BTW, GoJS typically looks for a div with a pre-specified ID to set itself up in
         this.gojsDiv = document.createElement("div")
 
         this.circuitDiv = document.createElement("div")
@@ -304,7 +317,7 @@ export default class DC extends RunestoneBase {
 
 
 
-
+        //more HTML stuff
         this.answerDiv = document.createElement("div")
         this.wrapperDiv.append(this.answerDiv)
 
@@ -350,6 +363,7 @@ export default class DC extends RunestoneBase {
 
         this.answerDiv.appendChild(this.checkButton)
 
+        //check function: get the user cirucit's truth table => check it
         this.checkButton.addEventListener("click", ()=>{
             this.getTruthTable()
             this.checkAnswer()
@@ -361,6 +375,7 @@ export default class DC extends RunestoneBase {
 
         this.answerDiv.appendChild(this.generateButton)
 
+        //generate function
         this.generateButton.addEventListener("click", ()=>{
             this.removeEverything()
             this.initDCElement()
@@ -373,12 +388,15 @@ export default class DC extends RunestoneBase {
 
     }
 
-
+    //This function is no longer used
+    //Actually I'm grateful it isn't because the code was heinous
     generateATruthTable = () => {
         
         let toggleArray = []
         this.truthTable = []
         //copying this over because can't use pointers in js :(
+        // Really I wouldn't if there was pointers :(
+        //Hopefully this doesn't cause any problems in the future
         const recursiveToggle = (n, param) => {
             n= n;
             if(n == 0){
@@ -399,7 +417,10 @@ export default class DC extends RunestoneBase {
           }
         
         recursiveToggle(this.numInputs-1, [])
+        //util
         const ZeroOrOne = () => Math.floor(Math.random() * 2)
+
+        //
         for(let elem of toggleArray){
             let outputVals = []
             for(let i = 0; i < this.numOutputs; i++){
@@ -411,7 +432,7 @@ export default class DC extends RunestoneBase {
     }
     
 
-
+    //This does the HTML stuff to render the user's truth table in feedback div
     renderFeedbackTruthTable () {
 
         const tDiv = document.createElement("div")
@@ -452,7 +473,7 @@ export default class DC extends RunestoneBase {
     }
 
 
-
+    //Handel the HTML side of the feedback 
     renderDCFeedbackDiv() {
         if(this.feedbackDiv){
             this.feedbackDiv.remove()
@@ -482,6 +503,8 @@ export default class DC extends RunestoneBase {
        
     }
 
+    //This loads in the GOJs script tags
+    //Figures jS needs go js to work, hence the delayed import 
     loadExternalScripts() {
         const self = this
         function loadScript(src, callback) {
@@ -501,7 +524,7 @@ export default class DC extends RunestoneBase {
     }
 
 
-
+    //I'm using this to programmatically toggle the inuts and outputs
     simulatedClickFunction = (obj, val) => {
         
         if (this.myDiagram instanceof go.Palette) return;
@@ -510,9 +533,15 @@ export default class DC extends RunestoneBase {
         this.myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
 
         this.updateStates();
+        this.updateStates();
+        this.updateStates();
+        this.updateStates();
+        this.updateStates();
+
         this.myDiagram.commitTransaction('Toggle Input');
     }
 
+    //Deprecated (and of somewhat dubious utillity)
     log = data => {
         console.log()
     }
@@ -547,6 +576,7 @@ export default class DC extends RunestoneBase {
 
         // creates relinkable Links that will avoid crossing Nodes when possible and will jump over other Links in their paths
         this.myDiagram.linkTemplate = new go.Link({
+        routing: go.Link.AvoidsNodes,
         curve: go.Curve.JumpOver,
         corner: 3,
         relinkableFrom: true,
@@ -625,6 +655,8 @@ export default class DC extends RunestoneBase {
         }
 
 
+
+        //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
 
         const inputTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
             .set({
@@ -966,6 +998,7 @@ export default class DC extends RunestoneBase {
 
       }
 
+    //Periodicall update states (this is reduntant, but I think it's redundant in a good way)
     loop() {
         this.timeoutId = setTimeout(() => {
         this.updateStates();
@@ -973,6 +1006,8 @@ export default class DC extends RunestoneBase {
         }, 250);
     }
 
+    //Updates the circuit states
+    //Note: this doesn't necessarily update in the right order, so it can be good to call update states a couple times if the result is important
     updateStates() {
         const oldskip = this.myDiagram.skipsUndoManager;
         this.myDiagram.skipsUndoManager = true;
@@ -1100,7 +1135,8 @@ load = () => {
   }
 
 
-  
+//Toggle thorugh the user inputs and see what the outputs are
+//Build a truth table out of this  
 getTruthTable = () => {
 
     this.userAnswerLabelledTruthTable = []
@@ -1121,8 +1157,7 @@ getTruthTable = () => {
     })
   
     
-  
-  
+    //Generate all possibile combinations of n two bit inputs
     const toggleArray = [];
     const recursiveToggle = (n, param) => {
         n= n;
@@ -1157,6 +1192,8 @@ getTruthTable = () => {
       }
       
 
+      //Redundant, but necessary because sometimes the updates don't happen in the right order
+      //I'm not sure what the upper bound on how many updates might be needed, but beyond 3 seems to make no changes
       this.myDiagram.redraw()
       this.updateStates()
       this.myDiagram.redraw()
