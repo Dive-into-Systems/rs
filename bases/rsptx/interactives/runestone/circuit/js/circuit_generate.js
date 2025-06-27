@@ -51,7 +51,8 @@
  * 
  *      -chooseGate(prevChoice=null): chooses a gate to use randomly. If prevChoice is set to the previously used gate, the selected gate will be different.
  * 
- *      -chooseFeedGate(choice, prevChoice=null, prevGate=null): main helper function that recursively generates statement.
+ *      -chooseFeedGate(choice, prevChoice=null, prevGate=null): main helper function that recursively generates statement. The number of gates in the generated
+ *       statement tends towards (minGates+maxGates)/2
  *       -choice (array of ints): possible cases for the switch statement.
  *       -prevChoice: previously chosen case to ensure base case is hit.
  *       -prevGate: previously generated gate to avoid repeatedly generating the same gate.
@@ -87,7 +88,7 @@ export default class circuit_generator{
         if(this.notSelected){
             for(let i = 0; i<numGates; i++){
                 if(!selection.includes(4)){
-                    let notProb = 0.5
+                    let notProb = 0.4
                     if(Math.random()>=notProb)
                         selection.push(Math.floor(Math.random()*(2)+2));
                     else{

@@ -361,7 +361,6 @@ export default class DC extends RunestoneBase {
         this.checkButton.textContent = "Check"
         this.checkButton.className = 'btn btn-success'
 
-        this.answerDiv.appendChild(this.checkButton)
 
         //check function: get the user cirucit's truth table => check it
         this.checkButton.addEventListener("click", ()=>{
@@ -374,6 +373,7 @@ export default class DC extends RunestoneBase {
         this.generateButton.className = 'btn btn-success'
 
         this.answerDiv.appendChild(this.generateButton)
+        this.answerDiv.appendChild(this.checkButton)
 
         //generate function
         this.generateButton.addEventListener("click", ()=>{
