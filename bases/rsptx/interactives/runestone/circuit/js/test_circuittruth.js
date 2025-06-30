@@ -205,6 +205,7 @@ export default class CircuitTruth extends RunestoneBase {
          *    - inputs: array of strings that are used as inputs to the circuit.
          *    - gates: the gates that can be generated in the circuit.
          */
+        let circuit_gen;
         function generateCircuit() {
             let inputs; // possible inputs
             let gates;  // the gates that are possible to generate
@@ -220,11 +221,9 @@ export default class CircuitTruth extends RunestoneBase {
             } else{
                 gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'NOT'];
                 inputs = ['A', 'B', 'C']
-                maxGates = 4;
+                maxGates = 5;
                 minGates = 3;
             }
-
-            let circuit_gen;
 
             circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true, prevCircuit);
             let circuit = circuit_gen.generateStatement();
@@ -460,6 +459,7 @@ export default class CircuitTruth extends RunestoneBase {
              */
             function generateInputNodes(inputNodes) {
                 // Define vertical ordering for inputs. A on top.
+                let stagger = -130;
                 const inputOrder = { 'A': 5, 'B': 4, 'C': 3, 'D' : 2, 'E':1, 'F' : 0};
                 inputNodes.sort((a, b) => inputOrder[a] - inputOrder[b]);
                 inputNodes.forEach((input, index) => {
@@ -479,18 +479,19 @@ export default class CircuitTruth extends RunestoneBase {
                         if (index === 0) {
                         locationY = 110;
                         } else if (index === 1) {
-                        locationY = 0;
+                        locationY = 20;
                         } else {
-                        locationY = -110;
+                        locationY = -90;
                         }
                     }
                     // Add the input node to the array with its position and label.
                     nodeDataArray.push({
                         category: 'input',
                         key: inputId,
-                        loc: `0 ${locationY}`,
+                        loc: `${stagger} ${locationY} `,
                         label: input
                     });
+                    stagger+=10;
                 });
             }
             generateInputNodes(inputNodes);
@@ -516,22 +517,84 @@ export default class CircuitTruth extends RunestoneBase {
              *  - Y coordinate distributed evenly around center based on how many
              *    gates are in that depth.
              */
-            function setPosition(node, depth = 0, layers, positions = {}) {
+            let set2 = [];
+            let set3 = [];
+            function setPosition(node, depth = 0, layers, positions = {}, stagger=20) {
                 if (node.type === 'INPUT') return;
+                let inputCount = circuit_gen.getInformation().numInputs;
                 let width = 400; // Set the width of the canvas to be 400.
                 let numLevels = Object.keys(layers).length; // Number of layers = number of unique depths
                 let interval = width / (numLevels + 1); // Horizontal spacing between layers
-                let xPosition = width - interval * (depth + 1) + 30;
+                let xPosition = width - interval * (depth + 1)+stagger;
                 let yPosition = 0;
 
                 // Determine vertical slot for this node within its depth
                 if (!positions[depth]) positions[depth] = 0;
-                let numGatesAtDepth = layers[depth];
-                let midPoint = Math.floor(numGatesAtDepth / 2);
-                // Spread around zero
-                yPosition = (positions[depth] - midPoint) * 100; 
                 positions[depth]++;
+                if(node.value == "NOT"){
+                    switch(inputCount){
+                        case 2:
+                            if(node.children[0].value == "A"){
+                                yPosition = -110
+                            }else if(node.children[0].value == "B"){
+                                yPosition = 110
+                            }
+                            break;
+                        case 3:
+                            if(node.children[0].value == "A"){
+                                yPosition = -90
+                            }else if (node.children[0].value == "B"){
+                                if(!set3.includes(60)){
+                                    yPosition = 60;
+                                    xPosition -= 10;
+                                }else if (!set3.includes(-60)){
+                                    yPosition = -60;
+                                    xPosition += 10;
+                                }else{
+                                    yPosition = 20;
+                                    xPosition -= 10;
+                                }
+                            }else if (node.children[0].value == "C"){
+                                yPosition = 110
+                            }
+                            break;
+                    }
+                }else{
+                    switch(inputCount){
+                        case 2:
+                            if((node.children[0].value == "A" && node.children[1].value == "B") || (node.children[0].value == "B" && node.children[1].value == "A")){
+                                if(set2.length == 0){
+                                    yPosition = -60;
+                                    set2.push(-60)
+                                }else{
+                                    yPosition = 60;
+                                }
+                                
+                            }
+                            break;
+                        case 3:
+                            if((node.children[0].value == "A" && node.children[1].value == "B") || (node.children[0].value == "B" && node.children[1].value == "A")){
+                                if(!set3.includes(-60)){
+                                    yPosition = -60
+                                    set3.push(-60)
+                                }else{
+                                    yPosition = 60
+                                    set3.push(60)
+                                }
 
+                            }else if ((node.children[0].value == "C" && node.children[1].value == "B") || (node.children[0].value == "B" && node.children[1].value == "C")){
+                                if(!set3.includes(60)){
+                                    yPosition = 60
+                                    set3.push(60)
+                                }else{
+                                    yPosition = -60
+                                    set3.push(-60)
+                                }
+                            }
+                            break;
+                    }
+                }
+                
                 // Add gate node with its calculated position.
                 nodeDataArray.push({
                     category: node.value.toLowerCase(),
@@ -539,7 +602,12 @@ export default class CircuitTruth extends RunestoneBase {
                     loc: `${xPosition} ${yPosition}`
                 });
                 // Recurse into children gates.
-                node.children.forEach(child => setPosition(child, depth + 1, layers, positions));
+                node.children.forEach((child) => {
+                    setPosition(child, depth + 1, layers, positions, stagger)
+                    stagger-=40
+                });
+                set3=[];
+                
             }
             setPosition(node, 0, layers);
 
@@ -645,10 +713,10 @@ export default class CircuitTruth extends RunestoneBase {
                             return inputOrderMapping[minA] - inputOrderMapping[minB];
                         });
                         children.forEach((child, index) => {
-                        let port = (index === 0) ? 'in1' : 'in2';
+                        let port = (index === 0) ? 'in' : 'in';
                         if (child.type === 'INPUT') {
-                            if (child.value === 'A') port = 'in1';
-                            else if (child.value === 'C') port = 'in2';
+                            if (child.value === 'A') port = 'in';
+                            else if (child.value === 'C') port = 'in';
                         }
                         if (child.type === 'INPUT') {
                             linkDataArray.push({

@@ -79,9 +79,12 @@ export default class circuit_generator{
         let numGates = Math.floor(Math.floor(Math.random() * (this.maxGates - this.minGates + 1)) + this.minGates);
         
         let additionalGateProb = 0.5
-        if(numGates<(this.maxGates+this.minGates)/2 && Math.random()<additionalGateProb){
+        let lessGateProb = 0.5
+        if(numGates<=(this.maxGates+this.minGates)/2-1 && Math.random()<additionalGateProb){
             numGates++;
             
+        }else if(numGates>=(this.maxGates+this.minGates)/2+1 && Math.random()<lessGateProb){
+            numGates--;
         }
         console.log(numGates);
         let selection = []
@@ -201,9 +204,14 @@ export default class circuit_generator{
         }
     }
 
-    chooseInput = (prevChoice=null)=>{
-
-        let selectInputs = this.inputs;
+    chooseInput = (prevChoice=null, limit=this.inputs)=>{
+        let selectInputs
+        if(this.inputs.length>2){
+            selectInputs = limit;
+        }else{
+            selectInputs = this.inputs
+        }
+        
     
         if(prevChoice!=null){
             selectInputs = selectInputs.filter(item => item!=prevChoice);
@@ -227,7 +235,7 @@ export default class circuit_generator{
         return selectGate[gateChoice]
     }
 
-    chooseFeedGate = (choice, prevChoice=null, prevGate=null, notGenerated=false) => {
+    chooseFeedGate = (choice, prevChoice=null, prevGate=null, notGenerated=false, limit=this.inputs) => {
         let feedType;
         let remove;
         console.log(choice);
@@ -257,49 +265,59 @@ export default class circuit_generator{
 
         switch(feedType){
             case 4: 
-                return `NOT (${this.chooseFeedGate(choice, feedType, null, true)})`;
+                return `NOT (${this.chooseFeedGate(choice, feedType, null, true, limit)})`;
             case 3:
                 let choice2 = choice;
                 choice2.push(remove)
                 choice2.shift();
                 prevGate = this.chooseGate(prevGate)
-                return `((${this.chooseFeedGate(choice, feedType, prevGate)}) ${prevGate} (${this.chooseFeedGate(choice2, feedType)}))`
+                return `((${this.chooseFeedGate(choice, feedType, prevGate, notGenerated, ["A","B"])}) ${prevGate} (${this.chooseFeedGate(choice2, feedType, null, notGenerated,["B","C"])}))`
             case 2:
                 prevGate = this.chooseGate(prevGate)
-                return `(${this.chooseFeedGate(choice, feedType, prevGate)}) ${prevGate} ${this.chooseInput()}`
+                return `(${this.chooseFeedGate(choice, feedType, prevGate, notGenerated, limit)}) ${prevGate} ${this.chooseInput(limit)}`
             case 1:
-                return (this.notSelected) ? ((!notGenerated)?((Math.floor(Math.random()*7)) ? `${this.gateTemplates[this.chooseGate(prevGate)]()}` : `NOT ${this.chooseInput()}`) : `${this.gateTemplates[this.chooseGate(prevGate)]()}`):`${this.gateTemplates[this.chooseGate(prevGate)]()}`
+                let ret;
+                if(this.notSelected){
+                    if(notGenerated){
+                        ret = `${this.gateTemplates[this.chooseGate(prevGate)](limit)}`
+                    }else{
+                        ret = (Math.floor(Math.random()*7)) ? `${this.gateTemplates[this.chooseGate(prevGate)](limit)}` : `NOT ${this.chooseInput(limit)}`
+                    }
+                } else{
+                    ret = `${this.gateTemplates[this.chooseGate(prevGate)](limit)}`
+                }
+                return ret;
         }
     }
 
     gateTemplates = {
-        ["AND"] : ()=>{
-            const input1 = this.chooseInput();
-            const input2 = this.chooseInput(input1);
+        ["AND"] : (limit)=>{
+            const input1 = this.chooseInput(null, limit);
+            const input2 = this.chooseInput(input1,limit);
             return `${input1} AND ${input2}`;
         },
 
-        ["OR"] : ()=>{
-            const input1 = this.chooseInput();
-            const input2 = this.chooseInput(input1);
+        ["OR"] : (limit)=>{
+            const input1 = this.chooseInput(null, limit);
+            const input2 = this.chooseInput(input1,limit);
             return `${input1} OR ${input2}`;
         },
 
-        ["XOR"] : ()=>{
-            const input1 = this.chooseInput();
-            const input2 = this.chooseInput(input1);
+        ["XOR"] : (limit)=>{
+            const input1 = this.chooseInput(null, limit);
+            const input2 = this.chooseInput(input1,limit);
             return `${input1} XOR ${input2}`;
         },
 
-        ["NAND"] : ()=>{
-            const input1 = this.chooseInput();
-            const input2 = this.chooseInput(input1);
+        ["NAND"] : (limit)=>{
+            const input1 = this.chooseInput(null, limit);
+            const input2 = this.chooseInput(input1,limit);
             return `${input1} NAND ${input2}`;
         },
 
-        ["NOR"] : ()=>{
-            const input1 = this.chooseInput();
-            const input2 = this.chooseInput(input1);
+        ["NOR"] : (limit)=>{
+            const input1 = this.chooseInput(null, limit);
+            const input2 = this.chooseInput(input1,limit);
             return `${input1} NOR ${input2}`;
         },
 

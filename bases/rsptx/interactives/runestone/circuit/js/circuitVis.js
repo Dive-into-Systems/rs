@@ -3,14 +3,12 @@
 
 import RunestoneBase from "../../common/js/runestonebase.js";
 import { Pass } from "codemirror";
-import circuitAST from "./circuit_AST/circuitAST.js";
-import circuit_generator from "./circuit_generate.js";
 import "../css/circuitdraw.css"
 
-export var DCList = {}; // Object containing all instances of DC that aren't a child of a timed assessment.
+export var CVList = {}; // Object containing all instances of CV that aren't a child of a timed assessment.
 
 
-export default class DC extends RunestoneBase {
+export default class CV extends RunestoneBase {
    constructor(opts) {
        super(opts);
 
@@ -52,14 +50,15 @@ export default class DC extends RunestoneBase {
         this.myDiagram
         this.userAnswerLabelledTruthTable = [];
         this.userAnswerTruthTable = []
+        this.inputAndOutputLabels = []
 
 
-
+        this.letters = ["A", "B", "C", "D", "E"]
 
 
        // Fields for logging data
 
-       this.initDCElement();
+       this.initCVElement();
 
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
@@ -91,86 +90,109 @@ export default class DC extends RunestoneBase {
    // Component initialization
 
    //This function sets up everything.
-    initDCElement() {
-        //utillity
-        const generateRandom = (n) => (Math.floor(Math.random()*n))
+    initCVElement() {
 
-        // this.numInputs = 2 + generateRandom(2);
-        // this.numOutputs = 1 + generateRandom(2)
-
-        //Generate two instances of the circuit class (each instance has only one output)
-        //If there are supposed to be two outputs (mode 2), force the second circuit to have the same number of inputs as the first one
-
-        let c1;
-        if(this.modeOutput == 1){
-            c1 = new circuit_generator(["A", "B"], ["AND", "OR", "NOR", "XOR", "NOT"],4,2, true, this.prevCircuit);
-        }
-        else{
-            c1 = new circuit_generator(["A", "B", "C"], ["AND", "OR", "NOR", "XOR", "NOT"],4,2, true, this.prevCircuit);
-        }
-        const s1 = c1.generateStatement();
-        this.prevCircuit = s1
-        const tt1 = c1.getTruthTable();
- 
-        const c2 = new circuit_generator(["A", "B", "C"].slice(0,c1.getInformation().numInputs), ["AND", "OR", "NOR", "XOR", "NOT"], 4,2, true, s1)
-        const s2 = c2.generateStatement();
-        const tt2 = c2.getTruthTable()
-
-        console.log(`Draw Circuits's statements: 1 => ${s1};  2 => ${s2}`)
-
-
-        //Because the modeSelect HTML gets deleted on generate
-        this.numOutputs = this.modeOutput
-        
-        //Merge the two truth tables into one if necessary
-        if(this.numOutputs == 2){
-
-            for(let i = 0; i < tt1.length; i++){
-                tt1[i].push(tt2[i][(tt2[i].length-1)])
-            }
-            this.truthTable = tt1;
-            const d1intputs = c1.getInformation().numInputs
-            const d2inputs = c2.getInformation().numInputs
-            this.numInputs = (d1intputs > d2inputs) ? d1intputs : d2inputs
-
-        }
-        else{
-            this.truthTable = tt1;
-            const d1intputs = c1.getInformation().numInputs
-            this.numInputs = d1intputs
-        }
-
-        console.log(tt1)
 
 
         // This JSON is used initialie the digram.
-        this.startJson = `{ "class": "GraphLinksModel",
-        "linkFromPortIdProperty": "fromPort",
-        "linkToPortIdProperty": "toPort",
-        "nodeDataArray": [`
+        this.startJson = ``;
 
-        //This is how I get the inputs to be labelled A B C D and spaced equally
-        //The outputs are number 1 2 3 ...
-        this.letters = ['A','B','C','D','E']
-        for(let i = 0; i < this.numInputs; i++){
-            if(i < this.numInputs - 1){
-                this.startJson += `{"category":"input","isOn":true,"key":-2,"loc":"${-750} ${-740 + i*80}", "text": "${this.letters[i]}"},`
-            }
-            else{
-                this.startJson += `{"category":"input","isOn":true,"key":-2,"loc":"${-750} ${-740 + i*80}", "text": "${this.letters[i]}"},`
-            }
-
+        if(this.modeOutput == 1){
+            this.startJson = `
+            { "class": "GraphLinksModel",
+            "linkFromPortIdProperty": "fromPort",
+            "linkToPortIdProperty": "toPort",
+            "nodeDataArray": [
+            {"category":"input","isOn":false,"key":-1,"loc":"-900 -450","text":"S0"},
+            {"category":"input","isOn":false,"key":-2,"loc":"-940 -330","text":"S1"},
+            {"category":"output","key":-5,"loc":"-570 -450","isOn":false,"text":"1"},
+            {"category":"input","key":-7,"loc":"-730 -330","isOn":false,"text":"A"},
+            {"category":"input","key":-8,"loc":"-720 -210","isOn":false,"text":"B"},
+            {"category":"input","key":-9,"loc":"-730 -120","isOn":false,"text":"C"},
+            {"category":"input","key":-10,"loc":"-740 -20","isOn":false,"text":"D"},
+            {"category":"threeInputAnd","key":-11,"loc":"-640 -390"},
+            {"category":"not","key":-12,"loc":"-750 -440"},
+            {"category":"not","key":-13,"loc":"-780 -360"},
+            {"category":"threeInputAnd","key":-14,"loc":"-630 -270"},
+            {"category":"threeInputAnd","key":-15,"loc":"-630 -170"},
+            {"category":"threeInputAnd","key":-16,"loc":"-610 -70"},
+            {"category":"fourInputOr","key":-17,"loc":"-550 -270"}
+            ],
+            "linkDataArray": [
+            {"from":-1,"to":-12,"fromPort":"","toPort":"in"},
+            {"from":-2,"to":-13,"fromPort":"","toPort":"in"},
+            {"from":-12,"to":-11,"fromPort":"out","toPort":"in1"},
+            {"from":-13,"to":-11,"fromPort":"out","toPort":"in2"},
+            {"from":-1,"to":-16,"fromPort":"","toPort":"in1"},
+            {"from":-2,"to":-16,"fromPort":"","toPort":"in2"},
+            {"from":-7,"to":-11,"fromPort":"","toPort":"in3"},
+            {"from":-8,"to":-14,"fromPort":"","toPort":"in3"},
+            {"from":-9,"to":-15,"fromPort":"","toPort":"in3"},
+            {"from":-10,"to":-16,"fromPort":"","toPort":"in3"},
+            {"from":-11,"to":-17,"fromPort":"out","toPort":"in1"},
+            {"from":-14,"to":-17,"fromPort":"out","toPort":"in2"},
+            {"from":-15,"to":-17,"fromPort":"out","toPort":"in3"},
+            {"from":-16,"to":-17,"fromPort":"out","toPort":"in4"},
+            {"from":-17,"to":-5,"fromPort":"out","toPort":""},
+            {"from":-12,"to":-15,"fromPort":"out","toPort":"in1"},
+            {"from":-1,"to":-14,"fromPort":"","toPort":"in1"},
+            {"from":-2,"to":-15,"fromPort":"","toPort":"in2"},
+            {"from":-13,"to":-14,"fromPort":"out","toPort":"in2"}
+            ]}
+            `        
         }
-        for(let i = 0; i < this.numOutputs; i++){
-            if(i < this.numOutputs - 1){
-                this.startJson += `{"category":"output","key":-8,"loc":"${-330 } ${-720 + (i*90)}","isOn":false, "text" : "${i+1}"},`
-            }
-            else{
-                this.startJson += `{"category":"output","key":-8,"loc":"${-330} ${-720 + (i*90)}","isOn":false, "text" : "${i+1}"}`
-            }
-
+        else if (this.modeOutput == 2){
+            this.startJson = `
+            { "class": "GraphLinksModel",
+            "linkFromPortIdProperty": "fromPort",
+            "linkToPortIdProperty": "toPort",
+            "nodeDataArray": [
+            {"category":"input","isOn":true,"key":-1,"loc":"-710 -330", "text": "R"},
+            {"category":"input","isOn":true,"key":-2,"loc":"-710 -190", "text": "S"},
+            {"category":"nand","key":-3,"loc":"-540 -320"},
+            {"category":"nand","key":-4,"loc":"-600 -210"},
+            {"category":"output","key":-5,"loc":"-360 -350","isOn":true ,"text":"1"},
+            {"category":"output","key":-6,"loc":"-350 -220","isOn":false ,"text":"2"}
+            ],
+            "linkDataArray": [
+            {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
+            {"from":-2,"to":-4,"fromPort":"","toPort":"in2"},
+            {"from":-3,"to":-4,"fromPort":"out","toPort":"in1"},
+            {"from":-4,"to":-3,"fromPort":"out","toPort":"in2"},
+            {"from":-4,"to":-6,"fromPort":"out","toPort":""},
+            {"from":-3,"to":-5,"fromPort":"out","toPort":""}
+            ]}`
         }
-        this.startJson += '], "linkDataArray":[]}'
+        else{
+            this.startJson = `
+            { "class": "GraphLinksModel",
+            "linkFromPortIdProperty": "fromPort",
+            "linkToPortIdProperty": "toPort",
+            "nodeDataArray": [
+            {"category":"input","isOn":false,"key":-1,"loc":"-770 -280", "text": "D"},
+            {"category":"input","isOn":false,"key":-2,"loc":"-640 -250", "text": "WE"},
+            {"category":"output","key":-5,"loc":"-310 -350","isOn":false,"text":"1"},
+            {"category":"output","key":-6,"loc":"-300 -220","isOn":true,"text":"2"},
+            {"category":"nand","key":-7,"loc":"-490 -320"},
+            {"category":"nand","key":-8,"loc":"-480 -250"},
+            {"category":"nand","key":-9,"loc":"-580 -170"},
+            {"category":"nand","key":-10,"loc":"-590 -360"},
+            {"category":"not","key":-11,"loc":"-640 -150"}
+            ],
+            "linkDataArray": [
+            {"from":-11,"to":-9,"fromPort":"out","toPort":"in2"},
+            {"from":-1,"to":-10,"fromPort":"","toPort":"in1"},
+            {"from":-1,"to":-11,"fromPort":"","toPort":"in"},
+            {"from":-9,"to":-8,"fromPort":"out","toPort":"in2"},
+            {"from":-10,"to":-7,"fromPort":"out","toPort":"in1"},
+            {"from":-2,"to":-10,"fromPort":"","toPort":"in2"},
+            {"from":-2,"to":-9,"fromPort":"","toPort":"in1"},
+            {"from":-7,"to":-8,"fromPort":"out","toPort":"in1"},
+            {"from":-8,"to":-7,"fromPort":"out","toPort":"in2"},
+            {"from":-7,"to":-5,"fromPort":"out","toPort":""},
+            {"from":-8,"to":-6,"fromPort":"out","toPort":""}
+            ]}`
+        }
 
         console.log(this.startJson)
 
@@ -180,7 +202,7 @@ export default class DC extends RunestoneBase {
         // this.generateATruthTable()
         
         //Render the main html
-        this.renderDCPromptAndInput();
+        this.renderCVPromptAndInput();
         
 
 
@@ -189,36 +211,164 @@ export default class DC extends RunestoneBase {
         if(!this.loaded){
             $(this.origElem).replaceWith(this.containerDiv);
             this.loadExternalScripts()
+
             this.loaded = true;
         }else{
             this.init()
+
         }
+
+
 
 
 
    }
 
-   checkAnswer(){
-    //Elem by Elem comparison for the user and answer truth table
-    let correct = true;
-    for(let i = 0; i < this.userAnswerTruthTable.length; i++){
-        for(let j = 0; j < this.userAnswerTruthTable[0].length; j++){
-            if(this.userAnswerTruthTable[i][j] != this.truthTable[i][j]){
-                correct = false;
+   highlightATableRow(){
+
+        if(!this.table){
+            return
+        }
+
+        let inputVals = [];
+        this.myDiagram.nodes.each(n=>{
+        if(n.category == "input"){
+            inputVals.push(n.data.isOn ? 1 : 0)
+        }
+        })
+
+        let outputRow
+        for(let i = 0; i < this.userAnswerTruthTable.length; i++){
+            let match = true;
+            for(let x = 0; x < inputVals.length; x++){
+                if(this.userAnswerTruthTable[i][x] != inputVals[x]){
+                    match = false;
+                }
+
+            }
+            if(match){
+                outputRow = i
+            }
+            
+        }
+
+        //need to set back to normal
+        for(let i = 1; i < this.table.rows.length; i++){
+            if(i == outputRow+1){
+                this.table.rows.item(i).style.background = "rgba(178, 255, 187, 0.5)" 
+
+            }
+            else{
+                this.table.rows.item(i).style.background = "white"
             }
         }
+
+   }
+
+
+
+   renderCircuitTable(){
+    
+    this.tdH3 = document.createElement("div")
+    this.tdH3.textContent = "Truth Table:"
+    this.answerDiv.append(this.tdH3)
+
+    this.tableDiv = document.createElement("div")
+    this.tableDiv.className = 'tables-container'
+
+    this.getTruthTable()
+    
+    
+    this.table = document.createElement("table")
+    this.table.className = 'register-table'
+    const th = document.createElement("tr")
+    let thInnerHTML = ""
+    for(let i = 0; i < this.numInputs+this.numOutputs; i++){
+        thInnerHTML += `<th style='text-align:center;'>${this.inputAndOutputLabels[i]}</th>`
     }
 
-    this.correct = correct;
+    th.innerHTML = thInnerHTML
+    this.table.appendChild(th)
 
-    // Feedback stuff
-    const msg = `Anwer is ${correct ? 'correct' : 'incorrect'}`
-    console.log(msg)
-    this.feedbackHTML = `${msg}`
-    this.renderDCFeedbackDiv()
+    let tableDataHTML = ""
+    for(let i = 0; i < 2**this.numInputs; i++){
+        let trInnerHTML = "<tr>"
+        for(let j = 0; j < this.numInputs + this.numOutputs; j++){
+            trInnerHTML += `<td> ${this.userAnswerTruthTable[i][j]} </td>`
+        }
+        trInnerHTML += "</tr>"
+        tableDataHTML += trInnerHTML;
+    }
+    this.table.innerHTML += tableDataHTML
+
+    this.tableDiv.appendChild(this.table)
+    this.answerDiv.append(this.tableDiv)
    }
+
+   renderMUXTable(){
+    this.tdH3 = document.createElement("div")
+    this.tdH3.textContent = "Truth Table:"
+    this.answerDiv.append(this.tdH3)
+
+    this.MUXTable = document.createElement("table")
+    this.MUXTable.className = 'register-table'
+    
+    this.tableDiv = document.createElement("div")
+    this.tableDiv.className = 'tables-container'
+
+    this.MUXTable.innerHTML = 
+    `
+    <tr>  <th>S0</th> <th>S1</th>  <th>Output Selected</th>   </tr>
+    <tr> <td>0</td> <td>0</td> <td>A</td> </tr>
+    <tr> <td>1</td> <td>0</td> <td>B</td> </tr>
+    <tr> <td>0</td> <td>1</td> <td>C</td> </tr>
+    <tr> <td>1</td> <td>1</td> <td>D</td> </tr>
+    `
+
+    this.tableDiv.appendChild(this.MUXTable)
+    this.answerDiv.append(this.tableDiv)
+   }
+
+   highlightMUXTable(){
+    if(!this.MUXTable){
+        return
+    }
+
+    let inputVals = [];
+    this.myDiagram.nodes.each(n=>{
+    if(n.category == "input"){
+        inputVals.push(n.data.isOn ? 1 : 0)
+    }
+    })
+
+    let outputRow;
+    if(!inputVals[0] && !inputVals[1]){
+        outputRow = 0;
+    }
+    else if(inputVals[0] && !inputVals[1]){
+        outputRow = 1;
+    }
+    else if(!inputVals[0] && inputVals[1]){
+        outputRow = 2;
+    }
+    else{
+        outputRow = 3
+    }
+
+    //need to set back to normal
+    for(let i = 1; i < this.table.rows.length; i++){
+        if(i == outputRow+1){
+            this.MUXTable.rows.item(i).style.background = "rgba(178, 255, 187, 0.5)" 
+
+        }
+        else{
+            this.MUXTable.rows.item(i).style.background = "white"
+        }
+    }
+   }
+
        
-    renderDCPromptAndInput() {
+    renderCVPromptAndInput() {
 
         if(!this.containerDiv){
             this.containerDiv = document.createElement("div"); 
@@ -257,27 +407,34 @@ export default class DC extends RunestoneBase {
         this.modeSelect.className = "form-control fork-inline mode outputSelect"
         this.mode1Option = document.createElement("option")
         this.mode1Option.value = "1"
-        this.mode1Option.textContent = "1"
+        this.mode1Option.textContent = "Multiplexer"
 
         this.mode2Option = document.createElement("option")
         this.mode2Option.value = "2"
-        this.mode2Option.textContent = "2"
+        this.mode2Option.textContent = "RS Latch"
 
+        this.mode3Option = document.createElement("option")
+        this.mode3Option.value = "3"
+        this.mode3Option.textContent = "Gated D-Latch"
 
-        this.modeSelect.addEventListener("change", ()=>{ this.modeOutput = Number(this.modeSelect.value); this.generateButton.click()})
+        this.modeSelect.addEventListener("change", ()=>{ this.modeOutput = Number(this.modeSelect.value); this.genFunc()})
 
         this.modeSelectText = document.createElement("div")
-        this.modeSelectText.append(document.createTextNode('Select the number of outputs:'))
+        this.modeSelectText.append(document.createTextNode('Select a component to visualize'))
 
         this.modeSelect.append(this.mode1Option)
         this.modeSelect.append(this.mode2Option)
+        this.modeSelect.append(this.mode3Option)
 
         if(this.modeOutput == 1){
             this.mode1Option.selected = "selected"
         }
-        else{
+        else if (this.modeOutput == 2){
             this.mode2Option.selected = "selected"
 
+        }
+        else{
+            this.mode3Option.selected = "selected"
         }
 
         modeDiv.append(this.modeSelectText)
@@ -321,71 +478,23 @@ export default class DC extends RunestoneBase {
         this.answerDiv = document.createElement("div")
         this.wrapperDiv.append(this.answerDiv)
 
-        this.tdH3 = document.createElement("div")
-        this.tdH3.textContent = "Truth Table:"
-        this.answerDiv.append(this.tdH3)
-
-        this.tableDiv = document.createElement("div")
-        this.tableDiv.className = 'tables-container'
 
 
-        const table = document.createElement("table")
-        table.className = 'register-table'
-        const th = document.createElement("tr")
-        let thInnerHTML = ""
-        for(let i = 0; i < this.numInputs; i++){
-            thInnerHTML += `<th style='text-align:center;'>${this.letters[i]}</th>`
-        }
-        for(let i = 0; i < this.numOutputs; i++){
-            thInnerHTML += `<th style='text-align:center;'>Output ${i+1}</th>`
-        }
-        th.innerHTML = thInnerHTML
-        table.appendChild(th)
-
-        let tableDataHTML = ""
-        for(let i = 0; i < 2**this.numInputs; i++){
-            let trInnerHTML = "<tr>"
-            for(let j = 0; j < this.numInputs + this.numOutputs; j++){
-                trInnerHTML += `<td> ${this.truthTable[i][j]} </td>`
-            }
-            trInnerHTML += "</tr>"
-            tableDataHTML += trInnerHTML;
-        }
-        table.innerHTML += tableDataHTML
-
-        this.tableDiv.appendChild(table)
-        this.answerDiv.append(table)
 
 
-        this.checkButton = document.createElement("button")
-        this.checkButton.textContent = "Check"
-        this.checkButton.className = 'btn btn-success'
 
-
-        //check function: get the user cirucit's truth table => check it
-        this.checkButton.addEventListener("click", ()=>{
-            this.getTruthTable()
-            this.checkAnswer()
-        })
-
-        this.generateButton = document.createElement("button")
-        this.generateButton.textContent = "Generate Another Question"
-        this.generateButton.className = 'btn btn-success'
-
-        this.answerDiv.appendChild(this.generateButton)
-        this.answerDiv.appendChild(this.checkButton)
-
-        //generate function
-        this.generateButton.addEventListener("click", ()=>{
-            this.removeEverything()
-            this.initDCElement()
-        })
 
 
         this.containerDiv.append(this.wrapperDiv)
 
         $(this.origElem).children().clone().appendTo(this.containerDiv);
 
+    }
+
+
+    genFunc(){
+        this.removeEverything()
+        this.initCVElement()
     }
 
     //This function is no longer used
@@ -474,7 +583,7 @@ export default class DC extends RunestoneBase {
 
 
     //Handel the HTML side of the feedback 
-    renderDCFeedbackDiv() {
+    renderCVFeedbackDiv() {
         if(this.feedbackDiv){
             this.feedbackDiv.remove()
         }
@@ -539,6 +648,8 @@ export default class DC extends RunestoneBase {
         this.updateStates();
 
         this.myDiagram.commitTransaction('Toggle Input');
+
+
     }
 
     //Deprecated (and of somewhat dubious utillity)
@@ -573,6 +684,9 @@ export default class DC extends RunestoneBase {
         });
 
         const palette = new go.Palette('palette'); // create a new Palette in the HTML DIV element "palette"
+        palette.contentAlignment = go.Spot.Center;
+
+        this.myDiagram.routers.add(new AvoidsLinksRouter());
 
         // creates relinkable Links that will avoid crossing Nodes when possible and will jump over other Links in their paths
         this.myDiagram.linkTemplate = new go.Link({
@@ -649,9 +763,16 @@ export default class DC extends RunestoneBase {
 
             const isOn = !obj.data.isOn;
             this.myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
+            if(this.modeOutput != 1){
+                this.highlightATableRow()
+            }
+            else{
+                this.highlightMUXTable()
+            }
 
             this.updateStates();
             e.diagram.commitTransaction('Toggle Input');
+            console.log(this.myDiagram.model.toJson())
         }
 
 
@@ -665,7 +786,7 @@ export default class DC extends RunestoneBase {
                 click: (e, obj) => {
                     nodeOnClickFunction(e, obj)
                 },
-                deletable : false,
+                deletable : true,
                 movable : true,
             })
         .add(
@@ -693,7 +814,7 @@ export default class DC extends RunestoneBase {
                 portId: '',
                 alignment: new go.Spot(1, 0.5, -2, 0)
             }),
-        new go.TextBlock({margin: 4}).bind("text", "text"),
+        new go.TextBlock({margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind("text", "text"),
         );
 
         const switchTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -792,7 +913,7 @@ export default class DC extends RunestoneBase {
         const outputTemplate = new go.Node('Spot', nodeStyle())
         .set({
         isShadowed: true,
-        deletable : false,
+        deletable : true,
         movable : true,
         })
         .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
@@ -825,7 +946,7 @@ export default class DC extends RunestoneBase {
                 alignmentFocus: new go.Spot(0.5, 0, 0, 2)
                 })
                 .bindObject('shadowVisible', 'isSelected'),
-                new go.TextBlock({margin: 4}).bind("text", "text"),
+                new go.TextBlock({margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind("text", "text"),
 
             ),
         new go.Shape(portStyle(true, new go.Spot(0.5, 1, 0, -3))).set({
@@ -852,8 +973,32 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
+
+        const threeInputAndTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('AndGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0, 0.6)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in3',
+            alignment: new go.Spot(0, 0.9)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            alignment: new go.Spot(1, 0.5)
+        })
+        )
+        //.add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        ;
+
 
         const orTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
         .add(
@@ -872,7 +1017,35 @@ export default class DC extends RunestoneBase {
         })
 
         )
-        .add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        ;
+
+        const fourInputOrTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('OrGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0.16, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0.16, 0.5)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in3',
+            alignment: new go.Spot(0.16, 0.7)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in4',
+            alignment: new go.Spot(0.16, 0.9)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            alignment: new go.Spot(1, 0.5)
+        })
+
+        )
+        //.add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
         const xorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -891,7 +1064,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
         const norTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -911,7 +1084,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
 
@@ -932,7 +1105,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
         const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -948,7 +1121,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
         // add the templates created above to this.myDiagram and palette
@@ -956,14 +1129,16 @@ export default class DC extends RunestoneBase {
         this.myDiagram.nodeTemplateMap.add('output', outputTemplate);
 
         this.myDiagram.nodeTemplateMap.add('and', andTemplate);
+        this.myDiagram.nodeTemplateMap.add('threeInputAnd', threeInputAndTemplate);
         this.myDiagram.nodeTemplateMap.add('or', orTemplate);
+        this.myDiagram.nodeTemplateMap.add('fourInputOr', fourInputOrTemplate);
+
         this.myDiagram.nodeTemplateMap.add('not', notTemplate);
 
-        if(this.modeOutput == 2){
-            this.myDiagram.nodeTemplateMap.add('xor', xorTemplate);
-            this.myDiagram.nodeTemplateMap.add('nand', nandTemplate);
-            this.myDiagram.nodeTemplateMap.add('nor', norTemplate);
-        }
+        this.myDiagram.nodeTemplateMap.add('xor', xorTemplate);
+        this.myDiagram.nodeTemplateMap.add('nand', nandTemplate);
+        this.myDiagram.nodeTemplateMap.add('nor', norTemplate);
+        
 
 
         // share the template map with the Palette
@@ -976,15 +1151,21 @@ export default class DC extends RunestoneBase {
         palette.nodeTemplateMap = paletteMap;
 
         let ndArr = []
+        ndArr.push({ category: 'input' })
+        ndArr.push({ category: 'output' })
+
         ndArr.push({ category: 'and' })
+        ndArr.push({ category: 'threeInputAnd' })
+
         ndArr.push({ category: 'or' })
+        ndArr.push({ category: 'fourInputOr' })
+
         ndArr.push({ category: 'not' })
 
-        if(this.modeOutput == 2){
-            ndArr.push({ category: 'nor' })
-            ndArr.push({ category: 'nand' })
-            ndArr.push({ category: 'xor' })
-        }
+        ndArr.push({ category: 'nor' })
+        ndArr.push({ category: 'nand' })
+        ndArr.push({ category: 'xor' })
+        
 
         palette.model.nodeDataArray = ndArr
         // load the initial diagram
@@ -992,7 +1173,12 @@ export default class DC extends RunestoneBase {
 
         this.diagramReady = true;
 
-
+        if(this.modeOutput != 1){
+            this.renderCircuitTable()
+        }
+        else{
+            this.renderMUXTable()
+        }
         // continually update the diagram
         this.loop();
 
@@ -1003,7 +1189,7 @@ export default class DC extends RunestoneBase {
         this.timeoutId = setTimeout(() => {
         this.updateStates();
         this.loop();
-        }, 750);
+        }, 340);
     }
 
     //Updates the circuit states
@@ -1026,7 +1212,13 @@ export default class DC extends RunestoneBase {
             case 'and':
                 this.doAnd(node);
                 break;
+            case 'threeInputAnd':
+                this.doAnd(node);
+                break;
             case 'or':
+                this.doOr(node);
+                break;
+            case 'fourInputOr':
                 this.doOr(node);
                 break;
             case 'xor':
@@ -1083,7 +1275,7 @@ doSwitch = (node) => {
 
 doAnd = (node) => {
     const linksInto = node.findLinksInto();
-    const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) && linksInto.count % 2 == 0 ? this.green : this.red;
+    const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) ? this.green : this.red;
     this.setOutputLinks(node, color);
   }
 doNand = (node) => {
@@ -1207,6 +1399,7 @@ getTruthTable = () => {
       outputNodes.forEach(e => {
         outputValues.push({"label": e.data.text,"value":e.data.isOn ? 1 : 0})
         outputNumbers.push(e.data.isOn ? 1 : 0)
+
       })
       truthTable.push([inputData, outputValues])
       this.userAnswerTruthTable.push([...elem, ...outputNumbers])
@@ -1214,11 +1407,23 @@ getTruthTable = () => {
 
     }
 
+    this.inputAndOutputLabels = []
+    for(let elem of inputNodes){
+        this.inputAndOutputLabels.push(elem.data.text)
+    }
+    for(let elem of outputNodes){
+        this.inputAndOutputLabels.push(elem.data.text)
+    }
+
+    this.numInputs = inputNodes.length
+    this.numOutputs = outputNodes.length
+
+    console.log(this.inputAndOutputLabels)
     console.log(truthTable)
     console.log(this.userAnswerTruthTable)
     this.userAnswerLabelledTruthTable = truthTable
 
-
+    
     
   //   simulatedClickFunction(inputNodes[0].obj, false)
   //     simulatedClickFunction(inputNodes[1].obj, true)
@@ -1251,7 +1456,7 @@ getTruthTable = () => {
     ==   execute our code on them    ==
     =================================*/
     $(document).on("runestone:login-complete", function () {
-        $("[data-component=drawCircuit]").each(function (index) {
+        $("[data-component=circuitVis]").each(function (index) {
             var opts = {
                 orig: this,
                 useRunestoneServices: eBookConfig.useRunestoneServices,
@@ -1259,7 +1464,7 @@ getTruthTable = () => {
             if ($(this).closest("[data-component=timedAssessment]").length == 0) {
                 // If this element exists within a timed component, don't render it here
                 try {
-                    DCList[this.id] = new DC(opts);
+                    CVList[this.id] = new CV(opts);
                 } catch (err) {
                     console.log(
                         `Error rendering Bitwise Operation Problem ${this.id}

@@ -111,6 +111,8 @@ const module_map = {
     webwork: () => import("./runestone/webwork/js/webwork.js"),
     youtube: () => import("./runestone/video/js/runestonevideo.js"),
     drawCircuit: ()=> import("./runestone/circuit/js/drawCircuit.js"),
+    circuitVis: ()=> import("./runestone/circuit/js/circuitVis.js"),
+
 };
 
 const module_map_cache = {};

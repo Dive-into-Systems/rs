@@ -17,10 +17,7 @@
 //   Rectangle, Square, RoundedRectangle, Border, Ellipse, Circle,
 //   TriangleRight, TriangleDown, TriangleLeft, TriangleUp, Triangle,
 //   LineH, LineV, None, BarH, BarV, MinusLine, PlusLine, XLine, Capsule
-// If you need any of the other figures that are defined in this file, we suggest that you copy
-// just those definitions into your own code.  Do not load this file unless you really want to
-// define a lot of code that your app does not use and will not get garbage-collected.
-// The following functions and variables are used throughout this file:
+
 /**
  * @hidden @internal
  * This FigureParameter class describes various properties each parameter uses in figures.
