@@ -543,17 +543,6 @@ export default class CircuitTruth extends RunestoneBase {
                         case 3:
                             if(node.children[0].value == "A"){
                                 yPosition = -90
-                            }else if (node.children[0].value == "B"){
-                                if(!set3.includes(60)){
-                                    yPosition = 60;
-                                    xPosition -= 10;
-                                }else if (!set3.includes(-60)){
-                                    yPosition = -60;
-                                    xPosition += 10;
-                                }else{
-                                    yPosition = 20;
-                                    xPosition -= 10;
-                                }
                             }else if (node.children[0].value == "C"){
                                 yPosition = 110
                             }
@@ -576,9 +565,11 @@ export default class CircuitTruth extends RunestoneBase {
                             if((node.children[0].value == "A" && node.children[1].value == "B") || (node.children[0].value == "B" && node.children[1].value == "A")){
                                 if(!set3.includes(-60)){
                                     yPosition = -60
+                                    xPosition+=15
                                     set3.push(-60)
                                 }else{
                                     yPosition = 60
+                                    xPosition+=15
                                     set3.push(60)
                                 }
 

@@ -627,6 +627,7 @@ export default class CV extends RunestoneBase {
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
                 import('./figures.js').then(()=>self.init())
+
             });
         });
 
@@ -686,11 +687,11 @@ export default class CV extends RunestoneBase {
         const palette = new go.Palette('palette'); // create a new Palette in the HTML DIV element "palette"
         palette.contentAlignment = go.Spot.Center;
 
-        this.myDiagram.routers.add(new AvoidsLinksRouter());
+        // this.myDiagram.routers.add(new AvoidsLinksRouter());
 
         // creates relinkable Links that will avoid crossing Nodes when possible and will jump over other Links in their paths
         this.myDiagram.linkTemplate = new go.Link({
-        routing: go.Link.AvoidsNodes,
+        // routing: go.Routing.Orthogonal,
         curve: go.Curve.JumpOver,
         corner: 3,
         relinkableFrom: true,
@@ -723,6 +724,7 @@ export default class CV extends RunestoneBase {
         };
         }
 
+
         function applyNodeBindings(node) {
         node.bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify);
         node.bindObject('isShadowed', 'isSelected');
@@ -738,6 +740,34 @@ export default class CV extends RunestoneBase {
                 strokeWidth: 2
             };
         }
+        const threeAndStyle = () => {
+            return {
+                name: 'NODESHAPE',
+                fill: this.gray,
+                stroke: this.darkGray,
+                desiredSize: new go.Size(50, 50),
+                strokeWidth: 2
+            };
+        }
+        const notStyle = () => {
+            return {
+                name: 'NODESHAPE',
+                fill: this.gray,
+                stroke: this.darkGray,
+                desiredSize: new go.Size(30, 30),
+                strokeWidth: 2
+            };
+        }
+        const junctionStyle = () => {
+            return {
+                name: 'NODESHAPE',
+                fill: this.gray,
+                stroke: this.darkGray,
+                desiredSize: new go.Size(5, 5),
+                strokeWidth: 2
+            };
+        }
+
 
         const portStyle = (input, spot) => {
             return {
@@ -976,7 +1006,7 @@ export default class CV extends RunestoneBase {
         //.add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
-        const threeInputAndTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        const threeInputAndTemplate = applyNodeBindings(new go.Node('Spot', threeAndStyle()))
         .add(
         new go.Shape('AndGate', shapeStyle()),
         new go.Shape(portStyle(true)).set({
@@ -1110,7 +1140,7 @@ export default class CV extends RunestoneBase {
 
         const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
         .add(
-        new go.Shape('Inverter', shapeStyle()),
+        new go.Shape('Inverter', notStyle()),
         new go.Shape(portStyle(true)).set({
             portId: 'in',
             alignment: new go.Spot(0, 0.5)
@@ -1123,6 +1153,29 @@ export default class CV extends RunestoneBase {
         )
         //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
+
+        const junctionTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('Circle', junctionStyle())
+        .bindTwoWay("fill", "fillColor"),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0.5, 0.5)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out1',
+            opacity: 0,
+            alignment:  new go.Spot(0.5, 0.5)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out2',
+            opacity: 0,
+            alignment:  go.Spot.Center
+        }),
+        )
+        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        ;
+
 
         // add the templates created above to this.myDiagram and palette
         this.myDiagram.nodeTemplateMap.add('input', inputTemplate);
@@ -1138,7 +1191,7 @@ export default class CV extends RunestoneBase {
         this.myDiagram.nodeTemplateMap.add('xor', xorTemplate);
         this.myDiagram.nodeTemplateMap.add('nand', nandTemplate);
         this.myDiagram.nodeTemplateMap.add('nor', norTemplate);
-        
+        this.myDiagram.nodeTemplateMap.add('junction', junctionTemplate);
 
 
         // share the template map with the Palette
@@ -1165,7 +1218,8 @@ export default class CV extends RunestoneBase {
         ndArr.push({ category: 'nor' })
         ndArr.push({ category: 'nand' })
         ndArr.push({ category: 'xor' })
-        
+        ndArr.push({ category: 'junction' })
+
 
         palette.model.nodeDataArray = ndArr
         // load the initial diagram
@@ -1238,6 +1292,9 @@ export default class CV extends RunestoneBase {
                 break;
             case 'output':
                 this.doOutput(node);
+                break;
+            case 'junction':
+                this.doJunction(node);
                 break;
             case 'input':
                 break; // doInput already called, above
@@ -1320,6 +1377,11 @@ doOutput = (node) => {
       this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
     });
   }
+doJunction = (node) => {
+    const color = node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
+    this.setOutputLinks(node, color);
+    this.myDiagram.model.setDataProperty(node.data, 'fillColor', color);
+}
 
 
 load = () => {

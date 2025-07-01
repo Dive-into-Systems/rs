@@ -78,7 +78,7 @@ export default class circuit_generator{
     generateStatement = ()=>{
         let numGates = Math.floor(Math.floor(Math.random() * (this.maxGates - this.minGates + 1)) + this.minGates);
         
-        let additionalGateProb = 0.5
+        let additionalGateProb = 0.75
         let lessGateProb = 0.5
         if(numGates<=(this.maxGates+this.minGates)/2-1 && Math.random()<additionalGateProb){
             numGates++;
@@ -106,6 +106,11 @@ export default class circuit_generator{
             for(let i = 0; i<numGates; i++){
                 selection.push(Math.floor((Math.random()*(2)+2)))
             }
+        }
+
+        if(!selection.includes(3)||selection.indexOf(3)==selection.length-1){
+            selection.splice(Math.floor(selection/2), 0, 3);
+            selection.pop();
         }
 
         this.ret = this.chooseFeedGate(selection);
@@ -243,7 +248,7 @@ export default class circuit_generator{
         if (choice.length == 1){
             feedType = 1;
         }else {
-            feedType = choice[(Math.floor(Math.random()*choice.length))];
+            feedType = choice[0];
             if(feedType == prevChoice && feedType!=2){
                 feedType--;
             }else if (feedType == prevChoice && feedType == 2){
@@ -281,7 +286,7 @@ export default class circuit_generator{
                     if(notGenerated){
                         ret = `${this.gateTemplates[this.chooseGate(prevGate)](limit)}`
                     }else{
-                        ret = (Math.floor(Math.random()*7)) ? `${this.gateTemplates[this.chooseGate(prevGate)](limit)}` : `NOT ${this.chooseInput(limit)}`
+                        ret = (Math.floor(Math.random()*7)) ? `${this.gateTemplates[this.chooseGate(prevGate)](limit)}` : `NOT ${this.chooseInput(null, ["A", "C"])}`
                     }
                 } else{
                     ret = `${this.gateTemplates[this.chooseGate(prevGate)](limit)}`
