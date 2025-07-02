@@ -240,7 +240,7 @@ export default class DC extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.paddingBottom = "2px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Draw a circuit that produces the truth table below. "
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the randomly-generated truth table shown below, with inputs [A, B, C, ...] and outputs [1, 2, ...], draw a circuit that implements the truth table.  Select gates from the bank on the left and drag them onto the canvas.  Connect inputs, gates, and outputs to one another by clicking and dragging from the connection points between them."
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
@@ -267,7 +267,7 @@ export default class DC extends RunestoneBase {
         this.modeSelect.addEventListener("change", ()=>{ this.modeOutput = Number(this.modeSelect.value); this.generateButton.click()})
 
         this.modeSelectText = document.createElement("div")
-        this.modeSelectText.append(document.createTextNode('Select the number of outputs:'))
+        this.modeSelectText.innerHTML = `<div style="margin-right: 2px;"> <span style='font-weight:bold'><u>Configure Question</u></span>:Select the number of outputs in the circuit: </div>`
 
         this.modeSelect.append(this.mode1Option)
         this.modeSelect.append(this.mode2Option)
@@ -297,9 +297,9 @@ export default class DC extends RunestoneBase {
         this.circuitDiv = document.createElement("div")
         const html = "<div id='sample'>"+
             "<div style='width: 100%; display: flex; justify-content: space-between'>" +
-            "<div id='palette' style='width: 100px; height: 600px; margin-right: 2px; background-color: #f3f4f6; border: solid 1px black;'" +
+            "<div id='palette' style='width: 100px; height: 500px; margin-right: 2px; background-color:rgb(255, 255, 255); border: solid 1px black;'" +
             "></div>"+
-            "<div id='myDiagramDiv' class='myDiagramDiv' style='background-color: #f3f4f6; flex-grow: 1; height: 500px; border: solid 1px black'></div>"+
+            "<div id='myDiagramDiv' class='myDiagramDiv' style='background-color:rgb(255, 255, 255); flex-grow: 1; height: 500px; border: solid 1px black'></div>"+
             "</div>"
         this.circuitDiv.innerHTML = html
         this.textArea = document.createElement("textarea")
@@ -358,7 +358,7 @@ export default class DC extends RunestoneBase {
 
 
         this.checkButton = document.createElement("button")
-        this.checkButton.textContent = "Check"
+        this.checkButton.textContent = "Check Answer"
         this.checkButton.className = 'btn btn-success'
 
 
@@ -369,7 +369,7 @@ export default class DC extends RunestoneBase {
         })
 
         this.generateButton = document.createElement("button")
-        this.generateButton.textContent = "Generate Another Question"
+        this.generateButton.textContent = "Generate another question"
         this.generateButton.className = 'btn btn-success'
 
         this.answerDiv.appendChild(this.generateButton)
@@ -517,6 +517,8 @@ export default class DC extends RunestoneBase {
 
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
+                go.Diagram.licenseKey =
+"2b8647e1b2604fc702d90676423d6bbc5cf07d34cd960ef6590015f5ec5b6f40729be17906dad8c4d3f04df9487ac6d9ddc26c2ac31b003fe165d2df10f096ffb26424b2165b47daa40321c390f22ca0a97078f7cbb374a3dd7ed9f0effbc5985abcf2d740c95cb3792d0635066cbf4ce2abdf7bab52cd5d7b6e99a4fef6a856fa";
                 import('./figures.js').then(()=>self.init())
             });
         });
@@ -555,7 +557,9 @@ export default class DC extends RunestoneBase {
             initialContentAlignment: go.Spot.Center,
             allowDrop: true,
             "draggingTool.isGridSnapEnabled": true,
-            "undoManager.isEnabled": true
+            "undoManager.isEnabled": true,
+            'grid.visible': true
+
         });
 
         this.myDiagram.allowClipboard = false

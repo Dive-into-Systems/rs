@@ -197,4 +197,5 @@ input.input-validation-error {
 
 .itemLi{
   display:flex;
+  padding: 0px 2px 0px 2px;
 }

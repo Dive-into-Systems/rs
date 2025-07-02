@@ -99,99 +99,121 @@ export default class CV extends RunestoneBase {
 
         if(this.modeOutput == 1){
             this.startJson = `
-            { "class": "GraphLinksModel",
-            "linkFromPortIdProperty": "fromPort",
-            "linkToPortIdProperty": "toPort",
-            "nodeDataArray": [
-            {"category":"input","isOn":false,"key":-1,"loc":"-900 -450","text":"S0"},
-            {"category":"input","isOn":false,"key":-2,"loc":"-940 -330","text":"S1"},
-            {"category":"output","key":-5,"loc":"-570 -450","isOn":false,"text":"1"},
-            {"category":"input","key":-7,"loc":"-730 -330","isOn":false,"text":"A"},
-            {"category":"input","key":-8,"loc":"-720 -210","isOn":false,"text":"B"},
-            {"category":"input","key":-9,"loc":"-730 -120","isOn":false,"text":"C"},
-            {"category":"input","key":-10,"loc":"-740 -20","isOn":false,"text":"D"},
-            {"category":"threeInputAnd","key":-11,"loc":"-640 -390"},
-            {"category":"not","key":-12,"loc":"-750 -440"},
-            {"category":"not","key":-13,"loc":"-780 -360"},
-            {"category":"threeInputAnd","key":-14,"loc":"-630 -270"},
-            {"category":"threeInputAnd","key":-15,"loc":"-630 -170"},
-            {"category":"threeInputAnd","key":-16,"loc":"-610 -70"},
-            {"category":"fourInputOr","key":-17,"loc":"-550 -270"}
-            ],
-            "linkDataArray": [
-            {"from":-1,"to":-12,"fromPort":"","toPort":"in"},
-            {"from":-2,"to":-13,"fromPort":"","toPort":"in"},
-            {"from":-12,"to":-11,"fromPort":"out","toPort":"in1"},
-            {"from":-13,"to":-11,"fromPort":"out","toPort":"in2"},
-            {"from":-1,"to":-16,"fromPort":"","toPort":"in1"},
-            {"from":-2,"to":-16,"fromPort":"","toPort":"in2"},
-            {"from":-7,"to":-11,"fromPort":"","toPort":"in3"},
-            {"from":-8,"to":-14,"fromPort":"","toPort":"in3"},
-            {"from":-9,"to":-15,"fromPort":"","toPort":"in3"},
-            {"from":-10,"to":-16,"fromPort":"","toPort":"in3"},
-            {"from":-11,"to":-17,"fromPort":"out","toPort":"in1"},
-            {"from":-14,"to":-17,"fromPort":"out","toPort":"in2"},
-            {"from":-15,"to":-17,"fromPort":"out","toPort":"in3"},
-            {"from":-16,"to":-17,"fromPort":"out","toPort":"in4"},
-            {"from":-17,"to":-5,"fromPort":"out","toPort":""},
-            {"from":-12,"to":-15,"fromPort":"out","toPort":"in1"},
-            {"from":-1,"to":-14,"fromPort":"","toPort":"in1"},
-            {"from":-2,"to":-15,"fromPort":"","toPort":"in2"},
-            {"from":-13,"to":-14,"fromPort":"out","toPort":"in2"}
-            ]}
+                { "class": "GraphLinksModel",
+                "linkFromPortIdProperty": "fromPort",
+                "linkToPortIdProperty": "toPort",
+                "nodeDataArray": [
+                {"category":"input","isOn":false,"key":-1,"loc":"-957 -428","text":"S0"},
+                {"category":"input","isOn":false,"key":-2,"loc":"-957 -379","text":"S1"},
+                {"category":"output","key":-5,"loc":"-510 -250","isOn":false,"text":"1"},
+                {"category":"input","key":-7,"loc":"-981 -266","isOn":false,"text":"A"},
+                {"category":"input","key":-8,"loc":"-984 -167","isOn":false,"text":"B"},
+                {"category":"input","key":-9,"loc":"-995 -76","isOn":false,"text":"C"},
+                {"category":"input","key":-10,"loc":"-994 5","isOn":false,"text":"D"},
+                {"category":"threeInputAnd","key":-11,"loc":"-660 -290"},
+                {"category":"threeInputAnd","key":-12,"loc":"-660 -190"},
+                {"category":"threeInputAnd","key":-13,"loc":"-660 -100"},
+                {"category":"threeInputAnd","key":-14,"loc":"-660 -20"},
+                {"category":"junction","key":-16,"loc":"-890 -80","fillColor":"#b91c1c"},
+                {"category":"junction","key":-17,"loc":"-890 -370","fillColor":"#b91c1c"},
+                {"category":"junction","key":-15,"loc":"-890 0","fillColor":"#b91c1c"},
+                {"category":"junction","key":-19,"loc":"-827 -269","fillColor":"#15803d"},
+                {"category":"junction","key":-20,"loc":"-828 -170","fillColor":"#15803d"},
+                {"category":"junction","key":-21,"loc":"-760 -420","fillColor":"#b91c1c"},
+                {"category":"junction","key":-22,"loc":"-760 -13","fillColor":"#15803d"},
+                {"category":"junction","key":-23,"loc":"-761 -183","fillColor":"#b91c1c"},
+                {"category":"junction","key":-26,"loc":"-680 -284","fillColor":"#b91c1c"},
+                {"category":"fourInputOr","key":-27,"loc":"-540 -170"},
+                {"category":"junction","key":-25,"loc":"-680 -94","fillColor":"#b91c1c"},
+                {"category":"not","mode1":true,"key":-28,"loc":"-691 -405"},
+                {"category":"not","mode1":true,"key":-24,"loc":"-838 -355"}
+                ],
+                "linkDataArray": [
+                {"from":-7,"to":-11,"fromPort":"","toPort":"in3"},
+                {"from":-8,"to":-12,"fromPort":"","toPort":"in3"},
+                {"from":-9,"to":-13,"fromPort":"","toPort":"in3"},
+                {"from":-10,"to":-14,"fromPort":"","toPort":"in3"},
+                {"from":-17,"to":-16,"fromPort":"out2","toPort":"in1"},
+                {"from":-16,"to":-15,"fromPort":"out2","toPort":"in1"},
+                {"from":-15,"to":-14,"fromPort":"out2","toPort":"in2"},
+                {"from":-16,"to":-13,"fromPort":"out2","toPort":"in2"},
+                {"from":-19,"to":-11,"fromPort":"out2","toPort":"in2"},
+                {"from":-19,"to":-20,"fromPort":"out2","toPort":"in1"},
+                {"from":-20,"to":-12,"fromPort":"out2","toPort":"in2"},
+                {"from":-1,"to":-21,"fromPort":"","toPort":"in1"},
+                {"from":-21,"to":-23,"fromPort":"out2","toPort":"in1"},
+                {"from":-23,"to":-22,"fromPort":"out2","toPort":"in1"},
+                {"from":-22,"to":-14,"fromPort":"out2","toPort":"in1"},
+                {"from":-26,"to":-11,"fromPort":"out2","toPort":"in1"},
+                {"from":-11,"to":-27,"fromPort":"out","toPort":"in1"},
+                {"from":-12,"to":-27,"fromPort":"out","toPort":"in2"},
+                {"from":-13,"to":-27,"fromPort":"out","toPort":"in3"},
+                {"from":-14,"to":-27,"fromPort":"out","toPort":"in4"},
+                {"from":-27,"to":-5,"fromPort":"out","toPort":""},
+                {"from":-2,"to":-17,"fromPort":"","toPort":"in1"},
+                {"from":-23,"to":-12,"fromPort":"out2","toPort":"in1"},
+                {"from":-25,"to":-13,"fromPort":"out2","toPort":"in1"},
+                {"from":-26,"to":-25,"fromPort":"out2","toPort":"in1"},
+                {"from":-21,"to":-28,"fromPort":"out2","toPort":"in"},
+                {"from":-28,"to":-26,"fromPort":"out","toPort":"in1"},
+                {"from":-17,"to":-24,"fromPort":"out2","toPort":"in"},
+                {"from":-24,"to":-19,"fromPort":"out","toPort":"in1"}
+                ]}
             `        
         }
         else if (this.modeOutput == 2){
             this.startJson = `
-            { "class": "GraphLinksModel",
-            "linkFromPortIdProperty": "fromPort",
-            "linkToPortIdProperty": "toPort",
-            "nodeDataArray": [
-            {"category":"input","isOn":true,"key":-1,"loc":"-710 -330", "text": "R"},
-            {"category":"input","isOn":true,"key":-2,"loc":"-710 -190", "text": "S"},
-            {"category":"nand","key":-3,"loc":"-540 -320"},
-            {"category":"nand","key":-4,"loc":"-600 -210"},
-            {"category":"output","key":-5,"loc":"-360 -350","isOn":true ,"text":"1"},
-            {"category":"output","key":-6,"loc":"-350 -220","isOn":false ,"text":"2"}
-            ],
-            "linkDataArray": [
-            {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
-            {"from":-2,"to":-4,"fromPort":"","toPort":"in2"},
-            {"from":-3,"to":-4,"fromPort":"out","toPort":"in1"},
-            {"from":-4,"to":-3,"fromPort":"out","toPort":"in2"},
-            {"from":-4,"to":-6,"fromPort":"out","toPort":""},
-            {"from":-3,"to":-5,"fromPort":"out","toPort":""}
-            ]}`
+                { "class": "GraphLinksModel",
+                "linkFromPortIdProperty": "fromPort",
+                "linkToPortIdProperty": "toPort",
+                "nodeDataArray": [
+                {"category":"input","isOn":false,"key":-1,"loc":"-756 -321","text":"R"},
+                {"category":"input","isOn":false,"key":-2,"loc":"-748 -189","text":"S"},
+                {"category":"nand","key":-3,"loc":"-540 -320"},
+                {"category":"nand","key":-4,"loc":"-605 -205"},
+                {"category":"output","key":-5,"loc":"-355 -360","isOn":true,"text":"1"},
+                {"category":"output","key":-6,"loc":"-343 -248","isOn":true,"text":"2"}
+                ],
+                "linkDataArray": [
+                {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
+                {"from":-2,"to":-4,"fromPort":"","toPort":"in2"},
+                {"from":-3,"to":-4,"fromPort":"out","toPort":"in1"},
+                {"from":-4,"to":-3,"fromPort":"out","toPort":"in2"},
+                {"from":-4,"to":-6,"fromPort":"out","toPort":""},
+                {"from":-3,"to":-5,"fromPort":"out","toPort":""}
+                ]}
+            `
         }
         else{
             this.startJson = `
-            { "class": "GraphLinksModel",
-            "linkFromPortIdProperty": "fromPort",
-            "linkToPortIdProperty": "toPort",
-            "nodeDataArray": [
-            {"category":"input","isOn":false,"key":-1,"loc":"-770 -280", "text": "D"},
-            {"category":"input","isOn":false,"key":-2,"loc":"-640 -250", "text": "WE"},
-            {"category":"output","key":-5,"loc":"-310 -350","isOn":false,"text":"1"},
-            {"category":"output","key":-6,"loc":"-300 -220","isOn":true,"text":"2"},
-            {"category":"nand","key":-7,"loc":"-490 -320"},
-            {"category":"nand","key":-8,"loc":"-480 -250"},
-            {"category":"nand","key":-9,"loc":"-580 -170"},
-            {"category":"nand","key":-10,"loc":"-590 -360"},
-            {"category":"not","key":-11,"loc":"-640 -150"}
-            ],
-            "linkDataArray": [
-            {"from":-11,"to":-9,"fromPort":"out","toPort":"in2"},
-            {"from":-1,"to":-10,"fromPort":"","toPort":"in1"},
-            {"from":-1,"to":-11,"fromPort":"","toPort":"in"},
-            {"from":-9,"to":-8,"fromPort":"out","toPort":"in2"},
-            {"from":-10,"to":-7,"fromPort":"out","toPort":"in1"},
-            {"from":-2,"to":-10,"fromPort":"","toPort":"in2"},
-            {"from":-2,"to":-9,"fromPort":"","toPort":"in1"},
-            {"from":-7,"to":-8,"fromPort":"out","toPort":"in1"},
-            {"from":-8,"to":-7,"fromPort":"out","toPort":"in2"},
-            {"from":-7,"to":-5,"fromPort":"out","toPort":""},
-            {"from":-8,"to":-6,"fromPort":"out","toPort":""}
-            ]}`
+                { "class": "GraphLinksModel",
+                "linkFromPortIdProperty": "fromPort",
+                "linkToPortIdProperty": "toPort",
+                "nodeDataArray": [
+                {"category":"input","isOn":false,"key":-1,"loc":"-783 -361","text":"D"},
+                {"category":"input","isOn":false,"key":-2,"loc":"-708.8095238095239 -198.7619047619048","text":"WE"},
+                {"category":"output","key":-5,"loc":"-317.14285714285717 -360.9047619047619","isOn":false,"text":"1"},
+                {"category":"output","key":-6,"loc":"-325.7142857142857 -213.42857142857144","isOn":true,"text":"2"},
+                {"category":"nand","key":-7,"loc":"-434.14285714285717 -319.9047619047619"},
+                {"category":"nand","key":-8,"loc":"-502.7142857142857 -166.42857142857144"},
+                {"category":"nand","key":-9,"loc":"-585.7142857142858 -132.85714285714286"},
+                {"category":"nand","key":-10,"loc":"-590 -360"},
+                {"category":"not","key":-11,"loc":"-675.2329608725884 -88.53921262033009"}
+                ],
+                "linkDataArray": [
+                {"from":-11,"to":-9,"fromPort":"out","toPort":"in2"},
+                {"from":-1,"to":-10,"fromPort":"","toPort":"in1"},
+                {"from":-1,"to":-11,"fromPort":"","toPort":"in"},
+                {"from":-9,"to":-8,"fromPort":"out","toPort":"in2"},
+                {"from":-10,"to":-7,"fromPort":"out","toPort":"in1"},
+                {"from":-2,"to":-10,"fromPort":"","toPort":"in2"},
+                {"from":-2,"to":-9,"fromPort":"","toPort":"in1"},
+                {"from":-7,"to":-8,"fromPort":"out","toPort":"in1"},
+                {"from":-8,"to":-7,"fromPort":"out","toPort":"in2"},
+                {"from":-7,"to":-5,"fromPort":"out","toPort":""},
+                {"from":-8,"to":-6,"fromPort":"out","toPort":""}
+                ]}
+            `
         }
 
         console.log(this.startJson)
@@ -454,9 +476,10 @@ export default class CV extends RunestoneBase {
         this.circuitDiv = document.createElement("div")
         const html = "<div id='sample'>"+
             "<div style='width: 100%; display: flex; justify-content: space-between'>" +
-            "<div id='palette' style='width: 100px; height: 600px; margin-right: 2px; background-color: #f3f4f6; border: solid 1px black;'" +
-            "></div>"+
-            "<div id='myDiagramDiv' class='myDiagramDiv' style='background-color: #f3f4f6; flex-grow: 1; height: 500px; border: solid 1px black'></div>"+
+            //Palette Stuff
+            //"<div id='palette' style='width: 100px; height: 600px; margin-right: 2px; background-color: white; border: solid 1px black;'>" +
+            "</div>"+
+            "<div id='myDiagramDiv' class='myDiagramDiv' style='background-color: white; flex-grow: 1; height: 500px; border: solid 1px black'></div>"+
             "</div>"
         this.circuitDiv.innerHTML = html
         this.textArea = document.createElement("textarea")
@@ -626,8 +649,11 @@ export default class CV extends RunestoneBase {
 
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
+                loadScript("https://gojs.net/latest/extensions/AvoidsLinksRouter.js", function() {
+                    go.Diagram.licenseKey =
+                    "2b8647e1b2604fc702d90676423d6bbc5cf07d34cd960ef6590015f5ec5b6f40729be17906dad8c4d3f04df9487ac6d9ddc26c2ac31b003fe165d2df10f096ffb26424b2165b47daa40321c390f22ca0a97078f7cbb374a3dd7ed9f0effbc5985abcf2d740c95cb3792d0635066cbf4ce2abdf7bab52cd5d7b6e99a4fef6a856fa";
                 import('./figures.js').then(()=>self.init())
-
+                });
             });
         });
 
@@ -667,8 +693,13 @@ export default class CV extends RunestoneBase {
             initialContentAlignment: go.Spot.Center,
             allowDrop: true,
             "draggingTool.isGridSnapEnabled": true,
-            "undoManager.isEnabled": true
+            "undoManager.isEnabled": true,
+            'grid.visible': true
+
         });
+
+
+        this.myDiagram.toolManager.draggingTool.isGridSnapEnabled = false
 
         this.myDiagram.allowClipboard = false
 
@@ -684,26 +715,47 @@ export default class CV extends RunestoneBase {
         }
         });
 
-        const palette = new go.Palette('palette'); // create a new Palette in the HTML DIV element "palette"
-        palette.contentAlignment = go.Spot.Center;
+        //Palette Stuff
+        // const palette = new go.Palette('palette'); // create a new Palette in the HTML DIV element "palette"
+        // palette.contentAlignment = go.Spot.Center;
 
-        // this.myDiagram.routers.add(new AvoidsLinksRouter());
+        if(this.modeOutput != 1){
+            this.myDiagram.linkTemplate = new go.Link({
+                routing: go.Link.AvoidsNodes,
+                curve: go.Curve.JumpOver,
+                corner: 3,
+                relinkableFrom: true,
+                relinkableTo: true,
+                selectionAdorned: false, // Links are not adorned when selected so that their color remains visible.
+                shadowOffset: new go.Point(0, 0),
+                shadowBlur: 5,
+                shadowColor: 'blue',
+                layerName: 'Background'
+                })
+                .bindObject('isShadowed', 'isSelected')
+                .add(new go.Shape({ name: 'SHAPE', strokeWidth: 3, stroke: this.red }));
+            this.myDiagram.routers.add(new AvoidsLinksRouter());
+
+        }
+        else{
+            this.myDiagram.linkTemplate = new go.Link({
+                routing: go.Link.Normal,
+                curve: go.Curve.JumpOver,
+                corner: 3,
+                relinkableFrom: true,
+                relinkableTo: true,
+                selectionAdorned: false, // Links are not adorned when selected so that their color remains visible.
+                shadowOffset: new go.Point(0, 0),
+                shadowBlur: 5,
+                shadowColor: 'blue',
+                layerName: 'Background'
+                })
+                .bindObject('isShadowed', 'isSelected')
+                .add(new go.Shape({ name: 'SHAPE', strokeWidth: 3, stroke: this.red }));
+        }
 
         // creates relinkable Links that will avoid crossing Nodes when possible and will jump over other Links in their paths
-        this.myDiagram.linkTemplate = new go.Link({
-        // routing: go.Routing.Orthogonal,
-        curve: go.Curve.JumpOver,
-        corner: 3,
-        relinkableFrom: true,
-        relinkableTo: true,
-        selectionAdorned: false, // Links are not adorned when selected so that their color remains visible.
-        shadowOffset: new go.Point(0, 0),
-        shadowBlur: 5,
-        shadowColor: 'blue',
-        layerName: 'Background'
-        })
-        .bindObject('isShadowed', 'isSelected')
-        .add(new go.Shape({ name: 'SHAPE', strokeWidth: 3, stroke: this.red }));
+
 
         // node template helpers
         const sharedToolTip = go.GraphObject.build('ToolTip', {
@@ -745,7 +797,7 @@ export default class CV extends RunestoneBase {
                 name: 'NODESHAPE',
                 fill: this.gray,
                 stroke: this.darkGray,
-                desiredSize: new go.Size(50, 50),
+                desiredSize: new go.Size(55, 55),
                 strokeWidth: 2
             };
         }
@@ -763,7 +815,7 @@ export default class CV extends RunestoneBase {
                 name: 'NODESHAPE',
                 fill: this.gray,
                 stroke: this.darkGray,
-                desiredSize: new go.Size(5, 5),
+                desiredSize: new go.Size(8, 8),
                 strokeWidth: 2
             };
         }
@@ -785,6 +837,56 @@ export default class CV extends RunestoneBase {
             };
         }
 
+        const junctionPortStyle = (input, spot) => {
+            return {
+                figure: 'Rectangle',
+                desiredSize: new go.Size(1, 1),
+                fill: this.darkGray,
+                stroke: 'transparent',
+                strokeWidth: 6,
+                fromLinkable: !input,
+                fromSpot: spot ?? go.Spot.Center,
+                toSpot: spot ?? go.Spot.Center,
+                toLinkable: input,
+                toMaxLinks: 1,
+                cursor: 'pointer'
+            };
+        }
+
+        const notPortStyle = (input, spot) => {
+            if(this.modeOutput == 1){
+                return {
+                    figure: 'Rectangle',
+                    desiredSize: new go.Size(2, 2),
+                    fill: this.darkGray,
+                    stroke: 'transparent',
+                    strokeWidth: 6,
+                    fromLinkable: !input,
+                    toSpot: spot ?? new go.Spot(0.5, 0.2),
+                    fromSpot: spot ?? new go.Spot(0.5 ,0.8 ),
+                    toLinkable: input,
+                    toMaxLinks: 1,
+                    cursor: 'pointer',
+                    opacity: 0
+                };
+            }
+            else{
+                return {
+                    figure: 'Rectangle',
+                    desiredSize: new go.Size(2, 2),
+                    fill: this.darkGray,
+                    stroke: 'transparent',
+                    strokeWidth: 6,
+                    fromLinkable: !input,
+                    fromSpot: spot ?? new go.Spot(1, 0.5),
+                    toSpot: spot ?? new go.Spot(0, 0.5),
+                    toLinkable: input,
+                    toMaxLinks: 1,
+                    cursor: 'pointer',
+                    opacity: 0,
+                };                
+            }
+        }
         // define templates for each type of node
 
         const nodeOnClickFunction = (e, obj) => {
@@ -844,7 +946,7 @@ export default class CV extends RunestoneBase {
                 portId: '',
                 alignment: new go.Spot(1, 0.5, -2, 0)
             }),
-        new go.TextBlock({margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind("text", "text"),
+        new go.TextBlock({margin: new go.Margin(4,4,4,4), background:'white', alignment: go.Spot.Center }).bind("text", "text"),
         );
 
         const switchTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -1026,7 +1128,7 @@ export default class CV extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        //.add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        // .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
 
@@ -1140,16 +1242,20 @@ export default class CV extends RunestoneBase {
 
         const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
         .add(
-        new go.Shape('Inverter', notStyle()),
-        new go.Shape(portStyle(true)).set({
+        new go.Shape('Inverter', notStyle())
+        .bind('angle', 'mode1', mode1 =>mode1 ? 90 : 360),
+        new go.Shape(notPortStyle(true)).set({
             portId: 'in',
-            alignment: new go.Spot(0, 0.5)
-        }),
-        new go.Shape(portStyle(false)).set({
-            portId: 'out',
-            opacity: 0,
-            alignment: new go.Spot(1, 0.5, -5, 0)
         })
+        .bind('alignment', "mode1", mode1 => mode1 == true ? new go.Spot(0.5, 0.0)  : new go.Spot(0, 0.5) ),
+        new go.Shape(notPortStyle(false)).set({
+            portId: 'out',
+            opacity: 0
+        })
+        .bind('alignment', "mode1", mode1 => mode1 == true ? new go.Spot(0.5, 0.9) : new go.Spot(1, 0.5, -5, 0) )
+
+
+
         )
         //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
@@ -1158,16 +1264,16 @@ export default class CV extends RunestoneBase {
         .add(
         new go.Shape('Circle', junctionStyle())
         .bindTwoWay("fill", "fillColor"),
-        new go.Shape(portStyle(true)).set({
+        new go.Shape(junctionPortStyle(true)).set({
             portId: 'in1',
             alignment: new go.Spot(0.5, 0.5)
         }),
-        new go.Shape(portStyle(false)).set({
+        new go.Shape(junctionPortStyle(false)).set({
             portId: 'out1',
             opacity: 0,
             alignment:  new go.Spot(0.5, 0.5)
         }),
-        new go.Shape(portStyle(false)).set({
+        new go.Shape(junctionPortStyle(false)).set({
             portId: 'out2',
             opacity: 0,
             alignment:  go.Spot.Center
@@ -1200,8 +1306,8 @@ export default class CV extends RunestoneBase {
         // paletteMap.remove('input')
         // paletteMap.remove('output')
 
-
-        palette.nodeTemplateMap = paletteMap;
+        //Palette Stuff
+        // palette.nodeTemplateMap = paletteMap;
 
         let ndArr = []
         ndArr.push({ category: 'input' })
@@ -1213,7 +1319,7 @@ export default class CV extends RunestoneBase {
         ndArr.push({ category: 'or' })
         ndArr.push({ category: 'fourInputOr' })
 
-        ndArr.push({ category: 'not' })
+        ndArr.push({ category: 'not', mode1 : (this.modeOutput == 1 ? true : false) })
 
         ndArr.push({ category: 'nor' })
         ndArr.push({ category: 'nand' })
@@ -1221,7 +1327,8 @@ export default class CV extends RunestoneBase {
         ndArr.push({ category: 'junction' })
 
 
-        palette.model.nodeDataArray = ndArr
+        //Palette Stuff
+        //palette.model.nodeDataArray = ndArr
         // load the initial diagram
         this.load();
 
@@ -1386,6 +1493,9 @@ doJunction = (node) => {
 
 load = () => {
     this.myDiagram.model = go.Model.fromJson(this.startJson);
+    //Palette Stuff
+    this.myDiagram.model.isReadOnly = true
+
   }
 
 

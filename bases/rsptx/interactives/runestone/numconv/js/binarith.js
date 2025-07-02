@@ -20,6 +20,7 @@ import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
 import "../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
+import {MinSelectBox} from "../../../utils/MinSelectBox.js";
 
 
 
@@ -50,6 +51,10 @@ export default class BA extends RunestoneBase {
         this.num_bits = 4;
         this.fromOpt = ["ADDITION", "SUBTRACTION"];
         this.toOpt = ["4", "6", "8"];
+
+        this.windowOpen = false;
+        this.setWindowOpen = (val) => this.windowOpen = val
+        this.getWindowOpen = () => (this.windowOpen)
 
         // Fields for logging data
         this.componentId = "4.4";
@@ -113,34 +118,10 @@ export default class BA extends RunestoneBase {
         this.renderBAButtons();
         this.renderBAFeedbackDiv();
         
-        const addBox = this.menuNode1.getElementsByClassName("addBox")
-        const subBox = this.menuNode1.getElementsByClassName("subBox")
+        const addBox = this.containerDiv.getElementsByClassName("addBox")
+        const subBox = this.containerDiv.getElementsByClassName("subBox")
 
-        addBox[0].addEventListener("change", (e) => {
-            
-            if(e.target.checked == false){
-                this.addOrSubChecked[0] = false;
-            }
-            if(e.target.checked == true){
-            this.addOrSubChecked[0] = true;
-            }
-            if(this.addOrSubChecked[0] == false && this.addOrSubChecked[1] == false){
-                e.target.checked = true;
-                this.addOrSubChecked[0] = true;
-            }
-        })
-        subBox[0].addEventListener("change", (e) => {
-            if(e.target.checked == false){
-                this.addOrSubChecked[1] = false;
-            }
-            if(e.target.checked == true){
-            this.addOrSubChecked[1] = true;
-            }
-            if(this.addOrSubChecked[0] == false && this.addOrSubChecked[1] == false){
-                e.target.checked = true;
-                this.addOrSubChecked[1] = true;
-            }
-        })
+
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
@@ -172,11 +153,12 @@ export default class BA extends RunestoneBase {
 
             },
             false);
-        
+
+        this.clarification = document.createElement("div");
+        this.clarification.innerHTML = `<span style='font-weight:bold'><u>This is a two part exercise.</u></span> After correctly completing Part 1, you will be able to view and complete Part 2.`
+        this.clarification.appendChild(document.createElement("br"))
         this.instruction = document.createElement("div");
-        this.instruction.innerHTML = "<span style='font-weight:bold'><u>Instructions (Part 1)</u></span>: " +
-            `Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
-        this.instruction.style.padding = "10px";
+        this.instruction.innerHTML = `<span style='font-weight:bold'><u>Instructions (Part 1)</u></span>: Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
 
         this.configHelperText = document.createElement("div");
         this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
@@ -184,18 +166,18 @@ export default class BA extends RunestoneBase {
         this.statementNode1 = document.createTextNode(" Choose operators: ");
 
         // Create the container for the dropdown checkbox list
-        this.menuNode1 = document.createElement("div");
-        this.menuNode1.id = 'list1';
-        this.menuNode1.className = 'dropdown-check-list';
-        this.menuNode1.tabIndex = 100;  // Set tabindex to make the div focusable
+        // this.menuNode1 = document.createElement("div");
+        // this.menuNode1.id = 'list1';
+        // this.menuNode1.className = 'dropdown-check-list';
+        // this.menuNode1.tabIndex = 100;  // Set tabindex to make the div focusable
 
-        // Build the inner HTML using template literals
-        // Inner HTML defines the items in the dropdown
-        var html =   "<span class='anchor'>Select Operators</span>"+
-        "<ul class='items'>"+
-        "  <li><input class='addBox' type='checkbox' value='ADDITION' checked/>ADDITION </li>"+ //pre checked item
-        "  <li><input class='subBox' type='checkbox' value='SUBTRACTION' checked/>SUBTRACTION </li>"+
-        "</ul>";
+        // // Build the inner HTML using template literals
+        // // Inner HTML defines the items in the dropdown
+        // var html =   "<span class='anchor'>Select Operators</span>"+
+        // "<ul class='items'>"+
+        // "  <li><input class='addBox' type='checkbox' value='ADDITION' checked/>ADDITION </li>"+ //pre checked item
+        // "  <li><input class='subBox' type='checkbox' value='SUBTRACTION' checked/>SUBTRACTION </li>"+
+        // "</ul>";
 
         // this.pSpan = document.createElement("span");
         // this.pSpan.className = "anchor"
@@ -221,33 +203,33 @@ export default class BA extends RunestoneBase {
 
         
         // Assign the built HTML to innerHTML of the this.menuNode1 container
-        this.menuNode1.innerHTML = html;
+        // this.menuNode1.innerHTML = html;
        
-        this.addOrSubChecked = [true, true];
+        // this.addOrSubChecked = [true, true];
 
 
-        // Access the anchor for adding click event
-        var anchor = this.menuNode1.getElementsByClassName('anchor')[0];
-        anchor.onclick = function() {
-            if (this.menuNode1.classList.contains('visible'))
-                this.menuNode1.classList.remove('visible');
-            else
-                this.menuNode1.classList.add('visible');
-        }.bind(this);
+        // // Access the anchor for adding click event
+        // var anchor = this.menuNode1.getElementsByClassName('anchor')[0];
+        // anchor.onclick = function() {
+        //     if (this.menuNode1.classList.contains('visible'))
+        //         this.menuNode1.classList.remove('visible');
+        //     else
+        //         this.menuNode1.classList.add('visible');
+        // }.bind(this);
 
-        // Event lister that shrinks the dropdown whenever clicking outside of it
-        document.addEventListener('click', function (e) {
-            if (!this.menuNode1.contains(e.target) && this.menuNode1.classList.contains('visible')) {
-                this.menuNode1.classList.remove('visible');
-            }
-        }.bind(this), false);
+        // // Event lister that shrinks the dropdown whenever clicking outside of it
+        // document.addEventListener('click', function (e) {
+        //     if (!this.menuNode1.contains(e.target) && this.menuNode1.classList.contains('visible')) {
+        //         this.menuNode1.classList.remove('visible');
+        //     }
+        // }.bind(this), false);
 
-        // addEventListener define functions to be executed when menuNode1 has any changes
-        this.menuNode1.addEventListener("change",
-        function () {
-            this.getCheckedValues();
-        }.bind(this),
-        false);
+        // // addEventListener define functions to be executed when menuNode1 has any changes
+        // this.menuNode1.addEventListener("change",
+        // function () {
+        //     this.getCheckedValues();
+        // }.bind(this),
+        // false);
       
         this.statementNode2 = document.createTextNode(" Select the number of bits: ");
 
@@ -255,13 +237,17 @@ export default class BA extends RunestoneBase {
         
 
         // Render the statement
+        this.containerDiv.append(this.clarification)
         this.containerDiv.append(this.instruction);
         this.configDiv = document.createElement("div");
         this.configDiv.appendChild(this.configHelperText);
         this.configDiv.appendChild(this.statementNode2);
+
+
         this.configDiv.appendChild(this.menuNode2);
         this.configDiv.appendChild(this.statementNode1);
-        this.configDiv.appendChild(this.menuNode1);
+        // this.configDiv.appendChild(this.menuNode1);
+
 
 
 
@@ -442,27 +428,31 @@ export default class BA extends RunestoneBase {
             name: "generate a number",
             type: "button",
         });
+
+        const genFunc =  () => {
+            this.inputNode.className = "form form-control";
+            this.inputNode2.className = "form form-control";
+            this.clearAnswer();
+            this.getCheckedValues();
+            // only generate new prompt when there is item selected
+            if (this.checkedValues.length != 0){
+                this.generateNumber();
+                this.generateAnswer();
+                this.clearSecondPart();
+                if(this.runUnitTest && this.UTButton){
+                    this.clearUnitTestButton()
+                }
+                if(this.runUnitTest){
+                    this.renderUnitTestButton()
+                }
+            } 
+            this.checkValidConversion();
+            this.sendData(3);
+        }
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
-            function () {
-                this.clearAnswer();
-                this.getCheckedValues();
-                // only generate new prompt when there is item selected
-                if (this.checkedValues.length != 0){
-                    this.generateNumber();
-                    this.generateAnswer();
-                    this.clearSecondPart();
-                    if(this.runUnitTest && this.UTButton){
-                        this.clearUnitTestButton()
-                    }
-                    if(this.runUnitTest){
-                        this.renderUnitTestButton()
-                    }
-                } 
-                this.checkValidConversion();
-                this.sendData(3);
-            }.bind(this),
+             genFunc,
             false
         );
 
@@ -473,6 +463,8 @@ export default class BA extends RunestoneBase {
             this.renderUnitTestButton();
         }
 
+        //have to unforunately put this here to hae access to generatebutton.click
+        const operatorBox = MinSelectBox(this.configDiv, 1, ["addBox", "subBox"], ["ADDITION", "SUBTRACTION"], [true, true], "Operators", this.getWindowOpen, this.setWindowOpen, genFunc)
 
 
 
@@ -781,7 +773,7 @@ export default class BA extends RunestoneBase {
     // clear the input field
     clearAnswer() {
         this.inputNode.value = "";
-        this.instruction.innerHTML=`Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
+        this.instruction.innerHTML=`<span style='font-weight:bold'><u>Instructions (Part 1)</u></span>: Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
         this.feedbackDiv.remove();
         if(this.feedbackDiv2 != undefined && this.feedbackDiv2 == null){
             this.feedbackDiv2.remove();
@@ -1034,9 +1026,11 @@ export default class BA extends RunestoneBase {
        if ( input_value === "" ) {
            this.feedback_msg = ($.i18n("msg_no_answer"));
            this.correctpt1 = false;
+           this.inputNode.className = "alert alert-danger";
        } 
        else if (input_value == `0b${ans}`){
         this.feedback_msg = ($.i18n("msg_NC_correct"));
+        this.inputNode.className = "alert alert-info"
 
        }
        else if ( input_value != ans ) {
@@ -1056,6 +1050,7 @@ export default class BA extends RunestoneBase {
             }          
        } else {
             this.feedback_msg = ($.i18n("msg_NC_correct"));
+            this.inputNode.className = "alert alert-info"
 
        }
        
@@ -1063,9 +1058,12 @@ export default class BA extends RunestoneBase {
        if(input_value_2 != correctCarryOut){
         this.feedback_msg += "\n Incorrect carry out"
         this.correctpt1 = false;
+        this.inputNode2.className = "alert alert-danger";
+        
        }
        else{
         this.feedback_msg += '\n Correct carry out!'
+        this.inputNode2.className = "alert alert-info"
        }
 
        if(this.correctpt1 == true){
@@ -1083,20 +1081,20 @@ export default class BA extends RunestoneBase {
 
    displayCorrectAnswerUnsigned(){
     // il8n autoconverts < into &lt
-    this.feedback_msg2 += ($.i18n("Overflow for unsigned correct. "));
+    this.feedback_msg2 += ($.i18n("Overflow for unsigned correct. <br>"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerUnsigned(){
-    this.feedback_msg2 += ($.i18n("Overflow for unsigned incorrect. \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for unsigned incorrect. <br>"));
     this.contWrong ++;
     this.correctpt2 = false;
    }
    displayCorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("Overflow for signed correct. \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for signed correct. <br>"));
     this.contWrong = 0;
    }
    displayIncorrectAnswerSigned(){
-    this.feedback_msg2 += ($.i18n("Overflow for signed incorrect. \n"));
+    this.feedback_msg2 += ($.i18n("Overflow for signed incorrect. <br>"));
     this.contWrong ++;
     this.correctpt2 = false;
    }
@@ -1143,34 +1141,40 @@ export default class BA extends RunestoneBase {
     console.log("ANS:")
     console.log(`${this.ans}, targetnumstring: ${this.target_num_string}, USI: ${this.USValue}`)
     if(this.USValue == ""){
-        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_no_answer"));
+        this.feedback_msg2 = "Unsigned interpretation: " + ($.i18n("msg_no_answer")) + "<br>";
         this.correctpt2 = false;
+        this.USInput.className = "alert alert-danger";
     }
     else if(this.ans != this.USValue){
-        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 = "Unsigned interpretation: " + ($.i18n("msg_NC_incorrect"))+ "<br>";
         this.contWrong ++;
         this.correctpt2 = false;
+        this.USInput.className = "alert alert-danger";
     }
     else{
-        this.feedback_msg2 = "Unsigned: " + ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 = "Unsigned interpretation: " + ($.i18n("msg_NC_correct"))+ "<br>";
         this.contWrong = 0;
+        this.USInput.className = "alert alert-info";
 
     }
 
 
     //Check the signed value
     if(this.SValue == ""){
-        this.feedback_msg2 += "Signed: " + ($.i18n("msg_no_answer"));
+        this.feedback_msg2 += "Signed interpretation: " + ($.i18n("msg_no_answer"))+ "<br>";
         this.correctpt2 = false;
+        this.SInput.className = "alert alert-danger"
     }
     else if(this.toSignedDecimal() != this.SValue){
-        this.feedback_msg2 += "Signed: " + ($.i18n("msg_NC_incorrect"));
+        this.feedback_msg2 += "Signed interpretation: " + ($.i18n("msg_NC_incorrect"))+ "<br>";
         this.contWrong ++;
         this.correctpt2 = false;
+        this.SInput.className = "alert alert-danger"
     }
     else{
-        this.feedback_msg2 += "Signed: " + ($.i18n("msg_NC_correct"));
+        this.feedback_msg2 += "Signed interpretation: " + ($.i18n("msg_NC_correct"))+ "<br>";
         this.contWrong = 0;
+        this.SInput.className = "alert alert-info"
     }
 
     this.UTunsignedDecimalAnswer = this.ans;
