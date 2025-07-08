@@ -1,4 +1,4 @@
-const thread1 = [
+let thread1 = [
         (state,info) => {
             let x = state.x;
             let y = state.y1;
@@ -17,24 +17,56 @@ const thread1 = [
             let x = state.x;
             let y = state.y1;
             if(state.inIf1){
-                if (info.operand1 == "x"){
-                    state.x = eval(info.change1)
+                if (info.operandIf[0] == "x"){
+                    state.x = eval(info.changeIf[0])
                 }else{
-                    state.y1 = eval(info.change1)
-                }
-            }
-            else{
-                if (info.operand2 == "x"){
-                    state.x = eval(info.change2)
-                }else{
-                    state.y1 = eval(info.change2)
+                    state.y1 = eval(info.changeIf[0])
                 }
             }
             return state
         },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(state.inIf1){
+                if (info.operandIf[1] == "x"){
+                    state.x = eval(info.changeIf[1])
+                }else{
+                    state.y1 = eval(info.changeIf[1])
+                }
+            }
+            return state
+        },
+        
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(!state.inIf1){
+                if (info.operandElse[0] == "x"){
+                    state.x = eval(info.changeElse[0])
+                }else{
+                    state.y1 = eval(info.changeElse[0])
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(!state.inIf1){
+                if (info.operandElse[1] == "x"){
+                    state.x = eval(info.changeElse[1])
+                }else{
+                    state.y1 = eval(info.changeElse[1])
+                }
+            }
+            return state
+        }
     ]
 
-const thread2 = [
+let thread2 = [
     
     (state,info) => {
         let x = state.x;
@@ -55,58 +87,137 @@ const thread2 = [
         let y = state.y2;
         
         if(state.inIf2){
-            if (info.operand1 == "x"){
-                console.log("x:" + x);
-                console.log("y:" + y)
-                state.x = eval(info.change1);
-                console.log("info.change:" + info.change1)
-                console.log("state.x:" + state.x)
+            if (info.operandIf[0] == "x"){
+                state.x = eval(info.changeIf[0]);
             }else{
-                state.y2= eval(info.change1);
-            }
-        }
-        else{
-            if (info.operand2 == "x"){
-                state.x = eval(info.change2);
-            }else{
-                state.y2 = eval(info.change2);
+                state.y2= eval(info.changeIf[0]);
             }
         }
         return state
     },
+
+    (state, info) => {
+        let x = state.x;
+        let y = state.y2;
+        
+        if(state.inIf2){
+            if (info.operandIf[1] == "x"){
+                state.x = eval(info.changeIf[1]);
+            }else{
+                state.y2= eval(info.changeIf[1]);
+            }
+        }
+        return state
+    },
+
+    (state, info) => {
+        let x = state.x;
+        let y = state.y2;
+        if(!state.inIf2){
+            if (info.operandElse[0] == "x"){
+                state.x = eval(info.changeElse[0]);
+            }else{
+                state.y2 = eval(info.changeElse[0]);
+            }
+        }
+        return state
+    },
+
+    (state, info) => {
+        let x = state.x;
+        let y = state.y2;
+        if(!state.inIf2){
+            if (info.operandElse[1] == "x"){
+                state.x = eval(info.changeElse[1]);
+            }else{
+                state.y2 = eval(info.changeElse[1]);
+            }
+        }
+        return state
+    }
 ]
 
 
-let state = {x : 3, y1: 2, y2:3, inIf1: false, inIf2: false}
-const thread1Info = generateThreadInfo()
-const thread2Info = generateThreadInfo()
-
 function generateText(state, thread1Info, thread2Info){
     let initialText = `int x = ${state.x};\n`
-
+    
     let thread1Text = `int y = ${state.y1};\n`
     thread1Text += `if (${thread1Info.comp}){\n`
-    thread1Text += `    ${thread1Info.operand1} = ${thread1Info.change1};\n`
-    thread1Text += `} else{\n   ${thread1Info.operand2} = ${thread1Info.change2};\n}\n`
+    switch (thread1Info.lineSizeIf){
+        case 1: 
+            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
+            break;
+        case 2:
+            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
+            thread1Text += `    ${thread1Info.operandIf[1]} = ${thread1Info.changeIf[1]};\n`
+            break;
+    }
+    
+    thread1Text += `} else{\n`
+    
+    switch (thread1Info.lineSizeElse){
+        case 1:
+            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};\n}\n`
+            break
+        case 2:
+            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};\n`
+            thread1Text += `   ${thread1Info.operandElse[1]} = ${thread1Info.changeElse[1]};\n}\n`
+    }
     thread1Text += `print("%d %d", x, y);`
 
     let thread2Text = `int y = ${state.y2};\n`
+
     thread2Text += `if (${thread2Info.comp}){\n`
-    thread2Text += `    ${thread2Info.operand1} = ${thread2Info.change1};\n`
-    thread2Text += `} else{\n   ${thread2Info.operand2} = ${thread2Info.change2};\n}\n`
+    switch (thread2Info.lineSizeIf){
+        case 1: 
+            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};\n`
+            break;
+        case 2:
+            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};\n`
+            thread2Text += `    ${thread2Info.operandIf[1]} = ${thread2Info.changeIf[1]};\n`
+            break;
+    }
+    
+    thread2Text += `} else{\n`
+    
+    switch (thread2Info.lineSizeElse){
+        case 1:
+            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};\n}\n`
+            break
+        case 2:
+            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};\n`
+            thread2Text += `   ${thread2Info.operandElse[1]} = ${thread2Info.changeElse[1]};\n}\n`
+    }
     thread2Text += `print("%d %d", x, y);`
 
     return {initial: initialText, t1: thread1Text, t2: thread2Text};
 }
 
-function generateThreadInfo(){
+function generateThreadInfo(limitLineSize=false){
+    
+    let lineSizeIf = (!limitLineSize && (Math.floor(Math.random()*7))<2) ? 2:1
+    let lineSizeElse = ((lineSizeIf == 1 && !limitLineSize) && Math.floor(Math.random()*2)) ? 2:1
+    let operandIf = []
+    let operandElse = []
+    let changeIf = []
+    let changeElse = []
     let comp;
-    let operand1;
-    let operand2;
-    let change1;
-    let change2;
 
-    const operatorComp = ["=", "<=", ">=", "<", ">", "!"];
+    if(lineSizeIf == 2){
+        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
+        operandIf.push((operandIf[0] == "x")?"y":"x");
+    }else{
+        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
+    }
+
+    if(lineSizeElse == 2){
+        operandElse.push(Math.floor(Math.random()*2) ? "x":"y");
+        operandElse.push((operandIf[0] == "x")?"y":"x");
+    }else{
+        operandElse.push((operandIf[0] == "x")? "y":"x");
+    }
+
+    const operatorComp = ["<=", ">=", "<", ">", "!"];
     let operatorChange = ["+", "-", "="]
     let operands = ["x", "y", "const"];
 
@@ -114,61 +225,110 @@ function generateThreadInfo(){
     const OPcompare1 = operands[Math.floor(Math.random()*(operands.length-1))];
     let temp = operands.filter(item => item!=OPcompare1);
     let OPcompare2 = temp[Math.floor(Math.random()*temp.length)];
-
     if(OPcompare2 == "const"){
         OPcompare2 = Math.floor(Math.random()*10);
     }
-
-    const changeOP1 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
-    operatorChange = operatorChange.filter(item=>item!=changeOP1);
-
-    const changeOP2 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
-
-    const op1 = operands[Math.floor(Math.random()*(operands.length-1))];
-    temp = operands.filter(item => item!=op1);
-    let op2 = temp[Math.floor(Math.random()*temp.length)];
-
-    if(op2 == "const"){
-        op2 = Math.floor(Math.random()*(9+1))+1;
-    }
-
     if(compareOP == "!"){
         comp = `!${OPcompare1}`
     }else{
         comp = `${OPcompare1} ${compareOP} ${OPcompare2}`
     }
 
-    operand1 = op1
-    if (changeOP1 == "="){
-        change1 = `${op2}`
-    }else{
-        change1 = `${op1} ${changeOP1} ${op2}`
+    let opIf1;
+    let opIf2;
+    const changeOPIf1 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
+    temp = operatorChange.filter(item=>item!=changeOPIf1);
+    const changeOPIf2 = temp[Math.floor(Math.random()*temp.length)];
+    opIf1 = operandIf[0];
+    temp = operands.filter(item => item!=opIf1);
+    opIf2 = temp[Math.floor(Math.random()*temp.length)];
+    if(opIf2 == "const"){
+        opIf2 = Math.floor(Math.random()*10)
     }
 
-    operands = operands.filter(item =>item!=op1);
-    const op3 = operands[Math.floor(Math.random()*(operands.length-1))];
-    operand2 = op3
-    temp = operands.filter(item => item!=op3);
-    let op4 = temp[Math.floor(Math.random()*temp.length)]
+    switch (lineSizeIf){
+        case 1:
+            if (changeOPIf1 == "="){
+                changeIf.push(`${opIf2}`)
+            }else{
+                changeIf.push(`${opIf1} ${changeOPIf1} ${opIf2}`)
+            }
+            break;
 
-    if(op4 == "const"){
-        op4 = Math.floor(Math.random()*(9+1))+1;
+        case 2:
+            let opIf3 = operandIf[1];
+            temp = operands.filter(item => item!=opIf3);
+            let opIf4 = temp[Math.floor(Math.random()*temp.length)];
+            if(opIf4 == "const"){
+                opIf4 = Math.floor(Math.random()*10)
+            }
+            if (changeOPIf1 == "="){
+                changeIf.push(`${opIf2}`)
+            }else{
+                changeIf.push(`${opIf1} ${changeOPIf1} ${opIf2}`)
+            }
+
+            if (changeOPIf2 == "="){
+                changeIf.push(`${opIf4}`)
+            }else{
+                changeIf.push(`${opIf3} ${changeOPIf2} ${opIf4}`)
+            }
+            break;
+
     }
 
-    if (changeOP2 == "="){
-        change2 = `${op4}`
-    }else{
-        change2 = `${op3} ${changeOP2} ${op4}`
+    let opElse1;
+    let opElse2;
+    const changeOPElse1 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
+    temp = operatorChange.filter(item=>item!=changeOPElse1);
+    const changeOPElse2 = temp[Math.floor(Math.random()*temp.length)];
+    opElse1 = operandElse[0];
+    temp = operands.filter(item => item!=opElse1);
+    opElse2 = temp[Math.floor(Math.random()*temp.length)];
+    if(opElse2 == "const"){
+        opElse2 = Math.floor(Math.random()*10)
     }
 
-    
+    switch (lineSizeElse){
+        case 1:
+            if (changeOPElse1 == "="){
+                changeElse.push(`${opElse2}`)
+            }else{
+                changeElse.push(`${opElse1} ${changeOPElse1} ${opElse2}`)
+            }
+            break;
 
-    const thread = {comp: comp, operand1: operand1, operand2: operand2, change1: change1, change2: change2}
+        case 2:
+            let opElse3 = operandElse[1];
+            temp = operands.filter(item => item!=opElse3);
+            let opElse4 = temp[Math.floor(Math.random()*temp.length)];
+            if(opElse4 == "const"){
+                opElse4 = Math.floor(Math.random()*10)
+            }
+            if (changeOPElse1 == "="){
+                changeElse.push(`${opElse2}`)
+            }else{
+                changeElse.push(`${opElse1} ${changeOPElse1} ${opElse2}`)
+            }
+
+            if (changeOPElse2 == "="){
+                changeElse.push(`${opElse4}`)
+            }else{
+                changeElse.push(`${opElse3} ${changeOPElse2} ${opElse4}`)
+            }
+            break;
+
+    }
+
+    const thread = {comp: comp, operandIf: operandIf, operandElse: operandElse, changeIf: changeIf, changeElse: changeElse, lineSizeIf: lineSizeIf, lineSizeElse: lineSizeElse}
     return thread
 }
 
 function generateInitialState(){
-
+    let x = Math.floor(Math.random()*10);
+    let y1 = Math.floor(Math.random()*10)
+    let y2 = Math.floor(Math.random()*10)
+    return {x: x, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
 
 function toState(stateArr){
@@ -194,11 +354,29 @@ function toState(stateArr){
     return states
 }
 
-function stateChange(state){
+function stateChange(state, thread1Info, thread2Info){
     let arr = [];
-    for(let n = 0; n<=thread1.length; n++){
+
+    console.log(thread1Info)
+    console.log(thread2Info)
+    if(thread1Info.lineSizeElse == 1){
+        thread1.splice(4, 1)
+    }
+    if(thread1Info.lineSizeIf == 1){
+        thread1.splice(2, 1)
+    }
+
+    if(thread2Info.lineSizeElse == 1){
+        thread2.splice(4, 1)
+    }
+    if(thread2Info.lineSizeIf == 1){
+        thread2.splice(2, 1)
+    }
+
+
+    for(let n = 0; n<=thread2.length; n++){
         let temp = [];
-        for (let m = 0; m <=thread2.length; m++){
+        for (let m = 0; m <=thread1.length; m++){
             temp.push('')
         }
         arr.push(temp)
@@ -208,14 +386,15 @@ function stateChange(state){
 
     let i;
     let j;
-    for(i = 0; i <= thread1.length; i++){
+    for(i = 0; i <= thread2.length; i++){
 
-        for (j = 0; j<= thread2.length; j++){
+        for (j = 0; j<= thread1.length; j++){
             if(i==0 && j==0){
                 continue;
             }
             else if(i == 0){
                 //continue through thread 1
+                console.log(j)
                 arr[0][j] = [];
                 arr[0][j-1].forEach((elem)=>{arr[0][j].push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
                 arr[0][j] = arr[0][j].flat()
@@ -232,11 +411,11 @@ function stateChange(state){
             }
             else{
                 let temp = []; 
-                console.log("break")
+
                 arr[i-1][j].forEach((elem)=>{
-                    console.log("elem: " + elem);
+
                     temp.push(JSON.stringify(thread2[i-1](JSON.parse(elem), thread2Info)))})
-                console.log("temp: " + temp)
+
                 temp = temp.flat();
                 
                 let temp2 = []; 
@@ -254,19 +433,33 @@ function stateChange(state){
         
 
     }
-    // for(i = 0; i< 3; i++){
-    //     for(j=0; j<3; j++)[
-    //         console.log(arr[i][j])
-    //     ]
-    // }
     return arr
 }
 
-let stateArr =stateChange(state)
-let text = generateText(state, thread1Info, thread2Info)
+function initialize(){
+    const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
+    const thread1Info = generateThreadInfo();//{comp: "x==1", operand1: "x", operand2: "y", change1: "x-y", change2: "y+1"}
+    let flag = false;
+    if(thread1Info.lineSizeIf == 2||thread1Info.lineSizeElse ==2){
+        flag = true
+    }
+    const thread2Info = generateThreadInfo(flag);//{comp: "y==6", operand1: "y", operand2: "x", change1: "y=x", change2: "x+9"}
 
-console.log(text.initial)
-console.log(text.t1)
-console.log(text.t2)
+    let text = generateText(state, thread1Info, thread2Info);
+
+    return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info};
+}
+
+function possibleFinalStates(stateArr, thread1Length, thread2Length){
+
+}
+
+
+let problem = initialize();
+
+console.log(problem.text.initial);
+console.log(problem.text.t1);
+console.log(problem.text.t2);
+let stateArr =stateChange(problem.state, problem.thread1Info, problem.thread2Info);
 
 console.log(stateArr)
