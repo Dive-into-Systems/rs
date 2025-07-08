@@ -1,54 +1,54 @@
 function generateText(state, thread1Info, thread2Info){
-    let initialText = `int x = ${state.x};\n`
+    let initialText = `int x = ${state.x};<br>`
     
-    let thread1Text = `int y = ${state.y1};\n`
-    thread1Text += `if (${thread1Info.comp}){\n`
+    let thread1Text = `<pre>int y = ${state.y1};<br>`
+    thread1Text += `if (${thread1Info.comp}){<br>`
     switch (thread1Info.lineSizeIf){
-        case 1: 
-            thread1Text += `   ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
+        case 1:
+            thread1Text += `   ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
             break;
         case 2:
-            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
-            thread1Text += `    ${thread1Info.operandIf[1]} = ${thread1Info.changeIf[1]};\n`
+            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
+            thread1Text += `    ${thread1Info.operandIf[1]} = ${thread1Info.changeIf[1]};<br>`
             break;
     }
     
-    thread1Text += `} else{\n`
+    thread1Text += `} else{<br>`
     
     switch (thread1Info.lineSizeElse){
         case 1:
-            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};\n}\n`
+            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>}<br>`
             break
         case 2:
-            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};\n`
-            thread1Text += `   ${thread1Info.operandElse[1]} = ${thread1Info.changeElse[1]};\n}\n`
+            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>`
+            thread1Text += `   ${thread1Info.operandElse[1]} = ${thread1Info.changeElse[1]};<br>}<br>`
     }
-    thread1Text += `print("%d %d", x, y);`
+    thread1Text += `print("%d %d", x, y);</pre>`
 
-    let thread2Text = `int y = ${state.y2};\n`
+    let thread2Text = `<pre>int y = ${state.y2};<br>`
 
-    thread2Text += `if (${thread2Info.comp}){\n`
+    thread2Text += `if (${thread2Info.comp}){<br>`
     switch (thread2Info.lineSizeIf){
         case 1: 
-            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};\n`
+            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
             break;
         case 2:
-            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};\n`
-            thread2Text += `    ${thread2Info.operandIf[1]} = ${thread2Info.changeIf[1]};\n`
+            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
+            thread2Text += `    ${thread2Info.operandIf[1]} = ${thread2Info.changeIf[1]};<br>`
             break;
     }
     
-    thread2Text += `} else{\n`
+    thread2Text += `} else{<br>`
     
     switch (thread2Info.lineSizeElse){
         case 1:
-            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};\n}\n`
+            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>}<br>`
             break
         case 2:
-            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};\n`
-            thread2Text += `   ${thread2Info.operandElse[1]} = ${thread2Info.changeElse[1]};\n}\n`
+            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>`
+            thread2Text += `   ${thread2Info.operandElse[1]} = ${thread2Info.changeElse[1]};<br>}<br>`
     }
-    thread2Text += `print("%d %d", x, y);`
+    thread2Text += `print("%d %d", x, y);</pre>`
 
     return {initial: initialText, t1: thread1Text, t2: thread2Text};
 }
@@ -158,7 +158,7 @@ function generateInitialState(){
     return {x: x, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
 
-function toState(stateArr){
+export function toState(stateArr){
     let states = []
 
     
@@ -179,7 +179,7 @@ function toState(stateArr){
     return states
 }
 
-function stateChange(state, thread1Info, thread2Info, thread1, thread2){
+export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
 
     if(thread1Info.lineSizeElse == 1){
@@ -241,7 +241,10 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 temp = temp.flat();
                 
                 let temp2 = []; 
-                arr[i][j-1].forEach((elem)=>{temp2.push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
+                arr[i][j-1].forEach((elem)=>{
+                    
+                    temp2.push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
+
                 temp2 = temp2.flat();
 
                 arr[i][j] = []
@@ -258,7 +261,7 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     return arr
 }
 
-function initialize(){
+export function initialize(){
     let thread1 = [
         (state,info) => {
             let x = state.x;
@@ -410,7 +413,7 @@ function initialize(){
     return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2};
 }
 
-function possibleFinalStates(stateArr, thread1Length, thread2Length){
+export function possibleFinalStates(stateArr, thread1Length, thread2Length){
     let finalState = stateArr[thread2Length][thread1Length];
     let ret = []
 
