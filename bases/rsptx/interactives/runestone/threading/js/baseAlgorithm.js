@@ -145,7 +145,7 @@ function generateText(state, thread1Info, thread2Info){
     thread1Text += `if (${thread1Info.comp}){\n`
     switch (thread1Info.lineSizeIf){
         case 1: 
-            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
+            thread1Text += `   ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
             break;
         case 2:
             thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};\n`
@@ -193,51 +193,13 @@ function generateText(state, thread1Info, thread2Info){
     return {initial: initialText, t1: thread1Text, t2: thread2Text};
 }
 
-function generateThreadInfo(limitLineSize=false){
-    
-    let lineSizeIf = (!limitLineSize && (Math.floor(Math.random()*7))<2) ? 2:1
-    let lineSizeElse = ((lineSizeIf == 1 && !limitLineSize) && Math.floor(Math.random()*2)) ? 2:1
-    let operandIf = []
-    let operandElse = []
-    let changeIf = []
-    let changeElse = []
-    let comp;
 
-    if(lineSizeIf == 2){
-        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
-        operandIf.push((operandIf[0] == "x")?"y":"x");
-    }else{
-        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
-    }
-
-    if(lineSizeElse == 2){
-        operandElse.push(Math.floor(Math.random()*2) ? "x":"y");
-        operandElse.push((operandIf[0] == "x")?"y":"x");
-    }else{
-        operandElse.push((operandIf[0] == "x")? "y":"x");
-    }
-
-    const operatorComp = ["<=", ">=", "<", ">", "!"];
-    let operatorChange = ["+", "-", "="]
-    let operands = ["x", "y", "const"];
-
-    const compareOP = operatorComp[Math.floor(Math.random()*operatorComp.length)];
-    const OPcompare1 = operands[Math.floor(Math.random()*(operands.length-1))];
-    let temp = operands.filter(item => item!=OPcompare1);
-    let OPcompare2 = temp[Math.floor(Math.random()*temp.length)];
-    if(OPcompare2 == "const"){
-        OPcompare2 = Math.floor(Math.random()*10);
-    }
-    if(compareOP == "!"){
-        comp = `!${OPcompare1}`
-    }else{
-        comp = `${OPcompare1} ${compareOP} ${OPcompare2}`
-    }
-
+function generateChange(operatorChange, operandIf, operands, lineSizeIf){
     let opIf1;
     let opIf2;
+    let changeIf = []
     const changeOPIf1 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
-    temp = operatorChange.filter(item=>item!=changeOPIf1);
+    let temp = operatorChange.filter(item=>item!=changeOPIf1);
     const changeOPIf2 = temp[Math.floor(Math.random()*temp.length)];
     opIf1 = operandIf[0];
     temp = operands.filter(item => item!=opIf1);
@@ -276,57 +238,59 @@ function generateThreadInfo(limitLineSize=false){
             break;
 
     }
+    return changeIf;
+}
 
-    let opElse1;
-    let opElse2;
-    const changeOPElse1 = operatorChange[Math.floor(Math.random()*operatorChange.length)];
-    temp = operatorChange.filter(item=>item!=changeOPElse1);
-    const changeOPElse2 = temp[Math.floor(Math.random()*temp.length)];
-    opElse1 = operandElse[0];
-    temp = operands.filter(item => item!=opElse1);
-    opElse2 = temp[Math.floor(Math.random()*temp.length)];
-    if(opElse2 == "const"){
-        opElse2 = Math.floor(Math.random()*10)
+function generateThreadInfo(limitLineSize=false){
+    
+    let lineSizeIf = (!limitLineSize && (Math.floor(Math.random()*7))<2) ? 2:1
+    let lineSizeElse = ((lineSizeIf == 1 && !limitLineSize) && Math.floor(Math.random()*2)) ? 2:1
+    let operandIf = []
+    let operandElse = []
+    let changeIf;
+    let changeElse;
+    let comp;
+
+    if(lineSizeIf == 2){
+        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
+        operandIf.push((operandIf[0] == "x")?"y":"x");
+    }else{
+        operandIf.push(Math.floor(Math.random()*2) ? "x":"y");
     }
 
-    switch (lineSizeElse){
-        case 1:
-            if (changeOPElse1 == "="){
-                changeElse.push(`${opElse2}`)
-            }else{
-                changeElse.push(`${opElse1} ${changeOPElse1} ${opElse2}`)
-            }
-            break;
-
-        case 2:
-            let opElse3 = operandElse[1];
-            temp = operands.filter(item => item!=opElse3);
-            let opElse4 = temp[Math.floor(Math.random()*temp.length)];
-            if(opElse4 == "const"){
-                opElse4 = Math.floor(Math.random()*10)
-            }
-            if (changeOPElse1 == "="){
-                changeElse.push(`${opElse2}`)
-            }else{
-                changeElse.push(`${opElse1} ${changeOPElse1} ${opElse2}`)
-            }
-
-            if (changeOPElse2 == "="){
-                changeElse.push(`${opElse4}`)
-            }else{
-                changeElse.push(`${opElse3} ${changeOPElse2} ${opElse4}`)
-            }
-            break;
-
+    if(lineSizeElse == 2){
+        operandElse.push(Math.floor(Math.random()*2) ? "x":"y");
+        operandElse.push((operandIf[0] == "x")?"y":"x");
+    }else{
+        operandElse.push((operandIf[0] == "x")? "y":"x");
     }
 
+    const operatorComp = ["<=", ">=", "<", ">"];
+    let operatorChange = ["+", "-", "="]
+    let operands = ["x", "y", "const"];
+
+    const compareOP = operatorComp[Math.floor(Math.random()*operatorComp.length)];
+    const OPcompare1 = operands[Math.floor(Math.random()*(operands.length-1))];
+    let temp = operands.filter(item => item!=OPcompare1);
+    let OPcompare2 = temp[Math.floor(Math.random()*temp.length)];
+    if(OPcompare2 == "const"){
+        OPcompare2 = Math.floor(Math.random()*10);
+    }
+
+    comp = `${OPcompare1} ${compareOP} ${OPcompare2}`
+
+    changeIf = generateChange(operatorChange, operandIf, operands, lineSizeIf);
+    changeElse = generateChange(operatorChange, operandElse, operands, lineSizeElse);
+
+    
     const thread = {comp: comp, operandIf: operandIf, operandElse: operandElse, changeIf: changeIf, changeElse: changeElse, lineSizeIf: lineSizeIf, lineSizeElse: lineSizeElse}
     return thread
 }
 
 function generateInitialState(){
-    let x = Math.floor(Math.random()*10);
-    let y1 = Math.floor(Math.random()*10)
+    let x = Math.floor(Math.random()*(7-2))+3;
+    let coinFlip = Math.floor(Math.random()*2);
+    let y1 = coinFlip ? Math.floor(Math.random()*(6))+1 : Math.floor(Math.random()*(9-4))+5;
     let y2 = Math.floor(Math.random()*10)
     return {x: x, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
@@ -344,8 +308,6 @@ function toState(stateArr){
                 entry = JSON.parse(entry)
                 substate.push(entry)
                 
-
-                
             })
             item.push(substate)
         })
@@ -357,8 +319,6 @@ function toState(stateArr){
 function stateChange(state, thread1Info, thread2Info){
     let arr = [];
 
-    console.log(thread1Info)
-    console.log(thread2Info)
     if(thread1Info.lineSizeElse == 1){
         thread1.splice(4, 1)
     }
@@ -394,7 +354,6 @@ function stateChange(state, thread1Info, thread2Info){
             }
             else if(i == 0){
                 //continue through thread 1
-                console.log(j)
                 arr[0][j] = [];
                 arr[0][j-1].forEach((elem)=>{arr[0][j].push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
                 arr[0][j] = arr[0][j].flat()
@@ -451,15 +410,36 @@ function initialize(){
 }
 
 function possibleFinalStates(stateArr, thread1Length, thread2Length){
+    let finalState = stateArr[thread2Length][thread1Length];
+    let ret = []
 
+    while(finalState.length > 0){
+        let state = finalState[0];
+        ret.push(state);
+        finalState = finalState.filter(item=>item!=state);
+    }
+
+    return ret;
 }
 
+function gatherGenerationStatistics(){
+    let finalStateCount = []
+    let finalStates = []
+    for (let i = 0; i<1000; i++){
+        let problem = initialize();
+        let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info);
+        let finalState = possibleFinalStates(stateArr, thread1.length, thread2.length)
+        finalStateCount.push(finalState.length)
+        finalState.push(finalState)
+    }
 
-let problem = initialize();
+    let stateFrequencies = [0,0,0,0,0,0,0,0,0,0]
 
-console.log(problem.text.initial);
-console.log(problem.text.t1);
-console.log(problem.text.t2);
-let stateArr =stateChange(problem.state, problem.thread1Info, problem.thread2Info);
+    finalStateCount.forEach(item=>{
+        stateFrequencies[item-1]++
+    })
 
-console.log(stateArr)
+    return stateFrequencies
+}
+
+console.log(gatherGenerationStatistics())
