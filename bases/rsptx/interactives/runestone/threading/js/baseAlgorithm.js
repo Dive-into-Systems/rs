@@ -1,143 +1,3 @@
-let thread1 = [
-        (state,info) => {
-            let x = state.x;
-            let y = state.y1;
-            if(eval(info.comp)){
-                state.inIf1 = true
-                
-            }
-            else{
-                state.inIf1 = false;
-            }
-            
-            return state
-        },
-
-        (state, info) => {
-            let x = state.x;
-            let y = state.y1;
-            if(state.inIf1){
-                if (info.operandIf[0] == "x"){
-                    state.x = eval(info.changeIf[0])
-                }else{
-                    state.y1 = eval(info.changeIf[0])
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
-            let x = state.x;
-            let y = state.y1;
-            if(state.inIf1){
-                if (info.operandIf[1] == "x"){
-                    state.x = eval(info.changeIf[1])
-                }else{
-                    state.y1 = eval(info.changeIf[1])
-                }
-            }
-            return state
-        },
-        
-        (state, info) => {
-            let x = state.x;
-            let y = state.y1;
-            if(!state.inIf1){
-                if (info.operandElse[0] == "x"){
-                    state.x = eval(info.changeElse[0])
-                }else{
-                    state.y1 = eval(info.changeElse[0])
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
-            let x = state.x;
-            let y = state.y1;
-            if(!state.inIf1){
-                if (info.operandElse[1] == "x"){
-                    state.x = eval(info.changeElse[1])
-                }else{
-                    state.y1 = eval(info.changeElse[1])
-                }
-            }
-            return state
-        }
-    ]
-
-let thread2 = [
-    
-    (state,info) => {
-        let x = state.x;
-        let y = state.y2;
-        if(eval(info.comp)){
-            state.inIf2 = true
-            
-        }
-        else{
-            state.inIf2 = false;
-        }
-        
-        return state
-    },
-
-    (state, info) => {
-        let x = state.x;
-        let y = state.y2;
-        
-        if(state.inIf2){
-            if (info.operandIf[0] == "x"){
-                state.x = eval(info.changeIf[0]);
-            }else{
-                state.y2= eval(info.changeIf[0]);
-            }
-        }
-        return state
-    },
-
-    (state, info) => {
-        let x = state.x;
-        let y = state.y2;
-        
-        if(state.inIf2){
-            if (info.operandIf[1] == "x"){
-                state.x = eval(info.changeIf[1]);
-            }else{
-                state.y2= eval(info.changeIf[1]);
-            }
-        }
-        return state
-    },
-
-    (state, info) => {
-        let x = state.x;
-        let y = state.y2;
-        if(!state.inIf2){
-            if (info.operandElse[0] == "x"){
-                state.x = eval(info.changeElse[0]);
-            }else{
-                state.y2 = eval(info.changeElse[0]);
-            }
-        }
-        return state
-    },
-
-    (state, info) => {
-        let x = state.x;
-        let y = state.y2;
-        if(!state.inIf2){
-            if (info.operandElse[1] == "x"){
-                state.x = eval(info.changeElse[1]);
-            }else{
-                state.y2 = eval(info.changeElse[1]);
-            }
-        }
-        return state
-    }
-]
-
-
 function generateText(state, thread1Info, thread2Info){
     let initialText = `int x = ${state.x};\n`
     
@@ -219,11 +79,14 @@ function generateChange(operatorChange, operandIf, operands, lineSizeIf){
 
         case 2:
             let opIf3 = operandIf[1];
-            temp = operands.filter(item => item!=opIf3);
-            let opIf4 = temp[Math.floor(Math.random()*temp.length)];
-            if(opIf4 == "const"){
-                opIf4 = Math.floor(Math.random()*10)
-            }
+            
+            let opIf4 = (opIf3 == "x") ? "y":"x";
+            // temp = operands.filter(item => item!=opIf3);
+            // let opIf4 = temp[Math.floor(Math.random()*temp.length)]
+            // if(opIf4 == "const"){
+            //     opIf4 = Math.floor(Math.random()*10)
+            // }
+
             if (changeOPIf1 == "="){
                 changeIf.push(`${opIf2}`)
             }else{
@@ -316,7 +179,7 @@ function toState(stateArr){
     return states
 }
 
-function stateChange(state, thread1Info, thread2Info){
+function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
 
     if(thread1Info.lineSizeElse == 1){
@@ -396,6 +259,144 @@ function stateChange(state, thread1Info, thread2Info){
 }
 
 function initialize(){
+    let thread1 = [
+        (state,info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(eval(info.comp)){
+                state.inIf1 = true
+                
+            }
+            else{
+                state.inIf1 = false;
+            }
+            
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(state.inIf1){
+                if (info.operandIf[0] == "x"){
+                    state.x = eval(info.changeIf[0])
+                }else{
+                    state.y1 = eval(info.changeIf[0])
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(state.inIf1){
+                if (info.operandIf[1] == "x"){
+                    state.x = eval(info.changeIf[1])
+                }else{
+                    state.y1 = eval(info.changeIf[1])
+                }
+            }
+            return state
+        },
+        
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(!state.inIf1){
+                if (info.operandElse[0] == "x"){
+                    state.x = eval(info.changeElse[0])
+                }else{
+                    state.y1 = eval(info.changeElse[0])
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y1;
+            if(!state.inIf1){
+                if (info.operandElse[1] == "x"){
+                    state.x = eval(info.changeElse[1])
+                }else{
+                    state.y1 = eval(info.changeElse[1])
+                }
+            }
+            return state
+        }
+    ]
+
+    let thread2 = [
+        
+        (state,info) => {
+            let x = state.x;
+            let y = state.y2;
+            if(eval(info.comp)){
+                state.inIf2 = true
+                
+            }
+            else{
+                state.inIf2 = false;
+            }
+            
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y2;
+            
+            if(state.inIf2){
+                if (info.operandIf[0] == "x"){
+                    state.x = eval(info.changeIf[0]);
+                }else{
+                    state.y2= eval(info.changeIf[0]);
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y2;
+            
+            if(state.inIf2){
+                if (info.operandIf[1] == "x"){
+                    state.x = eval(info.changeIf[1]);
+                }else{
+                    state.y2= eval(info.changeIf[1]);
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y2;
+            if(!state.inIf2){
+                if (info.operandElse[0] == "x"){
+                    state.x = eval(info.changeElse[0]);
+                }else{
+                    state.y2 = eval(info.changeElse[0]);
+                }
+            }
+            return state
+        },
+
+        (state, info) => {
+            let x = state.x;
+            let y = state.y2;
+            if(!state.inIf2){
+                if (info.operandElse[1] == "x"){
+                    state.x = eval(info.changeElse[1]);
+                }else{
+                    state.y2 = eval(info.changeElse[1]);
+                }
+            }
+            return state
+        }
+    ]
     const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
     const thread1Info = generateThreadInfo();//{comp: "x==1", operand1: "x", operand2: "y", change1: "x-y", change2: "y+1"}
     let flag = false;
@@ -406,7 +407,7 @@ function initialize(){
 
     let text = generateText(state, thread1Info, thread2Info);
 
-    return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info};
+    return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2};
 }
 
 function possibleFinalStates(stateArr, thread1Length, thread2Length){
@@ -427,8 +428,12 @@ function gatherGenerationStatistics(){
     let finalStates = []
     for (let i = 0; i<1000; i++){
         let problem = initialize();
-        let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info);
-        let finalState = possibleFinalStates(stateArr, thread1.length, thread2.length)
+        let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2);
+        console.log(problem.text.initial)
+        console.log(problem.text.t1);
+        console.log(problem.text.t2);
+        let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
+        console.log(finalState)
         finalStateCount.push(finalState.length)
         finalState.push(finalState)
     }
@@ -438,8 +443,18 @@ function gatherGenerationStatistics(){
     finalStateCount.forEach(item=>{
         stateFrequencies[item-1]++
     })
-
+    
     return stateFrequencies
 }
 
 console.log(gatherGenerationStatistics())
+
+// let problem = initialize();
+
+// let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2)
+// let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
+// console.log(problem.text.initial)
+// console.log(problem.text.t1)
+// console.log(problem.text.t2)
+// console.log(stateArr)
+// console.log(finalState)
