@@ -105,6 +105,7 @@ const module_map = {
     simple_sensor: () => import("./runestone/cellbotics/js/simple_sensor.js"),
     spreadsheet: () => import("./runestone/spreadsheet/js/spreadsheet.js"),
     tabbedStuff: () => import("./runestone/tabbedStuff/js/tabbedstuff.js"),
+    threading_race: () => import("./runestone/threading/js/threading_race.js"),
     timedAssessment: () => import("./runestone/timed/js/timed.js"),
     wavedrom: () => import("./runestone/wavedrom/js/wavedrom.js"),
     // TODO: since this isn't in a ``data-component``, need to trigger an import of this code manually.
