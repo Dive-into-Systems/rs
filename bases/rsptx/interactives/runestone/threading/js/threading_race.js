@@ -176,16 +176,17 @@ export default class TR extends RunestoneBase {
         row += '</tr>';
         this.answerTable.innerHTML += row;
 
-    
+        if(this.rowCount>= 1){
             for(let i = 0; i < this.rowCount; i++){
                 for (let j = 0; j<variables.length; j++){
 
                     let inputField = document.getElementById(`${i}${j}_answer`)
                     inputField.value = eval(variables[j])
+                    inputField.disabled = true;
                 }
             }
     
-
+        }
         this.rowCount++;
         
     }
@@ -322,10 +323,12 @@ export default class TR extends RunestoneBase {
 
         for(let j = 0; j<variables.length; j++){
             let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
-                if(input!=""){
-                    eval(`${variables[j]}` + `= ${input}`);
+                if(input==""){
+                    eval(`${variables[j]}` + `= ""`);
+                }else if(isNaN(Number(input))){
+                    eval(`${variables[j]}` + `= "${input}"`);
                 }else{
-                    eval(`${variables[j]}` + `= ""`)
+                    eval(`${variables[j]}` + `= ${input}`);
                 }
         }
 
@@ -360,6 +363,15 @@ export default class TR extends RunestoneBase {
 
         this.feedback_msg = "Correct. You've gotten all the possible states!"
         this.allCorrect = true
+
+        for(let i = 0; i < this.rowCount; i++){
+            for (let j = 0; j<variables.length; j++){
+
+                let inputField = document.getElementById(`${i}${j}_answer`)
+                inputField.disabled = true;
+            }
+        }
+
         this.renderFeedback();
     }
 
@@ -399,10 +411,12 @@ export default class TR extends RunestoneBase {
 
         for(let j = 0; j<variables.length; j++){
             let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
-                if(input!=""){
-                    eval(`${variables[j]}` + `= ${input}`);
+                if(input==""){
+                    eval(`${variables[j]}` + `= ""`);
+                }else if(isNaN(Number(input))){
+                    eval(`${variables[j]}` + `= "${input}"`);
                 }else{
-                    eval(`${variables[j]}` + `= ""`)
+                    eval(`${variables[j]}` + `= ${input}`);
                 }
         }
 
