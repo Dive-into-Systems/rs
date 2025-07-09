@@ -31,8 +31,19 @@ export default class TR extends RunestoneBase {
         this.questionId = 1;
         this.userId = this.getUserId();
 
-        this.problem = initialize();
+        this.raceRate = 0.67;
+        const flag = (Math.random()>this.raceRate)?1:0
 
+        for (let i = 0; i<20; i++){
+            this.problem = initialize();
+            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+            if (this.finalStates.length > 1 || flag){
+                break;
+            }
+        }
+        
         this.createTRElement();
 
         // this.addCaption("runestone");
@@ -64,31 +75,17 @@ export default class TR extends RunestoneBase {
     }
 
     renderTRPromptAndInput() {
-
+        this.userAnswers = [];
         // Generate the two dropdown menus for number conversion
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and a small block of assembly code containing a jump instruction, determine:"
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variable x and the two threads running concurrently, determine if there is a race condition."
 
-        // // specify the number of bits in the statement
-        // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
-
-
-
-        // Build the inner HTML using template literals
-        // Inner HTML defines the items in the dropdown
-
-        // Assign the built HTML to innerHTML of the this.menuNode1 container
-        
-        this.configHelperText = document.createElement("div");
-        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
-
-        this.containerDiv.append(document.createElement("br"))
 
 
         // create the node for the prompt
@@ -123,37 +120,81 @@ export default class TR extends RunestoneBase {
     }
 
     renderAnswerDiv(){
-            this.answerDiv = document.createElement('div');
-            
-            this.codeDiv = document.createElement('div');
-            
-            this.answerDiv.append(this.codeDiv);
-    
-            this.codeBox = document.createElement('code');
-            this.codeDiv.style = "margin-left:23%"
-            this.codeBox.style = "padding: 0px;";
-            
-            this.codeBox.innerHTML = this.problem.text.initial;
-            this.thread1 = document.createElement('code');
-            this.thread1.innerHTML = this.problem.text.t1;
-            this.thread2 = document.createElement('code');
-            this.thread2.innerHTML = this.problem.text.t2;
-            this.codeDiv.append(this.codeBox);
-            this.threadsDiv = document.createElement("div");
-            this.threadsDiv.style.display = "flex";
+        this.answerDiv = document.createElement('div');
+        
+        this.codeDiv = document.createElement('div');
+        
+        this.answerDiv.append(this.codeDiv);
 
-            this.threadsDiv.append(this.thread1);
-            this.threadsDiv.append(this.thread2);
-            this.answerDiv.append(this.threadsDiv);
+        this.codeBox = document.createElement('code');
+        this.codeDiv.style = "margin-left:40%"
+        this.codeBox.style = "font-size: 18px;";
+        
+        this.codeBox.innerHTML = this.problem.text.initial;
+        this.thread1 = document.createElement('code');
+        this.thread1.innerHTML = this.problem.text.t1;
+        this.thread2 = document.createElement('code');
+        this.thread2.innerHTML = this.problem.text.t2;
+        this.codeDiv.append(this.codeBox);
+        this.threadsDiv = document.createElement("div");
+        this.threadsDiv.style = "display: flex; width: 75%; margin: auto"
 
-            this.containerDiv.append(this.answerDiv)
+        this.threadsDiv.append(this.thread1);
+        this.threadsDiv.append(this.thread2);
+        this.answerDiv.append(this.threadsDiv);
+        this.background = document.createElement("div");
+        this.background.className = "statement-div"
+
+        this.rowCount = 0;
+        this.answerTable = document.createElement("table");
+
+
+        let variables = ["x", "y1", "y2"];
+        // Create table header
+        let header = '<tr>';
+        for (const variable of variables) {
+            header += `<th style="text-align:center">${variable}</th>`;
+        }
+        
+        this.answerTable.innerHTML = header;
+
+        this.generateAnswerSlot();
+        this.answerDiv.append(document.createElement("br"));
+        this.background.append(this.answerTable);
+        this.answerDiv.append(this.background)
+        this.containerDiv.append(this.answerDiv);
             
-
     }
+
+    generateAnswerSlot(){
+        let variables = ["this.userAnswers[i].x", "this.userAnswers[i].y1", "this.userAnswers[i].y2"]
+        let row = '<tr>';
+        for(let j = 0; j < variables.length; j++){
+            row += `<td><input type="text" size="3" maxlength="3" class="answer-input" id=${this.rowCount}${j}_answer /></td>`;
+        }
+
+        row += '</tr>';
+        this.answerTable.innerHTML += row;
+
+    
+            for(let i = 0; i < this.rowCount; i++){
+                for (let j = 0; j<variables.length; j++){
+
+                    let inputField = document.getElementById(`${i}${j}_answer`)
+                    inputField.value = eval(variables[j])
+                }
+            }
+    
+
+        this.rowCount++;
+        
+    }
+
 
     clearButtons(){
         this.generateButton.remove()
         this.submitButton.remove()
+        this.noMoreRowsButton.remove()
         
     }
 
@@ -164,7 +205,7 @@ export default class TR extends RunestoneBase {
     renderTRButtons() {
         // "check me" button and "generate a number" button
         this.submitButton = document.createElement("button");
-        this.submitButton.textContent = $.i18n("Check Answer");
+        this.submitButton.textContent = $.i18n("Check current row");
         $(this.submitButton).attr({
             class: "btn btn-success",
             name: "answer",
@@ -175,7 +216,7 @@ export default class TR extends RunestoneBase {
             if(this.feedbackDiv){
                 this.feedbackDiv.remove()
             }
-            this.clearHelp()
+
             this.checkCurrentAnswer();
             this.logCurrentAnswer();
     
@@ -191,15 +232,43 @@ export default class TR extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
             this.clearAnswer();
-            this.problem = initialize();
+            const flag = (Math.random()>this.raceRate)?1:0
+            this.userAnswers = [];
+            for (let i = 0; i<20; i++){
+                this.problem = initialize();
+                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+                if (this.finalStates.length > 1 || flag){
+                    break;
+                }
+            }
+
             this.renderAnswerDiv();
             this.renderTRButtons()
             
         });
 
+        this.noMoreRowsButton = document.createElement("button");
+        this.noMoreRowsButton.textContent = $.i18n("No more entries");
+        $(this.noMoreRowsButton).attr({
+            class: "btn btn-success",
+            name: "answer",
+            type: "button",
+        });
+        // check the answer when the conversion is valid
+        this.noMoreRowsButton.addEventListener("click", () => {
+            if(this.feedbackDiv){
+                this.feedbackDiv.remove()
+            }
+            this.checkAllAnswers();
+            this.logCurrentAnswer();
+    
+        });
 
         this.containerDiv.appendChild(this.generateButton);
         this.containerDiv.appendChild(this.submitButton);
+        this.containerDiv.appendChild(this.noMoreRowsButton);
 
 
     }
@@ -213,7 +282,7 @@ export default class TR extends RunestoneBase {
     clearAnswer() {
         this.feedbackDiv.remove();
         this.answerDiv.remove();
-
+        this.allCorrect = false;
         this.clearButtons()
     }
 
@@ -225,13 +294,137 @@ export default class TR extends RunestoneBase {
         
     }
     
-    // check if the answer is correct
-    checkCurrentAnswer() {
-        this.correct = false;
+    checkAllAnswers(){
+        this.correct = true;
+        if(this.allCorrect == true){
+            this.feedback_msg = "You've got everything! Stop clicking this button and generate another :D"
+            this.renderFeedback()
+            return;
+        }
+        if(this.rowCount < this.finalStates.length-1){
+            this.correct = false;
+            this.feedback_msg = "Incorrect. There are other possible states."
+            this.renderFeedback();
+            return;
+        }
+
+        let answers = [];
+        this.finalStates.forEach(state =>{
+            let temp = JSON.parse(state)
+            answers.push({x:temp.x, y1:temp.y1, y2:temp.y2});
+        })
+        for (let i = 0; i<answers.length; i++){
+            answers[i] = JSON.stringify(answers[i])
+        }
+        let userRow = {};
+
+        let variables = ["userRow.x", "userRow.y1", "userRow.y2"];
+
+        for(let j = 0; j<variables.length; j++){
+            let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
+                if(input!=""){
+                    eval(`${variables[j]}` + `= ${input}`);
+                }else{
+                    eval(`${variables[j]}` + `= ""`)
+                }
+        }
+
+        userRow = JSON.stringify(userRow)
+
+        let userAnswers = []
+        for (let i = 0; i<this.userAnswers.length; i++){
+            userAnswers.push(JSON.stringify(this.userAnswers[i]))
+        }
+
+        if(userRow != '{"x":"","y1":"","y2":""}'){
+            userAnswers.push(userRow);
+        }
+
+        for (let answer of userAnswers){
+            if(!answers.includes(answer)){
+                this.correct = false;
+                this.feedback_msg = "Incorrect. An entry is not a possible state."
+                this.renderFeedback();
+                return;
+            }
+        }
         
+        for (let answer of answers){
+            if(!userAnswers.includes(answer)){
+                this.correct = false;
+                this.feedback_msg = "Incorrect. There are other possible states."
+                this.renderFeedback();
+                return;
+            }
+        }
+
+        this.feedback_msg = "Correct. You've gotten all the possible states!"
+        this.allCorrect = true
         this.renderFeedback();
-        
-    
+    }
+
+    // check if the current answer is correct
+    checkCurrentAnswer() {
+        this.correct = true;
+        if(this.allCorrect == true){
+            this.feedback_msg = "You've got everything! Stop clicking this button and generate another :D"
+            this.renderFeedback()
+            return;
+        }
+        if (this.rowCount > this.finalStates.length){
+            this.correct = false;
+            this.feedback_msg = "There are no more possible states";
+            this.renderFeedback()
+            return;
+        }
+
+        let variables = ["userRow.x", "userRow.y1", "userRow.y2"];
+        let userRow = {}
+        this.correct = true;
+
+
+        let answers = [];
+        this.finalStates.forEach(state =>{
+            let temp = JSON.parse(state)
+            answers.push({x:temp.x, y1:temp.y1, y2:temp.y2});
+        })
+        for (let i = 0; i<answers.length; i++){
+            answers[i] = JSON.stringify(answers[i])
+        }
+        console.log(answers)
+        let userAnswers = [];
+        this.userAnswers.forEach(answer =>{
+            userAnswers.push(JSON.stringify(answer));
+        })
+
+        for(let j = 0; j<variables.length; j++){
+            let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
+                if(input!=""){
+                    eval(`${variables[j]}` + `= ${input}`);
+                }else{
+                    eval(`${variables[j]}` + `= ""`)
+                }
+        }
+
+        userRow = JSON.stringify(userRow)
+
+        if(!answers.includes(userRow)){
+            this.correct = false;
+            this.feedback_msg = "Incorrect. This is not a possible state."
+            this.renderFeedback();
+            return;
+        }else if(userAnswers.includes(userRow)){
+            this.correct = false;
+            this.feedback_msg = "Incorrect. This is a duplicate entry."
+            this.renderFeedback();
+            return;
+        }else{
+            this.feedback_msg = "Correct. Good job!"
+            this.userAnswers.push(JSON.parse(userRow));
+            this.renderFeedback();
+        }
+
+        this.generateAnswerSlot();
     }
 
     // log the answer and other info to the server (in the future)
