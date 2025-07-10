@@ -37,7 +37,7 @@ export default class am_x86{
 
             let SourceText = `%${reg1}`;
 
-            const start = Math.floor(Math.random()*(16))
+            const start = (this.randomZeroOrOne()) ? 0:8;
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             
@@ -105,7 +105,7 @@ export default class am_x86{
 
             let DestinationText = `%${reg1}`;
 
-            const start = Math.floor(Math.random()*(16))
+            const start = (this.randomZeroOrOne()) ? 0:8;
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             

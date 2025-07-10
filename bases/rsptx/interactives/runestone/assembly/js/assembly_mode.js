@@ -552,13 +552,16 @@ export default class AM extends RunestoneBase {
         this.genLea = 0;
         let selectHistory = [];
         this.MAarray = [];
-        let select;
-
+        let select = [];
+        
         if (this.archSelect != "arm_64"){
             this.instructionList = ["add", "mov"];
     
             for (let i = 0; i<4; i++){
                 select = Math.floor(Math.random()*3)
+                if (i == 2 && !selectHistory.includes(1)){
+                    select = 1;
+                }
                 if (i == 3 && !selectHistory.includes(2)){
                     select = 2;
                 }
