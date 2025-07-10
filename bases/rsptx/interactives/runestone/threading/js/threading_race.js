@@ -460,7 +460,7 @@ export default class TR extends RunestoneBase {
             this.clearAnswer();
             const flag = (Math.random()>this.raceRate)?1:0
             this.userAnswers = [];
-            for (let i = 0; i<20; i++){
+            for (let i = 0; i<50; i++){
                 this.problem = initialize(Number(this.modeSelect.value));
                 this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
                 this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
