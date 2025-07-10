@@ -128,22 +128,8 @@ export default class AJ extends RunestoneBase {
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
         this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and a small block of assembly code containing a jump instruction, determine:"
-
-        // // specify the number of bits in the statement
-        // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
-
-
-
-        // Build the inner HTML using template literals
-        // Inner HTML defines the items in the dropdown
-
-        // Assign the built HTML to innerHTML of the this.menuNode1 container
-       
-
-        
         this.configHelperText = document.createElement("div");
         this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
-        // render the statement
         this.containerDiv.appendChild(this.instructionNode);
         this.statementDiv.appendChild(this.configHelperText);
         this.containerDiv.appendChild(this.statementDiv);
@@ -173,7 +159,7 @@ export default class AJ extends RunestoneBase {
 
         this.modeStatementNode = document.createTextNode("Select a mode:")
         this.statementDiv.appendChild(this.modeStatementNode);
-        // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        
         this.modeSelect = document.createElement("select")
         this.modeSelect.className = "form-control fork-inline mode"
         this.mode1Option = document.createElement("option")

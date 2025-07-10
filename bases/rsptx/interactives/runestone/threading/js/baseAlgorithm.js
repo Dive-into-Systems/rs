@@ -118,10 +118,17 @@ function generateChange(operatorChange, operandIf, operands, lineSizeIf){
     return changeIf;
 }
 
-function generateThreadInfo(limitLineSize=false){
-    
-    let lineSizeIf = (!limitLineSize && (Math.floor(Math.random()*7))<2) ? 2:1
-    let lineSizeElse = ((lineSizeIf == 1 && !limitLineSize) && Math.floor(Math.random()*2)) ? 2:1
+function generateThreadInfo(mode, limitLineSize=false){
+
+    let lineSizeIf
+    let lineSizeElse
+    if (mode == 1){
+        lineSizeIf = 1;
+        lineSizeElse = 1;
+    }else{
+        lineSizeIf = (!limitLineSize && (Math.floor(Math.random()*7))<2) ? 2:1
+        lineSizeElse = ((lineSizeIf == 1 && !limitLineSize) && Math.floor(Math.random()*2)) ? 2:1
+    }
     let operandIf = []
     let operandElse = []
     let changeIf;
@@ -192,6 +199,7 @@ export function toState(stateArr){
     })
     return states
 }
+
 
 export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
@@ -275,7 +283,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     return arr
 }
 
-export function initialize(){
+export function initialize(mode){
     let thread1 = [
         (state,info) => {
             let x = state.x;
@@ -415,12 +423,12 @@ export function initialize(){
         }
     ]
     const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
-    const thread1Info = generateThreadInfo();//{comp: "x==1", operand1: "x", operand2: "y", change1: "x-y", change2: "y+1"}
+    const thread1Info = generateThreadInfo(mode);//{comp: "x==1", operand1: "x", operand2: "y", change1: "x-y", change2: "y+1"}
     let flag = false;
     if(thread1Info.lineSizeIf == 2||thread1Info.lineSizeElse ==2){
         flag = true
     }
-    const thread2Info = generateThreadInfo(flag);//{comp: "y==6", operand1: "y", operand2: "x", change1: "y=x", change2: "x+9"}
+    const thread2Info = generateThreadInfo(mode, flag);//{comp: "y==6", operand1: "y", operand2: "x", change1: "y=x", change2: "x+9"}
 
     let text = generateText(state, thread1Info, thread2Info);
 
@@ -430,6 +438,12 @@ export function initialize(){
 export function possibleFinalStates(stateArr, thread1Length, thread2Length){
     let finalState = stateArr[thread2Length][thread1Length];
     let ret = []
+
+    for (let i = 0; i < finalState.length; i++){
+        finalState[i] = JSON.parse(finalState[i]);
+        finalState[i] = {x: finalState[i].x, y1: finalState[i].y1, y2: finalState[i].y2};
+        finalState[i] = JSON.stringify(finalState[i])
+    }
 
     while(finalState.length > 0){
         let state = finalState[0];

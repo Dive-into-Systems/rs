@@ -6,7 +6,7 @@
 
 
 import RunestoneBase from "../../common/js/runestonebase.js";
-import {initialize, possibleFinalStates, stateChange, toState} from "./baseAlgorithm.js"
+import {initialize, possibleFinalStates, stateChange} from "./baseAlgorithm.js"
 import { nanoid } from 'nanoid/non-secure'; 
 import "./threading-i18n.en.js"
 import "../css/threading_race.css";
@@ -25,24 +25,10 @@ export default class TR extends RunestoneBase {
 
         // Default configuration settings
         this.correct = null;
-        
         // Fields for logging data
         this.componentId = "4.1";
         this.questionId = 1;
         this.userId = this.getUserId();
-
-        this.raceRate = 0.67;
-        const flag = (Math.random()>this.raceRate)?1:0
-
-        for (let i = 0; i<20; i++){
-            this.problem = initialize();
-            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
-            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
-
-            if (this.finalStates.length > 1 || flag){
-                break;
-            }
-        }
         
         this.createTRElement();
 
@@ -67,8 +53,15 @@ export default class TR extends RunestoneBase {
     
     createTRElement() {
         this.renderTRPromptAndInput();
-        this.renderAnswerDiv();
+        switch(this.typeSelect.value){
+            case "1":
+                this.renderAnswerDivMultipleChoice();
+                break;
+            case "2":
+                this.renderAnswerDiv();
+        }
         this.renderTRButtons();
+        
         this.renderTRFeedbackDiv();
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
@@ -87,17 +80,82 @@ export default class TR extends RunestoneBase {
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
+        this.configHelperText = document.createElement("div");
+        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
-        // create the node for the prompt
-        this.promptDiv = document.createElement("div");
-        this.promptDiv.style.fontSize = "x-large";
+        this.statementDiv = document.createElement("div");
+        this.statementDiv.className = "statement-div"
+
+        this.statementDiv.append(this.configHelperText);
+        const modeDiv= document.createElement('div')
+        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li>Mode 1: one line per block.</li> <li>Mode 2: a single block may contain two lines.</li></ul>'
+        this.statementDiv.appendChild(modeDiv)
+
+        this.modeStatementNode = document.createTextNode("Select a mode:")
+        this.statementDiv.appendChild(this.modeStatementNode);
+        
+        this.modeSelect = document.createElement("select")
+        this.modeSelect.className = "form-control fork-inline mode"
+        this.mode1Option = document.createElement("option")
+        this.mode1Option.value = "1"
+        this.mode1Option.textContent = "1"
+        this.modeSelect.append(this.mode1Option)
+
+        this.mode2Option = document.createElement("option")
+        this.mode2Option.value = "2"
+        this.modeSelect.append(this.mode2Option)
+        this.mode2Option.textContent = "2"
+
+        this.mode2Option.selected = "selected"
+
+        this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
 
 
-        this.containerDiv.appendChild(this.promptDiv);
+        this.statementDiv.append(this.modeSelect)
+
+        const questionTypeDiv = document.createElement('div');
+        questionTypeDiv.innerHTML = 'Please select what type of question to generate: <br> <ul> <li>Option 1: multiple choice.</li> <li>Option 2: fill in the values.</li></ul>'
+        this.statementDiv.appendChild(questionTypeDiv)
+
+        this.typeStatementNode = document.createTextNode("Select a question type:")
+        this.statementDiv.appendChild(this.typeStatementNode);
+        
+        this.typeSelect = document.createElement("select")
+        this.typeSelect.className = "form-control fork-inline mode"
+        this.type1Option = document.createElement("option")
+        this.type1Option.value = "1"
+        this.type1Option.textContent = "1"
+        this.typeSelect.append(this.type1Option)
+
+        this.type2Option = document.createElement("option")
+        this.type2Option.value = "2"
+        this.typeSelect.append(this.type2Option)
+        this.type2Option.textContent = "2"
+
+        this.type2Option.selected = "selected"
+
+        this.typeSelect.addEventListener("change", ()=>this.generateButton.click())
+
+        this.statementDiv.append(this.typeSelect);
+
+        this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.appendChild(document.createElement("br"));
 
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
+
+        this.raceRate = 0.67;
+        const flag = (Math.random()>this.raceRate)?1:0
+
+        for (let i = 0; i<20; i++){
+            this.problem = initialize(Number(this.modeSelect.value));
+            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+            if (this.finalStates.length > 1 || flag){
+                break;
+            }
+        }
 
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
@@ -117,6 +175,107 @@ export default class TR extends RunestoneBase {
         for (let blank of this.blankArray) {
             $(blank).change(this.recordAnswered.bind(this));
         }
+    }
+
+    renderAnswerDivMultipleChoice(){
+        this.answerDiv = document.createElement('div');
+        
+        this.codeDiv = document.createElement('div');
+        
+        this.answerDiv.append(this.codeDiv);
+
+        this.codeBox = document.createElement('code');
+        this.codeDiv.style = "margin-left:40%"
+        this.codeBox.style = "font-size: 18px;";
+        
+        this.codeBox.innerHTML = this.problem.text.initial;
+        this.thread1 = document.createElement('code');
+        this.thread1.innerHTML = this.problem.text.t1;
+        this.thread2 = document.createElement('code');
+        this.thread2.innerHTML = this.problem.text.t2;
+        this.codeDiv.append(this.codeBox);
+        this.threadsDiv = document.createElement("div");
+        this.threadsDiv.style = "display: flex; width: 75%; margin: auto"
+
+        this.threadsDiv.append(this.thread1);
+        this.threadsDiv.append(this.thread2);
+        this.answerDiv.append(this.threadsDiv);
+
+
+        this.answerDiv.append(document.createElement("br"));
+
+        this.answerStatement = document.createTextNode("Your answer: ");
+        this.answerDiv.appendChild(this.answerStatement);
+        
+        this.ansKey = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+
+        this.ansKey = possibleFinalStates(this.ansKey, this.problem.thread1.length, this.problem.thread2.length);
+
+        let dataList = [];
+
+        if(this.ansKey.length < 6){
+            for(let i = 0; i<this.ansKey.length; i++){
+                dataList.push(JSON.parse(this.ansKey[i]));
+            }
+            for(let i = 0; i<6-this.ansKey.length; i++){
+                let template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
+                template = JSON.parse(template);
+                let coinFlip = Math.floor(Math.random()*4);
+                switch(coinFlip){
+                    case 1:
+                        template.x = Math.floor(Math.random()*10);
+                        break;
+                    case 2:
+                        template.y1 = Math.floor(Math.random()*10);
+                        break;
+                    case 3:
+                        template.y2 = Math.floor(Math.random()*10);
+                        break
+                }
+                
+                let temp = JSON.stringify(template);
+                if(!this.ansKey.includes(temp)){
+                    dataList.push(template)
+                }else{
+                    i--;
+                }
+            }
+        }
+
+        function shuffleArray(array) {
+            let currentIndex = array.length;
+            let randomIndex;
+          
+            // While there remain elements to shuffle.
+            while (currentIndex !== 0) {
+              // Pick a remaining element.
+              randomIndex = Math.floor(Math.random() * currentIndex);
+              currentIndex--;
+          
+              // And swap it with the current element.
+              [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex],
+                array[currentIndex],
+              ];
+            }
+          
+            return array;
+        }
+
+        shuffleArray(dataList)
+
+        this.checkListDiv = document.createElement("div")
+        let checkListDivHTML = "<ul class='items'>";
+
+        for(let i = 0; i<6; i++){
+            let displayString = `x: ${dataList[i].x}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
+            checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
+        }
+
+        this.checkListDiv.innerHTML = checkListDivHTML;
+        this.answerDiv.append(this.checkListDiv)
+
+        this.containerDiv.append(this.answerDiv);
     }
 
     renderAnswerDiv(){
@@ -204,25 +363,6 @@ export default class TR extends RunestoneBase {
     }
 
     renderTRButtons() {
-        // "check me" button and "generate a number" button
-        this.submitButton = document.createElement("button");
-        this.submitButton.textContent = $.i18n("Check current row");
-        $(this.submitButton).attr({
-            class: "btn btn-success",
-            name: "answer",
-            type: "button",
-        });
-        // check the answer when the conversion is valid
-        this.submitButton.addEventListener("click", () => {
-            if(this.feedbackDiv){
-                this.feedbackDiv.remove()
-            }
-
-            this.checkCurrentAnswer();
-            this.logCurrentAnswer();
-    
-        });
-
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("Generate another question");
         $(this.generateButton).attr({
@@ -236,7 +376,7 @@ export default class TR extends RunestoneBase {
             const flag = (Math.random()>this.raceRate)?1:0
             this.userAnswers = [];
             for (let i = 0; i<20; i++){
-                this.problem = initialize();
+                this.problem = initialize(Number(this.modeSelect.value));
                 this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
                 this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
@@ -245,32 +385,80 @@ export default class TR extends RunestoneBase {
                 }
             }
 
-            this.renderAnswerDiv();
+            switch(this.typeSelect.value){
+                case "1":
+                    this.renderAnswerDivMultipleChoice();
+                    break;
+                case "2":
+                    this.renderAnswerDiv();
+            }
+
             this.renderTRButtons()
             
         });
+        switch(this.typeSelect.value){
+            case "1":
+                this.submitButton = document.createElement("button");
+                this.submitButton.textContent = $.i18n("Check answer");
+                $(this.submitButton).attr({
+                    class: "btn btn-success",
+                    name: "answer",
+                    type: "button",
+                });
+                // check the answer when the conversion is valid
+                this.submitButton.addEventListener("click", () => {
+                    if(this.feedbackDiv){
+                        this.feedbackDiv.remove()
+                    }
 
-        this.noMoreRowsButton = document.createElement("button");
-        this.noMoreRowsButton.textContent = $.i18n("No more entries");
-        $(this.noMoreRowsButton).attr({
-            class: "btn btn-success",
-            name: "answer",
-            type: "button",
-        });
-        // check the answer when the conversion is valid
-        this.noMoreRowsButton.addEventListener("click", () => {
-            if(this.feedbackDiv){
-                this.feedbackDiv.remove()
-            }
-            this.checkAllAnswers();
-            this.logCurrentAnswer();
-    
-        });
+                    this.checkAnswerMultipleChoice();
+                    this.logCurrentAnswer();
+            
+                });
+                this.containerDiv.appendChild(this.generateButton);
+                this.containerDiv.appendChild(this.submitButton);
+                break;
 
-        this.containerDiv.appendChild(this.generateButton);
-        this.containerDiv.appendChild(this.submitButton);
-        this.containerDiv.appendChild(this.noMoreRowsButton);
+            case "2":
+                // "check me" button and "generate a number" button
+                this.submitButton = document.createElement("button");
+                this.submitButton.textContent = $.i18n("Check current row");
+                $(this.submitButton).attr({
+                    class: "btn btn-success",
+                    name: "answer",
+                    type: "button",
+                });
+                // check the answer when the conversion is valid
+                this.submitButton.addEventListener("click", () => {
+                    if(this.feedbackDiv){
+                        this.feedbackDiv.remove()
+                    }
 
+                    this.checkCurrentAnswer();
+                    this.logCurrentAnswer();
+            
+                });
+
+                this.noMoreRowsButton = document.createElement("button");
+                this.noMoreRowsButton.textContent = $.i18n("No more entries");
+                $(this.noMoreRowsButton).attr({
+                    class: "btn btn-success",
+                    name: "answer",
+                    type: "button",
+                });
+                // check the answer when the conversion is valid
+                this.noMoreRowsButton.addEventListener("click", () => {
+                    if(this.feedbackDiv){
+                        this.feedbackDiv.remove()
+                    }
+                    this.checkAllAnswers();
+                    this.logCurrentAnswer();         
+                });
+                this.containerDiv.appendChild(this.generateButton);
+                this.containerDiv.appendChild(this.submitButton);
+                this.containerDiv.appendChild(this.noMoreRowsButton);   
+                break;
+        }
 
     }
 
@@ -293,6 +481,29 @@ export default class TR extends RunestoneBase {
         this.hideFeedback();
 
         
+    }
+
+    checkAnswerMultipleChoice(){
+        this.correct = true;
+        let numChecked;
+        console.log(this.ansKey)
+        for(let i = 0; i<6; i++){
+            let curAns = this.checkListDiv.getElementsByClassName(`option${i+1}`);
+            if(curAns[0].checked&&!this.ansKey.includes(curAns[0].value)){
+                this.correct = false;
+                this.feedback_msg = "Incorrect. One of the state that you've chosen is not a possible state.";
+                this.renderFeedback();
+                return
+            }else if(!curAns[0].checked&&this.ansKey.includes(curAns[0].value)){
+                this.correct = false;
+                this.feedback_msg = "Incorrect. There are possible states that you've not chosen."
+                this.renderFeedback();
+                return
+            }
+
+        }
+        this.feedback_msg = "Correct. Good job!"
+        this.renderFeedback();
     }
     
     checkAllAnswers(){
