@@ -176,7 +176,73 @@ export default class TR extends RunestoneBase {
             $(blank).change(this.recordAnswered.bind(this));
         }
     }
-
+    generateDistractors(coinFlip, template){
+        switch(coinFlip){
+            case 0:
+                let coinFlip = Math.floor((Math.random()*2)) ? 1:0
+                if(coinFlip){
+                    if(this.problem.thread1Info.operandIf[0] == "x"){
+                        let x = template.x;
+                        let y = template.y1;
+                        x = eval(this.problem.thread1Info.changeIf[0]);
+                        template.x = x;
+                    }else if (this.problem.thread1Info.operandElse[0] == "x"){
+                        let x = template.x;
+                        let y = template.y1;
+                        x = eval(this.problem.thread1Info.changeElse[0]);
+                        template.x = x;
+                    } else{
+                        template.x = Math.floor(Math.random()*10);
+                    }
+                }else{
+                    if(this.problem.thread2Info.operandIf[0] == "x"){
+                        let x = template.x;
+                        let y = template.y2;
+                        x = eval(this.problem.thread2Info.changeIf[0]);
+                        template.x = x;
+                    }else if (this.problem.thread2Info.operandElse[0] == "x"){
+                        let x = template.x;
+                        let y = template.y2;
+                        x = eval(this.problem.thread2Info.changeElse[0]);
+                        template.x = x;
+                    } else{
+                        template.x = Math.floor(Math.random()*10);
+                    }
+                }
+                break;
+            case 1:
+                if(this.problem.thread1Info.operandIf[0] == "y"){
+                    let x = template.x;
+                    let y = template.y1;
+                    y = eval(this.problem.thread1Info.changeIf[0]);
+                    template.y1 = y;
+                }else if (this.problem.thread1Info.operandElse[0] == "y"){
+                    let x = template.x;
+                    let y = template.y1;
+                    y = eval(this.problem.thread1Info.changeElse[0]);
+                    template.y1 = y;
+                } else{
+                    template.y1 = Math.floor(Math.random()*10);
+                }
+                break;
+            case 2:
+                if(this.problem.thread2Info.operandIf[0] == "y"){
+                    let x = template.x;
+                    let y = template.y2;
+                    y = eval(this.problem.thread2Info.changeIf[0]);
+                    template.y2 = y;
+                }else if (this.problem.thread2Info.operandElse[0] == "y"){
+                    let x = template.x;
+                    let y = template.y2;
+                    y = eval(this.problem.thread2Info.changeElse[0]);
+                    template.y2 = y;
+                } else{
+                    template.y2 = Math.floor(Math.random()*10);
+                }
+                break
+        }
+        return template
+    }
     renderAnswerDivMultipleChoice(){
         this.answerDiv = document.createElement('div');
         
@@ -212,7 +278,8 @@ export default class TR extends RunestoneBase {
         this.ansKey = possibleFinalStates(this.ansKey, this.problem.thread1.length, this.problem.thread2.length);
 
         let dataList = [];
-
+        let wrongList = [];
+        let loopCount = 0;
         if(this.ansKey.length < 6){
             for(let i = 0; i<this.ansKey.length; i++){
                 dataList.push(JSON.parse(this.ansKey[i]));
@@ -220,24 +287,42 @@ export default class TR extends RunestoneBase {
             for(let i = 0; i<6-this.ansKey.length; i++){
                 let template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
                 template = JSON.parse(template);
-                let coinFlip = Math.floor(Math.random()*4);
-                switch(coinFlip){
-                    case 1:
-                        template.x = Math.floor(Math.random()*10);
-                        break;
-                    case 2:
-                        template.y1 = Math.floor(Math.random()*10);
-                        break;
-                    case 3:
-                        template.y2 = Math.floor(Math.random()*10);
-                        break
-                }
-                
+                let coinFlip = Math.floor(Math.random()*3);
+                template = this.generateDistractors(coinFlip, template)
                 let temp = JSON.stringify(template);
-                if(!this.ansKey.includes(temp)){
+                if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
                     dataList.push(template)
+                    wrongList.push(temp);
                 }else{
-                    i--;
+                    if(loopCount >= 10){
+                        let flag = false;
+                        while(!flag){
+                            template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
+                            template = JSON.parse(template);
+                            coinFlip = Math.floor(Math.random()*3);
+                            switch(coinFlip){
+                                case 0:
+                                    template.x = Math.floor(Math.random()*10);
+                                    break;
+                                case 1:
+                                    template.y1 = Math.floor(Math.random()*10);
+                                    break;
+                                case 2:
+                                    template.y2 = Math.floor(Math.random()*10);
+                                    break
+                            }
+                            
+                            temp = JSON.stringify(template);
+                            if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
+                                dataList.push(template);
+                                wrongList.push(temp);
+                                flag = true;
+                            }
+                        }
+                    }else{
+                        i--;
+                        loopCount++;
+                    }
                 }
             }
         }
