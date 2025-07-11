@@ -119,7 +119,7 @@ function generateChange(operatorChange, operandIf, operands, lineSizeIf){
 }
 
 function generateThreadInfo(mode, limitLineSize=false){
-    mode = 2;
+    mode = 1;
     let lineSizeIf
     let lineSizeElse
     if (mode == 1){
@@ -260,7 +260,6 @@ function generateInitialState(){
 
                     let next = thread2[i-1](JSON.parse(elem), thread2Info)
                     temp.push(JSON.stringify(next))
-                    console.log(arr[i-1][j-1].length)
 
                 })
 
@@ -500,7 +499,6 @@ function generateInitialState(){
         ret.push(state);
         finalState = finalState.filter(item=>item!=state);
     }
-    console.log(ret)
     return ret;
 }
 
@@ -510,11 +508,14 @@ function gatherGenerationStatistics(){
     for (let i = 0; i<1000; i++){
         let problem = initialize();
         let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2);
-        console.log(problem.text.initial)
-        console.log(problem.text.t1);
-        console.log(problem.text.t2);
         let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
-        console.log(finalState)
+        if(finalState.length == 5){
+            console.log(problem.text.initial)
+            console.log(problem.text.t1);
+            console.log(problem.text.t2);
+            console.log(finalState)
+            break;
+        }
         finalStateCount.push(finalState.length)
         finalState.push(finalState)
     }

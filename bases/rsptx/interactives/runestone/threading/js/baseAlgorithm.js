@@ -1,6 +1,6 @@
 function generateText(state, thread1Info, thread2Info){
 
-    let initialText = `int x = ${state.readFromx};<br>`
+    let initialText = `<pre style="font-size: 18px; width:128px;">int x = ${state.readFromx};</pre><br>`
 
     let thread1Size = thread1Info.lineSizeIf+thread1Info.lineSizeElse;
     let thread2Size = thread2Info.lineSizeIf+thread2Info.lineSizeElse;

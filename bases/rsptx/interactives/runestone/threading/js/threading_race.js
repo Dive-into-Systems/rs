@@ -76,7 +76,7 @@ export default class TR extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variable x and the two threads running concurrently, determine if there is a race condition."
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, determine the possible values of the variables below after the threads execute in parallel."
 
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
@@ -88,9 +88,6 @@ export default class TR extends RunestoneBase {
         this.statementDiv.className = "statement-div"
 
         this.statementDiv.append(this.configHelperText);
-        const modeDiv= document.createElement('div')
-        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li>Mode 1: one line per block.</li> <li>Mode 2: a single block may contain two lines.</li></ul>'
-        this.statementDiv.appendChild(modeDiv)
 
         this.modeStatementNode = document.createTextNode("Select a mode:")
         this.statementDiv.appendChild(this.modeStatementNode);
@@ -113,25 +110,24 @@ export default class TR extends RunestoneBase {
 
 
         this.statementDiv.append(this.modeSelect)
+        const modeDiv= document.createElement('div')
+        modeDiv.innerHTML  = '<ul> <li>Mode 1: Each if/else body contains one expression.</li> <li>Mode 2: If/else bodies can contain two expressions.</li></ul>'
+        this.statementDiv.appendChild(modeDiv)
 
-        const questionTypeDiv = document.createElement('div');
-        questionTypeDiv.innerHTML = 'Please select what type of question to generate: <br> <ul> <li>Option 1: multiple choice.</li> <li>Option 2: fill in the values.</li></ul>'
-        this.statementDiv.appendChild(questionTypeDiv)
-
-        this.typeStatementNode = document.createTextNode("Select a question type:")
+        this.typeStatementNode = document.createTextNode("Please select what type of question to generate:")
         this.statementDiv.appendChild(this.typeStatementNode);
         
         this.typeSelect = document.createElement("select")
         this.typeSelect.className = "form-control fork-inline mode"
         this.type1Option = document.createElement("option")
         this.type1Option.value = "1"
-        this.type1Option.textContent = "1"
+        this.type1Option.textContent = "Select all";
         this.typeSelect.append(this.type1Option)
 
         this.type2Option = document.createElement("option")
         this.type2Option.value = "2"
         this.typeSelect.append(this.type2Option)
-        this.type2Option.textContent = "2"
+        this.type2Option.textContent = "Fill in the values"
 
         this.type2Option.selected = "selected"
 
@@ -270,24 +266,43 @@ export default class TR extends RunestoneBase {
         
         this.answerDiv.append(this.codeDiv);
 
+        this.codeDiv.innerHTML = "Shared Variables: "
         this.codeBox = document.createElement('code');
         this.codeDiv.style = "margin-left:40%"
         this.codeBox.style = "font-size: 18px;";
         
         this.codeBox.innerHTML = this.problem.text.initial;
+        this.codeBox.style.backgroundColor = "#f0f8ff"
         this.thread1 = document.createElement('code');
         this.thread1.innerHTML = this.problem.text.t1;
+        this.thread1.style.backgroundColor = "#f0f8ff"
         this.thread2 = document.createElement('code');
         this.thread2.innerHTML = this.problem.text.t2;
+        this.thread2.style.backgroundColor = "#f0f8ff"
+        this.thread1.style.margin = "auto";
+        this.thread2.style.margin = "auto";
         this.codeDiv.append(this.codeBox);
         this.threadsDiv = document.createElement("div");
-        this.threadsDiv.style = "display: flex; width: 75%; margin: auto"
+        this.threadsDiv.style = "display: flex; width: 100%; margin: auto"
+
+        this.thread1LabelDiv = document.createElement("div");
+        this.thread2LabelDiv = document.createElement("div");
+
+        this.labelsDiv = document.createElement("div");
+        this.labelsDiv.style = "display: flex; margin:auto;";
+        this.thread1LabelDiv.innerHTML = "Thread 1:";
+        this.thread2LabelDiv.innerHTML = "Thread 2:";
+
+        this.thread1LabelDiv.style = "margin: auto;"
+        this.thread2LabelDiv.style = "margin: auto;"
+
+        this.labelsDiv.append(this.thread1LabelDiv);
+        this.labelsDiv.append(this.thread2LabelDiv);
+        this.answerDiv.append(this.labelsDiv)
 
         this.threadsDiv.append(this.thread1);
         this.threadsDiv.append(this.thread2);
         this.answerDiv.append(this.threadsDiv);
-
-
         this.answerDiv.append(document.createElement("br"));
 
         this.answerStatement = document.createTextNode("Your answer: ");
@@ -373,7 +388,7 @@ export default class TR extends RunestoneBase {
         let checkListDivHTML = "<ul class='items'>";
 
         for(let i = 0; i<6; i++){
-            let displayString = `readFromx: ${dataList[i].readFromx}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
+            let displayString = `x: ${dataList[i].readFromx}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
             checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
         }
 
@@ -391,29 +406,52 @@ export default class TR extends RunestoneBase {
         this.answerDiv.append(this.codeDiv);
 
         this.codeBox = document.createElement('code');
+        this.codeDiv.innerHTML = "Shared Variables: "
         this.codeDiv.style = "margin-left:40%"
         this.codeBox.style = "font-size: 18px;";
-        
         this.codeBox.innerHTML = this.problem.text.initial;
+        this.codeBox.style.backgroundColor = "#f0f8ff"
+
         this.thread1 = document.createElement('code');
         this.thread1.innerHTML = this.problem.text.t1;
+        this.thread1.style.backgroundColor = "#f0f8ff"
         this.thread2 = document.createElement('code');
         this.thread2.innerHTML = this.problem.text.t2;
+        this.thread2.style.backgroundColor = "#f0f8ff"
+        this.thread1.style.margin = "auto";
+        this.thread2.style.margin = "auto";
         this.codeDiv.append(this.codeBox);
         this.threadsDiv = document.createElement("div");
-        this.threadsDiv.style = "display: flex; width: 75%; margin: auto"
+        this.threadsDiv.style = "display: flex; width: 100%; margin: auto"
+
+        this.thread1LabelDiv = document.createElement("div");
+        this.thread2LabelDiv = document.createElement("div");
+
+        this.labelsDiv = document.createElement("div");
+        this.labelsDiv.style = "display: flex; margin:auto;";
+        this.thread1LabelDiv.innerHTML = "Thread 1:";
+        this.thread2LabelDiv.innerHTML = "Thread 2:";
+
+        this.thread1LabelDiv.style = "margin: auto;"
+        this.thread2LabelDiv.style = "margin: auto;"
+
+        this.labelsDiv.append(this.thread1LabelDiv);
+        this.labelsDiv.append(this.thread2LabelDiv);
+        this.answerDiv.append(this.labelsDiv)
 
         this.threadsDiv.append(this.thread1);
         this.threadsDiv.append(this.thread2);
         this.answerDiv.append(this.threadsDiv);
+
         this.background = document.createElement("div");
+        this.background.style.display = "flex"
         this.background.className = "statement-div"
 
         this.rowCount = 0;
         this.answerTable = document.createElement("table");
 
 
-        let variables = ["x", "y1", "y2"];
+        let variables = ["x", "y (thread1)", "y (thread2)"];
         // Create table header
         let header = '<tr>';
         for (const variable of variables) {
@@ -431,14 +469,24 @@ export default class TR extends RunestoneBase {
     }
 
     generateAnswerSlot(){
+        
         let variables = ["this.userAnswers[i].readFromx", "this.userAnswers[i].y1", "this.userAnswers[i].y2"]
-        let row = '<tr>';
+        this.row = document.createElement("tr");;
         for(let j = 0; j < variables.length; j++){
-            row += `<td><input type="text" size="3" maxlength="3" class="answer-input" id=${this.rowCount}${j}_answer /></td>`;
+            let cell = document.createElement("td");
+            cell.style.width = "400px"
+            let input = document.createElement("input");
+            input.type = "text";
+            input.maxLength = "3";
+            input.class = "answer-input";
+            input.id=`${this.rowCount}${j}_answer`;
+            input.style.width = "50px";
+            input.style.textAlign = "center";
+            cell.append(input);
+            this.row.append(cell);
         }
 
-        row += '</tr>';
-        this.answerTable.innerHTML += row;
+        this.answerTable.append(this.row);
 
         if(this.rowCount>= 1){
             for(let i = 0; i < this.rowCount; i++){
@@ -447,12 +495,13 @@ export default class TR extends RunestoneBase {
                     let inputField = document.getElementById(`${i}${j}_answer`)
                     inputField.value = eval(variables[j])
                     inputField.disabled = true;
+                    inputField.style.backgroundColor = "#D3D3D3"
                 }
             }
     
         }
         this.rowCount++;
-        
+
     }
 
 
@@ -527,23 +576,25 @@ export default class TR extends RunestoneBase {
             case "2":
                 // "check me" button and "generate a number" button
                 this.submitButton = document.createElement("button");
-                this.submitButton.textContent = $.i18n("Check current row");
+                this.submitButton.textContent = $.i18n("Check row");
                 $(this.submitButton).attr({
                     class: "btn btn-success",
                     name: "answer",
                     type: "button",
                 });
                 // check the answer when the conversion is valid
+                this.submitButton.style = "display: inline-block;width: 140px;height:37px;"
                 this.submitButton.addEventListener("click", () => {
                     if(this.feedbackDiv){
                         this.feedbackDiv.remove()
                     }
-
+                    this.submitButton.remove();
                     this.checkCurrentAnswer();
+                    this.row.appendChild(this.submitButton);
                     this.logCurrentAnswer();
             
                 });
-
+                this.submitButton.style.display = "inline-block"
                 this.noMoreRowsButton = document.createElement("button");
                 this.noMoreRowsButton.textContent = $.i18n("No more entries");
                 $(this.noMoreRowsButton).attr({
@@ -560,7 +611,7 @@ export default class TR extends RunestoneBase {
                     this.logCurrentAnswer();         
                 });
                 this.containerDiv.appendChild(this.generateButton);
-                this.containerDiv.appendChild(this.submitButton);
+                this.row.appendChild(this.submitButton);
                 this.containerDiv.appendChild(this.noMoreRowsButton);   
                 break;
         }
@@ -685,6 +736,7 @@ export default class TR extends RunestoneBase {
 
                 let inputField = document.getElementById(`${i}${j}_answer`)
                 inputField.disabled = true;
+                inputField.style.backgroundColor = "#D3D3D3"
             }
         }
 
