@@ -53,6 +53,7 @@ export default class TR extends RunestoneBase {
     
     createTRElement() {
         this.renderTRPromptAndInput();
+        //this.setCustomizedParams();
         switch(this.typeSelect.value){
             case "1":
                 this.renderAnswerDivMultipleChoice();
@@ -144,7 +145,7 @@ export default class TR extends RunestoneBase {
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
 
-        this.raceRate = 0.67;
+        this.raceRate = 0.75;
         const flag = (Math.random()>this.raceRate)?1:0
 
         for (let i = 0; i<20; i++){
@@ -176,48 +177,67 @@ export default class TR extends RunestoneBase {
             $(blank).change(this.recordAnswered.bind(this));
         }
     }
+
+    setCustomizedParams() {
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if(currentOptions["questionType"] !== undefined&&currentOptions["mode"] !== undefined){
+            this.statementDiv.remove();
+            this.typeSelect.value = currentOptions["questionType"];
+            this.modeSelect = currentOptions["mode"];
+        }
+        if (currentOptions["questionType"] !== undefined) {
+            this.typeSelect.remove();
+            this.typeSelect.value = currentOptions["questionType"];
+            
+        }
+        if(currentOptions["mode"] !== undefined){
+            this.modeSelect.remove();
+            this.modeSelect = currentOptions["mode"];
+        }
+};
+
     generateDistractors(coinFlip, template){
         switch(coinFlip){
             case 0:
                 let coinFlip = Math.floor((Math.random()*2)) ? 1:0
                 if(coinFlip){
                     if(this.problem.thread1Info.operandIf[0] == "x"){
-                        let x = template.x;
+                        let x = template.readFromx;
                         let y = template.y1;
                         x = eval(this.problem.thread1Info.changeIf[0]);
-                        template.x = x;
+                        template.readFromx = x;
                     }else if (this.problem.thread1Info.operandElse[0] == "x"){
-                        let x = template.x;
+                        let x = template.readFromx;
                         let y = template.y1;
                         x = eval(this.problem.thread1Info.changeElse[0]);
-                        template.x = x;
+                        template.readFromx = x;
                     } else{
-                        template.x = Math.floor(Math.random()*10);
+                        template.readFromx = Math.floor(Math.random()*10);
                     }
                 }else{
                     if(this.problem.thread2Info.operandIf[0] == "x"){
-                        let x = template.x;
+                        let x = template.readFromx;
                         let y = template.y2;
                         x = eval(this.problem.thread2Info.changeIf[0]);
-                        template.x = x;
+                        template.readFromx = x;
                     }else if (this.problem.thread2Info.operandElse[0] == "x"){
-                        let x = template.x;
+                        let x = template.readFromx;
                         let y = template.y2;
                         x = eval(this.problem.thread2Info.changeElse[0]);
-                        template.x = x;
+                        template.readFromx = x;
                     } else{
-                        template.x = Math.floor(Math.random()*10);
+                        template.readFromx = Math.floor(Math.random()*10);
                     }
                 }
                 break;
             case 1:
                 if(this.problem.thread1Info.operandIf[0] == "y"){
-                    let x = template.x;
+                    let x = template.readFromx;
                     let y = template.y1;
                     y = eval(this.problem.thread1Info.changeIf[0]);
                     template.y1 = y;
                 }else if (this.problem.thread1Info.operandElse[0] == "y"){
-                    let x = template.x;
+                    let x = template.readFromx;
                     let y = template.y1;
                     y = eval(this.problem.thread1Info.changeElse[0]);
                     template.y1 = y;
@@ -227,12 +247,12 @@ export default class TR extends RunestoneBase {
                 break;
             case 2:
                 if(this.problem.thread2Info.operandIf[0] == "y"){
-                    let x = template.x;
+                    let x = template.readFromx;
                     let y = template.y2;
                     y = eval(this.problem.thread2Info.changeIf[0]);
                     template.y2 = y;
                 }else if (this.problem.thread2Info.operandElse[0] == "y"){
-                    let x = template.x;
+                    let x = template.readFromx;
                     let y = template.y2;
                     y = eval(this.problem.thread2Info.changeElse[0]);
                     template.y2 = y;
@@ -302,7 +322,7 @@ export default class TR extends RunestoneBase {
                             coinFlip = Math.floor(Math.random()*3);
                             switch(coinFlip){
                                 case 0:
-                                    template.x = Math.floor(Math.random()*10);
+                                    template.readFromx = Math.floor(Math.random()*10);
                                     break;
                                 case 1:
                                     template.y1 = Math.floor(Math.random()*10);
@@ -353,7 +373,7 @@ export default class TR extends RunestoneBase {
         let checkListDivHTML = "<ul class='items'>";
 
         for(let i = 0; i<6; i++){
-            let displayString = `x: ${dataList[i].x}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
+            let displayString = `readFromx: ${dataList[i].readFromx}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
             checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
         }
 
@@ -411,7 +431,7 @@ export default class TR extends RunestoneBase {
     }
 
     generateAnswerSlot(){
-        let variables = ["this.userAnswers[i].x", "this.userAnswers[i].y1", "this.userAnswers[i].y2"]
+        let variables = ["this.userAnswers[i].readFromx", "this.userAnswers[i].y1", "this.userAnswers[i].y2"]
         let row = '<tr>';
         for(let j = 0; j < variables.length; j++){
             row += `<td><input type="text" size="3" maxlength="3" class="answer-input" id=${this.rowCount}${j}_answer /></td>`;
@@ -608,14 +628,14 @@ export default class TR extends RunestoneBase {
         let answers = [];
         this.finalStates.forEach(state =>{
             let temp = JSON.parse(state)
-            answers.push({x:temp.x, y1:temp.y1, y2:temp.y2});
+            answers.push({readFromx:temp.readFromx, y1:temp.y1, y2:temp.y2});
         })
         for (let i = 0; i<answers.length; i++){
             answers[i] = JSON.stringify(answers[i])
         }
         let userRow = {};
 
-        let variables = ["userRow.x", "userRow.y1", "userRow.y2"];
+        let variables = ["userRow.readFromx", "userRow.y1", "userRow.y2"];
 
         for(let j = 0; j<variables.length; j++){
             let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
@@ -635,7 +655,7 @@ export default class TR extends RunestoneBase {
             userAnswers.push(JSON.stringify(this.userAnswers[i]))
         }
 
-        if(userRow != '{"x":"","y1":"","y2":""}'){
+        if(userRow != '{"readFromx":"","y1":"","y2":""}'){
             userAnswers.push(userRow);
         }
 
@@ -686,7 +706,7 @@ export default class TR extends RunestoneBase {
             return;
         }
 
-        let variables = ["userRow.x", "userRow.y1", "userRow.y2"];
+        let variables = ["userRow.readFromx", "userRow.y1", "userRow.y2"];
         let userRow = {}
         this.correct = true;
 
@@ -694,7 +714,7 @@ export default class TR extends RunestoneBase {
         let answers = [];
         this.finalStates.forEach(state =>{
             let temp = JSON.parse(state)
-            answers.push({x:temp.x, y1:temp.y1, y2:temp.y2});
+            answers.push({readFromx:temp.readFromx, y1:temp.y1, y2:temp.y2});
         })
         for (let i = 0; i<answers.length; i++){
             answers[i] = JSON.stringify(answers[i])

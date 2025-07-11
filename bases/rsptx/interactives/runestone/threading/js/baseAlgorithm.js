@@ -1,6 +1,6 @@
 function generateText(state, thread1Info, thread2Info){
 
-    let initialText = `int x = ${state.x};<br>`
+    let initialText = `int x = ${state.readFromx};<br>`
 
     let thread1Size = thread1Info.lineSizeIf+thread1Info.lineSizeElse;
     let thread2Size = thread2Info.lineSizeIf+thread2Info.lineSizeElse;
@@ -172,11 +172,11 @@ function generateThreadInfo(mode, limitLineSize=false){
 }
 
 function generateInitialState(){
-    let x = Math.floor(Math.random()*(7-2))+3;
+    let readFromx = Math.floor(Math.random()*(7-2))+3;
     let coinFlip = Math.floor(Math.random()*2);
     let y1 = coinFlip ? Math.floor(Math.random()*(6))+1 : Math.floor(Math.random()*(9-4))+5;
     let y2 = Math.floor(Math.random()*10)
-    return {x: x, y1:y1, y2:y2, inIf1: false, inIf2: false}
+    return {readFromx: readFromx, writeTox: readFromx, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
 
 export function toState(stateArr){
@@ -205,17 +205,17 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
 
     if(thread1Info.lineSizeElse == 1){
-        thread1.splice(4, 1)
+        thread1.splice(7, 2)
     }
     if(thread1Info.lineSizeIf == 1){
-        thread1.splice(2, 1)
+        thread1.splice(3, 2)
     }
 
     if(thread2Info.lineSizeElse == 1){
-        thread2.splice(4, 1)
+        thread2.splice(7, 2)
     }
     if(thread2Info.lineSizeIf == 1){
-        thread2.splice(2, 1)
+        thread2.splice(3, 2)
     }
 
 
@@ -258,16 +258,35 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
                 arr[i-1][j].forEach((elem)=>{
 
-                    temp.push(JSON.stringify(thread2[i-1](JSON.parse(elem), thread2Info)))})
+                    let next = thread2[i-1](JSON.parse(elem), thread2Info)
+                    temp.push(JSON.stringify(next))
+                    console.log(arr[i-1][j-1].length)
+                    
+                    // for (let n = 0; n<arr[i-1][j-1].length; n++){
+                    //     let xRace = {x: thread2[i-1](JSON.parse(arr[i-1][j-1][n]), thread2Info).x, y1: next.y1, y2: next.y2};
+                    //     temp.push(JSON.stringify(xRace));
+                    // }
+
+                    // for (let n = 0; n<arr[i-1][j-1].length; n++){
+                    //     let xRace = {x: thread1[j-1](JSON.parse(arr[i-1][j-1][n]), thread1Info).x, y1: next.y1, y2: next.y2};
+                    //     temp.push(JSON.stringify(xRace));
+                    // }
+                
+                })
 
                 temp = temp.flat();
                 
                 let temp2 = []; 
                 arr[i][j-1].forEach((elem)=>{
+
+                    let next = thread1[j-1](JSON.parse(elem), thread1Info)
                     
-                    temp2.push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
+                    temp2.push(JSON.stringify(next))
+
+                })
 
                 temp2 = temp2.flat();
+
 
                 arr[i][j] = []
                 arr[i][j].push(temp);
@@ -280,13 +299,14 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
         
 
     }
+  
     return arr
 }
 
 export function initialize(mode){
     let thread1 = [
         (state,info) => {
-            let x = state.x;
+            let x = state.readFromx;
             let y = state.y1;
             if(eval(info.comp)){
                 state.inIf1 = true
@@ -300,37 +320,47 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            let x = state.readFromx;
             let y = state.y1;
             if(state.inIf1){
                 if (info.operandIf[0] == "x"){
-                    state.x = eval(info.changeIf[0])
+                    state.writeTox = eval(info.changeIf[0])
                 }else{
                     state.y1 = eval(info.changeIf[0])
                 }
             }
-            return state
+            return state;
         },
 
         (state, info) => {
-            let x = state.x;
+            state.readFromx = state.writeTox
+            return state;
+        },
+
+        (state, info) => {
+            let x = state.readFromx;
             let y = state.y1;
             if(state.inIf1){
                 if (info.operandIf[1] == "x"){
-                    state.x = eval(info.changeIf[1])
+                    state.writeTox = eval(info.changeIf[1])
                 }else{
                     state.y1 = eval(info.changeIf[1])
                 }
             }
             return state
         },
+
+        (state, info) => {
+            state.readFromx = state.writeTox
+            return state;
+        },
         
         (state, info) => {
-            let x = state.x;
+            let x = state.readFromx;
             let y = state.y1;
             if(!state.inIf1){
                 if (info.operandElse[0] == "x"){
-                    state.x = eval(info.changeElse[0])
+                    state.writeTox = eval(info.changeElse[0])
                 }else{
                     state.y1 = eval(info.changeElse[0])
                 }
@@ -339,23 +369,33 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            state.readFromx = state.writeTox
+            return state;
+        },
+
+        (state, info) => {
+            let x = state.readFromx;
             let y = state.y1;
             if(!state.inIf1){
                 if (info.operandElse[1] == "x"){
-                    state.x = eval(info.changeElse[1])
+                    state.writeTox = eval(info.changeElse[1])
                 }else{
                     state.y1 = eval(info.changeElse[1])
                 }
             }
             return state
+        },
+
+        (state, info) => {
+            state.readFromx = state.writeTox
+            return state;
         }
     ]
 
     let thread2 = [
         
         (state,info) => {
-            let x = state.x;
+            let x = state.readFromx;
             let y = state.y2;
             if(eval(info.comp)){
                 state.inIf2 = true
@@ -369,12 +409,12 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            let x = state.readFromx;
             let y = state.y2;
             
             if(state.inIf2){
                 if (info.operandIf[0] == "x"){
-                    state.x = eval(info.changeIf[0]);
+                    state.writeTox = eval(info.changeIf[0]);
                 }else{
                     state.y2= eval(info.changeIf[0]);
                 }
@@ -383,12 +423,17 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            state.readFromx = state.writeTox
+            return state;
+        },
+
+        (state, info) => {
+            let x = state.readFromx;
             let y = state.y2;
             
             if(state.inIf2){
                 if (info.operandIf[1] == "x"){
-                    state.x = eval(info.changeIf[1]);
+                    state.writeTox = eval(info.changeIf[1]);
                 }else{
                     state.y2= eval(info.changeIf[1]);
                 }
@@ -397,11 +442,16 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            state.readFromx = state.writeTox
+            return state;
+        },
+
+        (state, info) => {
+            let x = state.readFromx;
             let y = state.y2;
             if(!state.inIf2){
                 if (info.operandElse[0] == "x"){
-                    state.x = eval(info.changeElse[0]);
+                    state.writeTox = eval(info.changeElse[0]);
                 }else{
                     state.y2 = eval(info.changeElse[0]);
                 }
@@ -410,16 +460,26 @@ export function initialize(mode){
         },
 
         (state, info) => {
-            let x = state.x;
+            state.readFromx = state.writeTox
+            return state;
+        },
+
+        (state, info) => {
+            let x = state.readFromx;
             let y = state.y2;
             if(!state.inIf2){
                 if (info.operandElse[1] == "x"){
-                    state.x = eval(info.changeElse[1]);
+                    state.writeTox = eval(info.changeElse[1]);
                 }else{
                     state.y2 = eval(info.changeElse[1]);
                 }
             }
             return state
+        },
+
+        (state, info) => {
+            state.readFromx = state.writeTox
+            return state;
         }
     ]
     const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
@@ -441,7 +501,7 @@ export function possibleFinalStates(stateArr, thread1Length, thread2Length){
 
     for (let i = 0; i < finalState.length; i++){
         finalState[i] = JSON.parse(finalState[i]);
-        finalState[i] = {x: finalState[i].x, y1: finalState[i].y1, y2: finalState[i].y2};
+        finalState[i] = {readFromx: finalState[i].readFromx, y1: finalState[i].y1, y2: finalState[i].y2};
         finalState[i] = JSON.stringify(finalState[i])
     }
 
@@ -450,7 +510,7 @@ export function possibleFinalStates(stateArr, thread1Length, thread2Length){
         ret.push(state);
         finalState = finalState.filter(item=>item!=state);
     }
-
+    console.log(ret)
     return ret;
 }
 
@@ -478,14 +538,14 @@ function gatherGenerationStatistics(){
     return stateFrequencies
 }
 
-console.log(gatherGenerationStatistics())
+// console.log(gatherGenerationStatistics())
 
-// let problem = initialize();
+let problem = initialize();
 
-// let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2)
-// let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
-// console.log(problem.text.initial)
-// console.log(problem.text.t1)
-// console.log(problem.text.t2)
-// console.log(stateArr)
-// console.log(finalState)
+let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2)
+let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
+console.log(problem.text.initial)
+console.log(problem.text.t1)
+console.log(problem.text.t2)
+console.log(stateArr)
+console.log(finalState)
