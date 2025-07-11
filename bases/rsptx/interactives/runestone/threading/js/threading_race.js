@@ -1,7 +1,7 @@
 // *********
-// numconv.js
+// threadingRace.js
 // *********
-// This file contains the JS for the Runestone numberconversion component. It was created By Luyuan Fan, Zhengfei Li, and Yue Zhang, 06/01/2023
+// This file contains the JS for the Runestone threading race component. It was created by Bohou Zhang, 07/06/2025
 "use strict";
 
 
