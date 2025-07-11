@@ -119,7 +119,7 @@ function generateChange(operatorChange, operandIf, operands, lineSizeIf){
 }
 
 function generateThreadInfo(mode, limitLineSize=false){
-
+    mode = 2;
     let lineSizeIf
     let lineSizeElse
     if (mode == 1){
@@ -179,7 +179,7 @@ function generateInitialState(){
     return {readFromx: readFromx, writeTox: readFromx, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
 
-export function toState(stateArr){
+ function toState(stateArr){
     let states = []
 
     
@@ -201,7 +201,7 @@ export function toState(stateArr){
 }
 
 
-export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
+ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
 
     if(thread1Info.lineSizeElse == 1){
@@ -293,7 +293,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     return arr
 }
 
-export function initialize(mode){
+ function initialize(mode){
     let thread1 = [
         (state,info) => {
             let x = state.readFromx;
@@ -485,7 +485,7 @@ export function initialize(mode){
     return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2};
 }
 
-export function possibleFinalStates(stateArr, thread1Length, thread2Length){
+ function possibleFinalStates(stateArr, thread1Length, thread2Length){
     let finalState = stateArr[thread2Length][thread1Length];
     let ret = []
 
@@ -528,7 +528,7 @@ function gatherGenerationStatistics(){
     return stateFrequencies
 }
 
-// console.log(gatherGenerationStatistics())
+console.log(gatherGenerationStatistics())
 
 // let problem = initialize();
 
