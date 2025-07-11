@@ -143,13 +143,19 @@ export default class TR extends RunestoneBase {
 
         this.raceRate = 0.75;
         const flag = (Math.random()>this.raceRate)?1:0
+        let target;
+        if(this.modeSelect.value == "1"){
+            target = 4;
+        } else if (this.modeSelect.value = "2"){
+            target = 5;
+        }
 
         for (let i = 0; i<20; i++){
             this.problem = initialize(Number(this.modeSelect.value));
             this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
             this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-            if (this.finalStates.length > 1 || flag){
+            if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
                 break;
             }
         }
@@ -259,6 +265,70 @@ export default class TR extends RunestoneBase {
         }
         return template
     }
+
+    generateChoices(){
+        let dataList = [];
+        let wrongList = [];
+        let loopCount = 0;
+        this.numChoices = 0;
+        switch(this.modeSelect.value){
+            case "1":
+                this.numChoices = 4;
+                break;
+            case "2":
+                this.numChoices = 5;
+                break;
+        }
+
+        if(this.ansKey.length < this.numChoices){
+            for(let i = 0; i<this.ansKey.length; i++){
+                dataList.push(JSON.parse(this.ansKey[i]));
+            }
+            for(let i = 0; i<this.numChoices-this.ansKey.length; i++){
+                let template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
+                template = JSON.parse(template);
+                let coinFlip = Math.floor(Math.random()*3);
+                template = this.generateDistractors(coinFlip, template)
+                let temp = JSON.stringify(template);
+                if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
+                    dataList.push(template)
+                    wrongList.push(temp);
+                }else{
+                    if(loopCount >= 10){
+                        let flag = false;
+                        while(!flag){
+                            template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
+                            template = JSON.parse(template);
+                            coinFlip = Math.floor(Math.random()*3);
+                            switch(coinFlip){
+                                case 0:
+                                    template.readFromx = Math.floor(Math.random()*10);
+                                    break;
+                                case 1:
+                                    template.y1 = Math.floor(Math.random()*10);
+                                    break;
+                                case 2:
+                                    template.y2 = Math.floor(Math.random()*10);
+                                    break
+                            }
+                            
+                            temp = JSON.stringify(template);
+                            if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
+                                dataList.push(template);
+                                wrongList.push(temp);
+                                flag = true;
+                            }
+                        }
+                    }else{
+                        i--;
+                        loopCount++;
+                    }
+                }
+            }
+        }
+        return dataList;
+    }
+
     renderAnswerDivMultipleChoice(){
         this.answerDiv = document.createElement('div');
         
@@ -308,59 +378,9 @@ export default class TR extends RunestoneBase {
         this.answerStatement = document.createTextNode("Your answer: ");
         this.answerDiv.appendChild(this.answerStatement);
         
-        this.ansKey = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
-
-        this.ansKey = possibleFinalStates(this.ansKey, this.problem.thread1.length, this.problem.thread2.length);
-
-        let dataList = [];
-        let wrongList = [];
-        let loopCount = 0;
-        if(this.ansKey.length < 6){
-            for(let i = 0; i<this.ansKey.length; i++){
-                dataList.push(JSON.parse(this.ansKey[i]));
-            }
-            for(let i = 0; i<6-this.ansKey.length; i++){
-                let template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
-                template = JSON.parse(template);
-                let coinFlip = Math.floor(Math.random()*3);
-                template = this.generateDistractors(coinFlip, template)
-                let temp = JSON.stringify(template);
-                if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
-                    dataList.push(template)
-                    wrongList.push(temp);
-                }else{
-                    if(loopCount >= 10){
-                        let flag = false;
-                        while(!flag){
-                            template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
-                            template = JSON.parse(template);
-                            coinFlip = Math.floor(Math.random()*3);
-                            switch(coinFlip){
-                                case 0:
-                                    template.readFromx = Math.floor(Math.random()*10);
-                                    break;
-                                case 1:
-                                    template.y1 = Math.floor(Math.random()*10);
-                                    break;
-                                case 2:
-                                    template.y2 = Math.floor(Math.random()*10);
-                                    break
-                            }
-                            
-                            temp = JSON.stringify(template);
-                            if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
-                                dataList.push(template);
-                                wrongList.push(temp);
-                                flag = true;
-                            }
-                        }
-                    }else{
-                        i--;
-                        loopCount++;
-                    }
-                }
-            }
-        }
+        this.ansKey = this.finalStates;
+        console.log(this.ansKey)
+        let dataList = this.generateChoices();
 
         function shuffleArray(array) {
             let currentIndex = array.length;
@@ -387,10 +407,11 @@ export default class TR extends RunestoneBase {
         this.checkListDiv = document.createElement("div")
         let checkListDivHTML = "<ul class='items'>";
 
-        for(let i = 0; i<6; i++){
+        for(let i = 0; i<this.numChoices; i++){
             let displayString = `x: ${dataList[i].readFromx}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
             checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
         }
+        
 
         this.checkListDiv.innerHTML = checkListDivHTML;
         this.answerDiv.append(this.checkListDiv)
@@ -529,12 +550,20 @@ export default class TR extends RunestoneBase {
             this.clearAnswer();
             const flag = (Math.random()>this.raceRate)?1:0
             this.userAnswers = [];
+
+            let target;
+            if(this.modeSelect.value == "1"){
+                target = 4;
+            } else if (this.modeSelect.value = "2"){
+                target = 5;
+            }
+
             for (let i = 0; i<50; i++){
                 this.problem = initialize(Number(this.modeSelect.value));
                 this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
                 this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-                if (this.finalStates.length > 1 || flag){
+                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
                     break;
                 }
             }
@@ -643,7 +672,8 @@ export default class TR extends RunestoneBase {
         this.correct = true;
         let numChecked;
         console.log(this.ansKey)
-        for(let i = 0; i<6; i++){
+
+        for(let i = 0; i<this.numChoices; i++){
             let curAns = this.checkListDiv.getElementsByClassName(`option${i+1}`);
             if(curAns[0].checked&&!this.ansKey.includes(curAns[0].value)){
                 this.correct = false;
@@ -658,6 +688,7 @@ export default class TR extends RunestoneBase {
             }
 
         }
+        
         this.feedback_msg = "Correct. Good job!"
         this.renderFeedback();
     }

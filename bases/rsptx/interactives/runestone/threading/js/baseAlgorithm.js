@@ -260,7 +260,6 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
                     let next = thread2[i-1](JSON.parse(elem), thread2Info)
                     temp.push(JSON.stringify(next))
-                    console.log(arr[i-1][j-1].length)
 
                 })
 
@@ -500,7 +499,7 @@ export function possibleFinalStates(stateArr, thread1Length, thread2Length){
         ret.push(state);
         finalState = finalState.filter(item=>item!=state);
     }
-    console.log(ret)
+    console.log(ret.length)
     return ret;
 }
 
