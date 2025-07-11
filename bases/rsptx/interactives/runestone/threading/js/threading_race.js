@@ -325,6 +325,11 @@ export default class TR extends RunestoneBase {
                     }
                 }
             }
+        }else{
+            this.ansKey.forEach(answer=>{
+                dataList.push(JSON.parse(answer));
+            })
+            return dataList;
         }
         return dataList;
     }
@@ -381,6 +386,7 @@ export default class TR extends RunestoneBase {
         this.ansKey = this.finalStates;
         console.log(this.ansKey)
         let dataList = this.generateChoices();
+        console.log(dataList)
 
         function shuffleArray(array) {
             let currentIndex = array.length;
