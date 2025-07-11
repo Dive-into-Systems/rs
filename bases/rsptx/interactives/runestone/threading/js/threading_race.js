@@ -671,7 +671,6 @@ export default class TR extends RunestoneBase {
     checkAnswerMultipleChoice(){
         this.correct = true;
         let numChecked;
-        console.log(this.ansKey)
 
         for(let i = 0; i<this.numChoices; i++){
             let curAns = this.checkListDiv.getElementsByClassName(`option${i+1}`);
