@@ -26,7 +26,7 @@ export default class TR extends RunestoneBase {
         // Default configuration settings
         this.correct = null;
         // Fields for logging data
-        this.componentId = "4.1";
+        this.componentId = "13.3.1";
         this.questionId = 1;
         this.userId = this.getUserId();
         
@@ -152,7 +152,7 @@ export default class TR extends RunestoneBase {
 
         for (let i = 0; i<20; i++){
             this.problem = initialize(Number(this.modeSelect.value));
-            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
             this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
             if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
@@ -414,7 +414,7 @@ export default class TR extends RunestoneBase {
         let checkListDivHTML = "<ul class='items'>";
 
         for(let i = 0; i<this.numChoices; i++){
-            let displayString = `x: ${dataList[i].readFromx}    y1: ${dataList[i].y1}   y2: ${dataList[i].y2}`
+            let displayString = `x: ${dataList[i].readFromx}    y (thread1): ${dataList[i].y1}   y (thread2): ${dataList[i].y2}`
             checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
         }
         
@@ -566,7 +566,7 @@ export default class TR extends RunestoneBase {
 
             for (let i = 0; i<50; i++){
                 this.problem = initialize(Number(this.modeSelect.value));
-                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2)
+                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
                 this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
                 if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){

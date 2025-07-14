@@ -179,7 +179,7 @@ function generateInitialState(){
     return {readFromx: readFromx, writeTox: readFromx, y1:y1, y2:y2, inIf1: false, inIf2: false}
 }
 
-export function toState(stateArr){
+function toState(stateArr){
     let states = []
 
     
@@ -201,7 +201,7 @@ export function toState(stateArr){
 }
 
 
-export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
+export function stateChange(state, thread1Info, thread2Info, thread1, thread2, tp1, tp2){
     let arr = [];
 
     if(thread1Info.lineSizeElse == 1){
@@ -231,6 +231,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
     let i;
     let j;
+    const regex = /\d/;
     for(i = 0; i <= thread2.length; i++){
 
         for (j = 0; j<= thread1.length; j++){
@@ -240,7 +241,16 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
             else if(i == 0){
                 //continue through thread 1
                 arr[0][j] = [];
-                arr[0][j-1].forEach((elem)=>{arr[0][j].push(JSON.stringify(thread1[j-1](JSON.parse(elem), thread1Info)))})
+                
+                arr[0][j-1].forEach((elem)=>{
+
+                    if(regex.test(thread1[j-1])){
+                        arr[0][j].push(JSON.stringify(tp1[thread1[j-1].slice(1,thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))))
+                    }else{
+                        arr[0][j].push(JSON.stringify(tp1[thread1[j-1]](JSON.parse(elem), thread1Info)))
+                    }
+                    
+                })
                 arr[0][j] = arr[0][j].flat()
 
                 
@@ -248,7 +258,14 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
             else if(j == 0){   
 
                 arr[i][0] = [];
-                arr[i-1][0].forEach((elem)=>{arr[i][0].push(JSON.stringify(thread2[i-1](JSON.parse(elem), thread2Info)))})
+                arr[i-1][0].forEach((elem)=>{
+                    if(regex.test(thread2[i-1])){
+                        arr[i][0].push(JSON.stringify(tp2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))))
+                    }else{
+                        arr[i][0].push(JSON.stringify(tp2[thread2[i-1]](JSON.parse(elem), thread2Info)))
+                    }
+                    
+                })
                 arr[i][0] = arr[i][0].flat()
 
 
@@ -258,7 +275,14 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
                 arr[i-1][j].forEach((elem)=>{
 
-                    let next = thread2[i-1](JSON.parse(elem), thread2Info)
+                    let next;
+
+                    if(regex.test(thread2[i-1])){
+                        next =tp2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))
+                    }else{
+                        next = tp2[thread2[i-1]](JSON.parse(elem), thread2Info)
+                    }
+                    
                     temp.push(JSON.stringify(next))
 
                 })
@@ -268,7 +292,13 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 let temp2 = []; 
                 arr[i][j-1].forEach((elem)=>{
 
-                    let next = thread1[j-1](JSON.parse(elem), thread1Info)
+                    let next;
+
+                    if(regex.test(thread1[j-1])){
+                        next =tp1[thread1[j-1].slice(1, thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))
+                    }else{
+                        next = tp1[thread1[j-1]](JSON.parse(elem), thread1Info)
+                    }
                     
                     temp2.push(JSON.stringify(next))
 
@@ -291,10 +321,10 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
   
     return arr
 }
-
 export function initialize(mode){
-    let thread1 = [
-        (state,info) => {
+
+    const threadTemplate1 = {
+        ["evalIf"]: (state,info) => {
             let x = state.readFromx;
             let y = state.y1;
             if(eval(info.comp)){
@@ -307,83 +337,42 @@ export function initialize(mode){
             
             return state
         },
-
-        (state, info) => {
+    
+        ["changeIf"]: (state, info, i) => {
             let x = state.readFromx;
             let y = state.y1;
             if(state.inIf1){
-                if (info.operandIf[0] == "x"){
-                    state.writeTox = eval(info.changeIf[0])
+                if (info.operandIf[i] == "x"){
+                    state.writeTox = eval(info.changeIf[i])
                 }else{
-                    state.y1 = eval(info.changeIf[0])
+                    state.y1 = eval(info.changeIf[i])
                 }
             }
             return state;
         },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
-            return state;
-        },
-
-        (state, info) => {
-            let x = state.readFromx;
-            let y = state.y1;
-            if(state.inIf1){
-                if (info.operandIf[1] == "x"){
-                    state.writeTox = eval(info.changeIf[1])
-                }else{
-                    state.y1 = eval(info.changeIf[1])
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
-            return state;
-        },
-        
-        (state, info) => {
+    
+        ["changeElse"]: (state, info, i) => {
             let x = state.readFromx;
             let y = state.y1;
             if(!state.inIf1){
-                if (info.operandElse[0] == "x"){
-                    state.writeTox = eval(info.changeElse[0])
+                if (info.operandElse[i] == "x"){
+                    state.writeTox = eval(info.changeElse[i])
                 }else{
-                    state.y1 = eval(info.changeElse[0])
+                    state.y1 = eval(info.changeElse[i])
                 }
             }
             return state
         },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
-            return state;
-        },
-
-        (state, info) => {
-            let x = state.readFromx;
-            let y = state.y1;
-            if(!state.inIf1){
-                if (info.operandElse[1] == "x"){
-                    state.writeTox = eval(info.changeElse[1])
-                }else{
-                    state.y1 = eval(info.changeElse[1])
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
+    
+        ["update"]: (state, info) => {
             state.readFromx = state.writeTox
             return state;
         }
-    ]
+    
+    }
 
-    let thread2 = [
-        
-        (state,info) => {
+    const threadTemplate2 = {
+        ["evalIf"]: (state,info) => {
             let x = state.readFromx;
             let y = state.y2;
             if(eval(info.comp)){
@@ -396,81 +385,42 @@ export function initialize(mode){
             
             return state
         },
-
-        (state, info) => {
+    
+        ["changeIf"]: (state, info, i) => {
             let x = state.readFromx;
             let y = state.y2;
-            
             if(state.inIf2){
-                if (info.operandIf[0] == "x"){
-                    state.writeTox = eval(info.changeIf[0]);
+                if (info.operandIf[i] == "x"){
+                    state.writeTox = eval(info.changeIf[i])
                 }else{
-                    state.y2= eval(info.changeIf[0]);
+                    state.y2 = eval(info.changeIf[i])
                 }
             }
-            return state
-        },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
             return state;
         },
-
-        (state, info) => {
-            let x = state.readFromx;
-            let y = state.y2;
-            
-            if(state.inIf2){
-                if (info.operandIf[1] == "x"){
-                    state.writeTox = eval(info.changeIf[1]);
-                }else{
-                    state.y2= eval(info.changeIf[1]);
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
-            return state;
-        },
-
-        (state, info) => {
+    
+        ["changeElse"]: (state, info, i) => {
             let x = state.readFromx;
             let y = state.y2;
             if(!state.inIf2){
-                if (info.operandElse[0] == "x"){
-                    state.writeTox = eval(info.changeElse[0]);
+                if (info.operandElse[i] == "x"){
+                    state.writeTox = eval(info.changeElse[i])
                 }else{
-                    state.y2 = eval(info.changeElse[0]);
+                    state.y2 = eval(info.changeElse[i])
                 }
             }
             return state
         },
-
-        (state, info) => {
-            state.readFromx = state.writeTox
-            return state;
-        },
-
-        (state, info) => {
-            let x = state.readFromx;
-            let y = state.y2;
-            if(!state.inIf2){
-                if (info.operandElse[1] == "x"){
-                    state.writeTox = eval(info.changeElse[1]);
-                }else{
-                    state.y2 = eval(info.changeElse[1]);
-                }
-            }
-            return state
-        },
-
-        (state, info) => {
+    
+        ["update"]: (state, info) => {
             state.readFromx = state.writeTox
             return state;
         }
-    ]
+    }
+
+    let thread1 = ["evalIf", "0changeIf", "update", "1changeIf", "update", "0changeElse", "update", "1changeElse", "update"]
+    let thread2 = ["evalIf", "0changeIf", "update", "1changeIf", "update", "0changeElse", "update", "1changeElse", "update"]
+
     const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
     const thread1Info = generateThreadInfo(mode);//{comp: "x==1", operand1: "x", operand2: "y", change1: "x-y", change2: "y+1"}
     let flag = false;
@@ -481,7 +431,7 @@ export function initialize(mode){
 
     let text = generateText(state, thread1Info, thread2Info);
 
-    return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2};
+    return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2, threadTemplate1: threadTemplate1, threadTemplate2: threadTemplate2};
 }
 
 export function possibleFinalStates(stateArr, thread1Length, thread2Length){
@@ -499,7 +449,7 @@ export function possibleFinalStates(stateArr, thread1Length, thread2Length){
         ret.push(state);
         finalState = finalState.filter(item=>item!=state);
     }
-    console.log(ret.length)
+
     return ret;
 }
 
@@ -508,7 +458,7 @@ function gatherGenerationStatistics(){
     let finalStates = []
     for (let i = 0; i<1000; i++){
         let problem = initialize();
-        let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2);
+        let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2, problem.threadTemplate1, problem.threadTemplate2);
         console.log(problem.text.initial)
         console.log(problem.text.t1);
         console.log(problem.text.t2);
@@ -531,10 +481,11 @@ function gatherGenerationStatistics(){
 
 // let problem = initialize();
 
-// let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2)
+// let stateArr = stateChange(problem.state, problem.thread1Info, problem.thread2Info, problem.thread1, problem.thread2, problem.thread)
 // let finalState = possibleFinalStates(stateArr, problem.thread1.length, problem.thread2.length)
+
+// console.log(stateArr)
+// console.log(finalState)
 // console.log(problem.text.initial)
 // console.log(problem.text.t1)
 // console.log(problem.text.t2)
-// console.log(stateArr)
-// console.log(finalState)
