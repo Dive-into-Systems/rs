@@ -553,12 +553,28 @@ export default class AM extends RunestoneBase {
         let selectHistory = [];
         this.MAarray = [];
         let select = [];
+        switch (this.archSelect) {
+            case "X86_64":
+                this.arch = new am_x86();
+                break;
+            case "ia_32":
+                this.arch = new am_ia32();
+                break;
+            case "arm_64":
+                this.arch = new am_arm64();
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
         
         if (this.archSelect != "arm_64"){
             this.instructionList = ["add", "mov"];
     
             for (let i = 0; i<4; i++){
                 select = Math.floor(Math.random()*3)
+                if (i == 1 && !selectHistory.includes(0)){
+                    select = 0;
+                }
                 if (i == 2 && !selectHistory.includes(1)){
                     select = 1;
                 }
@@ -593,19 +609,7 @@ export default class AM extends RunestoneBase {
 
     generateCode(select) {
         let text;
-        switch (this.archSelect) {
-            case "X86_64":
-                this.arch = new am_x86();
-                break;
-            case "ia_32":
-                this.arch = new am_ia32();
-                break;
-            case "arm_64":
-                this.arch = new am_arm64();
-                break;
-            default:
-                throw new Error("Invalid architecture option");
-        }
+        
         if(select == 0){
             text = this.generateRead();
         } else if (select == 1){
