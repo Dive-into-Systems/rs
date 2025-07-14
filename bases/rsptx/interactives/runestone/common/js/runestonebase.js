@@ -115,11 +115,12 @@ export default class RunestoneBase {
             ActionID: actionId,
             UserID: this.getUserId(),
             Details: details
+            
         };
 
         console.log(data);
         
-        const url = 'http://127.0.0.1:5000/log';
+        const url = 'http://runestone.cs.swarthmore.edu/log/log';
 
         fetch(url, {
             method: 'POST',
