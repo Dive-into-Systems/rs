@@ -235,13 +235,18 @@ export default class AM extends RunestoneBase {
             let background = document.createElement("div");
             background.className = "statement-div";
             let registers;
-            switch(this.modeSelect.value){
+            if(this.modeSelect.value){
+                switch(this.modeSelect.value){
                 case "1":
                     registers = [regA];
                     break;
                 case "2":
                     registers = [regA, regB];
+                }
+            }else{
+                registers = [regA, regB];
             }
+            
             
 
             for (const register of registers) {
@@ -252,7 +257,8 @@ export default class AM extends RunestoneBase {
             let row = document.createElement('tr');
             let cell1;
             let cell2;
-            switch (this.modeSelect.value){
+            if(this.modeSelect.value){
+                switch (this.modeSelect.value){
                 case "1":
                     cell1 = document.createElement('td')
                     cell1.innerHTML = `${registerData.values[0]}`
@@ -266,7 +272,16 @@ export default class AM extends RunestoneBase {
                     cell2.innerHTML = `${registerData.values[1]}`
                     row.append(cell2);
                     break;
+                }
+            }else{
+                cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    cell2 = document.createElement('td')
+                    cell2.innerHTML = `${registerData.values[1]}`
+                    row.append(cell2);
             }
+            
             
             this.registerTable.append(row);
             let tableHeader = document.createElement('div');

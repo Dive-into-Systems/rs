@@ -519,8 +519,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         }
 
         const actionid = (isCorrect ? 1 : 2)
-        const actualAnswers = this.allStates.splice(1, this.currentInstruction+1)
-        const code = this.initialState[0].slice(0,this.currentInstruction-1)
+        const actualAnswers = this.allStates.slice(0, this.currentInstruction)
+        const code = this.initialState[0].slice(0,this.currentInstruction)
         const data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
         console.log(data)
         // this.sendData( )
