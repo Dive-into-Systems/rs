@@ -1,6 +1,6 @@
 function generateText(state, thread1Info, thread2Info){
 
-    let initialText = `<pre style="font-size: 18px; width:128px;">int x = ${state.readFromx};</pre><br>`
+    let initialText = `<pre style="font-size: 18px; width:130px;">int x = ${state.readFromx};</pre><br>`
 
     let thread1Size = thread1Info.lineSizeIf+thread1Info.lineSizeElse;
     let thread2Size = thread2Info.lineSizeIf+thread2Info.lineSizeElse;
@@ -145,7 +145,7 @@ function generateThreadInfo(mode, limitLineSize=false){
 
     if(lineSizeElse == 2){
         operandElse.push(Math.floor(Math.random()*2) ? "x":"y");
-        operandElse.push((operandIf[0] == "x")?"y":"x");
+        operandElse.push((operandElse[0] == "x")?"y":"x");
     }else{
         operandElse.push((operandIf[0] == "x")? "y":"x");
     }
