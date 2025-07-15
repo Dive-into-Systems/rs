@@ -517,6 +517,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.moveToNextInstruction();
             }
         }
+
+        const actionid = (isCorrect ? 1 : 2)
+        const actualAnswers = this.allStates.splice(1, this.currentInstruction+1)
+        const code = this.initialState[0].slice(0,this.currentInstruction-1)
+        const data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
+        console.log(data)
+        // this.sendData( )
     }
 
     // Handle case sensitivity or number forms
@@ -610,6 +617,44 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Resets all input fields
     resetInputFields() {
         this.containerDiv.find("input[type='text']").val("").css("background-color", "");
+    }
+
+
+    sendData(actionId) {
+
+        let details; 
+        if (actionId == 1 || actionId == 2) {
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+                prompt: {
+                    displayedPrompt: `${this.promptDivTextNode.textContent}`,
+                },
+                eval: {
+                    correctAnswer: `${this.target_num_string}`,
+                    userAnswer : this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null,
+                    correctpt1 : this.correctpt1,
+                }
+            }
+        
+
+
+        }
+
+        if(actionId == 3 || actionId == 0){
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+            }
+        }
+
+        this.logData(null, details, actionId, this.componentId);
     }
 }
 

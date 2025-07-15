@@ -4,65 +4,66 @@ function generateText(state, thread1Info, thread2Info){
 
     let thread1Size = thread1Info.lineSizeIf+thread1Info.lineSizeElse;
     let thread2Size = thread2Info.lineSizeIf+thread2Info.lineSizeElse;
-    let thread1Text;
-    let thread2Text;
+    let thread1Text = '<pre style="font-size: 18px;">void *thread(void *id) {<br>';
+    let thread2Text = '<pre style="font-size: 18px;">void *thread(void *id) {<br>'
     if(thread1Size > thread2Size){
-        thread1Text = `<pre style="font-size: 18px;">int y = ${state.y1};<br>`
-        thread2Text = `<pre style="font-size: 18px;">int y = ${state.y2};<br><br>`
+        thread1Text += `    int y = ${state.y1};<br>`
+        thread2Text += `    int y = ${state.y2};<br><br>`
     } else if(thread2Size>thread1Size){
-        thread1Text = `<pre style="font-size: 18px;">int y = ${state.y1};<br><br>`
-        thread2Text = `<pre style="font-size: 18px;">int y = ${state.y2};<br>`
+        thread1Text += `    int y = ${state.y1};<br><br>`
+        thread2Text += `    int y = ${state.y2};<br>`
     }else{
-        thread1Text = `<pre style="font-size: 18px;">int y = ${state.y1};<br>`
-        thread2Text = `<pre style="font-size: 18px;">int y = ${state.y2};<br>`
+        thread1Text += `    int y = ${state.y1};<br>`
+        thread2Text += `    int y = ${state.y2};<br>`
     }
     
     
-    thread1Text += `if (${thread1Info.comp}){<br>`
+    thread1Text += `    if (${thread1Info.comp}){<br>`
     switch (thread1Info.lineSizeIf){
         case 1:
-            thread1Text += `   ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
+            thread1Text += `        ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
             break;
         case 2:
-            thread1Text += `    ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
-            thread1Text += `    ${thread1Info.operandIf[1]} = ${thread1Info.changeIf[1]};<br>`
+            thread1Text += `        ${thread1Info.operandIf[0]} = ${thread1Info.changeIf[0]};<br>`
+            thread1Text += `        ${thread1Info.operandIf[1]} = ${thread1Info.changeIf[1]};<br>`
             break;
     }
     
-    thread1Text += `} else{<br>`
+    thread1Text += `    } else{<br>`
     
     switch (thread1Info.lineSizeElse){
         case 1:
-            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>}<br>`
+            thread1Text += `        ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>    }<br>`
             break
         case 2:
-            thread1Text += `   ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>`
-            thread1Text += `   ${thread1Info.operandElse[1]} = ${thread1Info.changeElse[1]};<br>}<br>`
+            thread1Text += `        ${thread1Info.operandElse[0]} = ${thread1Info.changeElse[0]};<br>`
+            thread1Text += `        ${thread1Info.operandElse[1]} = ${thread1Info.changeElse[1]};<br>    }<br>`
     }
-    thread1Text += `print("%d %d", x, y);</pre>`
+    thread1Text += `    print("%d %d", x, y);<br>    return NULL;<br>}</pre>`
 
-    thread2Text += `if (${thread2Info.comp}){<br>`
+    thread2Text += `    if (${thread2Info.comp}){<br>`
     switch (thread2Info.lineSizeIf){
         case 1: 
-            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
+            thread2Text += `        ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
             break;
         case 2:
-            thread2Text += `    ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
-            thread2Text += `    ${thread2Info.operandIf[1]} = ${thread2Info.changeIf[1]};<br>`
+            thread2Text += `        ${thread2Info.operandIf[0]} = ${thread2Info.changeIf[0]};<br>`
+            thread2Text += `        ${thread2Info.operandIf[1]} = ${thread2Info.changeIf[1]};<br>`
             break;
     }
     
-    thread2Text += `} else{<br>`
+    thread2Text += `    } else{<br>`
     
     switch (thread2Info.lineSizeElse){
         case 1:
-            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>}<br>`
+            thread2Text += `        ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>    }<br>`
             break
         case 2:
-            thread2Text += `   ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>`
-            thread2Text += `   ${thread2Info.operandElse[1]} = ${thread2Info.changeElse[1]};<br>}<br>`
+            thread2Text += `        ${thread2Info.operandElse[0]} = ${thread2Info.changeElse[0]};<br>`
+            thread2Text += `        ${thread2Info.operandElse[1]} = ${thread2Info.changeElse[1]};<br>    }<br>`
     }
-    thread2Text += `print("%d %d", x, y);</pre>`
+    thread2Text += `    print("%d %d", x, y);<br>    return NULL;<br>}</pre>`
+
 
     return {initial: initialText, t1: thread1Text, t2: thread2Text};
 }

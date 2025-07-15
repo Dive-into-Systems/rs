@@ -207,7 +207,10 @@ export default class AM extends RunestoneBase {
         this.answerDiv = document.createElement('div')
         this.answerDiv.className = "answerDiv"
 
-
+        this.registerTable = document.createElement('table');
+        let header = '<tr>';
+        
+        
 
         this.questions = [];
         this.answers = [];
@@ -216,15 +219,7 @@ export default class AM extends RunestoneBase {
         const largeOl = document.createElement("ol")
 
         this.generateAnswer();
-        this.questions.map((q,i)=>{
-
-            const index = i
-
-            const li = document.createElement('li')
-            
-            const codeDiv = document.createElement('div')
-            
-            const registerData = this.generateRegisterState(i)
+        let registerData = this.generateRegisterState(0)
             let regA;
             let regB;
             if(this.archSelect == "X86_64"){
@@ -237,14 +232,66 @@ export default class AM extends RunestoneBase {
                 regA = "X0";
                 regB = "X1";
             }
+            let background = document.createElement("div");
+            background.className = "statement-div";
+            let registers;
+            switch(this.modeSelect.value){
+                case "1":
+                    registers = [regA];
+                    break;
+                case "2":
+                    registers = [regA, regB];
+            }
+            
+
+            for (const register of registers) {
+            header += `<th style="text-align:center">${register}</th>`;
+            }
+
+            this.registerTable.innerHTML = header;
+            let row = document.createElement('tr');
+            let cell1;
+            let cell2;
+            switch (this.modeSelect.value){
+                case "1":
+                    cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    break;
+                case "2":
+                    cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    cell2 = document.createElement('td')
+                    cell2.innerHTML = `${registerData.values[1]}`
+                    row.append(cell2);
+                    break;
+            }
+            
+            this.registerTable.append(row);
+            let tableHeader = document.createElement('div');
+            tableHeader.style = "margin: auto; width: 100%; text-align: center";
+            tableHeader.innerHTML = "Register Values:"
+            background.append(tableHeader);
+            background.append(this.registerTable);
+            this.answerDiv.append(background);
+
+        this.questions.map((q,i)=>{
+
+            const index = i
+
+            const li = document.createElement('li')
+            
+            const codeDiv = document.createElement('div')
+
+            registerData = this.generateRegisterState(i)
+
 
             codeDiv.innerHTML = ((registerData.names[0] == "rax")||(registerData.names[0] == "eax")||(registerData.names[0] == "X0")) ?
             (`<div>` +
-            `<div> <em>${regA}</em>: <m>${registerData.values[0]}</m> <em>${regB}</em>: <m>${registerData.values[1]}</m> </div>`+
             `<div> <code class="modeCode">${q.code}</code> </div>` +
             `</div>`) :
             (`<div>`+
-            `<div> <em>${regA}</em>: <m>${registerData.values[1]}</m> <em>${regB}</em>: <m>${registerData.values[0]}</m> </div>`+
             `<div> <code class="modeCode">${q.code}</code> </div>`+
             `</div>`);
             
@@ -616,6 +663,12 @@ export default class AM extends RunestoneBase {
             text = this.generateWrite();
         } else {
             text = this.generateNoAccess();
+        }
+        
+        for (let i = 0; i<this.questions.length; i++){
+            if(this.questions[i].code == text){
+                text = this.generateCode(select).code;
+            }
         }
 
         return {code: text};

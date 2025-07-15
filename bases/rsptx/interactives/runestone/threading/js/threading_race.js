@@ -341,13 +341,18 @@ export default class TR extends RunestoneBase {
         
         this.answerDiv.append(this.codeDiv);
 
-        this.codeDiv.innerHTML = "Shared Variables: "
         this.codeBox = document.createElement('code');
-        this.codeDiv.style = "margin-left:40%"
+        this.codeDiv.innerHTML = "Shared Global Variables:<br>"
+        this.codeDiv.style = "margin:auto; width:100%; text-align:center"
         this.codeBox.style = "font-size: 18px;";
-        
         this.codeBox.innerHTML = this.problem.text.initial;
         this.codeBox.style.backgroundColor = "#f0f8ff"
+        this.codeAlign = document.createElement('div')
+        this.codeAlign.style = "margin-left: 40%;"
+        this.codeAlign.append(this.codeBox)
+        this.codeDiv.append(this.codeAlign);
+        
+
         this.thread1 = document.createElement('code');
         this.thread1.innerHTML = this.problem.text.t1;
         this.thread1.style.backgroundColor = "#f0f8ff"
@@ -356,7 +361,6 @@ export default class TR extends RunestoneBase {
         this.thread2.style.backgroundColor = "#f0f8ff"
         this.thread1.style.margin = "auto";
         this.thread2.style.margin = "auto";
-        this.codeDiv.append(this.codeBox);
         this.threadsDiv = document.createElement("div");
         this.threadsDiv.style = "display: flex; width: 100%; margin: auto"
 
@@ -433,11 +437,15 @@ export default class TR extends RunestoneBase {
         this.answerDiv.append(this.codeDiv);
 
         this.codeBox = document.createElement('code');
-        this.codeDiv.innerHTML = "Shared Variables: "
-        this.codeDiv.style = "margin-left:40%"
+        this.codeDiv.innerHTML = "Shared Global Variables:<br>"
+        this.codeDiv.style = "margin:auto; width:100%; text-align:center"
         this.codeBox.style = "font-size: 18px;";
         this.codeBox.innerHTML = this.problem.text.initial;
         this.codeBox.style.backgroundColor = "#f0f8ff"
+        this.codeAlign = document.createElement('div')
+        this.codeAlign.style = "margin-left: 40%;"
+        this.codeAlign.append(this.codeBox)
+        this.codeDiv.append(this.codeAlign);
 
         this.thread1 = document.createElement('code');
         this.thread1.innerHTML = this.problem.text.t1;
@@ -447,7 +455,6 @@ export default class TR extends RunestoneBase {
         this.thread2.style.backgroundColor = "#f0f8ff"
         this.thread1.style.margin = "auto";
         this.thread2.style.margin = "auto";
-        this.codeDiv.append(this.codeBox);
         this.threadsDiv = document.createElement("div");
         this.threadsDiv.style = "display: flex; width: 100%; margin: auto"
 

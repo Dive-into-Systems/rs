@@ -186,7 +186,7 @@ export default class AJ extends RunestoneBase {
         this.comparisonOptionsText = document.createElement("span")
         this.comparisonOptionsText.textContent = "Choose which types of comparison instructions should appear:"
         this.comparisonOptionsDiv.append(this.comparisonOptionsText)
-        this.checkBoxes = MinSelectBox(this.comparisonOptionsDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Type of Conditional");
+        this.checkBoxes = MinSelectBox(this.comparisonOptionsDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Pick Comparison Instruction");
 
         this.statementDiv.appendChild(this.comparisonOptionsDiv)
 

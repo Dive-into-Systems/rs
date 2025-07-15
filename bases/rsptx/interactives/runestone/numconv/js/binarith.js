@@ -392,6 +392,58 @@ export default class BA extends RunestoneBase {
             }
         
     }
+
+    genFunc = () => {
+            this.inputNode.className = "form form-control";
+            this.inputNode2.className = "form form-control";
+            this.clearAnswer();
+            this.getCheckedValues();
+            // only generate new prompt when there is item selected
+            if (this.checkedValues.length != 0){
+                this.generateNumber();
+                this.generateAnswer();
+                if(this.answerDiv2){
+                    this.clearSecondPart();
+                }
+                if(this.runUnitTest && this.UTButton){
+                    this.clearUnitTestButton()
+                }
+                if(this.runUnitTest){
+                    this.renderUnitTestButton()
+                }
+            } 
+            this.checkValidConversion();
+            this.sendData(3);
+    }
+
+    submitFunc = () => {
+        this.checkValidConversion();
+
+        if(this.answerDiv2 && this.answerDiv2 != null){
+            this.checkValidConversion();
+            if ( this.valid_conversion ) {
+                this.correctpt2 = true;
+                this.checkCurrentAnswerPt2();
+                // this.logCurrentAnswer();
+                this.sendData(1, true)
+                
+                this.renderFeedback2();
+                console.log(this.correctpt2);
+            }
+        }
+        else{
+        if ( this.valid_conversion ) {
+            this.checkCurrentAnswer();
+            console.log(this.target_num_string);
+            // this.logCurrentAnswer();
+            this.sendData(1, false)
+            this.renderFeedback();
+            this.correctpt1 = true;
+
+        }
+        }
+
+    }
     // Create the buttons
     renderBAButtons() {
         // "check answer" button
@@ -405,18 +457,7 @@ export default class BA extends RunestoneBase {
         // check the answer
         this.submitButton.addEventListener(
             "click",
-            function () {
-                this.checkValidConversion();
-                if ( this.valid_conversion ) {
-                    this.checkCurrentAnswer();
-                    console.log(this.target_num_string);
-                    // this.logCurrentAnswer();
-                    this.sendData(1, false)
-                    this.renderFeedback();
-                    this.correctpt1 = true;
-
-                }
-            }.bind(this),
+            this.submitFunc,
             false
         );
 
@@ -429,30 +470,11 @@ export default class BA extends RunestoneBase {
             type: "button",
         });
 
-        const genFunc =  () => {
-            this.inputNode.className = "form form-control";
-            this.inputNode2.className = "form form-control";
-            this.clearAnswer();
-            this.getCheckedValues();
-            // only generate new prompt when there is item selected
-            if (this.checkedValues.length != 0){
-                this.generateNumber();
-                this.generateAnswer();
-                this.clearSecondPart();
-                if(this.runUnitTest && this.UTButton){
-                    this.clearUnitTestButton()
-                }
-                if(this.runUnitTest){
-                    this.renderUnitTestButton()
-                }
-            } 
-            this.checkValidConversion();
-            this.sendData(3);
-        }
+
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
-             genFunc,
+            this.genFunc,
             false
         );
 
@@ -464,7 +486,7 @@ export default class BA extends RunestoneBase {
         }
 
         //have to unforunately put this here to hae access to generatebutton.click
-        const operatorBox = MinSelectBox(this.configDiv, 1, ["addBox", "subBox"], ["ADDITION", "SUBTRACTION"], [true, true], "Operators", this.getWindowOpen, this.setWindowOpen, genFunc)
+        const operatorBox = MinSelectBox(this.configDiv, 1, ["addBox", "subBox"], ["ADDITION", "SUBTRACTION"], [true, true], "Operators", this.getWindowOpen, this.setWindowOpen, this.genFunc)
 
 
 
@@ -482,24 +504,14 @@ export default class BA extends RunestoneBase {
     // check the answer
     this.submitButton2.addEventListener(
         "click",
-        function () {
-            this.checkValidConversion();
-            if ( this.valid_conversion ) {
-                this.correctpt2 = true;
-                this.checkCurrentAnswerPt2();
-                // this.logCurrentAnswer();
-                this.sendData(1, true)
-                
-                this.renderFeedback2();
-                console.log(this.correctpt2);
-            }
-
-        }.bind(this),
+        this.submitFunc,
         true
     );
 
     // "try another" button
     this.generateButton.remove();
+    this.submitButton.remove()
+
     this.generateButton = document.createElement("button");
     this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
     $(this.generateButton).attr({
@@ -510,31 +522,15 @@ export default class BA extends RunestoneBase {
     // Generate a new prompt
     this.generateButton.addEventListener(
         "click",
-        function () {
-            this.clearAnswer();
-            this.getCheckedValues();
-            // only generate new prompt when there is item selected
-            if (this.checkedValues.length != 0){
-                this.generateNumber();
-                this.generateAnswer();
-                this.clearSecondPart();
-                if(this.runUnitTest){
-                    this.clearUnitTestButton()
-                }
-
-                this.renderBAButtons();
-
-            } 
-            this.checkValidConversion();
-            this.sendData(3);
-
-        }.bind(this),
+        this.genFunc,
         false
     );
 
+
+
     // Add the buttons in the container
-    this.answerDiv2.appendChild(this.generateButton);
-    this.answerDiv2.appendChild(this.submitButton2);
+    this.containerDiv.appendChild(this.generateButton);
+    this.containerDiv.appendChild(this.submitButton2);
 
     // Check answer when pressing "Enter"
 
@@ -766,6 +762,25 @@ export default class BA extends RunestoneBase {
     clearSecondPart(){
         if(this.answerDiv2 != undefined && this.answerDiv2 != null){
             this.answerDiv2.remove();
+            this.answerDiv2 = null;
+            this.submitButton2.remove()
+            this.submitButton2 = null;
+
+            this.submitButton = document.createElement("button");
+            this.submitButton.textContent = $.i18n("msg_NC_check_me");
+            $(this.submitButton).attr({
+                class: "btn btn-success",
+                name: "do answer",
+                type: "button",
+            });
+            // check the answer
+            this.submitButton.addEventListener(
+                "click",
+                this.submitFunc,
+                false
+            );
+            this.containerDiv.appendChild(this.submitButton);
+
 
         }
     }
@@ -773,6 +788,8 @@ export default class BA extends RunestoneBase {
     // clear the input field
     clearAnswer() {
         this.inputNode.value = "";
+        this.inputNode2.value = "";
+
         this.instruction.innerHTML=`<span style='font-weight:bold'><u>Instructions (Part 1)</u></span>: Perform the bitwise arithmetic operation and input your answer as a binary number in the boxes below.  The carry out field accepts one bit, and the result field accepts a ${this.menuNode2.value}-bit number.`;
         this.feedbackDiv.remove();
         if(this.feedbackDiv2 != undefined && this.feedbackDiv2 == null){

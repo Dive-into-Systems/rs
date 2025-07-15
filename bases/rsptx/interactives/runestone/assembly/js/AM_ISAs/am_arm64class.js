@@ -20,7 +20,7 @@ export default class am_arm64{
 
 
     generateReadWriteInstruction = ()=>{
-        let regChoice1 = this.randomZeroOrOne();
+        let regChoice1 = 0;
             let regChoice2 = 0;
 
             if (regChoice1 == 0){
@@ -68,7 +68,7 @@ export default class am_arm64{
     }
 
     generateNAInstruction = () => {
-        let regChoice1 = this.randomZeroOrOne();
+        let regChoice1 = 0;
             let regChoice2 = 0;
 
             if (regChoice1 == 0){
