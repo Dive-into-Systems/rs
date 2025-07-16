@@ -50,9 +50,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
-        this.frame = window.frameElement;
-        let height = document.getElementById(`${this.divid}`).scrollHeight;
-        updateHeight(this.frame, height);
+        updateHeight(window, document, this);
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -365,21 +363,19 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
             this.tryAnother();
-            let height = document.getElementById(`${this.divid}`).scrollHeight;
-            updateHeight(this.frame, height);});
+            updateHeight(window, document, this);
+        });
         const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
             this.resetValues()
-            let height = document.getElementById(`${this.divid}`).scrollHeight;
-            updateHeight(this.frame, height);});
+            updateHeight(window, document, this);
+        });
         const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
             this.provideHelp();
-            let height = document.getElementById(`${this.divid}`).scrollHeight;
-            updateHeight(this.frame, height);
+            updateHeight(window, document, this);
             });
         const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
             this.checkAnswer()
-            let height = document.getElementById(`${this.divid}`).scrollHeight;
-            updateHeight(this.frame, height);
+            updateHeight(window, document, this);
         });
 
         buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);

@@ -21,7 +21,7 @@ import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in f
 import "../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
 import {MinSelectBox} from "../../../utils/MinSelectBox.js";
-
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 
 export var BAList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
@@ -92,7 +92,7 @@ export default class BA extends RunestoneBase {
             this.generateAnswer();
         } 
         this.checkValidConversion();
-
+        updateHeight(window, document, this);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
@@ -150,7 +150,7 @@ export default class BA extends RunestoneBase {
         this.menuNode2.addEventListener("change",
             () => {
                 this.generateButton.click();
-
+                updateHeight(window, document, this);
             },
             false);
 
@@ -413,6 +413,7 @@ export default class BA extends RunestoneBase {
                 }
             } 
             this.checkValidConversion();
+            updateHeight(window, document, this);
             this.sendData(3);
     }
 
@@ -457,7 +458,10 @@ export default class BA extends RunestoneBase {
         // check the answer
         this.submitButton.addEventListener(
             "click",
-            this.submitFunc,
+            function(){
+                this.submitFunc();
+                updateHeight(window, document, this);
+            }.bind(this),
             false
         );
 
@@ -474,7 +478,10 @@ export default class BA extends RunestoneBase {
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
-            this.genFunc,
+            function(){
+                this.genFunc();
+                updateHeight(window, document, this);
+            }.bind(this),
             false
         );
 
@@ -504,7 +511,10 @@ export default class BA extends RunestoneBase {
     // check the answer
     this.submitButton2.addEventListener(
         "click",
-        this.submitFunc,
+        function(){
+                this.submitFunc();
+                updateHeight(window, document, this);
+            }.bind(this),
         true
     );
 
@@ -522,7 +532,10 @@ export default class BA extends RunestoneBase {
     // Generate a new prompt
     this.generateButton.addEventListener(
         "click",
-        this.genFunc,
+        function(){
+                this.genFunc();
+                updateHeight(window, document, this);
+            }.bind(this),
         false
     );
 
@@ -776,7 +789,10 @@ export default class BA extends RunestoneBase {
             // check the answer
             this.submitButton.addEventListener(
                 "click",
-                this.submitFunc,
+                function(){
+                this.submitFunc();
+                updateHeight(window, document, this);
+            }.bind(this),
                 false
             );
             this.containerDiv.appendChild(this.submitButton);
