@@ -10,6 +10,7 @@ import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 import arch_data from './arch_data.json';
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 const num_instructions = 3;
@@ -46,9 +47,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         else {
             this.createRegularAssemblyStateElement();
         }
-
+        
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
+        this.frame = window.frameElement;
+        let height = document.getElementById(`${this.divid}`).scrollHeight;
+        updateHeight(this.frame, height);
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -359,10 +363,24 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
-        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => this.tryAnother());
-        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
-        const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => this.provideHelp());
-        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
+        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
+            this.tryAnother();
+            let height = document.getElementById(`${this.divid}`).scrollHeight;
+            updateHeight(this.frame, height);});
+        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
+            this.resetValues()
+            let height = document.getElementById(`${this.divid}`).scrollHeight;
+            updateHeight(this.frame, height);});
+        const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
+            this.provideHelp();
+            let height = document.getElementById(`${this.divid}`).scrollHeight;
+            updateHeight(this.frame, height);
+            });
+        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
+            this.checkAnswer()
+            let height = document.getElementById(`${this.divid}`).scrollHeight;
+            updateHeight(this.frame, height);
+        });
 
         buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);
         this.containerDiv.append(buttonContainer);

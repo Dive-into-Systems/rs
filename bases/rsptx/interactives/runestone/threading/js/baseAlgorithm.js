@@ -4,8 +4,8 @@ function generateText(state, thread1Info, thread2Info){
 
     let thread1Size = thread1Info.lineSizeIf+thread1Info.lineSizeElse;
     let thread2Size = thread2Info.lineSizeIf+thread2Info.lineSizeElse;
-    let thread1Text = '<pre style="font-size: 18px;">void *thread(void *id) {<br>';
-    let thread2Text = '<pre style="font-size: 18px;">void *thread(void *id) {<br>'
+    let thread1Text = '<pre style="font-size: 18px;">void *thread(void *arg) {<br>';
+    let thread2Text = '<pre style="font-size: 18px;">void *thread(void *arg) {<br>'
     if(thread1Size > thread2Size){
         thread1Text += `    int y = ${state.y1};<br>`
         thread2Text += `    int y = ${state.y2};<br><br>`

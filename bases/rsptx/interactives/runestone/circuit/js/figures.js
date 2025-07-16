@@ -2890,6 +2890,26 @@ go.Shape.defineFigureGenerator('ManualInput', (shape, w, h) => {
 //     geo.spot2 = new go.Spot(0.75, 0.5);
 //     return geo;
 // });
+
+
+go.Shape.defineFigureGenerator('InputNode', (shape, w, h) => {
+
+
+    const geo = new go.Geometry();
+    const cpOffset = KAPPA * 0.5;
+    const fig = new go.PathFigure(0, 0, true);
+    geo.add(fig);
+    // The gate body
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0.5 * w, 0));
+    fig.add(new go.PathSegment(go.SegmentType.Bezier, w, 0.5 * h, (0.5 + cpOffset) * w, 0, w, (0.5 - cpOffset) * h));
+    fig.add(new go.PathSegment(go.SegmentType.Bezier, 0.5 * w, h, w, (0.5 + cpOffset) * h, (0.5 + cpOffset) * w, h));
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0, h).close());
+    geo.spot1 = go.Spot.TopLeft;
+    geo.spot2 = new go.Spot(0.55, 1);
+    return geo;
+
+});
+
 go.Shape.defineFigureGenerator('Start', (shape, w, h) => {
     const geo = new go.Geometry();
     let param1 = shape ? shape.parameter1 : NaN;
@@ -2933,6 +2953,38 @@ go.Shape.defineFigureGenerator('TransmittalTape', (shape, w, h) => {
     // ??? geo.spot2 = new go.Spot(1, 1 - param1);
     return geo;
 });
+
+go.Shape.defineFigureGenerator('InputTemplate', (shape, w, h) => {
+    const geo = new go.Geometry();
+    const cpOffset = KAPPA * 0.5;
+    const fig = new go.PathFigure(0, 0, true);
+    geo.add(fig);
+    // The gate body
+    h = h* 0.7;
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0.7 * w, 0));
+    fig.add(new go.PathSegment(go.SegmentType.Line, w, 0.5 * h, (0.5 + cpOffset) * w, 0, w, (0.5 - cpOffset) * h));
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0.7 * w, h, w, (0.5 + cpOffset) * h, (0.5 + cpOffset) * w, h));
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0, h).close());
+    geo.spot1 = new go.Spot(0, 0.5);
+    return geo;
+});
+
+go.Shape.defineFigureGenerator('OutputTemplate', (shape, w, h) => {
+    const geo = new go.Geometry();
+    const radius = 0.5;
+    const cpOffset = KAPPA * radius;
+    const centerx = 0;
+    const centery = 0.5;
+    const fig = new go.PathFigure(0, 0, true);
+    geo.add(fig);
+    fig.add(new go.PathSegment(go.SegmentType.Bezier, w, 0.5 * h, (centerx + cpOffset + cpOffset) * w, (centery - radius) * h, 0.8 * w, (centery - cpOffset) * h));
+    fig.add(new go.PathSegment(go.SegmentType.Bezier, 0, h, 0.8 * w, (centery + cpOffset) * h, (centerx + cpOffset + cpOffset) * w, (centery + radius) * h));
+    fig.add(new go.PathSegment(go.SegmentType.Line, 0, 0, 0.25 * w, 0.75 * h, 0.25 * w, 0.25 * h).close());
+    geo.spot1 = new go.Spot(0, 0.5);
+
+    return geo;
+});
+
 go.Shape.defineFigureGenerator('AndGate', (shape, w, h) => {
     const geo = new go.Geometry();
     const cpOffset = KAPPA * 0.5;

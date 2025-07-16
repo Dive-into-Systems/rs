@@ -8,6 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./cache-i18n.en.js";
 import "../css/cache.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var cachetableList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 
@@ -46,7 +47,9 @@ export default class cachetable extends RunestoneBase {
             tag: 0,
             lru: 0 
         };
-
+        this.frame = window.frameElement;
+        let height = document.getElementById(`${this.divid}`).scrollHeight ;
+        updateHeight(this.frame, height);
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -185,6 +188,8 @@ export default class cachetable extends RunestoneBase {
         this.createAnswerTable();
         this.containerDiv.appendChild(this.bodyTableDiv);
         
+        
+        
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
 
@@ -254,6 +259,8 @@ export default class cachetable extends RunestoneBase {
                     this.helpDiv.appendChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
                 }
+                let height = this.containerDiv.scrollHeight ;
+                updateHeight(this.frame, height);
             }.bind(this),
         false); 
 
@@ -860,6 +867,8 @@ export default class cachetable extends RunestoneBase {
             "click",
             function () {
                 this.submitResponse();
+                let height =  document.getElementById(`${this.divid}`).scrollHeight ;
+                updateHeight(this.frame, height);
                 this.sendData(3); // Action 3 for data logging
             }.bind(this),
             false
@@ -885,6 +894,8 @@ export default class cachetable extends RunestoneBase {
                     this.incorrectAttempts[key] = 0;
                 });
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
+                let height =  document.getElementById(`${this.divid}`).scrollHeight ;
+                updateHeight(this.frame, height)
             }.bind(this),
             false
         );
@@ -903,6 +914,8 @@ export default class cachetable extends RunestoneBase {
                 this.resetGeneration();
                 this.displayNecessaryFields();
                 this.hidefeedback();
+                let height =  document.getElementById(`${this.divid}`).scrollHeight ;
+                updateHeight(this.frame, height)
             }.bind(this),
             false
         );

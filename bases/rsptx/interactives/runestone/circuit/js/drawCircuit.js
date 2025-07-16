@@ -661,7 +661,7 @@ export default class DC extends RunestoneBase {
 
 
         //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
-
+        //changing this will be a pain.
         const inputTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
             .set({
                 cursor: 'pointer',
@@ -743,7 +743,7 @@ export default class DC extends RunestoneBase {
                 )
             ),
         // this rectangle is the clickable area
-        new go.Shape('Rectangle', {
+        new go.Shape('InputTemplate', {
             fill: 'transparent',
             // fill: 'skyblue',
             // opacity: 0.6,
@@ -803,7 +803,7 @@ export default class DC extends RunestoneBase {
         .add(
         new go.Panel('Spot')
             .add(
-            new go.Shape('RoundedRectangle', {
+            new go.Shape('OutputTemplate', {
                 fill: 'transparent',
                 parameter1: Infinity,
                 parameter2: 0b0011, // top rounded
