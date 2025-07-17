@@ -40,7 +40,7 @@ export default class cacheinfo extends RunestoneBase {
         }
         this.generateButtonCounter = 0;
         this.contWrong = 0;
-        updateHeight(window, document, this)
+        updateHeight(window, document, this, true);
         
         this.sendData(0);
     }
@@ -82,7 +82,7 @@ export default class cacheinfo extends RunestoneBase {
             function () {
                 this.clearInput();
                 this.generateAnswer();
-                updateHeight(window, document, this);
+                
             }.bind(this),
             false);
 
@@ -106,7 +106,7 @@ export default class cacheinfo extends RunestoneBase {
                 this.generateAddress();
                 this.clearInput();
                 this.generateAnswer();
-                updateHeight(window, document, this)
+                
             }.bind(this),
             false);
         
@@ -254,7 +254,7 @@ export default class cacheinfo extends RunestoneBase {
                 //add additional button functions below here
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                updateHeight(window, document, this)
+                
             }.bind(this),
             false
         );
@@ -273,7 +273,7 @@ export default class cacheinfo extends RunestoneBase {
                 this.clearInput();
                 this.generateAnswer();
                 this.generateButtonCounter++;
-                updateHeight(window, document, this)
+                
                 this.sendData(3);
             }.bind(this),
             false)

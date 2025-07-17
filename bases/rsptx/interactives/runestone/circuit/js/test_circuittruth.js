@@ -31,6 +31,7 @@
 */
 "use strict";
 
+import { updateHeight } from "../../../utils/updateHeight.js";
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "../css/circuittruth.css";
 import circuit_generator from "./circuit_generate.js";
@@ -44,12 +45,16 @@ export default class CircuitTruth extends RunestoneBase {
         this.origElem = orig;
         this.divid = orig.id;
         this.useRunestoneServices = opts.useRunestoneServices;
+        document.body.classList.add('no-scroll');
 
         this.initCircuitElement();
-
+        
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
+        updateHeight(window, document, this, true, 1076);
+
     }
 
     initCircuitElement() {
@@ -133,13 +138,16 @@ export default class CircuitTruth extends RunestoneBase {
                 import('./figures.js').then(()=>self.main());
             });
         });
+
     }
 
     main= ()=>{
         /* Global Variables */
         var json; // JSON to visualize the circuit
-        var red = 'orangered';   // Color for false inputs
-        var green = 'forestgreen'; // Color for true inputs
+        const red = '#115222ff';
+        const red2 = '#1a642eff';
+        const green = '#0deb48ff';
+        const green2 = '#33ff66ff';
         var myDiagram;
         let prevCircuit=null;
 
@@ -706,11 +714,11 @@ export default class CircuitTruth extends RunestoneBase {
          * load() function below is where JSON object is passed in.
          */
         function init() {
-            
-            const red = '#b91c1c';
-            const red2 = '#fca5a5';
-            const green = '#15803d';
-            const green2 = '#86efac';
+              
+            const red = '#115222ff';
+            const red2 = '#1a642eff';
+            const green = '#0deb48ff';
+            const green2 = '#33ff66ff';
 
             const gray = '#cbd5e1';
             const darkGray = '#334155';
@@ -799,329 +807,214 @@ export default class CircuitTruth extends RunestoneBase {
                 };
               }
           
+
+            const nodeOnClickFunction = (e, obj) => {
+                if (e.diagram instanceof go.Palette) return;
+                e.diagram.startTransaction('Toggle Input');
+
+                const isOn = !obj.data.isOn;
+                myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
+                
+                updateStates();
+                e.diagram.commitTransaction('Toggle Input');
+            }
+
               // define templates for each type of node
           
+              const BottomLabelAlignment = new go.Spot(0.5, 1, 0, 10);
+
+
+              //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
+              //changing this will be a pain.
               const inputTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .set({
-                  cursor: 'pointer',
-                  margin: new go.Margin(-15, 0, 0, 0),
-                  click: (e, obj) => {
-                    e.diagram.startTransaction('Toggle Input');
-          
-                    const isOn = !obj.data.isOn;
-                    myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
-          
-                    updateStates();
-                    e.diagram.commitTransaction('Toggle Input');
-                  }
-                })
-                .add(
-                  new go.Shape(shapeStyle())
-                    .set({
-                      fill: go.Brush.lighten(green),
-                      margin: 3,
-                      strokeWidth: 1.5,
-                      desiredSize: new go.Size(NaN, NaN),
-                      scale: 1.75,
-                      geometry: go.Geometry.parse('F M19.5 3 L19.875 3 C20.4963 3 21 3.5037000000000003 21 4.125 L21 6.375 C21 6.9963 20.4963 7.5 19.875 7.5 L19.5 7.5 M2.25 10.5 L17.25 10.5 C18.4926 10.5 19.5 9.4926 19.5 8.25 L19.5 2.25 C19.5 1.0073600000000003 18.4926 0 17.25 0 L2.25 0 C1.0073599999999998 0 0 1.0073600000000003 0 2.25 L0 8.25 C0 9.4926 1.0073599999999998 10.5 2.25 10.5z', true)
-                    })
-                      .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? green : red)),
-                  new go.Shape('BpmnEventError', {
-                    alignment: new go.Spot(0.5, 0.5, -1, 0),
-                    width: 18,
-                    height: 10,
-                    fill: green2,
-                    strokeWidth: 0
+                  .set({
+                      cursor: 'pointer',
+                      margin: new go.Margin(-15, 0, 0, 0),
+                      click: (e, obj) => {
+                          nodeOnClickFunction(e, obj)
+                      },
+                      deletable : false,
+                      movable : true,
                   })
-                    .bind('fill', 'isOn', isOn => isOn ? green2 : red2),
-                  new go.Shape(portStyle(false)) // the only port
-                    .set({
-                      opacity: 0,
+              .add(
+              new go.Shape('inputTemplate', {
+                      name: 'NODESHAPE',
+                      fill: gray,
+                      stroke: darkGray,
+                      strokeWidth: 2
+                  })
+                      .set({
+                          fill: go.Brush.lighten(green),
+                          margin: 3,
+                          strokeWidth: 1.5,
+                          desiredSize: new go.Size(40, 40),
+                          scale: 1,
+                      })
+                  .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? green : red)),
+              new go.Shape(portStyle(false)) // the only port
+                      .set({
+                      opacity: 1,
                       portId: '',
-                      alignment: new go.Spot(1, 0.5, -2, 0)
-                    })
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Center }).bind('text', 'label'));
-
-              const switchTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .set({
-                  shadowOffset: new go.Point(0, 0),
-                  shadowBlur: 5,
-                  margin: new go.Margin(-35, 0, 0, 0)
-                })
-                .add(
-                  new go.Panel('Horizontal', {
-                    // this prevents the ports from moving when the shape rotates
-                    minSize: new go.Size(42, 60)
+                      alignment: new go.Spot(1, 0.5, -2.5, 0),
                   })
-                    .add(
-                      new go.Panel('Spot', {
-                        isClipping: true
-                      })
-                        .add(
-                          new go.Shape({fill: 'blue', strokeWidth: 0}),
-                          new go.Panel({
-                            alignment: go.Spot.Left,
-                            alignmentFocus: go.Spot.Center,
-                            angle: 359.99 // rotate counter clock wise
-                          })
-                            .add(
-                              new go.Shape({width: 1, height: 1}),
-                              new go.Shape(shapeStyle())
-                                .set({
-                                  strokeWidth: 0,
-                                  fill: green,
-                                  width: 40,
-                                  height: 4,
-                                  position: new go.Point(40,0),
-                                  shadowVisible: false
-                                }),
+                  .bind("fill", "isOn", isOn => isOn ? "black": "white"),
+              new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "label", label => `Input ${label}`),
+              new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -5, 3), font: '20px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
 
-                            )
-                            .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+              );
 
-                            .bind('angle', 'isOn', isOn => isOn ? 359.99 : 359.99 - 30)
-                            .trigger('angle', {
-                              duration: 250,
-                              easing: go.Animation.EaseOutQuad,
-                              finished: updateStates
-                            })
-                        )
-                    ),
-                  // this rectangle is the clickable area
-                  new go.Shape('Rectangle', {
-                    fill: 'transparent',
-                    // fill: 'skyblue',
-                    // opacity: 0.6,
-                    strokeWidth: 0,
-                    width: 40,
-                    height: 30,
-                    alignment: go.Spot.Center,
-                    alignmentFocus: new go.Spot(0.5, 1, 0, -8),
-                    cursor: 'pointer',
-                    click: (e, obj) => {
-                      e.diagram.startTransaction('Toggle Switch');
-          
-                      while (obj.part && obj.part !== obj) obj = obj.part; // find node
-                      const shp = obj.findObject('NODESHAPE');
-                      const isOn = !obj.data.isOn;
-                      myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
-          
-                      e.diagram.commitTransaction('Toggle Switch');
-                      if (!obj.data.isOn)
-                        updateStates();
-                    }
-                  }),
-                  // ports
-                  new go.Shape(portStyle(false)) // the only port
-                    .set({
-                      portId: 'out',
-                      desiredSize: new go.Size(5, 5),
-                      alignment: new go.Spot(1, 0.5)
-                    }),
-                  new go.Shape(portStyle(true)) // the only port
-                    .set({
-                      portId: 'in',
-                      desiredSize: new go.Size(5, 5),
-                      alignment: new go.Spot(0, 0.5)
-                    })
-                );
-          
-              // brush for the "light" in the LED
-              const outBrush = new go.Brush('Radial', {
-                0.0: 'rgba(255, 255, 255, 0.2)',
-                0.5: 'rgba(0,255,0,0.8)',
-                0.75: 'rgba(0,255,0,0.3)',
-                0.85: 'rgba(0,255,0,0.1)',
-                0.95: 'rgba(0,255,0,0.05)',
-                1: 'rgba(0,255,0,0)',
-                start: new go.Spot(0.5, 0.8)
-              })
-          
+
+
               const outputTemplate = new go.Node('Spot', nodeStyle())
-                .set({
-                  isShadowed: true
-                })
-                .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
-                .add(
-                  new go.Panel('Spot')
-                    .add(
-                      new go.Shape('RoundedRectangle', {
-                        fill: 'transparent',
-                        parameter1: Infinity,
-                        parameter2: 0b0011, // top rounded
-                        width: 25,
-                        height: 22,
-                        strokeWidth: 2,
-                        shadowVisible: false
-                      }),
-                      new go.Shape('Rectangle', {
-                        alignment: go.Spot.Bottom,
-                        alignmentFocus: new go.Spot(0.5, 0.8),
-                        strokeWidth: 0,
-                        fill: null,
-                        width: 40,
-                        height: 43
-                      })
-                        .bind('fill', 'isOn', isOn => isOn ? outBrush : 'transparent'),
-                      new go.Shape('Rectangle', shapeStyle())
-                        .set({
-                          width: 32,
-                          height: 15,
-                          alignment: go.Spot.Bottom,
-                          alignmentFocus: new go.Spot(0.5, 0, 0, 2)
-                        })
-                          .bindObject('shadowVisible', 'isSelected')
-                    ),
-                  new go.Shape(portStyle(true, new go.Spot(0.5, 1, 0, -3))).set({
-                    // the only port
-                    portId: '',
-                    alignment: new go.Spot(0.5, 1)
+              .set({
+              isShadowed: true,
+              deletable : false,
+              movable : true,
+              })
+              .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
+              .add(
+              new go.Panel('Spot')
+                  .add(
+                  new go.Shape('OutputTemplate', {
+                      fill: 'transparent',
+                      parameter1: Infinity,
+                      parameter2: 0b0011, // top rounded
+                      width: 44,
+                      height: 38,
+                      strokeWidth: 2,
+                      shadowVisible: false
                   })
-                );
-          
+                  .set({ fill: go.Brush.lighten(green)})
+                  .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? green : red)),
+
+
+                  ),
+              new go.Shape(portStyle(true, new go.Spot(0, 0.5, 0, 0))).set({
+                  // the only port
+                  portId: '',
+                  alignment: new go.Spot(0, 0.5, 5, 0),
+              })
+              .bind("fill", "isOn", isOn => isOn ? "black": "white"),
+              new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Output ${text}`),
+              new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -3, 3),  font: '15px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
+              );
+
               const andTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('AndGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    alignment: new go.Spot(1, 0.5)
-                  }),
+              .add(
+              new go.Shape('AndGate', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in1',
+                  alignment: new go.Spot(0, 0.3)
+              }),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in2',
+                  alignment: new go.Spot(0, 0.7)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  alignment: new go.Spot(1, 0.5)
+              })
+              )
+              .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+              ;
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
               const orTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('OrGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0.16, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0.16, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    alignment: new go.Spot(1, 0.5)
-                  }),
+              .add(
+              new go.Shape('OrGate', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in1',
+                  alignment: new go.Spot(0.16, 0.3)
+              }),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in2',
+                  alignment: new go.Spot(0.16, 0.7)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  alignment: new go.Spot(1, 0.5)
+              })
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
+              )
+              .add(new go.TextBlock({ margin: 2, alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+              ;
+
               const xorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('XorGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0.26, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0.26, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    alignment: new go.Spot(1, 0.5)
-                  }),
+              .add(
+              new go.Shape('XorGate', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in1',
+                  alignment: new go.Spot(0.26, 0.3)
+              }),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in2',
+                  alignment: new go.Spot(0.26, 0.7)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  alignment: new go.Spot(1, 0.5)
+              })
+              )
+              .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+              ;
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
               const norTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('NorGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0.16, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0.16, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    opacity: 0,
-                    alignment: new go.Spot(1, 0.5, -5, 0)
-                  }),
+              .add(
+              new go.Shape('NorGate', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in1',
+                  alignment: new go.Spot(0.16, 0.3)
+              }),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in2',
+                  alignment: new go.Spot(0.16, 0.7)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  opacity: 0,
+                  alignment: new go.Spot(1, 0.5, -5, 0)
+              })
+              )
+              .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+              ;
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
-              const xnorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('XnorGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0.26, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0.26, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    opacity: 0,
-                    alignment: new go.Spot(1, 0.5, -5, 0)
-                  }),
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
               const nandTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('NandGate', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in1',
-                    alignment: new go.Spot(0, 0.3)
-                  }),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in2',
-                    alignment: new go.Spot(0, 0.7)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    opacity: 0,
-                    alignment: new go.Spot(1, 0.5, -5, 0)
-                  }),
+              .add(
+              new go.Shape('NandGate', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in1',
+                  alignment: new go.Spot(0, 0.3)
+              }),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in2',
+                  alignment: new go.Spot(0, 0.7)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  opacity: 0,
+                  alignment: new go.Spot(1, 0.5, -5, 0)
+              })
+              )
+              .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment}).bind('text', '', (d) => d.category))
+              ;
 
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
-          
               const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-                .add(
-                  new go.Shape('Inverter', shapeStyle()),
-                  new go.Shape(portStyle(true)).set({
-                    portId: 'in',
-                    alignment: new go.Spot(0, 0.5)
-                  }),
-                  new go.Shape(portStyle(false)).set({
-                    portId: 'out',
-                    opacity: 0,
-                    alignment: new go.Spot(1, 0.5, -5, 0)
-                  }),
-
-                )
-                .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-                ;
+              .add(
+              new go.Shape('Inverter', shapeStyle()),
+              new go.Shape(portStyle(true)).set({
+                  portId: 'in',
+                  alignment: new go.Spot(0, 0.5)
+              }),
+              new go.Shape(portStyle(false)).set({
+                  portId: 'out',
+                  opacity: 0,
+                  alignment: new go.Spot(1, 0.5, -5, 0)
+              })
+              )
+              .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+              ;
           
               myDiagram.nodeTemplateMap.add('input', inputTemplate);
-              myDiagram.nodeTemplateMap.add('switch', switchTemplate);
               myDiagram.nodeTemplateMap.add('output', outputTemplate);
               myDiagram.nodeTemplateMap.add('and', andTemplate);
               myDiagram.nodeTemplateMap.add('or', orTemplate);
@@ -1129,7 +1022,6 @@ export default class CircuitTruth extends RunestoneBase {
               myDiagram.nodeTemplateMap.add('not', notTemplate);
               myDiagram.nodeTemplateMap.add('nand', nandTemplate);
               myDiagram.nodeTemplateMap.add('nor', norTemplate);
-              myDiagram.nodeTemplateMap.add('xnor', xnorTemplate);
           
           
               // load the initial diagram

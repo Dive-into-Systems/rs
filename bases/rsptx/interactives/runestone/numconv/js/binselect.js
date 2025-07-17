@@ -22,6 +22,7 @@ import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in f
 import "../css/binselect.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
 import { MinSelectBox } from "../../../utils/MinSelectBox.js";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var BSList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -69,7 +70,7 @@ export default class BS extends RunestoneBase {
             this.generateAnswer();
         } 
         this.checkValidConversion();
-
+        updateHeight(window, document, this, true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }

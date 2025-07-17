@@ -92,7 +92,7 @@ export default class BA extends RunestoneBase {
             this.generateAnswer();
         } 
         this.checkValidConversion();
-        updateHeight(window, document, this);
+        updateHeight(window, document, this, true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
@@ -150,7 +150,7 @@ export default class BA extends RunestoneBase {
         this.menuNode2.addEventListener("change",
             () => {
                 this.generateButton.click();
-                updateHeight(window, document, this);
+                
             },
             false);
 
@@ -413,7 +413,7 @@ export default class BA extends RunestoneBase {
                 }
             } 
             this.checkValidConversion();
-            updateHeight(window, document, this);
+            
             this.sendData(3);
     }
 
@@ -460,7 +460,7 @@ export default class BA extends RunestoneBase {
             "click",
             function(){
                 this.submitFunc();
-                updateHeight(window, document, this);
+                
             }.bind(this),
             false
         );
@@ -480,7 +480,7 @@ export default class BA extends RunestoneBase {
             "click",
             function(){
                 this.genFunc();
-                updateHeight(window, document, this);
+                
             }.bind(this),
             false
         );
@@ -513,7 +513,7 @@ export default class BA extends RunestoneBase {
         "click",
         function(){
                 this.submitFunc();
-                updateHeight(window, document, this);
+                
             }.bind(this),
         true
     );
@@ -534,7 +534,7 @@ export default class BA extends RunestoneBase {
         "click",
         function(){
                 this.genFunc();
-                updateHeight(window, document, this);
+                
             }.bind(this),
         false
     );
@@ -791,7 +791,7 @@ export default class BA extends RunestoneBase {
                 "click",
                 function(){
                 this.submitFunc();
-                updateHeight(window, document, this);
+                
             }.bind(this),
                 false
             );

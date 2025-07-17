@@ -16,6 +16,7 @@ import "../css/assembly_jump.css";
 import { Pass } from "codemirror";
 export var AJList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 import {MinSelectBox} from "../../../utils/MinSelectBox.js";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 // NC constructor
 export default class AJ extends RunestoneBase {
@@ -52,6 +53,7 @@ export default class AJ extends RunestoneBase {
         }
 
         this.contWrong = 0;
+        updateHeight(window, document, this, true);
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.

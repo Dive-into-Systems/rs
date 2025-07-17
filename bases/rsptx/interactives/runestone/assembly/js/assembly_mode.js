@@ -14,6 +14,7 @@ import "./assembly-i18n.en.js";
 // import "./NC-i18n.pt-br.js";
 import "../css/assembly_mode.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 export var AMList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
 // NC constructor
@@ -47,6 +48,7 @@ export default class AM extends RunestoneBase {
         }
 
         this.contWrong = 0;
+        updateHeight(window, document, this, true);
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.

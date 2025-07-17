@@ -60,6 +60,7 @@
 */
 "use strict";
 
+import { updateHeight } from "../../../utils/updateHeight.js";
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "../css/circuittruth.css";
 
@@ -74,7 +75,7 @@ export default class CircuitTruth extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
 
         this.initCircuitElement();
-
+        updateHeight(window, document, this, true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }

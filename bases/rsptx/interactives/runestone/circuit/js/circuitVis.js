@@ -4,6 +4,7 @@
 import RunestoneBase from "../../common/js/runestonebase.js";
 import { Pass } from "codemirror";
 import "../css/circuitdraw.css"
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var CVList = {}; // Object containing all instances of CV that aren't a child of a timed assessment.
 
@@ -38,10 +39,10 @@ export default class CV extends RunestoneBase {
 
        // Default configuration settings
        //For somereason the default code uses colors (and not a separate variable) to update the circuit
-        this.red = '#b91c1c';
-        this.red2 = '#fca5a5';
-        this.green = '#15803d';
-        this.green2 = '#86efac';
+        this.red = '#115222ff';
+        this.red2 = '#1a642eff';
+        this.green = '#0deb48ff';
+        this.green2 = '#33ff66ff';
      
         this.gray = '#cbd5e1';
         this.darkGray = '#334155';
@@ -63,6 +64,7 @@ export default class CV extends RunestoneBase {
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
+
        this.sendData(0);
    }
 
@@ -99,80 +101,82 @@ export default class CV extends RunestoneBase {
 
         if(this.modeOutput == 1){
             this.startJson = `
-                { "class": "GraphLinksModel",
-                "linkFromPortIdProperty": "fromPort",
-                "linkToPortIdProperty": "toPort",
-                "nodeDataArray": [
-                {"category":"input","isOn":false,"key":-1,"loc":"-957 -428","text":"S0"},
-                {"category":"input","isOn":false,"key":-2,"loc":"-957 -379","text":"S1"},
-                {"category":"output","key":-5,"loc":"-510 -250","isOn":false,"text":"1"},
-                {"category":"input","key":-7,"loc":"-981 -266","isOn":false,"text":"A"},
-                {"category":"input","key":-8,"loc":"-984 -167","isOn":false,"text":"B"},
-                {"category":"input","key":-9,"loc":"-995 -76","isOn":false,"text":"C"},
-                {"category":"input","key":-10,"loc":"-994 5","isOn":false,"text":"D"},
-                {"category":"threeInputAnd","key":-11,"loc":"-660 -290"},
-                {"category":"threeInputAnd","key":-12,"loc":"-660 -190"},
-                {"category":"threeInputAnd","key":-13,"loc":"-660 -100"},
-                {"category":"threeInputAnd","key":-14,"loc":"-660 -20"},
-                {"category":"junction","key":-16,"loc":"-890 -80","fillColor":"#b91c1c"},
-                {"category":"junction","key":-17,"loc":"-890 -370","fillColor":"#b91c1c"},
-                {"category":"junction","key":-15,"loc":"-890 0","fillColor":"#b91c1c"},
-                {"category":"junction","key":-19,"loc":"-827 -269","fillColor":"#15803d"},
-                {"category":"junction","key":-20,"loc":"-828 -170","fillColor":"#15803d"},
-                {"category":"junction","key":-21,"loc":"-760 -420","fillColor":"#b91c1c"},
-                {"category":"junction","key":-22,"loc":"-760 -13","fillColor":"#15803d"},
-                {"category":"junction","key":-23,"loc":"-761 -183","fillColor":"#b91c1c"},
-                {"category":"junction","key":-26,"loc":"-680 -284","fillColor":"#b91c1c"},
-                {"category":"fourInputOr","key":-27,"loc":"-540 -170"},
-                {"category":"junction","key":-25,"loc":"-680 -94","fillColor":"#b91c1c"},
-                {"category":"not","mode1":true,"key":-28,"loc":"-691 -405"},
-                {"category":"not","mode1":true,"key":-24,"loc":"-838 -355"}
-                ],
-                "linkDataArray": [
-                {"from":-7,"to":-11,"fromPort":"","toPort":"in3"},
-                {"from":-8,"to":-12,"fromPort":"","toPort":"in3"},
-                {"from":-9,"to":-13,"fromPort":"","toPort":"in3"},
-                {"from":-10,"to":-14,"fromPort":"","toPort":"in3"},
-                {"from":-17,"to":-16,"fromPort":"out2","toPort":"in1"},
-                {"from":-16,"to":-15,"fromPort":"out2","toPort":"in1"},
-                {"from":-15,"to":-14,"fromPort":"out2","toPort":"in2"},
-                {"from":-16,"to":-13,"fromPort":"out2","toPort":"in2"},
-                {"from":-19,"to":-11,"fromPort":"out2","toPort":"in2"},
-                {"from":-19,"to":-20,"fromPort":"out2","toPort":"in1"},
-                {"from":-20,"to":-12,"fromPort":"out2","toPort":"in2"},
-                {"from":-1,"to":-21,"fromPort":"","toPort":"in1"},
-                {"from":-21,"to":-23,"fromPort":"out2","toPort":"in1"},
-                {"from":-23,"to":-22,"fromPort":"out2","toPort":"in1"},
-                {"from":-22,"to":-14,"fromPort":"out2","toPort":"in1"},
-                {"from":-26,"to":-11,"fromPort":"out2","toPort":"in1"},
-                {"from":-11,"to":-27,"fromPort":"out","toPort":"in1"},
-                {"from":-12,"to":-27,"fromPort":"out","toPort":"in2"},
-                {"from":-13,"to":-27,"fromPort":"out","toPort":"in3"},
-                {"from":-14,"to":-27,"fromPort":"out","toPort":"in4"},
-                {"from":-27,"to":-5,"fromPort":"out","toPort":""},
-                {"from":-2,"to":-17,"fromPort":"","toPort":"in1"},
-                {"from":-23,"to":-12,"fromPort":"out2","toPort":"in1"},
-                {"from":-25,"to":-13,"fromPort":"out2","toPort":"in1"},
-                {"from":-26,"to":-25,"fromPort":"out2","toPort":"in1"},
-                {"from":-21,"to":-28,"fromPort":"out2","toPort":"in"},
-                {"from":-28,"to":-26,"fromPort":"out","toPort":"in1"},
-                {"from":-17,"to":-24,"fromPort":"out2","toPort":"in"},
-                {"from":-24,"to":-19,"fromPort":"out","toPort":"in1"}
-                ]}
+                    { "class": "GraphLinksModel",
+                    "isReadOnly": true,
+                    "linkFromPortIdProperty": "fromPort",
+                    "linkToPortIdProperty": "toPort",
+                    "nodeDataArray": [
+                    {"category":"input","isOn":false,"key":-1,"loc":"-960 -438","text":"S0"},
+                    {"category":"input","isOn":false,"key":-2,"loc":"-1008.9070294784581 -388.90702947845807","text":"S1"},
+                    {"category":"output","key":-5,"loc":"-483 -237","isOn":false,"text":"X"},
+                    {"category":"input","key":-7,"loc":"-1034 -277","isOn":false,"text":"A"},
+                    {"category":"input","key":-8,"loc":"-1037 -176","isOn":false,"text":"B"},
+                    {"category":"input","key":-9,"loc":"-1038.030518086086 -85.03051808608606","isOn":false,"text":"C"},
+                    {"category":"input","key":-10,"loc":"-1038.5062691544877 -6","isOn":false,"text":"D"},
+                    {"category":"threeInputAnd","key":-11,"loc":"-660 -290"},
+                    {"category":"threeInputAnd","key":-12,"loc":"-660 -190"},
+                    {"category":"threeInputAnd","key":-13,"loc":"-660 -100"},
+                    {"category":"threeInputAnd","key":-14,"loc":"-660 -20"},
+                    {"category":"junction","key":-16,"loc":"-890 -80","fillColor":"#b91c1c"},
+                    {"category":"junction","key":-17,"loc":"-890 -370","fillColor":"#b91c1c"},
+                    {"category":"junction","key":-15,"loc":"-890 0","fillColor":"#b91c1c"},
+                    {"category":"junction","key":-19,"loc":"-827 -269","fillColor":"#15803d"},
+                    {"category":"junction","key":-20,"loc":"-828 -170","fillColor":"#15803d"},
+                    {"category":"junction","key":-21,"loc":"-760 -420","fillColor":"#b91c1c"},
+                    {"category":"junction","key":-22,"loc":"-760 -13","fillColor":"#15803d"},
+                    {"category":"junction","key":-23,"loc":"-761 -183","fillColor":"#b91c1c"},
+                    {"category":"junction","key":-26,"loc":"-680 -284","fillColor":"#b91c1c"},
+                    {"category":"fourInputOr","key":-27,"loc":"-540 -170"},
+                    {"category":"junction","key":-25,"loc":"-680 -94","fillColor":"#b91c1c"},
+                    {"category":"not","mode1":true,"key":-28,"loc":"-729 -435"},
+                    {"category":"not","mode1":true,"key":-24,"loc":"-875 -386"}
+                    ],
+                    "linkDataArray": [
+                    {"from":-7,"to":-11,"fromPort":"","toPort":"in3"},
+                    {"from":-8,"to":-12,"fromPort":"","toPort":"in3"},
+                    {"from":-9,"to":-13,"fromPort":"","toPort":"in3"},
+                    {"from":-10,"to":-14,"fromPort":"","toPort":"in3"},
+                    {"from":-17,"to":-16,"fromPort":"out2","toPort":"in1"},
+                    {"from":-16,"to":-15,"fromPort":"out2","toPort":"in1"},
+                    {"from":-15,"to":-14,"fromPort":"out2","toPort":"in2"},
+                    {"from":-16,"to":-13,"fromPort":"out2","toPort":"in2"},
+                    {"from":-19,"to":-11,"fromPort":"out2","toPort":"in2"},
+                    {"from":-19,"to":-20,"fromPort":"out2","toPort":"in1"},
+                    {"from":-20,"to":-12,"fromPort":"out2","toPort":"in2"},
+                    {"from":-1,"to":-21,"fromPort":"","toPort":"in1"},
+                    {"from":-21,"to":-23,"fromPort":"out2","toPort":"in1"},
+                    {"from":-23,"to":-22,"fromPort":"out2","toPort":"in1"},
+                    {"from":-22,"to":-14,"fromPort":"out2","toPort":"in1"},
+                    {"from":-26,"to":-11,"fromPort":"out2","toPort":"in1"},
+                    {"from":-11,"to":-27,"fromPort":"out","toPort":"in1"},
+                    {"from":-12,"to":-27,"fromPort":"out","toPort":"in2"},
+                    {"from":-13,"to":-27,"fromPort":"out","toPort":"in3"},
+                    {"from":-14,"to":-27,"fromPort":"out","toPort":"in4"},
+                    {"from":-27,"to":-5,"fromPort":"out","toPort":""},
+                    {"from":-2,"to":-17,"fromPort":"","toPort":"in1"},
+                    {"from":-23,"to":-12,"fromPort":"out2","toPort":"in1"},
+                    {"from":-25,"to":-13,"fromPort":"out2","toPort":"in1"},
+                    {"from":-26,"to":-25,"fromPort":"out2","toPort":"in1"},
+                    {"from":-21,"to":-28,"fromPort":"out2","toPort":"in"},
+                    {"from":-28,"to":-26,"fromPort":"out","toPort":"in1"},
+                    {"from":-17,"to":-24,"fromPort":"out2","toPort":"in"},
+                    {"from":-24,"to":-19,"fromPort":"out","toPort":"in1"}
+                    ]}
             `        
         }
         else if (this.modeOutput == 2){
             this.startJson = `
                 { "class": "GraphLinksModel",
+                "isReadOnly": true,
                 "linkFromPortIdProperty": "fromPort",
                 "linkToPortIdProperty": "toPort",
                 "nodeDataArray": [
-                {"category":"input","isOn":false,"key":-1,"loc":"-756 -321","text":"R"},
-                {"category":"input","isOn":false,"key":-2,"loc":"-748 -189","text":"S"},
-                {"category":"nand","key":-3,"loc":"-540 -320"},
-                {"category":"nand","key":-4,"loc":"-605 -205"},
-                {"category":"output","key":-5,"loc":"-355 -360","isOn":true,"text":"1"},
-                {"category":"output","key":-6,"loc":"-343 -248","isOn":true,"text":"2"}
+                {"category":"input","isOn":true,"key":-1,"loc":"-755 -330","text":"R"},
+                {"category":"input","isOn":true,"key":-2,"loc":"-756 -200","text":"S"},
+                {"category":"nand","key":-3,"loc":"-544 -320"},
+                {"category":"nand","key":-4,"loc":"-610 -205"},
+                {"category":"output","key":-5,"loc":"-355 -360","isOn":false,"text":"X"},
+                {"category":"output","key":-6,"loc":"-358 -222","isOn":true,"text":"Y"}
                 ],
                 "linkDataArray": [
                 {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
@@ -187,15 +191,16 @@ export default class CV extends RunestoneBase {
         else{
             this.startJson = `
                 { "class": "GraphLinksModel",
+                "isReadOnly": true,
                 "linkFromPortIdProperty": "fromPort",
                 "linkToPortIdProperty": "toPort",
                 "nodeDataArray": [
-                {"category":"input","isOn":false,"key":-1,"loc":"-783 -361","text":"D"},
-                {"category":"input","isOn":false,"key":-2,"loc":"-708.8095238095239 -198.7619047619048","text":"WE"},
-                {"category":"output","key":-5,"loc":"-317.14285714285717 -360.9047619047619","isOn":false,"text":"1"},
-                {"category":"output","key":-6,"loc":"-325.7142857142857 -213.42857142857144","isOn":true,"text":"2"},
-                {"category":"nand","key":-7,"loc":"-434.14285714285717 -319.9047619047619"},
-                {"category":"nand","key":-8,"loc":"-502.7142857142857 -166.42857142857144"},
+                {"category":"input","isOn":true,"key":-1,"loc":"-783 -361","text":"D"},
+                {"category":"input","isOn":true,"key":-2,"loc":"-708.8095238095239 -198.7619047619048","text":"WE"},
+                {"category":"output","key":-5,"loc":"-317.14285714285717 -360.9047619047619","isOn":true,"text":"X"},
+                {"category":"output","key":-6,"loc":"-301.7142857142857 -207.42857142857144","isOn":false,"text":"Y"},
+                {"category":"nand","key":-7,"loc":"-421.14285714285717 -307.9047619047619"},
+                {"category":"nand","key":-8,"loc":"-484.7142857142857 -209.42857142857144"},
                 {"category":"nand","key":-9,"loc":"-585.7142857142858 -132.85714285714286"},
                 {"category":"nand","key":-10,"loc":"-590 -360"},
                 {"category":"not","key":-11,"loc":"-675.2329608725884 -88.53921262033009"}
@@ -907,10 +912,10 @@ export default class CV extends RunestoneBase {
             console.log(this.myDiagram.model.toJson())
         }
 
-
+        const BottomLabelAlignment = new go.Spot(0.5, 1, 0, 10);
 
         //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
-
+        //changing this will be a pain.
         const inputTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
             .set({
                 cursor: 'pointer',
@@ -918,175 +923,70 @@ export default class CV extends RunestoneBase {
                 click: (e, obj) => {
                     nodeOnClickFunction(e, obj)
                 },
-                deletable : true,
+                deletable : false,
                 movable : true,
             })
         .add(
-        new go.Shape(shapeStyle())
+        new go.Shape('inputTemplate', {
+                name: 'NODESHAPE',
+                fill: this.gray,
+                stroke: this.darkGray,
+                strokeWidth: 2
+            })
                 .set({
                     fill: go.Brush.lighten(this.green),
                     margin: 3,
                     strokeWidth: 1.5,
-                    desiredSize: new go.Size(NaN, NaN),
-                    scale: 1.75,
-                    geometry: go.Geometry.parse('F M19.5 3 L19.875 3 C20.4963 3 21 3.5037000000000003 21 4.125 L21 6.375 C21 6.9963 20.4963 7.5 19.875 7.5 L19.5 7.5 M2.25 10.5 L17.25 10.5 C18.4926 10.5 19.5 9.4926 19.5 8.25 L19.5 2.25 C19.5 1.0073600000000003 18.4926 0 17.25 0 L2.25 0 C1.0073599999999998 0 0 1.0073600000000003 0 2.25 L0 8.25 C0 9.4926 1.0073599999999998 10.5 2.25 10.5z', true)
+                    desiredSize: new go.Size(40, 40),
+                    scale: 1,
                 })
             .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? this.green : this.red)),
-        new go.Shape('BpmnEventError', {
-            alignment: new go.Spot(0.5, 0.5, -1, 0),
-            width: 18,
-            height: 10,
-            fill: this.green2,
-            strokeWidth: 0
-        })
-            .bind('fill', 'isOn', isOn => isOn ? this.green2 : this.red2),
         new go.Shape(portStyle(false)) // the only port
                 .set({
-                opacity: 0,
+                opacity: 1,
                 portId: '',
-                alignment: new go.Spot(1, 0.5, -2, 0)
-            }),
-        new go.TextBlock({margin: new go.Margin(4,4,4,4), background:'white', alignment: go.Spot.Center }).bind("text", "text"),
+                alignment: new go.Spot(1, 0.5, -2.5, 0),
+            })
+            .bind("fill", "isOn", isOn => isOn ? "black": "white"),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Input ${text}`),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -5, 3), font: '20px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
+
         );
 
-        const switchTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-            .set({
-                shadowOffset: new go.Point(0, 0),
-                shadowBlur: 5,
-                margin: new go.Margin(-35, 0, 0, 0)
-            })
-        .add(
-        new go.Panel('Horizontal', {
-            // this prevents the ports from moving when the shape rotates
-            minSize: new go.Size(42, 60)
-        })
-            .add(
-                new go.Panel('Spot', {
-                    isClipping: true
-                })
-                    .add(
-                    new go.Shape({fill: 'blue', strokeWidth: 0}),
-                    new go.Panel({
-                        alignment: go.Spot.Left,
-                        alignmentFocus: go.Spot.Center,
-                        angle: 359.99 // rotate counter clock wise
-                    })
-                        .add(
-                            new go.Shape({width: 1, height: 1}),
-                            new go.Shape(shapeStyle())
-                                .set({
-                                strokeWidth: 0,
-                                fill: this.green,
-                                width: 40,
-                                height: 4,
-                                position: new go.Point(40,0),
-                                shadowVisible: false
-                                })
-                        )
-                    .bind('angle', 'isOn', isOn => isOn ? 359.99 : 359.99 - 30)
-                    .trigger('angle', {
-                    duration: 250,
-                    easing: go.Animation.EaseOutQuad,
-                    finished: this.updateStates
-                    })
-                )
-            ),
-        // this rectangle is the clickable area
-        new go.Shape('Rectangle', {
-            fill: 'transparent',
-            // fill: 'skyblue',
-            // opacity: 0.6,
-            strokeWidth: 0,
-            width: 40,
-            height: 30,
-            alignment: go.Spot.Center,
-            alignmentFocus: new go.Spot(0.5, 1, 0, -8),
-            cursor: 'pointer',
-            click: (e, obj) => {
-            if (e.diagram instanceof go.Palette) return;
-            e.diagram.startTransaction('Toggle Switch');
 
-            while (obj.part && obj.part !== obj) obj = obj.part; // find node
-            const shp = obj.findObject('NODESHAPE');
-            const isOn = !obj.data.isOn;
-            this.myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
-
-            e.diagram.commitTransaction('Toggle Switch');
-            if (!obj.data.isOn)
-                this.updateStates();
-            }
-        }),
-        // ports
-        new go.Shape(portStyle(false)) // the only port
-            .set({
-            portId: 'out',
-            desiredSize: new go.Size(5, 5),
-            alignment: new go.Spot(1, 0.5)
-            }),
-        new go.Shape(portStyle(true)) // the only port
-            .set({
-            portId: 'in',
-            desiredSize: new go.Size(5, 5),
-            alignment: new go.Spot(0, 0.5)
-            })
-        );
-
-        // brush for the "light" in the LED
-        const outBrush = new go.Brush('Radial', {
-        0.0: 'rgba(255, 255, 255, 0.2)',
-        0.5: 'rgba(0,255,0,0.8)',
-        0.75: 'rgba(0,255,0,0.3)',
-        0.85: 'rgba(0,255,0,0.1)',
-        0.95: 'rgba(0,255,0,0.05)',
-        1: 'rgba(0,255,0,0)',
-        start: new go.Spot(0.5, 0.8)
-        })
 
         const outputTemplate = new go.Node('Spot', nodeStyle())
         .set({
         isShadowed: true,
-        deletable : true,
+        deletable : false,
         movable : true,
         })
         .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
         .add(
         new go.Panel('Spot')
             .add(
-            new go.Shape('RoundedRectangle', {
+            new go.Shape('OutputTemplate', {
                 fill: 'transparent',
                 parameter1: Infinity,
                 parameter2: 0b0011, // top rounded
-                width: 25,
-                height: 22,
+                width: 44,
+                height: 38,
                 strokeWidth: 2,
                 shadowVisible: false
-            }),
-            new go.Shape('Rectangle', {
-                alignment: go.Spot.Bottom,
-                alignmentFocus: new go.Spot(0.5, 0.8),
-                strokeWidth: 0,
-                fill: null,
-                width: 40,
-                height: 43
             })
-                .bind('fill', 'isOn', isOn => isOn ? outBrush : 'transparent'),
-            new go.Shape('Rectangle', shapeStyle())
-                .set({
-                width: 32,
-                height: 15,
-                alignment: go.Spot.Bottom,
-                alignmentFocus: new go.Spot(0.5, 0, 0, 2)
-                })
-                .bindObject('shadowVisible', 'isSelected'),
-                new go.TextBlock({margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind("text", "text"),
+            .set({ fill: go.Brush.lighten(this.green)})
+            .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? this.green : this.red)),
+
 
             ),
-        new go.Shape(portStyle(true, new go.Spot(0.5, 1, 0, -3))).set({
+        new go.Shape(portStyle(true, new go.Spot(0, 0.5, 0, 0))).set({
             // the only port
             portId: '',
-            alignment: new go.Spot(0.5, 1)
-        }),
-
+            alignment: new go.Spot(0, 0.5, 5, 0),
+        })
+        .bind("fill", "isOn", isOn => isOn ? "black": "white"),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Output ${text}`),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -3, 3),  font: '15px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
         );
 
         const andTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -1105,8 +1005,105 @@ export default class CV extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        //.add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
+
+        const orTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('OrGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0.16, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0.16, 0.7)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            alignment: new go.Spot(1, 0.5)
+        })
+
+        )
+        .add(new go.TextBlock({ margin: 2, alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+        ;
+
+        const xorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('XorGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0.26, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0.26, 0.7)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            alignment: new go.Spot(1, 0.5)
+        })
+        )
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+        ;
+
+        const norTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('NorGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0.16, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0.16, 0.7)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            opacity: 0,
+            alignment: new go.Spot(1, 0.5, -5, 0)
+        })
+        )
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+        ;
+
+
+        const nandTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('NandGate', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in1',
+            alignment: new go.Spot(0, 0.3)
+        }),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in2',
+            alignment: new go.Spot(0, 0.7)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            opacity: 0,
+            alignment: new go.Spot(1, 0.5, -5, 0)
+        })
+        )
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment}).bind('text', '', (d) => d.category))
+        ;
+
+        const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
+        .add(
+        new go.Shape('Inverter', shapeStyle()),
+        new go.Shape(portStyle(true)).set({
+            portId: 'in',
+            alignment: new go.Spot(0, 0.5)
+        }),
+        new go.Shape(portStyle(false)).set({
+            portId: 'out',
+            opacity: 0,
+            alignment: new go.Spot(1, 0.5, -5, 0)
+        })
+        )
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
+        ;
+
 
         const threeInputAndTemplate = applyNodeBindings(new go.Node('Spot', threeAndStyle()))
         .add(
@@ -1132,25 +1129,6 @@ export default class CV extends RunestoneBase {
         ;
 
 
-        const orTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-        .add(
-        new go.Shape('OrGate', shapeStyle()),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in1',
-            alignment: new go.Spot(0.16, 0.3)
-        }),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in2',
-            alignment: new go.Spot(0.16, 0.7)
-        }),
-        new go.Shape(portStyle(false)).set({
-            portId: 'out',
-            alignment: new go.Spot(1, 0.5)
-        })
-
-        )
-        //.add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-        ;
 
         const fourInputOrTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
         .add(
@@ -1180,85 +1158,7 @@ export default class CV extends RunestoneBase {
         //.add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
         ;
 
-        const xorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-        .add(
-        new go.Shape('XorGate', shapeStyle()),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in1',
-            alignment: new go.Spot(0.26, 0.3)
-        }),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in2',
-            alignment: new go.Spot(0.26, 0.7)
-        }),
-        new go.Shape(portStyle(false)).set({
-            portId: 'out',
-            alignment: new go.Spot(1, 0.5)
-        })
-        )
-        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-        ;
 
-        const norTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-        .add(
-        new go.Shape('NorGate', shapeStyle()),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in1',
-            alignment: new go.Spot(0.16, 0.3)
-        }),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in2',
-            alignment: new go.Spot(0.16, 0.7)
-        }),
-        new go.Shape(portStyle(false)).set({
-            portId: 'out',
-            opacity: 0,
-            alignment: new go.Spot(1, 0.5, -5, 0)
-        })
-        )
-        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-        ;
-
-
-        const nandTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-        .add(
-        new go.Shape('NandGate', shapeStyle()),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in1',
-            alignment: new go.Spot(0, 0.3)
-        }),
-        new go.Shape(portStyle(true)).set({
-            portId: 'in2',
-            alignment: new go.Spot(0, 0.7)
-        }),
-        new go.Shape(portStyle(false)).set({
-            portId: 'out',
-            opacity: 0,
-            alignment: new go.Spot(1, 0.5, -5, 0)
-        })
-        )
-        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-        ;
-
-        const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-        .add(
-        new go.Shape('Inverter', notStyle())
-        .bind('angle', 'mode1', mode1 =>mode1 ? 90 : 360),
-        new go.Shape(notPortStyle(true)).set({
-            portId: 'in',
-        })
-        .bind('alignment', "mode1", mode1 => mode1 == true ? new go.Spot(0.5, 0.0)  : new go.Spot(0, 0.5) ),
-        new go.Shape(notPortStyle(false)).set({
-            portId: 'out',
-            opacity: 0
-        })
-        .bind('alignment', "mode1", mode1 => mode1 == true ? new go.Spot(0.5, 0.9) : new go.Spot(1, 0.5, -5, 0) )
-
-
-
-        )
-        //.add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
-        ;
 
         const junctionTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
         .add(
@@ -1480,10 +1380,18 @@ doXnor = (node) => {
 doOutput = (node) => {
     // assume there is just one input link
     // we just need to update the node's data.isOn
+
+    //node.linksconnecetd is an iterator so I have to count it like this x(
+    let i = 0;
     node.linksConnected.each((link) => {
       this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
+      i++
     });
+    if(i == 0){
+        this.myDiagram.model.setDataProperty(node.data, 'isOn', false);
+    }
   }
+
 doJunction = (node) => {
     const color = node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
     this.setOutputLinks(node, color);

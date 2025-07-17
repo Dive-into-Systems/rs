@@ -6,6 +6,7 @@ import { Pass } from "codemirror";
 import circuitAST from "./circuit_AST/circuitAST.js";
 import circuit_generator from "./circuit_generate.js";
 import "../css/circuitdraw.css"
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var DCList = {}; // Object containing all instances of DC that aren't a child of a timed assessment.
 
@@ -42,7 +43,7 @@ export default class DC extends RunestoneBase {
        //For somereason the default code uses colors (and not a separate variable) to update the circuit
         this.red = '#115222ff';
         this.red2 = '#1a642eff';
-        this.green = '#0efc4dff';
+        this.green = '#0deb48ff';
         this.green2 = '#33ff66ff';
      
         this.gray = '#cbd5e1';
@@ -64,6 +65,7 @@ export default class DC extends RunestoneBase {
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
+       updateHeight(window, document, this, true);
        this.sendData(0);
    }
 
@@ -309,8 +311,7 @@ export default class DC extends RunestoneBase {
 
 
 
-        this.gojsDiv.append(this.circuitDiv)
-        this.wrapperDiv.append(this.gojsDiv)
+
 
 
 
@@ -320,7 +321,6 @@ export default class DC extends RunestoneBase {
 
         //more HTML stuff
         this.answerDiv = document.createElement("div")
-        this.wrapperDiv.append(this.answerDiv)
 
         this.tdH3 = document.createElement("div")
         this.tdH3.textContent = "Truth Table:"
@@ -355,8 +355,12 @@ export default class DC extends RunestoneBase {
         table.innerHTML += tableDataHTML
 
         this.tableDiv.appendChild(table)
-        this.answerDiv.append(table)
 
+        this.gojsDiv.append(this.circuitDiv)
+        this.wrapperDiv.append(this.gojsDiv)
+        this.wrapperDiv.append(this.answerDiv)
+        this.answerDiv.append(table)
+ 
 
         this.checkButton = document.createElement("button")
         this.checkButton.textContent = "Check Answer"

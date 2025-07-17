@@ -29,7 +29,7 @@ export default class vmInfo extends RunestoneBase {
         this.createvmInfoElement();
         this.caption = "Virtual Memory Information";
         this.addCaption("runestone");
-        updateHeight(window, document, this);
+        updateHeight(window, document, this, true);
         // this.checkServer("vmInfo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -144,7 +144,7 @@ export default class vmInfo extends RunestoneBase {
                 if (e.key === "Enter") {
                     e.preventDefault();
                     this.submitButton.click();
-                    updateHeight(window, document, this);
+                   
                 }
             }.bind(this), false);  
         }
@@ -205,7 +205,7 @@ export default class vmInfo extends RunestoneBase {
             function () {
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                updateHeight(window, document, this);
+               
             }.bind(this),
             false
         );
@@ -223,10 +223,10 @@ export default class vmInfo extends RunestoneBase {
                 this.generateQuestion();
                 this.clearInput();
                 this.generateAnswer();
-                updateHeight(window, document, this);
+               
             }.bind(this),
             false)
-        ;
+       
 
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.generateButton);
