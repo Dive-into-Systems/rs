@@ -92,8 +92,8 @@ export default class RunestoneBase {
     getUserId() {
         let userId;
         if (! localStorage.getItem("Dive-into-Systems-user-Id")) {
-            userId = "test-id-for-dis-exercise";
-            // userId = nanoid(30);
+            // userId = "test-id-for-dis-exercise";
+            userId = nanoid(30);
             localStorage.setItem("Dive-into-Systems-user-Id", userId);
         } else {
             userId = localStorage.getItem("Dive-into-Systems-user-Id");
@@ -115,11 +115,12 @@ export default class RunestoneBase {
             ActionID: actionId,
             UserID: this.getUserId(),
             Details: details
+            
         };
 
         console.log(data);
         
-        const url = 'http://127.0.0.1:5000/log';
+        const url = 'http://runestone.cs.swarthmore.edu/log/log';
 
         fetch(url, {
             method: 'POST',

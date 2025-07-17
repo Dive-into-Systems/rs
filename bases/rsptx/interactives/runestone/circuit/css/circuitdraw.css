@@ -34,11 +34,16 @@ input.input-validation-error {
    width: 100%;
    border-collapse: collapse;
    margin-bottom: 20px;
+   background: white !important; 
+}
+th {
+    text-align: center;
 }
 
 th, td {
-   border: 1px solid #ddd;
-   text-align: center;
+   border: 1px solid #ccc !important;
+   padding: 8px !important;
+   text-align: center !important;
 }
 
 th {
@@ -69,4 +74,26 @@ th {
 .radioSpan{
    display:flex;
    width: 50%;
+}
+
+.feedbackTable{
+    background: white;
+}
+
+.statement-div {
+    border-width: 1px;
+    border-radius: 5px;
+    border-style: solid;
+    border-color: rgb(234, 234, 234);
+    background-color: rgb(255, 255, 255);
+    padding: 8px;
+  }
+
+.outputSelect {
+    width: auto !important;
+    margin-left:2px !important;
+}
+
+.outputModeDiv{
+    display:flex
 }

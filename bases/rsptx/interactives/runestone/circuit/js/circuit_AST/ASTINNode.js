@@ -1,10 +1,11 @@
 export default class ASTINNode{
     constructor(type, token){
         this.type = type;
-        this.token = token;
+        this.value = token;
+        this.input = null;
     }
 
     setValue(val){
-        this.value = val;
+        this.input = val;
     }
 }

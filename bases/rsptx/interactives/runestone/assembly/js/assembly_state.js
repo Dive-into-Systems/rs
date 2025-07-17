@@ -10,6 +10,7 @@ import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { ARM64_OPS, X86_32_OPS, X86_64_OPS } from "./arch_generate.js";
 import arch_data from './arch_data.json';
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var ASMStateList = {}; // Object containing all instances of cachetable that aren't a child of a timed assessment.
 const num_instructions = 3;
@@ -46,9 +47,10 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         else {
             this.createRegularAssemblyStateElement();
         }
-
+        
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
+        updateHeight(window, document, this);
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -359,10 +361,22 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
 
-        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => this.tryAnother());
-        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => this.resetValues());
-        const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => this.provideHelp());
-        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => this.checkAnswer());
+        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
+            this.tryAnother();
+            updateHeight(window, document, this);
+        });
+        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
+            this.resetValues()
+            updateHeight(window, document, this);
+        });
+        const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
+            this.provideHelp();
+            updateHeight(window, document, this);
+            });
+        const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
+            this.checkAnswer()
+            updateHeight(window, document, this);
+        });
 
         buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);
         this.containerDiv.append(buttonContainer);
@@ -517,6 +531,13 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.moveToNextInstruction();
             }
         }
+
+        const actionid = (isCorrect ? 1 : 2)
+        const actualAnswers = this.allStates.slice(0, this.currentInstruction)
+        const code = this.initialState[0].slice(0,this.currentInstruction)
+        const data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
+        console.log(data)
+        // this.sendData( )
     }
 
     // Handle case sensitivity or number forms
@@ -610,6 +631,44 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Resets all input fields
     resetInputFields() {
         this.containerDiv.find("input[type='text']").val("").css("background-color", "");
+    }
+
+
+    sendData(actionId) {
+
+        let details; 
+        if (actionId == 1 || actionId == 2) {
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+                prompt: {
+                    displayedPrompt: `${this.promptDivTextNode.textContent}`,
+                },
+                eval: {
+                    correctAnswer: `${this.target_num_string}`,
+                    userAnswer : this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null,
+                    correctpt1 : this.correctpt1,
+                }
+            }
+        
+
+
+        }
+
+        if(actionId == 3 || actionId == 0){
+            details = {
+                config : {
+                    numBits : `${this.num_bits}`,
+                    checkedOperators : `${this.checkedValues}`,
+                    usedOperator : `${this.randomItem}`
+                },
+            }
+        }
+
+        this.logData(null, details, actionId, this.componentId);
     }
 }
 

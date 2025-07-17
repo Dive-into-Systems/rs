@@ -13,6 +13,15 @@ div[id$="_result"] {
   visibility: hidden;
 }
 
+.statement-div {
+  border-width: 1px;
+  border-radius: 5px;
+  border-style: solid;
+  border-color: rgb(234, 234, 234);
+  background-color: rgb(255, 255, 255);
+  padding: 8px;
+}
+
 /* - all buttons - */
 .button-row {
   display: flex;

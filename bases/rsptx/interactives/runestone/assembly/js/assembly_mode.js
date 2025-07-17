@@ -58,6 +58,7 @@ export default class AM extends RunestoneBase {
     ===========================================*/
     // Create the NC Element
 
+
     setCustomizedParams() {
             const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
             if (currentOptions["architecture"] !== undefined) {
@@ -99,7 +100,7 @@ export default class AM extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Determine whether as a jump is taken based on the operation and the jump instruction."
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and an instruction, select whether or not the instruction accesses memory.  If so, specify whether it’s a read from memory or write to memory.  If the operation accesses memory or produces a memory address, fill in the blank with the corresponding address."
 
         this.containerDiv.appendChild(this.instructionNode);
 
@@ -109,7 +110,10 @@ export default class AM extends RunestoneBase {
 
 
         const modeDiv= document.createElement('div')
-        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li> Mode 1: Limited Addressing Modes </li> <li>Mode 2: More Complicated </li></ul>'
+        //Configure question: Select a mode to determine what type of instructions are generated.
+        modeDiv.innerHTML  = `<span style='font-weight:bold'><u>Configure Question</u></span>: Select a mode to determine what type of instructions are generated. <br> 
+        <ul> <li> Mode 1 generates memory addresses with a register value and potentially a constant displacement. </li> 
+        <li>Mode 2 generates memory addresses with a register value, and potentially constant displacements and/or scaling.</li></ul>`
 
         // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
         this.modeSelect = document.createElement("select")
@@ -127,7 +131,7 @@ export default class AM extends RunestoneBase {
         this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
 
         this.modeSelectText = document.createElement("div")
-        this.modeSelectText.append(document.createTextNode('Plese select a mode:'))
+        this.modeSelectText.append(document.createTextNode('Select a mode:'))
 
         //DON'T DO IF ARM
         if(this.archSelect != "arm_64"){
@@ -203,7 +207,10 @@ export default class AM extends RunestoneBase {
         this.answerDiv = document.createElement('div')
         this.answerDiv.className = "answerDiv"
 
-
+        this.registerTable = document.createElement('table');
+        let header = '<tr>';
+        
+        
 
         this.questions = [];
         this.answers = [];
@@ -212,15 +219,7 @@ export default class AM extends RunestoneBase {
         const largeOl = document.createElement("ol")
 
         this.generateAnswer();
-        this.questions.map((q,i)=>{
-
-            const index = i
-
-            const li = document.createElement('li')
-            
-            const codeDiv = document.createElement('div')
-            
-            const registerData = this.generateRegisterState(i)
+        let registerData = this.generateRegisterState(0)
             let regA;
             let regB;
             if(this.archSelect == "X86_64"){
@@ -233,16 +232,87 @@ export default class AM extends RunestoneBase {
                 regA = "X0";
                 regB = "X1";
             }
+            let background = document.createElement("div");
+            background.className = "statement-div";
+            let registers;
+            if(this.modeSelect.value){
+                switch(this.modeSelect.value){
+                case "1":
+                    registers = [regA];
+                    break;
+                case "2":
+                    registers = [regA, regB];
+                }
+            }else{
+                registers = [regA, regB];
+            }
+            
+            
+
+            for (const register of registers) {
+            header += `<th style="text-align:center">${register}</th>`;
+            }
+
+            this.registerTable.innerHTML = header;
+            let row = document.createElement('tr');
+            let cell1;
+            let cell2;
+            if(this.modeSelect.value){
+                switch (this.modeSelect.value){
+                case "1":
+                    cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    break;
+                case "2":
+                    cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    cell2 = document.createElement('td')
+                    cell2.innerHTML = `${registerData.values[1]}`
+                    row.append(cell2);
+                    break;
+                }
+            }else{
+                cell1 = document.createElement('td')
+                    cell1.innerHTML = `${registerData.values[0]}`
+                    row.append(cell1);
+                    cell2 = document.createElement('td')
+                    cell2.innerHTML = `${registerData.values[1]}`
+                    row.append(cell2);
+            }
+            
+            
+            this.registerTable.append(row);
+            let tableHeader = document.createElement('div');
+            tableHeader.style = "margin: auto; width: 100%; text-align: center";
+            tableHeader.innerHTML = "Register Values:"
+            background.append(tableHeader);
+            background.append(this.registerTable);
+            this.answerDiv.append(background);
+
+        this.questions.map((q,i)=>{
+
+            const index = i
+
+            const li = document.createElement('li')
+            
+            const codeDiv = document.createElement('div')
+
+            registerData = this.generateRegisterState(i)
+
 
             codeDiv.innerHTML = ((registerData.names[0] == "rax")||(registerData.names[0] == "eax")||(registerData.names[0] == "X0")) ?
-            `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
-            `<li> <em>${regA}</em>: <m>${registerData.values[0]}</m>; <em>${regB}</em>: <m>${registerData.values[1]}</m>; </li>`
-            +`</ul>` :
-            `<ul> <li> <code class="modeCode">${q.code}</code> </li>`+
-            `<li> <em>${regA}</em>: <m>${registerData.values[1]}</m>; <em>${regB}</em>: <m>${registerData.values[0]}</m>; </li>`
-            +`</ul>`;
+            (`<div>` +
+            `<div> <code class="modeCode">${q.code}</code> </div>` +
+            `</div>`) :
+            (`<div>`+
+            `<div> <code class="modeCode">${q.code}</code> </div>`+
+            `</div>`);
             
             codeDiv.style = "font-size: large;"
+            
+            
             li.append(codeDiv)
 
             
@@ -279,7 +349,7 @@ export default class AM extends RunestoneBase {
             rYesMA.name = `ma${i}`
             const rYesMALabel = document.createElement("label")
             rYesMALabel.setAttribute("for", `radioMAYes${i}`)
-            rYesMALabel.textContent = "yes"
+            rYesMALabel.textContent = "Yes"
 
             const rNoMA = document.createElement("input")
             rNoMA.value = `radioNo${i}`
@@ -288,15 +358,22 @@ export default class AM extends RunestoneBase {
             rNoMA.name = `ma${i}`
             const rNoMALabel = document.createElement("label")
             rNoMALabel.setAttribute("for", `radioMANo${i}`)
-            rNoMALabel.textContent = "no"
+            rNoMALabel.textContent = "No"
 
-            maTd.append(rYesMA)
-            maTd.append(rYesMALabel)
-            maTd.append(document.createElement("br"))
-            maTd.append(rNoMA)
-            maTd.append(rNoMALabel)
+            this.MAYesSpan = document.createElement('span')
+            this.MAYesSpan.className = "radioSpan"
+            this.MAYesSpan.append(rYesMA)
+            this.MAYesSpan.append(rYesMALabel)
 
-
+            this.MANoSpan = document.createElement("span")
+            this.MANoSpan.className = "radioSpan"
+            this.MANoSpan.append(rNoMA)
+            this.MANoSpan.append(rNoMALabel)
+            
+            maTd.append(this.MAYesSpan)
+            maTd.append(this.MANoSpan)
+            
+            maTd.className = "radioTD"
 
 
 
@@ -320,12 +397,21 @@ export default class AM extends RunestoneBase {
             rNoRWLabel.setAttribute("for", `radioRWNo${i}`)
             rNoRWLabel.textContent = "Write"
 
-            rwTd.append(rYesRW)
-            rwTd.append(rYesRWLabel)
-            rwTd.append(document.createElement("br"))
-            rwTd.append(rNoRW)
-            rwTd.append(rNoRWLabel)
 
+            this.rwYesSpan = document.createElement("span")
+            this.rwYesSpan.className = "radioSpan"
+            this.rwYesSpan.append(rYesRW)
+            this.rwYesSpan.append(rYesRWLabel)
+            
+            this.rwNoSpan = document.createElement("span")
+            this.rwNoSpan.className = "radioSpan"
+            this.rwNoSpan.append(rNoRW)
+            this.rwNoSpan.append(rNoRWLabel)
+            
+            rwTd.append(this.rwYesSpan)
+            rwTd.append(this.rwNoSpan)
+
+            rwTd.className = "radioTD"
             
 
             const input1 = document.createElement("input")
@@ -528,13 +614,32 @@ export default class AM extends RunestoneBase {
         this.genLea = 0;
         let selectHistory = [];
         this.MAarray = [];
-        let select;
-
+        let select = [];
+        switch (this.archSelect) {
+            case "X86_64":
+                this.arch = new am_x86();
+                break;
+            case "ia_32":
+                this.arch = new am_ia32();
+                break;
+            case "arm_64":
+                this.arch = new am_arm64();
+                break;
+            default:
+                throw new Error("Invalid architecture option");
+        }
+        
         if (this.archSelect != "arm_64"){
             this.instructionList = ["add", "mov"];
     
             for (let i = 0; i<4; i++){
                 select = Math.floor(Math.random()*3)
+                if (i == 1 && !selectHistory.includes(0)){
+                    select = 0;
+                }
+                if (i == 2 && !selectHistory.includes(1)){
+                    select = 1;
+                }
                 if (i == 3 && !selectHistory.includes(2)){
                     select = 2;
                 }
@@ -566,25 +671,19 @@ export default class AM extends RunestoneBase {
 
     generateCode(select) {
         let text;
-        switch (this.archSelect) {
-            case "X86_64":
-                this.arch = new am_x86();
-                break;
-            case "ia_32":
-                this.arch = new am_ia32();
-                break;
-            case "arm_64":
-                this.arch = new am_arm64();
-                break;
-            default:
-                throw new Error("Invalid architecture option");
-        }
+        
         if(select == 0){
             text = this.generateRead();
         } else if (select == 1){
             text = this.generateWrite();
         } else {
             text = this.generateNoAccess();
+        }
+        
+        for (let i = 0; i<this.questions.length; i++){
+            if(this.questions[i].code == text){
+                text = this.generateCode(select).code;
+            }
         }
 
         return {code: text};

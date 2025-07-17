@@ -8,6 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./vmtable-i18n.en.js";
 import "../css/vmtable.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var vmtableList = {}; // Object containing all instances of vmtable that aren't a child of a timed assessment.
 
@@ -33,6 +34,8 @@ export default class vmtable extends RunestoneBase {
         this.caption = "Virtual Memory Table";
         this.addCaption("runestone");
         // this.checkServer("vmtable", true);
+        updateHeight(window, document, this);
+
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
@@ -263,6 +266,7 @@ export default class vmtable extends RunestoneBase {
                     this.helpDiv.removeChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_vmtable_display_help");
                 }
+                updateHeight(window, document, this);
             }.bind(this),
         false); 
         this.helpDiv.appendChild(document.createElement("br"));
@@ -761,6 +765,7 @@ export default class vmtable extends RunestoneBase {
             "click",
             function () {
                 this.submitResponse();
+                updateHeight(window, document, this);
             }.bind(this),
             false
         );
@@ -779,6 +784,7 @@ export default class vmtable extends RunestoneBase {
                 this.fixedMinIndex = false;
                 this.resetGeneration();
                 this.hidefeedback();
+                updateHeight(window, document, this);
             }.bind(this),
             false
         );
@@ -797,6 +803,7 @@ export default class vmtable extends RunestoneBase {
                 this.resetGeneration();
                 // this.displayNecessaryFields();
                 this.hidefeedback();
+                updateHeight(window, document, this);
             }.bind(this),
             false
         );

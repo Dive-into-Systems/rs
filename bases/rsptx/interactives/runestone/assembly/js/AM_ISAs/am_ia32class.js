@@ -24,7 +24,7 @@ export default class am_ia32{
 
 
     generateWriteInstruction = (mode)=>{
-        let regChoice1 = this.randomZeroOrOne();
+        let regChoice1 = 0;
             let regChoice2 = 0;
 
             if (regChoice1 == 0){
@@ -38,7 +38,21 @@ export default class am_ia32{
 
             let SourceText = `%${reg1}`;
 
-            const start = Math.floor(Math.random()*(16))
+            let coinFlip = Math.floor(Math.random()*3);
+            let start;
+            switch(coinFlip){
+                case 0:
+                    start = 0;
+                    break;
+                case 1:
+                    start = 4;
+                    break;
+                case 2:
+                    start = 8;
+                case 3:
+                    start = 12;
+            }
+            
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             
@@ -92,7 +106,7 @@ export default class am_ia32{
     }
 
     generateReadInsturction = (mode)=> {
-        let regChoice1 = this.randomZeroOrOne();
+        let regChoice1 = 0;
             let regChoice2 = 0;
 
             if (regChoice1 == 0){
@@ -105,8 +119,20 @@ export default class am_ia32{
             let reg2 = this.registerList[regChoice2];
 
             let DestinationText = `%${reg1}`;
-
-            const start = Math.floor(Math.random()*(16))
+            let coinFlip = Math.floor(Math.random()*3);
+            let start;
+            switch(coinFlip){
+                case 0:
+                    start = 0;
+                    break;
+                case 1:
+                    start = 4;
+                    break;
+                case 2:
+                    start = 8;
+                case 3:
+                    start = 12;
+            }
             const offset = (start != 0) ? start.toString(16): "";
             const scale = [1, 2, 4, 8][Math.floor(Math.random()*(4))];
             
@@ -159,7 +185,7 @@ export default class am_ia32{
     }
 
     generateNAInstruction = () => {
-        let regChoice1 = this.randomZeroOrOne();
+        let regChoice1 = 0;
             let regChoice2 = 0;
 
             if (regChoice1 == 0){

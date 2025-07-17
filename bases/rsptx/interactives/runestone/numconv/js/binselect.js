@@ -21,6 +21,7 @@ import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
 import "../css/binselect.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
+import { MinSelectBox } from "../../../utils/MinSelectBox.js";
 
 export var BSList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -118,21 +119,23 @@ export default class BS extends RunestoneBase {
 
         // Build the inner HTML using template literals
         // Inner HTML defines the items in the dropdown
-        var html =   "<span class='anchor'>Select Operators</span>"+
-        "<ul class='items'>"+
-        "  <li><input class='addBoxSelect' type='checkbox' value='ADDITION' checked/>Addition </li>"+ //pre checked item
-        "  <li><input  class='subBoxSelect' type='checkbox' value='SUBTRACTION' checked/>Subtraction </li>"+
-        "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>And </li>"+
-        "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>Or </li>"+
-        "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>Exclusive Or </li>"+
-        "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' uncheck/>Left Shift</li>"+
-        "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' uncheck/>Logical Right Shift</li>"+
-        "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' uncheck/>Arithmetic Right Shift</li>"+
+        
+        const binSelectBox = MinSelectBox(this.menuNode1, 2, ["addBoxSelect", "subBoxSelect","andBoxSelect", "orBoxSelect", "xorBoxSelect", "lShiftBoxSelect", "lrShiftBoxSelect", "arShiftBoxSelect"], ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"], [true, true, true, true, true, false, false, false], "Operators", this.generateButton)
+        // var html =   "<span class='anchor'>Select Operators</span>"+
+        // "<ul class='items'>"+
+        // "  <li><input class='addBoxSelect' type='checkbox' value='ADDITION' checked/>Addition </li>"+ //pre checked item
+        // "  <li><input  class='subBoxSelect' type='checkbox' value='SUBTRACTION' checked/>Subtraction </li>"+
+        // "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>And </li>"+
+        // "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>Or </li>"+
+        // "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>Exclusive Or </li>"+
+        // "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' uncheck/>Left Shift</li>"+
+        // "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' uncheck/>Logical Right Shift</li>"+
+        // "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' uncheck/>Arithmetic Right Shift</li>"+
 
-        "</ul>"
+        // "</ul>"
         
         // Assign the built HTML to innerHTML of the this.menuNode1 container
-        this.menuNode1.innerHTML = html;
+        // this.menuNode1.innerHTML = html;
 
         this.addBoxSelect = this.menuNode1.getElementsByClassName("addBoxSelect")[0]
         this.subBoxSelect = this.menuNode1.getElementsByClassName("subBoxSelect")[0]
@@ -413,8 +416,6 @@ export default class BS extends RunestoneBase {
             }.bind(this),
             false
         );
-
-        // "try another" button
         this.generateButton = document.createElement("button");
         this.generateButton.textContent = $.i18n("msg_NC_generate_a_number");
         $(this.generateButton).attr({
@@ -422,6 +423,7 @@ export default class BS extends RunestoneBase {
             name: "generate a number",
             type: "button",
         });
+
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",

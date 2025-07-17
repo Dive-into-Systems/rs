@@ -127,27 +127,13 @@ export default class AJ extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Based on the starting data and the assmebly instructions, complete the table."
-
-        // // specify the number of bits in the statement
-        // this.statementNode05 = document.createTextNode("Please convert a value from one selected number system to another selected number system.");
-
-
-
-        // Build the inner HTML using template literals
-        // Inner HTML defines the items in the dropdown
-
-        // Assign the built HTML to innerHTML of the this.menuNode1 container
-       
-
-        
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and a small block of assembly code containing a jump instruction, determine:"
         this.configHelperText = document.createElement("div");
         this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
-        // render the statement
         this.containerDiv.appendChild(this.instructionNode);
         this.statementDiv.appendChild(this.configHelperText);
         this.containerDiv.appendChild(this.statementDiv);
-        this.containerDiv.appendChild(document.createElement("br"));
+        this.containerDiv.append(document.createElement("br"))
 
         this.X86Option = document.createElement("option")
         this.X86Option.value = "X86_64"
@@ -161,23 +147,19 @@ export default class AJ extends RunestoneBase {
         this.ARM64Option.value = "arm_64"
         this.ARM64Option.textContent = "arm_64"
 
-        this.statementDiv.appendChild(document.createElement("br"))
 
         this.statementDiv.className = "statement-div";
 
         console.log("MSB " + MinSelectBox)
-        this.cmpTestStatementNode = document.createTextNode("Select types of conditional statements:")
-        this.statementDiv.appendChild(this.cmpTestStatementNode)
-        this.checkBoxes = MinSelectBox(this.statementDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Type of Conditional");
-        this.statementDiv.appendChild(document.createElement("br"))
+
 
         const modeDiv= document.createElement('div')
-        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li> Mode 1: Simple compare then jump </li> <li>Mode 2: If-Else patterns </li></ul>'
+        modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li>Mode 1: whether or not the jump instruction will be taken.</li> <li>Mode 2: the values of the registers after the code block executes.</li></ul>'
         this.statementDiv.appendChild(modeDiv)
 
-        this.modeStatementNode = document.createTextNode("Select which mode you'd like to use:")
+        this.modeStatementNode = document.createTextNode("Select a mode:")
         this.statementDiv.appendChild(this.modeStatementNode);
-        // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        
         this.modeSelect = document.createElement("select")
         this.modeSelect.className = "form-control fork-inline mode"
         this.mode1Option = document.createElement("option")
@@ -196,6 +178,17 @@ export default class AJ extends RunestoneBase {
 
 
         this.statementDiv.append(this.modeSelect)
+
+        this.statementDiv.append(document.createElement("br"))
+
+        this.comparisonOptionsDiv = document.createElement("div")
+        this.comparisonOptionsDiv.className = "compOptionsDiv"
+        this.comparisonOptionsText = document.createElement("span")
+        this.comparisonOptionsText.textContent = "Choose which types of comparison instructions should appear:"
+        this.comparisonOptionsDiv.append(this.comparisonOptionsText)
+        this.checkBoxes = MinSelectBox(this.comparisonOptionsDiv, 1, ["cmpBox", "testBox"], ["cmp", "test"], [true, false], "Pick Comparison Instruction");
+
+        this.statementDiv.appendChild(this.comparisonOptionsDiv)
 
         // create the node for the prompt
         this.promptDiv = document.createElement("div");

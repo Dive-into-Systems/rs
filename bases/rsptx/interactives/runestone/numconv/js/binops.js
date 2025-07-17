@@ -92,7 +92,7 @@ export default class BO extends RunestoneBase {
         
         this.instruction = document.createElement("div");
         this.instruction.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: " +
-            "Please do the bitwise operation based on the operator and the number of bits you select.";
+            "Given the two operands and the result shown below, select all of the bitwise operators for which those operands would produce the result.";
         this.instruction.style.padding = "10px";
 
         this.configHelperText = document.createElement("div");
