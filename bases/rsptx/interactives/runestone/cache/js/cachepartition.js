@@ -33,7 +33,7 @@ export default class cachepartition extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        updateHeight(window, document, this)
+        updateHeight(window, document, this, true);
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -79,7 +79,7 @@ export default class cachepartition extends RunestoneBase {
             function () {
                 this.updatePromptNAnswer();
                 this.resetHighlight();
-                updateHeight(window, document, this);
+                
             }.bind(this),
             false);
         
@@ -97,7 +97,7 @@ export default class cachepartition extends RunestoneBase {
             function () {
                 this.updatePromptNAnswer();
                 this.resetHighlight();
-                updateHeight(window, document, this);
+                
             }.bind(this),
             false);
 
@@ -263,7 +263,7 @@ export default class cachepartition extends RunestoneBase {
                 this.updateCPFeedbackDiv();
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                updateHeight(window, document, this);
+                
             }.bind(this), false);
         
         this.generateButton.textContent = $.i18n("msg_cachepartition_generate_a_number");
@@ -282,7 +282,7 @@ export default class cachepartition extends RunestoneBase {
                 this.indexIncorrectCount = 0;
                 this.offsetIncorrectCount = 0;
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
-                updateHeight(window, document, this);
+                
                 this.sendData(3);
             }.bind(this), false);
         
@@ -303,7 +303,7 @@ export default class cachepartition extends RunestoneBase {
                 this.currentClass = "tagclass";
                 this.currInputBits();
                 this.clearFeedback();
-                updateHeight(window, document, this);
+                
             }.bind(this));
 
         // set to INDEX button
@@ -322,7 +322,7 @@ export default class cachepartition extends RunestoneBase {
                 this.currentClass = "indexclass";
                 this.currInputBits();
                 this.clearFeedback();
-                updateHeight(window, document, this);
+                
             }.bind(this));
         
         // set to OFFSET button
@@ -341,7 +341,7 @@ export default class cachepartition extends RunestoneBase {
                 this.currentClass = "offsetclass";
                 this.currInputBits();
                 this.clearFeedback();
-                updateHeight(window, document, this);
+                
             }.bind(this));
         
         // CLEAR ALL SELECTION 
@@ -357,7 +357,7 @@ export default class cachepartition extends RunestoneBase {
                 this.resetHighlight();
                 this.currInputBits();
                 this.clearFeedback(); 
-                updateHeight(window, document, this);
+                
             }.bind(this));
     }
 

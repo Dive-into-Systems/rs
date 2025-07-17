@@ -30,7 +30,7 @@ export default class vmpartition extends RunestoneBase {
         this.createCachePartitionElement();
         this.caption = "Cache Partition";
         this.addCaption("runestone");
-        updateHeight(window, document, this);
+        updateHeight(window, document, this, true);
         // this.checkServer("vmpartition", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -218,7 +218,7 @@ export default class vmpartition extends RunestoneBase {
             function () {
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
-                updateHeight(window, document, this);
+               
             }.bind(this),
             false
         );
@@ -236,11 +236,11 @@ export default class vmpartition extends RunestoneBase {
                 this.generateAnswer();
                 this.generateAddress();
                 this.generatePrompt();
-                updateHeight(window, document, this);
+               
                 // this.resetHighlight();
             }.bind(this),
             false)
-        ;
+       
         
         // put all buttons together
         this.containerDiv.appendChild(document.createElement("br"));

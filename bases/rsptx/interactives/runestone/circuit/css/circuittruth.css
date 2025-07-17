@@ -51,7 +51,10 @@ table[id$="_truthTable"] td {
   padding: 8px !important;
   text-align: center !important;
 }
-
+.no-scroll {
+  height: 100%;
+  overflow: hidden;
+}
 /* — Answer input cells — */
 .answer-input {
   width: 3ch !important;

@@ -8,6 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./nc-i18n.en.js";
 import "../css/bincalc.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var BinCalcList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -37,6 +38,7 @@ export default class BinCalc extends RunestoneBase {
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
+       updateHeight(window, document, this, true);
        this.sendData(0);
    }
 

@@ -21,6 +21,7 @@ import { nanoid } from 'nanoid/non-secure';
 import "./nc-i18n.en.js"; //file that includes msg messages, usually appear in feedback
 import "../css/binops.css"; //css file that describes formatting of the component
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var BOList = {}; // Object containing all instances of NC that aren't a child of a timed assessment.
 
@@ -61,6 +62,7 @@ export default class BO extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+        updateHeight(window, document, this, true);
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.

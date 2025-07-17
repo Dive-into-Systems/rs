@@ -30,7 +30,7 @@ export default class VO extends RunestoneBase {
         this.createVOElement();
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");
-        updateHeight(window, document, this)
+        updateHeight(window, document, this, true);
         // this.checkServer("vo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -197,7 +197,7 @@ export default class VO extends RunestoneBase {
                 .on("click", function() {
                     this.checkThisAnswers(i);
                     this.logCurrentAnswer();
-                    updateHeight(window, document, this);
+                    
                 }.bind(this));
             this.submitButton.addClass("button-check checkingbutton");
             this.innerQuestions.append(this.submitButton);
@@ -351,7 +351,6 @@ export default class VO extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
-            updateHeight(window, document, this);
         });
         this.containerDiv.append("<br>");
         this.containerDiv.append(this.generateButton);

@@ -101,17 +101,6 @@ export default class RunestoneBase {
         console.log("Local Storage is", localStorage.getItem("Dive-into-Systems-user-Id"));
         return userId;
     }
-
-    updateHeightInstance(window, document, obj, addOffset=null){
-        let frame = window.frameElement;
-        let height = document.getElementById(`${obj.divid}`).scrollHeight ;
-        height =  height + 100;
-        if(addOffset){
-            height = height + addOffset;
-        }
-        frame.style.height = height+'px'
-
-    }
     
     ///// This function sends data to the Dive in to Systems exercise book database. /////
     logData(bundle=null, details=null, actionId=null, componentId=null) {
