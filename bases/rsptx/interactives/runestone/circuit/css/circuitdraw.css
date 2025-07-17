@@ -97,3 +97,22 @@ th {
 .outputModeDiv{
     display:flex
 }
+
+.instructionsButton {
+   cursor: pointer;
+   margin: 2% 2% 2% 0;
+   display: inline-block
+
+}
+
+.instructionsLegend {
+
+   justify-content: center;
+   padding: 3%;
+}
+
+.legendImage{
+   display: inherit;
+   height: 50%;
+   width: 50%;
+}

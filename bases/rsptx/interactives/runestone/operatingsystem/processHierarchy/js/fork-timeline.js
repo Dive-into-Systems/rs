@@ -12,6 +12,7 @@ import * as timeline from "../algorithms/timelineDraw.js"
 import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
+import { updateHeight } from "../../../../utils/updateHeight.js";
 
 export var ProcTimelineList = {}; // All instances not in timed assessment
 

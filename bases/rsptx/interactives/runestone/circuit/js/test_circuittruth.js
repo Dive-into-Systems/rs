@@ -293,16 +293,45 @@ export default class CircuitTruth extends RunestoneBase {
          */
         function checkAnswers() {
             // Find every answer input
+            let i = 0
+            let inputNodes = document.getElementsByClassName('answer-input');
             container.querySelectorAll('.answer-input').forEach(input => {
                 const expected = input.dataset.expected;
                 const actual   = input.value.trim();
                 // color the containing TD
-                const td = input.parentElement;
+                let td = input.parentElement;
+                td.style.display = "flex"
+                inputNodes[i].style = "margin-left:46.5%"
+                let symbol;
+                symbol = document.createElement("div")
                 if (actual === expected) {
-                td.style.backgroundColor = 'lightgreen';
+                  td.style.backgroundColor = '#f4fcfc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  
+                  symbol.innerHTML = "✔️"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`;
+                  td.append(symbol);
+
                 } else {
-                td.style.backgroundColor = 'lightcoral';
+                  td.style.backgroundColor = '#f4dcdc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  symbol.innerHTML = "❌"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`
+                  td.append(symbol);
                 }
+                i++
             });
         }
 

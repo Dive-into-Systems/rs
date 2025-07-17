@@ -247,18 +247,46 @@ export default class DC extends RunestoneBase {
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
-        this.instructionsButton = document.createElement("button")
-        this.instructionsButton.textContent = "Stuck? Click for help using the component"
-        this.instructionsButton.className = 'btn btn-info'
+        this.helpOpen = false;
+
+        this.instructionsButton = document.createElement("a")
+        this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+        this.instructionsButton.className = 'instructionsButton'
 
         this.wrapperDiv.appendChild(this.instructionsButton)
 
         this.legend = document.createElement("div")
         this.legend.style.display = "none"
+        this.legend.className = "instructionsLegend"
+
+
+        this.legendImage = document.createElement('img')
+        this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
+        this.legendImage.className = 'legendImage'
+        this.legendImage.style.display = 'none'
+
+        this.legend.appendChild(this.legendImage)
+
+
 
         this.instructionsButton.addEventListener("click" , ()=> {
-            this.legend.style.display = this.legend.style.display == "none" ? "inherit" : "none"
+            
+            this.legend.style.display = this.legend.style.display == "flex" ? "none" : "flex"
+
+            this.helpOpen = !this.helpOpen
+            if(this.helpOpen){
+                this.instructionsButton.innerText = "Hide help ▲"
+                this.legendImage.style.display = "inherit"
+
+            }
+            else{
+                this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+                this.legendImage.style.display = "none"
+            }
+            return false;
         })
+
+        this.wrapperDiv.appendChild(this.legend)
 
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'
