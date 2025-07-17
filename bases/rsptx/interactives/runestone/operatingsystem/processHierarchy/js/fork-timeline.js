@@ -202,27 +202,42 @@ export default class ProcTimeline extends RunestoneBase {
             const mode = this.modeMenu.val().toString();
             switch (mode) {
                 case "2":
+                    this.numForks = 2;
+                    this.numPrints = this.pick([6, 7, 8]);
+                    break;
+                case "3":
                     this.numForks = 3;
                     this.numPrints = this.pick([8, 9, 10]);
                     break;
-                case "3":
-                    this.numForks = 4;
-                    this.numPrints = this.pick([11, 12, 13, 14]);
+                default:
+                    break;
+            }
+            let prev, i;
+            switch (mode) {
+                case "1":
+                    prev = this.source || "";
+                    this.source = build.genSimpleWaitCodeMode1();
+                    i = 0;
+                    while (this.source === prev && i < 100) {
+                        this.source = build.genSimpleWaitCodeMode1();
+                        i++;
+                    }
+                    if (i == 100) {
+                        console.error("Failed to generate a new source code after 100 attempts.");
+                    }
                     break;
                 default:
-                    this.numForks = 2;
-                    this.numPrints = this.pick([6, 7]);
+                    prev = this.source || "";
+                    this.source = generateNewSourceCode();
+                    i = 0;
+                    while (this.source === prev && i < 100) {
+                        this.source = generateNewSourceCode();
+                        i++;
+                    }
+                    if (i == 100) {
+                        console.error("Failed to generate a new source code after 100 attempts.");
+                    }
                     break;
-            }
-            let prev = this.source || "";
-            this.source = generateNewSourceCode();
-            let i = 0;
-            while (this.source == prev && i < 100) {
-                this.source = generateNewSourceCode();
-                i++;
-            }
-            if (i == 100) {
-                console.error("Failed to generate a new source code after 100 attempts.");
             }
         }
         else {

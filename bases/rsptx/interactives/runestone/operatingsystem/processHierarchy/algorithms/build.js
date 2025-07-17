@@ -396,6 +396,7 @@ class ForkNode {
         result.trace = trace;
         result.proc = liveProcesses;
         result.hist = hist; // processes that we created but eventually "killed"
+        console.log("result", result);
         return result;
     }
 
@@ -422,9 +423,27 @@ class ForkNode {
 }
 
 export class PrintItem {
-    constructor(printChar, executionIndex) {
+    constructor(printChar, executionIndex, dependencies = [], printed = false) {
         this.printChar = printChar;
         this.executionIndex = executionIndex;
+        this.dependencies = dependencies;
+        this.dependencyCount = dependencies.length;
+        this.printed = printed;
+    }
+
+    addDependency(input) {
+        if (Array.isArray(input)) {
+            for (let item of input) {
+                if (!this.dependencies.includes(item)) {
+                    this.dependencies.push(item);
+                }
+            }
+        } else {
+            if (!this.dependencies.includes(input)) {
+                this.dependencies.push(input);
+            }
+        }
+        this.dependencyCount = this.dependencies.length;
     }
 }
 
@@ -433,13 +452,18 @@ export class ForkItem {
         this.forkExecutionIndex = forkExecutionIndex;
         this.waitExecutionIndex = null;
         this.exitExecutionIndex = null;
+        this.parentWaited = false;
+        this.childExited = false;
+        this.beforeWait = [];
+        this.afterWait = [];
+        this.child = [];
     }
 }
 
 // Processes the code recursively and builds a structure of print constraints.
 // The process print structure may be nested (like how forks are nested)
 // example {beforeWait: ab, afterWait: c{beforeWait:, afterWait:d, child: e}, child: f}
-export function printSequenceConstraints(code, executionIndex = {index : 0}, depth = 0, isChild = false) {
+export function printSequenceConstraints(code, continuation = '', executionIndex = {index : 0}, depth = 0, isChild = false) {
     // Add protection against infinite recursion
     const MAX_RECURSION_DEPTH = 100;
     if (depth > MAX_RECURSION_DEPTH) {
@@ -455,39 +479,57 @@ export function printSequenceConstraints(code, executionIndex = {index : 0}, dep
             // Assume these helper functions return the expected values.
             let forkItem = new ForkItem(executionIndex.index++);
             let [leftCode, rightCode, newPtr] = parseForkArgs(code, ptr);
-            ptr = newPtr;
+            ptr = newPtr + 1;
             let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode);
             let hasElse = rightCode.length > 0;
+            continuation = code.substring(ptr) + continuation;
 
-            forkItem.beforeWait = printSequenceConstraints(leftWaitCode, executionIndex, depth + 1, isChild);
             if (leftCode.includes(WAIT_CHAR)) {
-                forkItem.waitExecutionIndex = executionIndex.index++;
-            }
-            forkItem.afterWait = printSequenceConstraints(rightWaitCode, executionIndex, depth + 1, isChild);
-
-            if (hasElse) {
-                executionIndex.index++; // for the } else {
-            }
-
-            const childCode = parseForkExit(rightCode);
-            forkItem.child = printSequenceConstraints(childCode, executionIndex, depth + 1, true);
-            if (childCode.length < rightCode.length) {
-                forkItem.exitExecutionIndex = executionIndex.index++;
-                executionIndex.index += (rightCode.length - 1 - childCode.length);
-            }
-
-            if (leftCode || rightCode) {
-                 executionIndex.index++; // for the closing }
+                forkItem.parentWaited = true;
+                const childCode = parseForkExit(rightCode);
+                if (rightCode.includes(EXIT_CHAR)) {
+                    forkItem.childExited = true;
+                }
+                forkItem.beforeWait = printSequenceConstraints(leftWaitCode, '', executionIndex, depth + 1, isChild);
+                if (leftCode.includes(WAIT_CHAR)) {
+                    forkItem.waitExecutionIndex = executionIndex.index++;
+                }
+                forkItem.afterWait = printSequenceConstraints(rightWaitCode+continuation, '', executionIndex, depth + 1, isChild);
+    
+                if (hasElse) {
+                    executionIndex.index++; // for the } else {
+                }
+                
+                if (forkItem.childExited) {
+                    forkItem.child = printSequenceConstraints(childCode, '', executionIndex, depth + 1, true);
+                } else {
+                    forkItem.child = printSequenceConstraints(childCode + continuation, '', executionIndex, depth + 1, true);
+                }
+                if (childCode.length < rightCode.length) {
+                    forkItem.exitExecutionIndex = executionIndex.index++;
+                    executionIndex.index += (rightCode.length - 1 - childCode.length);
+                }
+                if (leftCode || rightCode) {
+                    executionIndex.index++; // for the closing }
+                }
+            } else {
+                console.log("leftCode", leftCode, "rightCode", rightCode, "continuation", continuation);
+                leftCode = leftCode + continuation;
+                rightCode = rightCode + continuation;
+                forkItem.beforeWait = printSequenceConstraints(leftCode, '', executionIndex, depth + 1, isChild);
+                forkItem.child = printSequenceConstraints(parseForkExit(rightCode), '', executionIndex, depth + 1, true); 
+                forkItem.afterWait = [];
             }
 
             sequenceList.push(forkItem);
+            break;
         } else {
             if (char === WAIT_CHAR) {
                 executionIndex.index++;
             } else if (char === EXIT_CHAR) {
                 executionIndex.index++;
             } else if (char !== ' ') { // Assuming other chars are prints
-                let printItem = new PrintItem(code[ptr], executionIndex.index++);
+                let printItem = new PrintItem(code[ptr], executionIndex.index++, [], false);
                 sequenceList.push(printItem);
             }
         }
@@ -516,7 +558,7 @@ export function getPrintSequence(sequenceList, depth = 0) {
             correctPrint.push(sequenceList[i].printChar);
         } else if (sequenceList[i] instanceof ForkItem) {
             let beforeWait = getPrintSequence(sequenceList[i].beforeWait, depth + 1);
-            let afterWait = getPrintSequence(sequenceList[i].afterWait, depth + 1);
+            let afterWait = sequenceList[i].childExited ? getPrintSequence(sequenceList[i].afterWait, depth + 1) : [];
             let child = getPrintSequence(sequenceList[i].child, depth + 1);
             
             let temp = [
@@ -536,6 +578,8 @@ export function getPrintSequence(sequenceList, depth = 0) {
 export function getPrintSequenceIncorrect(sequenceList, indexCounter = {count : 0}, depth = 0) {
     // Add protection against infinite recursion
     const MAX_RECURSION_DEPTH = 100;
+    let child_exited = false;
+    let forked = false;
     if (depth > MAX_RECURSION_DEPTH) {
         console.warn("Maximum recursion depth reached in getPrintSequenceIncorrect - preventing infinite recursion");
         return [[], false];
@@ -550,14 +594,22 @@ export function getPrintSequenceIncorrect(sequenceList, indexCounter = {count : 
         if (sequenceList[i] instanceof PrintItem) {
             print.push(sequenceList[i].printChar);
         } else if (sequenceList[i] instanceof ForkItem) {
+            forked = true;
             let beforeWait, afterWait, child, temp_injected, temp;
             [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait, depth + 1);
             error_injected ||= temp_injected;
-            [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
-            error_injected ||= temp_injected;
+            if (sequenceList[i].childExited) {
+                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
+                error_injected ||= temp_injected;
+            } else if (Math.random() < 0.2) {
+                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
+                error_injected = true;
+            } else {
+                afterWait = [];
+            }
             [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child, depth + 1);
             error_injected ||= temp_injected;
-            
+            child_exited ||= sequenceList[i].childExited;            
             if ((!error_injected || Math.random() < 0.25) && afterWait.length > 0 && child.length > 0 && Math.random() < 0.5) {
                 // inject error
                 error_injected = true;
@@ -568,6 +620,7 @@ export function getPrintSequenceIncorrect(sequenceList, indexCounter = {count : 
                 ]
             } else {
                 // no error
+                console.log("beforeWait", beforeWait, "child", child, "afterWait", afterWait);
                 temp = [
                     ...randomWeave(beforeWait, child),
                     ...afterWait
@@ -577,65 +630,140 @@ export function getPrintSequenceIncorrect(sequenceList, indexCounter = {count : 
             print.push(...temp);
         }
     }
+    if (forked && !child_exited) {
+        if (Math.random() < 0.3) {
+            error_injected = true;
+            if (Math.random() < 0.5) {
+                // half chance inject another last print
+                print.push(print[print.length - 1]);
+            } else {
+                // half chance delete last print
+                print.pop();
+            }
+        }
+    }
+    let sequence_verified;
+    if (depth === 0) {
+        sequence_verified = verifyPrintSequence(print, sequenceList);
+        error_injected = !sequence_verified;
+    }
+    console.log("print", print, "sequenceList", sequenceList, "sequence_verified", sequence_verified, "child_exited", child_exited);
     return [print, error_injected];
 }
 
-// returns a dictionary
-// key is a char, item is a list of chars that needs to come before key
-// dict[after_char] = [before_char1, before_char2]
-// Not used for now, thought would be used for topological sort
-export function getPrintDirection(sequenceList) {
-    if (!Array.isArray(sequenceList) || sequenceList.length === 0) {
-        return {};
-    }
-    let printDirection = [];
+export function getPrintDependencies(sequenceList) {
+    let printItems = [];
+    let previousPrints = [];
     for (let i = 0; i < sequenceList.length; i++) {
-        if (typeof sequenceList[i] === 'string') {
-            temp = {};
-            temp[sequenceList[i]] = [];
-            printDirection.push(temp);
-        } else if (typeof sequenceList[i] === 'object') {
-            let beforeWait = getPrintDirection(sequenceList[i].beforeWait);
-            let afterWait = getPrintDirection(sequenceList[i].afterWait);
-            let child = getPrintDirection(sequenceList[i].child);
-            
-            let temp = mergeDicts(beforeWait, afterWait, child);
-            for (const keyB in beforeWait) {
-                for (const keyA in afterWait) {
-                    if (temp.hasOwnProperty(keyA)) {
-                        temp[keyA].push(keyB);
-                    } else {
-                        temp[keyA] = [keyB];
+        if (sequenceList[i] instanceof PrintItem) {
+            for (let print of previousPrints) {
+                sequenceList[i].addDependency(print);
+            }
+            previousPrints.length = 0;
+            previousPrints.push(sequenceList[i]);
+            printItems.push(sequenceList[i]);
+        } else if (sequenceList[i] instanceof ForkItem) {
+            let beforeWaitPrints = getPrintDependencies(sequenceList[i].beforeWait);
+            for (let print of beforeWaitPrints) {
+                for (let prevPrint of previousPrints) {
+                    print.addDependency(prevPrint);
+                }
+            }
+            let childPrints = getPrintDependencies(sequenceList[i].child);
+            for (let print of childPrints) {
+                for (let prevPrint of previousPrints) {
+                    print.addDependency(prevPrint);
+                }
+            }
+            let afterWaitPrints = [];
+            if (sequenceList[i].parentWaited && sequenceList[i].childExited) {
+                afterWaitPrints = getPrintDependencies(sequenceList[i].afterWait);
+                for (let print of afterWaitPrints) {
+                    for (let beforeWaitPrint of beforeWaitPrints) {
+                        print.addDependency(beforeWaitPrint);
+                    }
+                    for (let childPrint of childPrints) {
+                        print.addDependency(childPrint);
                     }
                 }
             }
-
-            for (const keyB in child) {
-                for (const keyA in afterWait) {
-                    if (temp.hasOwnProperty(keyA)) {
-                        temp[keyA].push(keyB);
-                    } else {
-                        temp[keyA] = [keyB];
-                    }
-                }
-            }
-
-            printDirection.push(...temp);
-        }
-        if (i > 0) {
-            for (const keyB in printDirection[i-1]) {
-                for (const keyA in printDirection[i]) {
-                    if (printDirection[i].hasOwnProperty(keyA)) {
-                        printDirection[i][keyA].push(keyB);
-                    } else {
-                        printDirection[i][keyA] = [keyB];
-                    }
-                }
-
+            previousPrints.length = 0;
+            if (sequenceList[i].parentWaited && sequenceList[i].childExited) {
+                previousPrints.push(...afterWaitPrints);
+                printItems.push(...beforeWaitPrints, ...childPrints, ...afterWaitPrints);
+            } else {
+                previousPrints.push(...beforeWaitPrints, ...childPrints);
+                printItems.push(...beforeWaitPrints, ...childPrints);
             }
         }
     }
-    return mergeDicts(...printDirection);
+    return printItems;
+}
+
+function deepCopyPrintItems(printItems) {
+    // First pass: create new objects
+    const newItems = printItems.map(item => {
+        if (item instanceof PrintItem) {
+            return new PrintItem(item.printChar, item.executionIndex, [], item.printed);
+        }
+    });
+    
+    // Second pass: map dependencies to new objects
+    for (let i = 0; i < printItems.length; i++) {
+        if (printItems[i] instanceof PrintItem) {
+            for (let dep of printItems[i].dependencies) {
+                // Find the corresponding new object for this dependency
+                const depIndex = printItems.findIndex(item => item === dep);
+                if (depIndex !== -1) {
+                    newItems[i].addDependency(newItems[depIndex]);
+                }
+            }
+        }
+    }
+    
+    return newItems;
+}
+
+function findPrintItemIdxFromFrontier(printItems, char) {
+    for (let i = 0; i < printItems.length; i++) {
+        if (printItems[i].printChar === char && !printItems[i].printed && printItems[i].dependencyCount === 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+export function verifyPrintSequence(printSequence, sequenceList) {
+    let printItems = getPrintDependencies(sequenceList);
+    printItems = deepCopyPrintItems(printItems);
+    console.log("printItems", printItems);
+
+    // use topological sort with backtracking to verify the print sequence    
+    for (let char of printSequence) {
+        let candidateIdx = findPrintItemIdxFromFrontier(printItems, char);
+        if (candidateIdx === -1) {
+            console.log("unable to resolve print", char);
+            return false;
+        }
+        let candidateItem = printItems[candidateIdx];
+        candidateItem.printed = true;
+        for (let item of printItems) {
+            if (item.dependencyCount > 0) {
+                if (item.dependencies.includes(candidateItem)) {
+                    console.log("dependency count decreased for ", item);
+                    item.dependencyCount--;
+                }
+            }
+        }
+    }
+    // check everything is printed
+    for (let item of printItems) {
+        if (!item.printed) {
+            console.log("leaving unprinted ", item.printChar);
+            return false;
+        }
+    }
+    return true;
 }
 
 function output(node) {
@@ -980,6 +1108,46 @@ export function genSimpleWaitCode(numForks, numPrints) {
     }
 
     code = adjustPrints(code, numPrints);
+
+    let i = 0;
+    const replaceChar = () => {
+        const char = String.fromCharCode('a'.charCodeAt(0) + i % 26);
+        i++;
+        return char;
+    };
+
+    code = code.replace(new RegExp("-", 'g'), replaceChar);
+
+    prev_code_child = current_code_child;
+    prev_code_afterwait = current_code_afterwait;
+    prev_code_parallel = current_code_parallel;
+
+    current_code_child = false;
+    current_code_afterwait = false;
+    current_code_parallel = false;
+
+    return code;
+}
+
+export function genSimpleWaitCodeMode1() {
+    let code_candidates = [
+        "F()F(-W-,-X)-",
+        "F()F(-W-,-X)-",
+        "F(-W-F()-,-X)-",
+        "F(-W-,-X)F()-",
+        "F()F(-W-,-X)-",
+        "F()F(-W-,-X)-",
+        "F(-W-F()-,-X)-",
+        "F(-W-,-X)F()-",
+        "F()F(-W-,-)-",
+        "F()F(-W-,-)-",
+        "F(-W-F()-,-)-",
+        "F(-W-,-)F()-",
+        "F()F(-,-)-",
+        "F()F(-,-)-",
+        "F(-,-)F()-"
+    ]
+    let code = unifPickItem(code_candidates);
 
     let i = 0;
     const replaceChar = () => {

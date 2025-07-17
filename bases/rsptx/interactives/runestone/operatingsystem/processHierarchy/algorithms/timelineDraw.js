@@ -7,7 +7,7 @@ import {PrintItem, ForkItem} from "./build.js"
 import * as d3 from "d3";
 
 class TimelineNode {
-    constructor(x, y, printsAfter = "", fork_node=false, exit_node=false, wait_node=false, solid_link = false) {
+    constructor(x, y, printsAfter = "", fork_node=false, exit_node=false, wait_node=false, child_node=false, solid_link = false) {
         this.x = x;
         this.y = y;
         this.fork_node = fork_node;
@@ -16,6 +16,8 @@ class TimelineNode {
         this.exit_idx = null;
         this.wait_node = wait_node;
         this.wait_idx = null;
+        this.child_node = child_node;
+        this.child_idx = null;
         this.printsAfter = printsAfter;
         this.print_idx = null;
         this.solid_link = solid_link;
@@ -106,7 +108,7 @@ function recursivePlanTimeline(constraints, prev_node_arg, y_btm = 1, nodes = []
             // fork: beforeWait, child, afterWait
             let fork_origin_node;
 
-            if (!current_attach_point_node.fork_node && !current_attach_point_node.wait_node && current_attach_point_node.printsAfter.length === 0){
+            if (!current_attach_point_node.fork_node && !current_attach_point_node.wait_node && !current_attach_point_node.child_node && current_attach_point_node.printsAfter.length === 0){
                 // reuse the current node as the fork point
                 fork_origin_node = current_attach_point_node;
             } else {
@@ -122,47 +124,60 @@ function recursivePlanTimeline(constraints, prev_node_arg, y_btm = 1, nodes = []
 
             // Process beforeWait branch
             let beforeWaitEnd = recursivePlanTimeline(item.beforeWait, fork_origin_node, (fork_origin_node.y + y_btm) / 2, nodes, graph_depth + 1, recursion_depth + 1);
-            beforeWaitEnd.wait_node = true;
-            beforeWaitEnd.wait_idx = item.waitExecutionIndex;
+            if (item.parentWaited) {
+                beforeWaitEnd.wait_node = true;
+                beforeWaitEnd.wait_idx = item.waitExecutionIndex;
+            }
 
             // Process child branch
             let childBranchStartNode = new TimelineNode(fork_origin_node.x, (fork_origin_node.y + y_btm) / 2);
-            childBranchStartNode.name += "child ";
-            nodes.push(childBranchStartNode);
             fork_origin_node.addChild(childBranchStartNode);
+            nodes.push(childBranchStartNode);
+            childBranchStartNode.name += "child ";
+            childBranchStartNode.child_node = true;
             let childBranchEnd = recursivePlanTimeline(item.child, childBranchStartNode, y_btm, nodes, graph_depth + 1, recursion_depth + 1);
             let child_attach_point;
-            if (childBranchEnd.fork_node || childBranchEnd.wait_node || childBranchEnd.printsAfter.length !== 0) {
-                child_attach_point = new TimelineNode(childBranchEnd.x + 1, childBranchEnd.y);
-                childBranchEnd.addChild(child_attach_point);
-                nodes.push(child_attach_point);
+            if (childBranchEnd.fork_node || childBranchEnd.wait_node || childBranchEnd.child_node || childBranchEnd.printsAfter.length !== 0) {
+                if (item.childExited) {
+                    child_attach_point = new TimelineNode(childBranchEnd.x + 1, childBranchEnd.y);
+                    childBranchEnd.addChild(child_attach_point);
+                    nodes.push(child_attach_point);
+                }
             } else {
                 child_attach_point = childBranchEnd;
             }
-            child_attach_point.exit_node = true;
-            child_attach_point.exit_idx = item.exitExecutionIndex;
 
-            // Align and connect child and wait ends
-            if (child_attach_point.x > beforeWaitEnd.x) {
-                beforeWaitEnd.x = child_attach_point.x;
-            } else {
-                child_attach_point.x = beforeWaitEnd.x;
-            }
-            child_attach_point.addChild(beforeWaitEnd);
+            // Only merge child back to parent if child has exited
+            if (item.childExited) {
+                child_attach_point.exit_node = true;
+                child_attach_point.exit_idx = item.exitExecutionIndex;
 
-            if (graph_depth === 0) {
-                beforeWaitEnd.solid_link = true;
+                // Align and connect child and wait ends
+                if (child_attach_point.x > beforeWaitEnd.x) {
+                    beforeWaitEnd.x = child_attach_point.x;
+                } else {
+                    child_attach_point.x = beforeWaitEnd.x;
+                }
+                child_attach_point.addChild(beforeWaitEnd);
+
+                if (graph_depth === 0) {
+                    beforeWaitEnd.solid_link = true;
+                }
             }
 
             // Process afterWait branch
-            let afterWaitEnd;
-            if (item.afterWait.length === 0) {
-                afterWaitEnd = beforeWaitEnd;
+            if (item.childExited) {
+                let afterWaitEnd;
+                if (item.afterWait.length === 0) {
+                    afterWaitEnd = beforeWaitEnd;
+                } else {
+                    afterWaitEnd = recursivePlanTimeline(item.afterWait, beforeWaitEnd, y_btm, nodes, graph_depth, recursion_depth + 1);
+                }
+                afterWaitEnd.name += "afterWaitEnd ";
+                current_attach_point_node = afterWaitEnd;
             } else {
-                afterWaitEnd = recursivePlanTimeline(item.afterWait, beforeWaitEnd, y_btm, nodes, graph_depth, recursion_depth + 1);
+                current_attach_point_node = beforeWaitEnd;
             }
-            afterWaitEnd.name += "afterWaitEnd ";
-            current_attach_point_node = afterWaitEnd;
         }
     }
 
@@ -176,11 +191,7 @@ function planTimeline(constraints) {
     start_node.addChild(first_node);
     let nodes = [start_node, first_node];
     
-    let merge_node = recursivePlanTimeline(constraints, first_node, 1, nodes, 0); 
-    merge_node.solid_link = true;
-    let lastNode = new TimelineNode(merge_node.x + 1, merge_node.y);
-    nodes.push(lastNode);
-    merge_node.addChild(lastNode);
+    let merge_node = recursivePlanTimeline(constraints, first_node, 1, nodes, 0);
     
     return nodes;
 }
