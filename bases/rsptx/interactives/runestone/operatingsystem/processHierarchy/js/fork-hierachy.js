@@ -12,6 +12,7 @@ import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { timeThursday } from "d3";
+import { updateHeight } from "../../../../utils/updateHeight.js";
 
 export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
@@ -35,6 +36,7 @@ export default class ProcHierarchy extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+        
     }
 
     scriptSelector(root_node) {
@@ -53,6 +55,8 @@ export default class ProcHierarchy extends RunestoneBase {
         this.initButtons();
         this.initFeedback_Hierarchy_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
+        const obj = this;
+        updateHeight(window, document, obj);
     }
 
     initParams() {
@@ -296,6 +300,7 @@ export default class ProcHierarchy extends RunestoneBase {
                 this.viewedHierarchy = true;
                 this.sendData(8);
                 this.showProcessHierarchy();
+                updateHeight(window, document, this);
             }
             else { this.hideProcessHierarchy(); }
         });

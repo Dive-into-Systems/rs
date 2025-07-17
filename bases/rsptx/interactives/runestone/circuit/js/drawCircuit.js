@@ -517,9 +517,13 @@ export default class DC extends RunestoneBase {
 
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
+                new FontFace("IOFont", "../fonts/analogfont/DS-DIGI.TTF").load().then((font => {
+                document.fonts.add(font);
                 go.Diagram.licenseKey =
 "2b8647e1b2604fc702d90676423d6bbc5cf07d34cd960ef6590015f5ec5b6f40729be17906dad8c4d3f04df9487ac6d9ddc26c2ac31b003fe165d2df10f096ffb26424b2165b47daa40321c390f22ca0a97078f7cbb374a3dd7ed9f0effbc5985abcf2d740c95cb3792d0635066cbf4ce2abdf7bab52cd5d7b6e99a4fef6a856fa";
                 import('./figures.js').then(()=>self.init())
+                }))
+
             });
         });
 
@@ -694,7 +698,7 @@ export default class DC extends RunestoneBase {
                 alignment: go.Spot.RightCenter,
             }),
         new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Input ${text}`),
-        new go.TextBlock({margin: 4, alignment: go.Spot.Center}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
+        new go.TextBlock({margin: 4, alignment: go.Spot.Center, font: 'IOFont'}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
 
         );
 

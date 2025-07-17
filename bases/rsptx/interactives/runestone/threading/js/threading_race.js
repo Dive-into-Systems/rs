@@ -40,8 +40,8 @@ export default class TR extends RunestoneBase {
         }
 
         this.contWrong = 0;
-        updateHeight(window, document, this);
-        
+        const obj = this;
+        updateHeight(window, document, obj)
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -67,12 +67,10 @@ export default class TR extends RunestoneBase {
         this.renderTRButtons();
         
         this.renderTRFeedbackDiv();
-        const obj = this;
+
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
-        document.body.addEventListener('click', function( event ){
-            updateHeight(window, document, obj)
-        });
+
     }
 
     renderTRPromptAndInput() {
