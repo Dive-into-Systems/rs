@@ -13,6 +13,7 @@ import "../css/threading_race.css";
 // import "./NC-i18n.pt-br.js";
 import { Pass } from "codemirror";
 export var TRList = {}
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 // NC constructor
 export default class TR extends RunestoneBase {
@@ -39,6 +40,8 @@ export default class TR extends RunestoneBase {
         }
 
         this.contWrong = 0;
+        updateHeight(window, document, this);
+        
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -64,8 +67,12 @@ export default class TR extends RunestoneBase {
         this.renderTRButtons();
         
         this.renderTRFeedbackDiv();
+        const obj = this;
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
+        document.body.addEventListener('click', function( event ){
+            updateHeight(window, document, obj)
+        });
     }
 
     renderTRPromptAndInput() {
@@ -609,6 +616,7 @@ export default class TR extends RunestoneBase {
 
                     this.checkAnswerMultipleChoice();
                     this.logCurrentAnswer();
+                    updateHeight(window,document,this);
             
                 });
                 this.containerDiv.appendChild(this.generateButton);

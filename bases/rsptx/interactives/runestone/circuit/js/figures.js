@@ -2960,16 +2960,23 @@ go.Shape.defineFigureGenerator('InputTemplate', (shape, w, h) => {
     const fig = new go.PathFigure(0, 0, true);
     geo.add(fig);
     // The gate body
-    h = h* 0.7;
+
+
+
+
+
     fig.add(new go.PathSegment(go.SegmentType.Line, 0.7 * w, 0));
     fig.add(new go.PathSegment(go.SegmentType.Line, w, 0.5 * h, (0.5 + cpOffset) * w, 0, w, (0.5 - cpOffset) * h));
     fig.add(new go.PathSegment(go.SegmentType.Line, 0.7 * w, h, w, (0.5 + cpOffset) * h, (0.5 + cpOffset) * w, h));
     fig.add(new go.PathSegment(go.SegmentType.Line, 0, h).close());
-    geo.spot1 = new go.Spot(0, 0.5);
+    geo.spot1 = new go.Spot(1, 0.5);
     return geo;
 });
 
 go.Shape.defineFigureGenerator('OutputTemplate', (shape, w, h) => {
+
+
+
     const geo = new go.Geometry();
     const radius = 0.5;
     const cpOffset = KAPPA * radius;

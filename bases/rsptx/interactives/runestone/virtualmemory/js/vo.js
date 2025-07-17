@@ -9,6 +9,7 @@ import "./vo-i18n.en.js";
 import "../css/vo.css";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var VOList = {}; // Object containing all instances of VO that aren't a child of a timed assessment.
 
@@ -29,6 +30,7 @@ export default class VO extends RunestoneBase {
         this.createVOElement();
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");
+        updateHeight(window, document, this)
         // this.checkServer("vo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -49,6 +51,7 @@ export default class VO extends RunestoneBase {
         this.renderVOInputField();
         this.renderVOButtons();
         this.renderVOFeedbackDiv();
+
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
     }
@@ -194,6 +197,7 @@ export default class VO extends RunestoneBase {
                 .on("click", function() {
                     this.checkThisAnswers(i);
                     this.logCurrentAnswer();
+                    updateHeight(window, document, this);
                 }.bind(this));
             this.submitButton.addClass("button-check checkingbutton");
             this.innerQuestions.append(this.submitButton);
@@ -347,6 +351,7 @@ export default class VO extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
+            updateHeight(window, document, this);
         });
         this.containerDiv.append("<br>");
         this.containerDiv.append(this.generateButton);

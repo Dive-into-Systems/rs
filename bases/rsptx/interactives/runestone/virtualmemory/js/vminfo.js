@@ -8,7 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./vminfo-i18n.en.js";
 import "../css/vminfo.css";
 import { Pass } from "codemirror";
-
+import { updateHeight } from "../../../utils/updateHeight.js";
 export var vmInfoList = {}; // Object containing all instances of vmInfo that aren't a child of a timed assessment.
 
 // vmInfo constructor
@@ -29,6 +29,7 @@ export default class vmInfo extends RunestoneBase {
         this.createvmInfoElement();
         this.caption = "Virtual Memory Information";
         this.addCaption("runestone");
+        updateHeight(window, document, this);
         // this.checkServer("vmInfo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -143,6 +144,7 @@ export default class vmInfo extends RunestoneBase {
                 if (e.key === "Enter") {
                     e.preventDefault();
                     this.submitButton.click();
+                    updateHeight(window, document, this);
                 }
             }.bind(this), false);  
         }
@@ -203,6 +205,7 @@ export default class vmInfo extends RunestoneBase {
             function () {
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+                updateHeight(window, document, this);
             }.bind(this),
             false
         );
@@ -220,6 +223,7 @@ export default class vmInfo extends RunestoneBase {
                 this.generateQuestion();
                 this.clearInput();
                 this.generateAnswer();
+                updateHeight(window, document, this);
             }.bind(this),
             false)
         ;

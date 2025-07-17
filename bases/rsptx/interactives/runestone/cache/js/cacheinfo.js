@@ -8,6 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./cache-i18n.en.js";
 import "../css/cache.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var cacheinfoList = {}; // Object containing all instances of cacheinfo that aren't a child of a timed assessment.
 
@@ -39,7 +40,8 @@ export default class cacheinfo extends RunestoneBase {
         }
         this.generateButtonCounter = 0;
         this.contWrong = 0;
-
+        updateHeight(window, document, this)
+        
         this.sendData(0);
     }
     // Find the script tag containing JSON in a given root DOM node.
@@ -80,6 +82,7 @@ export default class cacheinfo extends RunestoneBase {
             function () {
                 this.clearInput();
                 this.generateAnswer();
+                updateHeight(window, document, this);
             }.bind(this),
             false);
 
@@ -103,6 +106,7 @@ export default class cacheinfo extends RunestoneBase {
                 this.generateAddress();
                 this.clearInput();
                 this.generateAnswer();
+                updateHeight(window, document, this)
             }.bind(this),
             false);
         
@@ -250,6 +254,7 @@ export default class cacheinfo extends RunestoneBase {
                 //add additional button functions below here
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+                updateHeight(window, document, this)
             }.bind(this),
             false
         );
@@ -268,6 +273,7 @@ export default class cacheinfo extends RunestoneBase {
                 this.clearInput();
                 this.generateAnswer();
                 this.generateButtonCounter++;
+                updateHeight(window, document, this)
                 this.sendData(3);
             }.bind(this),
             false)

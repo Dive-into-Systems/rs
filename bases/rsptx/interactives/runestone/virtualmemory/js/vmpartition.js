@@ -8,6 +8,7 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import "./vmpartition-i18n.en.js";
 import "../css/vmpartition.css";
 import { Pass } from "codemirror";
+import { updateHeight } from "../../../utils/updateHeight.js";
 
 export var vmpartitionList = {}; // Object containing all instances of vmpartition that aren't a child of a timed assessment.
 
@@ -29,6 +30,7 @@ export default class vmpartition extends RunestoneBase {
         this.createCachePartitionElement();
         this.caption = "Cache Partition";
         this.addCaption("runestone");
+        updateHeight(window, document, this);
         // this.checkServer("vmpartition", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
@@ -216,6 +218,7 @@ export default class vmpartition extends RunestoneBase {
             function () {
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+                updateHeight(window, document, this);
             }.bind(this),
             false
         );
@@ -233,6 +236,7 @@ export default class vmpartition extends RunestoneBase {
                 this.generateAnswer();
                 this.generateAddress();
                 this.generatePrompt();
+                updateHeight(window, document, this);
                 // this.resetHighlight();
             }.bind(this),
             false)

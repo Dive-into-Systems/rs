@@ -40,10 +40,10 @@ export default class DC extends RunestoneBase {
 
        // Default configuration settings
        //For somereason the default code uses colors (and not a separate variable) to update the circuit
-        this.red = '#b91c1c';
-        this.red2 = '#fca5a5';
-        this.green = '#15803d';
-        this.green2 = '#86efac';
+        this.red = '#0b3018ff';
+        this.red2 = '#104619ff';
+        this.green = '#24aa53ff';
+        this.green2 = '#39c469ff';
      
         this.gray = '#cbd5e1';
         this.darkGray = '#334155';
@@ -673,125 +673,32 @@ export default class DC extends RunestoneBase {
                 movable : true,
             })
         .add(
-        new go.Shape(shapeStyle())
+        new go.Shape('inputTemplate', {
+                name: 'NODESHAPE',
+                fill: this.gray,
+                stroke: this.darkGray,
+                strokeWidth: 2
+            })
                 .set({
                     fill: go.Brush.lighten(this.green),
                     margin: 3,
                     strokeWidth: 1.5,
-                    desiredSize: new go.Size(NaN, NaN),
-                    scale: 1.75,
-                    geometry: go.Geometry.parse('F M19.5 3 L19.875 3 C20.4963 3 21 3.5037000000000003 21 4.125 L21 6.375 C21 6.9963 20.4963 7.5 19.875 7.5 L19.5 7.5 M2.25 10.5 L17.25 10.5 C18.4926 10.5 19.5 9.4926 19.5 8.25 L19.5 2.25 C19.5 1.0073600000000003 18.4926 0 17.25 0 L2.25 0 C1.0073599999999998 0 0 1.0073600000000003 0 2.25 L0 8.25 C0 9.4926 1.0073599999999998 10.5 2.25 10.5z', true)
+                    desiredSize: new go.Size(40, 40),
+                    scale: 1,
                 })
             .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? this.green : this.red)),
-        new go.Shape('BpmnEventError', {
-            alignment: new go.Spot(0.5, 0.5, -1, 0),
-            width: 18,
-            height: 10,
-            fill: this.green2,
-            strokeWidth: 0
-        })
-            .bind('fill', 'isOn', isOn => isOn ? this.green2 : this.red2),
         new go.Shape(portStyle(false)) // the only port
                 .set({
                 opacity: 0,
                 portId: '',
-                alignment: new go.Spot(1, 0.5, -2, 0)
+                alignment: go.Spot.RightCenter,
             }),
-        new go.TextBlock({margin: 4}).bind("text", "text"),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Input ${text}`),
+        new go.TextBlock({margin: 4, alignment: go.Spot.Center}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
+
         );
 
-        const switchTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
-            .set({
-                shadowOffset: new go.Point(0, 0),
-                shadowBlur: 5,
-                margin: new go.Margin(-35, 0, 0, 0)
-            })
-        .add(
-        new go.Panel('Horizontal', {
-            // this prevents the ports from moving when the shape rotates
-            minSize: new go.Size(42, 60)
-        })
-            .add(
-                new go.Panel('Spot', {
-                    isClipping: true
-                })
-                    .add(
-                    new go.Shape({fill: 'blue', strokeWidth: 0}),
-                    new go.Panel({
-                        alignment: go.Spot.Left,
-                        alignmentFocus: go.Spot.Center,
-                        angle: 359.99 // rotate counter clock wise
-                    })
-                        .add(
-                            new go.Shape({width: 1, height: 1}),
-                            new go.Shape(shapeStyle())
-                                .set({
-                                strokeWidth: 0,
-                                fill: this.green,
-                                width: 40,
-                                height: 4,
-                                position: new go.Point(40,0),
-                                shadowVisible: false
-                                })
-                        )
-                    .bind('angle', 'isOn', isOn => isOn ? 359.99 : 359.99 - 30)
-                    .trigger('angle', {
-                    duration: 250,
-                    easing: go.Animation.EaseOutQuad,
-                    finished: this.updateStates
-                    })
-                )
-            ),
-        // this rectangle is the clickable area
-        new go.Shape('InputTemplate', {
-            fill: 'transparent',
-            // fill: 'skyblue',
-            // opacity: 0.6,
-            strokeWidth: 0,
-            width: 40,
-            height: 30,
-            alignment: go.Spot.Center,
-            alignmentFocus: new go.Spot(0.5, 1, 0, -8),
-            cursor: 'pointer',
-            click: (e, obj) => {
-            if (e.diagram instanceof go.Palette) return;
-            e.diagram.startTransaction('Toggle Switch');
 
-            while (obj.part && obj.part !== obj) obj = obj.part; // find node
-            const shp = obj.findObject('NODESHAPE');
-            const isOn = !obj.data.isOn;
-            this.myDiagram.model.setDataProperty(obj.data, 'isOn', isOn);
-
-            e.diagram.commitTransaction('Toggle Switch');
-            if (!obj.data.isOn)
-                this.updateStates();
-            }
-        }),
-        // ports
-        new go.Shape(portStyle(false)) // the only port
-            .set({
-            portId: 'out',
-            desiredSize: new go.Size(5, 5),
-            alignment: new go.Spot(1, 0.5)
-            }),
-        new go.Shape(portStyle(true)) // the only port
-            .set({
-            portId: 'in',
-            desiredSize: new go.Size(5, 5),
-            alignment: new go.Spot(0, 0.5)
-            })
-        );
-
-        // brush for the "light" in the LED
-        const outBrush = new go.Brush('Radial', {
-        0.0: 'rgba(255, 255, 255, 0.2)',
-        0.5: 'rgba(0,255,0,0.8)',
-        0.75: 'rgba(0,255,0,0.3)',
-        0.85: 'rgba(0,255,0,0.1)',
-        0.95: 'rgba(0,255,0,0.05)',
-        1: 'rgba(0,255,0,0)',
-        start: new go.Spot(0.5, 0.8)
-        })
 
         const outputTemplate = new go.Node('Spot', nodeStyle())
         .set({
@@ -807,37 +714,23 @@ export default class DC extends RunestoneBase {
                 fill: 'transparent',
                 parameter1: Infinity,
                 parameter2: 0b0011, // top rounded
-                width: 25,
-                height: 22,
+                width: 44,
+                height: 38,
                 strokeWidth: 2,
                 shadowVisible: false
-            }),
-            new go.Shape('Rectangle', {
-                alignment: go.Spot.Bottom,
-                alignmentFocus: new go.Spot(0.5, 0.8),
-                strokeWidth: 0,
-                fill: null,
-                width: 40,
-                height: 43
             })
-                .bind('fill', 'isOn', isOn => isOn ? outBrush : 'transparent'),
-            new go.Shape('Rectangle', shapeStyle())
-                .set({
-                width: 32,
-                height: 15,
-                alignment: go.Spot.Bottom,
-                alignmentFocus: new go.Spot(0.5, 0, 0, 2)
-                })
-                .bindObject('shadowVisible', 'isSelected'),
-                new go.TextBlock({margin: 4}).bind("text", "text"),
+            .set({ fill: go.Brush.lighten(this.green)})
+            .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? this.green : this.red)),
+
 
             ),
-        new go.Shape(portStyle(true, new go.Spot(0.5, 1, 0, -3))).set({
+        new go.Shape(portStyle(true, new go.Spot(0, 0.5, 0, 0))).set({
             // the only port
             portId: '',
-            alignment: new go.Spot(0.5, 1)
+            alignment:  go.Spot.LeftCenter,
         }),
-
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Output ${text}`),
+        new go.TextBlock({margin: 4, alignment: go.Spot.Center}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
         );
 
         const andTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -1131,6 +1024,9 @@ doOutput = (node) => {
     node.linksConnected.each((link) => {
       this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
     });
+    if(node.linksConnected.length == 0){
+        this.myDiagram.model.setDataProperty(node.data, 'isOn', false);
+    }
   }
 
 
