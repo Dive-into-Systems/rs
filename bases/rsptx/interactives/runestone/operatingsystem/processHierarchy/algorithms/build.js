@@ -165,6 +165,7 @@ function parseForkExit(code) {
         if (code[end] === '(') balance++;
         if (code[end] === ')') balance--;
         if (balance === 0 && code[end] === EXIT_CHAR) {
+            end++;
             break
         };
         end++;
@@ -480,45 +481,29 @@ export function printSequenceConstraints(code, continuation = '', executionIndex
             let forkItem = new ForkItem(executionIndex.index++);
             let [leftCode, rightCode, newPtr] = parseForkArgs(code, ptr);
             ptr = newPtr + 1;
-            let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode);
             let hasElse = rightCode.length > 0;
             continuation = code.substring(ptr) + continuation;
+            let [leftWaitCode, rightWaitCode] = parseForkWait(leftCode + continuation);
+            const childCode = parseForkExit(rightCode + continuation);
+            forkItem.parentWaited = rightWaitCode.length > 0;
+            forkItem.childExited = childCode[childCode.length - 1] === EXIT_CHAR;
+            console.log("childCode", childCode, "rightCode", rightCode, "continuation", continuation);
 
-            if (leftCode.includes(WAIT_CHAR)) {
-                forkItem.parentWaited = true;
-                const childCode = parseForkExit(rightCode);
-                if (rightCode.includes(EXIT_CHAR)) {
-                    forkItem.childExited = true;
-                }
-                forkItem.beforeWait = printSequenceConstraints(leftWaitCode, '', executionIndex, depth + 1, isChild);
-                if (leftCode.includes(WAIT_CHAR)) {
-                    forkItem.waitExecutionIndex = executionIndex.index++;
-                }
-                forkItem.afterWait = printSequenceConstraints(rightWaitCode+continuation, '', executionIndex, depth + 1, isChild);
-    
-                if (hasElse) {
-                    executionIndex.index++; // for the } else {
-                }
-                
-                if (forkItem.childExited) {
-                    forkItem.child = printSequenceConstraints(childCode, '', executionIndex, depth + 1, true);
-                } else {
-                    forkItem.child = printSequenceConstraints(childCode + continuation, '', executionIndex, depth + 1, true);
-                }
-                if (childCode.length < rightCode.length) {
-                    forkItem.exitExecutionIndex = executionIndex.index++;
-                    executionIndex.index += (rightCode.length - 1 - childCode.length);
-                }
-                if (leftCode || rightCode) {
-                    executionIndex.index++; // for the closing }
-                }
-            } else {
-                console.log("leftCode", leftCode, "rightCode", rightCode, "continuation", continuation);
-                leftCode = leftCode + continuation;
-                rightCode = rightCode + continuation;
-                forkItem.beforeWait = printSequenceConstraints(leftCode, '', executionIndex, depth + 1, isChild);
-                forkItem.child = printSequenceConstraints(parseForkExit(rightCode), '', executionIndex, depth + 1, true); 
-                forkItem.afterWait = [];
+            forkItem.beforeWait = printSequenceConstraints(leftWaitCode, '', executionIndex, depth + 1, isChild);
+            forkItem.waitExecutionIndex = executionIndex.index++;
+            forkItem.afterWait = printSequenceConstraints(rightWaitCode, '', executionIndex, depth + 1, isChild);
+
+            if (hasElse) {
+                executionIndex.index++; // for the } else {
+            }
+            
+            forkItem.child = printSequenceConstraints(childCode, '', executionIndex, depth + 1, true);
+            if (forkItem.childExited) {
+                forkItem.exitExecutionIndex = executionIndex.index++;
+                executionIndex.index += (rightCode.length - 1 - childCode.length);
+            }
+            if (leftCode || rightCode) {
+                executionIndex.index++; // for the closing }
             }
 
             sequenceList.push(forkItem);
@@ -1145,7 +1130,9 @@ export function genSimpleWaitCodeMode1() {
         "F(-W-,-)F()-",
         "F()F(-,-)-",
         "F()F(-,-)-",
-        "F(-,-)F()-"
+        "F(-,-)F()-",
+        "F(-W,-F(-W,-)-X)-",
+        "F(-W,-F(-W,-)-X)-",
     ]
     let code = unifPickItem(code_candidates);
 

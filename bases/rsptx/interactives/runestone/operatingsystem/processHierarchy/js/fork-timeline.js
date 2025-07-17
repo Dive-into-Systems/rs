@@ -1,12 +1,13 @@
-// Process hierarchy component for fork/wait/exit visualization
-// Created by Luyuan Fan and Tony Cao (Summer 2024)
+// Process Timeline component for fork/wait/exit visualization
+// Initiated by Luyuan Fan and Tony Cao (Summer 2024)
+// Fixed and finalized by Zhengfei Li (Spring 2025-Summer 2025)
 
 import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
 import "../css/timeline.css";
 import * as build from "../algorithms/build.js";
-import * as hierarchy from "../algorithms/hierarchyDraw.js";
+// import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import * as timeline from "../algorithms/timelineDraw.js"
 import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
@@ -28,7 +29,7 @@ export default class ProcTimeline extends RunestoneBase {
         this.userId = this.getUserId();
 
         this.createElements();
-        this.caption = "Process hierarchy";
+        this.caption = "Process timeline";
         this.addCaption("runestone");
 
         if (typeof Prism !== "undefined") {
@@ -299,17 +300,17 @@ export default class ProcTimeline extends RunestoneBase {
         });
 
         // Reveal tree button
-        this.revealTreeButton = document.createElement("button");
-        this.revealTreeButton.textContent = $.i18n("msg_fork_reveal_tree");
-        $(this.revealTreeButton).attr({
-            class: "btn btn-success",
-            type: "button",
-            id: this.divid + "draw_tree",
-        });
-        this.revealTreeButton.addEventListener("click", () => {
-            if ($(this.hierarchyTreeDiv).css('display') == 'none') { this.showProcessHierarchy(); }
-            else { this.hideProcessHierarchy(); }
-        });
+        // this.revealTreeButton = document.createElement("button");
+        // this.revealTreeButton.textContent = $.i18n("msg_fork_reveal_tree");
+        // $(this.revealTreeButton).attr({
+        //     class: "btn btn-success",
+        //     type: "button",
+        //     id: this.divid + "draw_tree",
+        // });
+        // this.revealTreeButton.addEventListener("click", () => {
+        //     if ($(this.hierarchyTreeDiv).css('display') == 'none') { this.showProcessHierarchy(); }
+        //     else { this.hideProcessHierarchy(); }
+        // });
 
         // Reveal timeline button
         this.revealTimeLineButton = document.createElement("button");
@@ -358,7 +359,7 @@ export default class ProcTimeline extends RunestoneBase {
         $(this.codeDiv).off('click', 'span[data-block]');
 
         $(this.feedbackDiv).css("display", "none");
-        $(this.hierarchyTreeDiv).css("display", "none").empty();
+        // $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none").empty();
         $(this.helpDiv).css("display", "none");
     }
@@ -410,24 +411,24 @@ export default class ProcTimeline extends RunestoneBase {
         this.updateFeedbackDiv();
     }
 
-    updateTreeGraph(traceCsv, traceLabels) {
-        console.log("Trace CSV is", traceCsv);
-        console.log("Trace labels is", traceLabels);
-        $('#hierarchy_graph').html(hierarchy.drawHierarchy(traceCsv, traceLabels));
-    }
+    // updateTreeGraph(traceCsv, traceLabels) {
+    //     console.log("Trace CSV is", traceCsv);
+    //     console.log("Trace labels is", traceLabels);
+    //     $('#hierarchy_graph').html(hierarchy.drawHierarchy(traceCsv, traceLabels));
+    // }
 
-    showProcessHierarchy() {
-        $(this.hierarchyTreeDiv).css("display", "block");
-        $(this.hierarchyTreeDiv).html(
-            "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br><br>" + 
-            "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the C-code above</mark> to see how the tree is built step by step.</strong></div>" +
-            "<br>" +
-            "<div id='hierarchy_graph'></div>"
-        );
-        $('#hierarchy_graph').html(hierarchy.drawHierarchy(this.csvTree, this.labels));
-        console.log("Real ones", this.csvTree, this.labels);
-        this.bindCodeBlockEvents();
-    }
+    // showProcessHierarchy() {
+    //     $(this.hierarchyTreeDiv).css("display", "block");
+    //     $(this.hierarchyTreeDiv).html(
+    //         "<strong>Process Hierarchy Graph:</strong> Each node represents a process. The text within each node indicates what the process prints.<br><br>" + 
+    //         "<div id='trace_hierarchy'><strong><mark style='background:yellow!important;line-height:90%;padding:0!important'>Click on the C-code above</mark> to see how the tree is built step by step.</strong></div>" +
+    //         "<br>" +
+    //         "<div id='hierarchy_graph'></div>"
+    //     );
+    //     $('#hierarchy_graph').html(hierarchy.drawHierarchy(this.csvTree, this.labels));
+    //     console.log("Real ones", this.csvTree, this.labels);
+    //     this.bindCodeBlockEvents();
+    // }
 
     showProcessTimeline() {
         $(this.timelineDiv).css("display", "block");
@@ -455,12 +456,12 @@ export default class ProcTimeline extends RunestoneBase {
         this.bindCodeBlockEvents();
     }
 
-    hideProcessHierarchy() {
-        // Remove SVG elements before hiding
-        $(this.hierarchyTreeDiv).find('svg').remove();
-        $(this.hierarchyTreeDiv).html("");
-        $(this.hierarchyTreeDiv).css("display", "none");
-    }
+    // hideProcessHierarchy() {
+    //     // Remove SVG elements before hiding
+    //     $(this.hierarchyTreeDiv).find('svg').remove();
+    //     $(this.hierarchyTreeDiv).html("");
+    //     $(this.hierarchyTreeDiv).css("display", "none");
+    // }
 
     hideProcessTimeline() {
         // Remove SVG elements before hiding
@@ -472,7 +473,7 @@ export default class ProcTimeline extends RunestoneBase {
     showHelp() {
         $(this.helpDiv).css("display", "block");
         $(this.helpDiv).html(
-            `<strong>Try viewing the process hierarchy to see full answer.</strong><br><br>
+            `<strong>Try viewing the process timeline to see full answer.</strong><br><br>
             For reference:
             <ul>
                 <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
@@ -489,11 +490,12 @@ export default class ProcTimeline extends RunestoneBase {
 
     initFeedback_Hierarchy_Timeline_Help_Divs() {
         this.feedbackDiv = $('<div>').attr('id', this.divid + '_feedback').css('display', 'none').addClass('feedback-div');
-        this.hierarchyTreeDiv = $('<div>').css('display', 'none').addClass('tree-div');
+        // this.hierarchyTreeDiv = $('<div>').css('display', 'none').addClass('tree-div');
         this.timelineDiv = $('<div>').css('display', 'none').addClass('tree-div');
         this.helpDiv = $('<div>').css('display', 'none').addClass('help-div');
 
-        this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.hierarchyTreeDiv, this.timelineDiv);
+        // this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.hierarchyTreeDiv, this.timelineDiv);
+        this.containerDiv.append(this.feedbackDiv, this.helpDiv, this.timelineDiv);
     }
 
     updateFeedbackDiv() {
@@ -510,7 +512,8 @@ export default class ProcTimeline extends RunestoneBase {
         $(this.codeDiv).off('mouseout', 'span[data-block]');
         $(this.codeDiv).off('click', 'span[data-block]');
         
-        if ($(this.hierarchyTreeDiv).css('display') == 'block' || $(this.timelineDiv).css('display') == 'block') {
+        // if ($(this.hierarchyTreeDiv).css('display') == 'block' || $(this.timelineDiv).css('display') == 'block') {
+        if ($(this.timelineDiv).css('display') == 'block') {
             // Highlight on mouseover
             $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
                 const blockId = $(event.target).data('block');
@@ -528,12 +531,12 @@ export default class ProcTimeline extends RunestoneBase {
                 const blockId = $(event.target).data('block');
                 
                 // Update hierarchy if visible
-                if ($(this.hierarchyTreeDiv).css('display') == 'block') {
-                    const traceRoot = build.traceTree(this.source, blockId);
-                    console.log("Trace root is", traceRoot, "and blockId is", blockId);
-                    const { csv: csvTree, valuesList: labels } = build.getTreeCSV(traceRoot);
-                    this.updateTreeGraph(csvTree, labels);
-                }
+                // if ($(this.hierarchyTreeDiv).css('display') == 'block') {
+                //     const traceRoot = build.traceTree(this.source, blockId);
+                //     console.log("Trace root is", traceRoot, "and blockId is", blockId);
+                //     const { csv: csvTree, valuesList: labels } = build.getTreeCSV(traceRoot);
+                //     this.updateTreeGraph(csvTree, labels);
+                // }
                 
                 // Update timeline if visible
                 if ($(this.timelineDiv).css('display') == 'block') {
@@ -651,7 +654,7 @@ $(document).on("runestone:login-complete", function () {
                 ProcTimelineList[this.id] = new ProcTimeline(opts);
             } catch (err) {
                 console.log(
-                    `Error rendering Process hierarchy problem ${this.id}
+                    `Error rendering Process Timeline problem ${this.id}
                      Details: ${err}`
                 );
             }
