@@ -40,10 +40,10 @@ export default class DC extends RunestoneBase {
 
        // Default configuration settings
        //For somereason the default code uses colors (and not a separate variable) to update the circuit
-        this.red = '#0b3018ff';
-        this.red2 = '#104619ff';
-        this.green = '#24aa53ff';
-        this.green2 = '#39c469ff';
+        this.red = '#115222ff';
+        this.red2 = '#1a642eff';
+        this.green = '#0efc4dff';
+        this.green2 = '#33ff66ff';
      
         this.gray = '#cbd5e1';
         this.darkGray = '#334155';
@@ -152,6 +152,7 @@ export default class DC extends RunestoneBase {
         //This is how I get the inputs to be labelled A B C D and spaced equally
         //The outputs are number 1 2 3 ...
         this.letters = ['A','B','C','D','E']
+        this.outputLetters = [ 'X', 'Y', 'Z']
         for(let i = 0; i < this.numInputs; i++){
             if(i < this.numInputs - 1){
                 this.startJson += `{"category":"input","isOn":true,"key":-2,"loc":"${-750} ${-740 + i*80}", "text": "${this.letters[i]}"},`
@@ -163,10 +164,10 @@ export default class DC extends RunestoneBase {
         }
         for(let i = 0; i < this.numOutputs; i++){
             if(i < this.numOutputs - 1){
-                this.startJson += `{"category":"output","key":-8,"loc":"${-330 } ${-720 + (i*90)}","isOn":false, "text" : "${i+1}"},`
+                this.startJson += `{"category":"output","key":-8,"loc":"${-330 } ${-720 + (i*90)}","isOn":false, "text" : "${this.outputLetters[i]}"},`
             }
             else{
-                this.startJson += `{"category":"output","key":-8,"loc":"${-330} ${-720 + (i*90)}","isOn":false, "text" : "${i+1}"}`
+                this.startJson += `{"category":"output","key":-8,"loc":"${-330} ${-720 + (i*90)}","isOn":false, "text" : "${this.outputLetters[i]}"}`
             }
 
         }
@@ -337,7 +338,7 @@ export default class DC extends RunestoneBase {
             thInnerHTML += `<th style='text-align:center;'>${this.letters[i]}</th>`
         }
         for(let i = 0; i < this.numOutputs; i++){
-            thInnerHTML += `<th style='text-align:center;'>Output ${i+1}</th>`
+            thInnerHTML += `<th style='text-align:center;'>Output ${this.outputLetters[i]}</th>`
         }
         th.innerHTML = thInnerHTML
         table.appendChild(th)
@@ -447,7 +448,7 @@ export default class DC extends RunestoneBase {
             thInnerHTML += `<th style='text-align:center;'>${this.letters[i]}</th>`
         }
         for(let i = 0; i < this.numOutputs; i++){
-            thInnerHTML += `<th style='text-align:center;'>Output ${i+1}</th>`
+            thInnerHTML += `<th style='text-align:center;'>Output ${this.outputLetters[i]}</th>`
         }
         th.innerHTML = thInnerHTML
         table.appendChild(th)
@@ -517,13 +518,9 @@ export default class DC extends RunestoneBase {
 
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
-                new FontFace("IOFont", "../fonts/analogfont/DS-DIGI.TTF").load().then((font => {
-                document.fonts.add(font);
                 go.Diagram.licenseKey =
 "2b8647e1b2604fc702d90676423d6bbc5cf07d34cd960ef6590015f5ec5b6f40729be17906dad8c4d3f04df9487ac6d9ddc26c2ac31b003fe165d2df10f096ffb26424b2165b47daa40321c390f22ca0a97078f7cbb374a3dd7ed9f0effbc5985abcf2d740c95cb3792d0635066cbf4ce2abdf7bab52cd5d7b6e99a4fef6a856fa";
                 import('./figures.js').then(()=>self.init())
-                }))
-
             });
         });
 
@@ -662,6 +659,7 @@ export default class DC extends RunestoneBase {
             e.diagram.commitTransaction('Toggle Input');
         }
 
+        const BottomLabelAlignment = new go.Spot(0.5, 1, 0, 10);
 
 
         //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
@@ -693,12 +691,13 @@ export default class DC extends RunestoneBase {
             .bind('fill', 'isOn', isOn => go.Brush.lighten(isOn ? this.green : this.red)),
         new go.Shape(portStyle(false)) // the only port
                 .set({
-                opacity: 0,
+                opacity: 1,
                 portId: '',
-                alignment: go.Spot.RightCenter,
-            }),
+                alignment: new go.Spot(1, 0.5, -2.5, 0),
+            })
+            .bind("fill", "isOn", isOn => isOn ? "black": "white"),
         new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Input ${text}`),
-        new go.TextBlock({margin: 4, alignment: go.Spot.Center, font: 'IOFont'}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -5, 3), font: '20px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
 
         );
 
@@ -731,10 +730,11 @@ export default class DC extends RunestoneBase {
         new go.Shape(portStyle(true, new go.Spot(0, 0.5, 0, 0))).set({
             // the only port
             portId: '',
-            alignment:  go.Spot.LeftCenter,
-        }),
+            alignment: new go.Spot(0, 0.5, 5, 0),
+        })
+        .bind("fill", "isOn", isOn => isOn ? "black": "white"),
         new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 1, 0, 10)}).bind("text", "text", text => `Output ${text}`),
-        new go.TextBlock({margin: 4, alignment: go.Spot.Center}).bind("text", "isOn", isOn => isOn ? "1" : "0"),
+        new go.TextBlock({margin: 4, alignment: new go.Spot(0.5, 0.5, -3, 3),  font: '15px mono', stroke: 'white'}).bind("text", "isOn", isOn => isOn ? "1" : "0").bind("stroke", "isOn", isOn => isOn ? "black": "white"),
         );
 
         const andTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -753,7 +753,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(10,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
 
         const orTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -773,7 +773,7 @@ export default class DC extends RunestoneBase {
         })
 
         )
-        .add(new go.TextBlock({ margin: 2, background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: 2, alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
 
         const xorTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -792,7 +792,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
 
         const norTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -812,7 +812,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
 
 
@@ -833,7 +833,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment}).bind('text', '', (d) => d.category))
         ;
 
         const notTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
@@ -849,7 +849,7 @@ export default class DC extends RunestoneBase {
             alignment: new go.Spot(1, 0.5, -5, 0)
         })
         )
-        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), background:'white', alignment: go.Spot.Bottom }).bind('text', '', (d) => d.category))
+        .add(new go.TextBlock({ margin: new go.Margin(2,2,2,2), alignment: BottomLabelAlignment }).bind('text', '', (d) => d.category))
         ;
 
         // add the templates created above to this.myDiagram and palette
@@ -1025,10 +1025,14 @@ doXnor = (node) => {
 doOutput = (node) => {
     // assume there is just one input link
     // we just need to update the node's data.isOn
+
+    //node.linksconnecetd is an iterator so I have to count it like this x(
+    let i = 0;
     node.linksConnected.each((link) => {
       this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
+      i++
     });
-    if(node.linksConnected.length == 0){
+    if(i == 0){
         this.myDiagram.model.setDataProperty(node.data, 'isOn', false);
     }
   }

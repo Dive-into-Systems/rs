@@ -56,7 +56,7 @@ export default class ProcHierarchy extends RunestoneBase {
         this.initFeedback_Hierarchy_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
         const obj = this;
-        updateHeight(window, document, obj);
+        updateHeight(window, document, obj, true);
     }
 
     initParams() {
@@ -300,9 +300,9 @@ export default class ProcHierarchy extends RunestoneBase {
                 this.viewedHierarchy = true;
                 this.sendData(8);
                 this.showProcessHierarchy();
-                updateHeight(window, document, this);
             }
             else { this.hideProcessHierarchy(); }
+            // updateHeight(window, document, this, true);
         });
 
         /* Reveal help button */

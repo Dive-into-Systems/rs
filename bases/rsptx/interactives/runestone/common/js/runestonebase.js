@@ -102,15 +102,15 @@ export default class RunestoneBase {
         return userId;
     }
 
-    updateHeight(window, document, obj){
+    updateHeightInstance(window, document, obj, addOffset=null){
         let frame = window.frameElement;
         let height = document.getElementById(`${obj.divid}`).scrollHeight ;
         height =  height + 100;
+        if(addOffset){
+            height = height + addOffset;
+        }
         frame.style.height = height+'px'
-        
-        document.body.addEventListener('click', function( event ){
-                    updateHeight(window, document, obj)
-        });
+
     }
     
     ///// This function sends data to the Dive in to Systems exercise book database. /////
