@@ -247,6 +247,19 @@ export default class DC extends RunestoneBase {
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
+        this.instructionsButton = document.createElement("button")
+        this.instructionsButton.textContent = "Stuck? Click for help using the component"
+        this.instructionsButton.className = 'btn btn-info'
+
+        this.wrapperDiv.appendChild(this.instructionsButton)
+
+        this.legend = document.createElement("div")
+        this.legend.style.display = "none"
+
+        this.instructionsButton.addEventListener("click" , ()=> {
+            this.legend.style.display = this.legend.style.display == "none" ? "inherit" : "none"
+        })
+
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'
         //Configure question: Select a mode to determine what type of instructions are generated.
@@ -356,11 +369,12 @@ export default class DC extends RunestoneBase {
 
         this.tableDiv.appendChild(table)
 
-        this.gojsDiv.append(this.circuitDiv)
-        this.wrapperDiv.append(this.gojsDiv)
-        this.wrapperDiv.append(this.answerDiv)
         this.answerDiv.append(table)
- 
+        this.gojsDiv.style.marginBottom = "5px"
+        this.gojsDiv.append(this.circuitDiv)
+        this.answerDiv.append(this.gojsDiv)
+        this.wrapperDiv.append(this.answerDiv)
+
 
         this.checkButton = document.createElement("button")
         this.checkButton.textContent = "Check Answer"

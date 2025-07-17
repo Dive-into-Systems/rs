@@ -48,6 +48,8 @@ export default class ProcTimeline extends RunestoneBase {
         this.initButtons();
         this.initFeedback_Hierarchy_Timeline_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // Replace intermediate HTML with rendered component
+        const obj = this;
+        updateHeight(window, document, obj, true);
     }
 
     initParams() {
