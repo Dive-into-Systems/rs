@@ -70,17 +70,24 @@ export default class ProcHierarchy extends RunestoneBase {
             if (params["source"] != undefined) { // If you want to pass in a source code string for generating the code. 
                 this.hardCodedCCode = true;
                 this.source = params["source"];
-                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
-                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
-                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
-                if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
-                if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { console.error("Invalid hasNext param from .ptx file"); }
-                if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
-                if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
-                this.showMenu = false;
+                if (params['regeneration'] != undefined) { this.regeneration = params['regeneration']; } else { console.error("Invalid regeneration param from .ptx file"); }
+                if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
+                    if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
+                    if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                    if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
+                    if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { console.error("Invalid hasNext param from .ptx file"); }
+                    if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
+                    if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
+                    this.showMenu = false;
+                }
+                else {
+                    this.modes = ["1", "2", "3"];
+                    this.showMenu = true;
+                }
             }
             else {
                 this.hardCodedCCode = false;
+                this.regeneration = true;
                 if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
                     if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
                     if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
@@ -173,7 +180,9 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
-        if (this.hardCodedCCode == false) { this.updateSourceCode();}
+        if (this.hardCodedCCode == false) { this.updateSourceCode();} else {
+            if (this.regeneration == true) { this.hardCodedCCode = false; }
+        }
         // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
         // console.log(this.source);
         this.genQuestionInfo();
@@ -310,7 +319,7 @@ export default class ProcHierarchy extends RunestoneBase {
 
         this.buttonsDiv = $("<div>");
 
-        if (this.hardCodedCCode == false) { this.buttonsDiv.append(this.generateButton); }
+        if (this.regeneration) { this.buttonsDiv.append(this.generateButton); }
         this.buttonsDiv.append(this.revealTreeButton);
         this.buttonsDiv.append(this.helpButton);
         this.buttonsDiv.append(this.checkAnswerButton);
@@ -485,6 +494,7 @@ export default class ProcHierarchy extends RunestoneBase {
             bundle.details = {
                 config : {
                     hardCodedQuestion: `${this.hardCodedCCode}`,
+                    regeneration: `${this.regeneration}`,
                     showMenu: `${this.showMenu}`,
                     numForks: `${this.numForks}`,
                     numPrints: `${this.numPrints}`,
