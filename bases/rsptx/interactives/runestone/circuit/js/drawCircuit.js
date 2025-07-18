@@ -317,7 +317,7 @@ export default class DC extends RunestoneBase {
                 <img class="helpContent-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/President_Barack_Obama.jpg/960px-President_Barack_Obama.jpg"> </img>
                 </div>
                 <div id="Panel2-Content" class="helpContent" > 
-                        <img class="helpContent-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Official_portrait_of_Barack_Obama.jpg/960px-Official_portrait_of_Barack_Obama.jpg"> </img>
+                        <img class="helpContent-image" src="../gifs/connection.gif"> </img>
                 </div>
                 <div id="Panel3-Content" class="helpContent" > 
                     <img class="helpContent-image" src="https://bookstore.gpo.gov/sites/default/files/styles/product_page_image/public/covers/600x96-official_presidential_portrait_of_barack_obama_20x24.jpg?itok=IompvPfM"> </img>

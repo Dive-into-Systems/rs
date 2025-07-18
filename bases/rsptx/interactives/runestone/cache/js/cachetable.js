@@ -287,7 +287,7 @@ export default class cachetable extends RunestoneBase {
         "<tr>" +
         "   <td>Number of rows : " + this.numRows.toString() + "</td>" +
         "</tr>";
-        
+        this.logPrompt = {cacheOrg: this.cacheOrg, numBits: this.numBits.toString(), blockSize: this.blockSize.toString(), numRows: this.numRows.toString()};
         this.promptDiv.appendChild(this.tableInfo);
     }
     // height: auto; display:flex; flex-direction: row; justify-content:space-between
@@ -633,6 +633,8 @@ export default class cachetable extends RunestoneBase {
         var cellCurrRW = document.createElement("td");
         cellCurrRW.textContent = curr_RW;
         referenceTableNewRow.appendChild(cellCurrRW);
+        this.logPrompt.address = curr_address;
+        this.logPrompt.RW = curr_RW;
 
         this.referenceTableBody.appendChild(referenceTableNewRow);
     }
@@ -1814,11 +1816,7 @@ export default class cachetable extends RunestoneBase {
                         conf_incr: `${this.conf_incr}`
                     }
                 },
-                // prompt : {
-                //     address: `${this.addressNodeText.textContent}`,
-                //     block_size : `${this.block_size_ans}`, 
-                //     num_lines : `${this.num_line_ans}`
-                // },
+                prompt : this.logPrompt,
                 eval : {
                     correct_answer : this.logCorrect,
                     user_input : this.logUserInput
