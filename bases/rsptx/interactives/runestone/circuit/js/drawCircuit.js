@@ -61,11 +61,12 @@ export default class DC extends RunestoneBase {
        // Fields for logging data
 
        this.initDCElement();
-
+       console.log("about to update height");
+        updateHeight(window, document, this, true);
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
-       updateHeight(window, document, this, true);
+       
        this.sendData(0);
    }
 
@@ -260,10 +261,18 @@ export default class DC extends RunestoneBase {
         this.legend.className = "instructionsLegend"
 
 
-        this.legendImage = document.createElement('img')
-        this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
+        this.legendImage = document.createElement('div')
+        // this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
         this.legendImage.className = 'legendImage'
         this.legendImage.style.display = 'none'
+
+
+        const IHTML = `
+
+               
+        `
+
+        this.legendImage.innerHTML =  IHTML;
 
         this.legend.appendChild(this.legendImage)
 

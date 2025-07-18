@@ -30,11 +30,12 @@ export default class VO extends RunestoneBase {
         this.createVOElement();
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");
-        updateHeight(window, document, this, true);
+        
         // this.checkServer("vo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+        
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -54,6 +55,7 @@ export default class VO extends RunestoneBase {
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
+        updateHeight(window, document, this, true);
     }
 
     initParams() {
