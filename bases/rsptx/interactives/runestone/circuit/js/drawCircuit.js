@@ -61,6 +61,41 @@ export default class DC extends RunestoneBase {
        // Fields for logging data
 
        this.initDCElement();
+
+        const setInvis = () => {
+        
+            let contentArray = []
+            let panelsArray = []
+
+
+            for(let i = 1; i <= 4; i++){
+                contentArray.push( document.getElementById(`Panel${i}-Content`) )
+                panelsArray.push( document.getElementById(`Panel${i}`) )
+
+            }
+
+            
+            contentArray.forEach(  elem => elem.style.display = "none")
+            panelsArray.forEach(  elem => elem.style.background = "")
+
+            return contentArray
+        }
+
+            
+
+        for(let i = 0; i < 4; i++){
+        document.getElementById(`Panel${i+1}`).addEventListener("click", ()=> {
+        console.log("click")
+        
+        
+        const arr = setInvis()
+        arr[i].style.display = "block"
+        document.getElementById(`Panel${i+1}`).style.background = "lightblue"
+        
+        })
+        }
+
+
        console.log("about to update height");
         updateHeight(window, document, this, true);
        if (typeof Prism !== "undefined") {
@@ -261,36 +296,69 @@ export default class DC extends RunestoneBase {
         this.legend.className = "instructionsLegend"
 
 
-        this.legendImage = document.createElement('div')
+        this.TabsDiv = document.createElement('div')
         // this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
-        this.legendImage.className = 'legendImage'
-        this.legendImage.style.display = 'none'
+        this.TabsDiv.className = 'legendImage'
+        this.TabsDiv.style.display = 'none'
 
 
         const IHTML = `
+            <div class = "helpContainer">
+            
+            <div class="flexSidebar">
+                <div id="Panel1" class="flexItem">Adding Gates</div>
+                <div id="Panel2" class="flexItem">Making Connections</div>
+                <div id="Panel3" class="flexItem">Deleting Gates</div>
+                <div id="Panel4" class="flexItem">Toggling Inputs</div>
 
+            </div>
+            <div class = "helpContentHolder">
+                <div id="Panel1-Content" style="display:inherit" class="helpContent">  
+                <img class="helpContent-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/President_Barack_Obama.jpg/960px-President_Barack_Obama.jpg"> </img>
+                </div>
+                <div id="Panel2-Content" class="helpContent" > 
+                        <img class="helpContent-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Official_portrait_of_Barack_Obama.jpg/960px-Official_portrait_of_Barack_Obama.jpg"> </img>
+                </div>
+                <div id="Panel3-Content" class="helpContent" > 
+                    <img class="helpContent-image" src="https://bookstore.gpo.gov/sites/default/files/styles/product_page_image/public/covers/600x96-official_presidential_portrait_of_barack_obama_20x24.jpg?itok=IompvPfM"> </img>
+            </div>
+                <div id="Panel4-Content" class="helpContent" >
+                    <img class="helpContent-image" src="https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2194384120.jpg?c=16x9&q=h_833,w_1480,c_fill"> </img>
+            </div>
+
+            </div>
+            
+            </div>
                
         `
 
-        this.legendImage.innerHTML =  IHTML;
+        this.TabsDiv.innerHTML =  IHTML;
+        this.TabsDiv.getElementBy
 
-        this.legend.appendChild(this.legendImage)
+        this.legend.appendChild(this.TabsDiv)
+
+
+
+
+
+    
+
 
 
 
         this.instructionsButton.addEventListener("click" , ()=> {
             
-            this.legend.style.display = this.legend.style.display == "flex" ? "none" : "flex"
+            this.legend.style.display = this.legend.style.display == "block" ? "none" : "block"
 
             this.helpOpen = !this.helpOpen
             if(this.helpOpen){
                 this.instructionsButton.innerText = "Hide help ▲"
-                this.legendImage.style.display = "inherit"
+                this.TabsDiv.style.display = "inherit"
 
             }
             else{
                 this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
-                this.legendImage.style.display = "none"
+                this.TabsDiv.style.display = "none"
             }
             return false;
         })

@@ -257,6 +257,7 @@ export default class cachetable extends RunestoneBase {
                     this.helpStatement.style.visibility = "visible";
                     this.helpDiv.appendChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
+                    this.sendData(4)
                 }
                 
             }.bind(this),
@@ -865,8 +866,7 @@ export default class cachetable extends RunestoneBase {
             "click",
             function () {
                 this.submitResponse();
-                
-                this.sendData(3); // Action 3 for data logging
+
             }.bind(this),
             false
         );
@@ -891,7 +891,7 @@ export default class cachetable extends RunestoneBase {
                     this.incorrectAttempts[key] = 0;
                 });
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
-                this.sendData(5)
+                this.sendData(3)
             }.bind(this),
             false
         );
@@ -944,11 +944,15 @@ export default class cachetable extends RunestoneBase {
                     // this.generateAnswerNext();
                     this.updateReferenceTableAndAnswerTable();
                     this.displayNecessaryFields();
+                    
                 } else {
                     // render feedback that congrats and this is all of the question
                     this.disableAnswerTableCurrentRow(this.curr_ref-1);
                     this.completed = true;
                 }
+                this.sendData(1);
+            }else{
+                this.sendData(2);
             }
             this.logCurrentAnswer();
         }
@@ -1598,24 +1602,34 @@ export default class cachetable extends RunestoneBase {
         this.correct = false;
         const curr_ref = this.curr_ref;
         const curr_ref_str = this.getCurrRefStr();
+        this.logUserInput = {};
+        this.logCorrect = {};
         try {
             const response_hit_miss = 
                 document.querySelector('input[name="HM' + curr_ref_str + '"]:checked').value === "H" ? true : false;
+            this.logUserInput.hit_miss = response_hit_miss;
             const response_index =
                 document.querySelector('input[name="Index' + curr_ref_str + '"]').value;
+            this.logUserInput.index = response_index;
             const response_dirty =
                 document.querySelector('input[name="Dirty' + curr_ref_str + '"]').value;
+            this.logUserInput.dirty = response_dirty;
             const response_valid =
                 document.querySelector('input[name="Valid' + curr_ref_str + '"]').value;
+            this.logUserInput.valid = response_valid;
             const response_tag =
                 document.querySelector('input[name="Tag' + curr_ref_str + '"]').value;
+            this.logUserInput.tag = response_tag
             const curr_answers = this.answer_list[ curr_ref ];
+            
+            this.logCorrect.index = curr_answers[ 1 ].toString();
             if ( curr_answers[ 1 ].toString() != response_index ) {
                 this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_index");
                 this.incorrectAttempts.index++;
                 return;
             }
 
+            this.logCorrect.hit_miss = this.hit_miss_list[ curr_ref ];
             if ( this.hit_miss_list[ curr_ref ] != response_hit_miss  ) {
                 this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_HM");
                 this.incorrectAttempts.hitMiss++;
@@ -1625,18 +1639,28 @@ export default class cachetable extends RunestoneBase {
             if ( this.cacheOrg === twoWaySetAssociative ) {
                 const response_lru = 
                     document.querySelector('input[name="LRU' + curr_ref_str + '"]').value;
+                this.logUserInput.lru = response_lru;
                 const response_dirty2 =
                     document.querySelector('input[name="Dirty2' + curr_ref_str + '"]').value;
+                this.logUserInput.dirty2 = response_dirty2;
                 const response_valid2 =
                     document.querySelector('input[name="Valid2' + curr_ref_str + '"]').value;
+                this.logUserInput.valid2 = response_valid2;
                 const response_tag2 =
                     document.querySelector('input[name="Tag2' + curr_ref_str + '"]').value;
+                this.logUserInput.tag2 = response_tag2;
+                this.logCorrect.lru = curr_answers[ 8 ].toString();
                 if ( curr_answers[ 8 ].toString() != response_lru ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_LRU");
                     this.incorrectAttempts.lru++;
                     return;
                 }
+
+                
                 if ( response_lru == 1 ) {
+                    this.logCorrect.valid = curr_answers[ 2 ].toString();
+                    this.logCorrect.dirty = curr_answers[ 3 ].toString();
+                    this.logCorrect.tag = curr_answers[ 4 ].toString();
                     if ( response_valid + response_dirty + response_tag == "") {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_line");
                         return;
@@ -1657,6 +1681,10 @@ export default class cachetable extends RunestoneBase {
                         return;
                     }     
                 } else {
+                    this.logCorrect.valid2 = curr_answers[ 5 ].toString();
+                    this.logCorrect.dirty2 = curr_answers[ 6 ].toString();
+                    this.logCorrect.tag2 = curr_answers[ 7 ].toString();
+
                     if ( response_valid2 + response_dirty2 + response_tag2 == "") {
                         this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_line");
                         return;
@@ -1679,6 +1707,10 @@ export default class cachetable extends RunestoneBase {
                 }
 
             } else {
+                this.logCorrect.valid = "1";
+                this.logCorrect.dirty = curr_answers[ 3 ].toString();
+                this.logCorrect.tag = curr_answers[ 4 ].toString();
+
                 if ( response_valid != "1" ) {
                     this.feedbackWrongAnswer = $.i18n("msg_cachetable_wrong_valid");
                     this.incorrectAttempts.valid++;
@@ -1788,21 +1820,8 @@ export default class cachetable extends RunestoneBase {
                 //     num_lines : `${this.num_line_ans}`
                 // },
                 eval : {
-                    correct_answer : {
-                        tag_bits: `${this.tag_bits}`,
-                        index_bits: `${this.index_bits}`,
-                        offset_bits: `${this.offset_bits}`
-                    },
-                    user_input : {
-                        tag_bits: `${this.input_tag_bits}`,
-                        index_bits: `${this.input_index_bits}`,
-                        offset_bits: `${this.input_offset_bits}`
-                    },
-                    incorrect_attempts : {
-                        tag_bits_incorrect_count: `${this.tagIncorrectCount}`,
-                        index_bits_incorrect_count: `${this.indexIncorrectCount}`,
-                        offset_bits_incorrect_count: `${this.offsetIncorrectCount}`
-                    }
+                    correct_answer : this.logCorrect,
+                    user_input : this.logUserInput
                 },
                 algorithm : {
                     name: `${this.algorithm}`,
