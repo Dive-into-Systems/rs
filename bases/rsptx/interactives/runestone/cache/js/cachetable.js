@@ -1779,7 +1779,7 @@ export default class cachetable extends RunestoneBase {
                         chance_hit: `${this.chance_hit}`, 
                         hit_incr: `${this.hit_incr}`, 
                         chance_conf: `${this.chance_conf}`, 
-                        conf_incr: `${conf_incr}`
+                        conf_incr: `${this.conf_incr}`
                     }
                 },
                 // prompt : {
@@ -1810,7 +1810,7 @@ export default class cachetable extends RunestoneBase {
                         chance_hit: `${this.chance_hit}`, 
                         hit_incr: `${this.hit_incr}`, 
                         chance_conf: `${this.chance_conf}`, 
-                        conf_incr: `${conf_incr}`
+                        conf_incr: `${this.conf_incr}`
                     }
                 }
             }
