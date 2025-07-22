@@ -893,6 +893,8 @@ export default class cachetable extends RunestoneBase {
                     this.incorrectAttempts[key] = 0;
                 });
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
+                this.logCorrect = {};
+                this.logUserInput = {}; 
                 this.sendData(3)
             }.bind(this),
             false

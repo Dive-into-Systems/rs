@@ -364,14 +364,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
             this.tryAnother();
             updateHeight(window, document, this);
+            this.sendData(3);
         });
         const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
             this.resetValues()
             updateHeight(window, document, this);
+            this.sendData(9);
         });
         const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
             this.provideHelp();
             updateHeight(window, document, this);
+            this.sendData(4);
             });
         const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
             this.checkAnswer()
@@ -536,8 +539,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const actualAnswers = this.allStates.slice(0, this.currentInstruction)
         const code = this.initialState[0].slice(0,this.currentInstruction)
         const data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
-        console.log(data)
-        // this.sendData( )
+        if(isCorrect){
+            this.sendData(1);
+        }else{
+            this.sendData(2);
+        }
+        // 
     }
 
     // Handle case sensitivity or number forms
