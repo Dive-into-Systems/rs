@@ -314,16 +314,16 @@ export default class DC extends RunestoneBase {
             </div>
             <div class = "helpContentHolder">
                 <div id="Panel1-Content" style="display:inherit" class="helpContent">  
-                <img class="helpContent-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/President_Barack_Obama.jpg/960px-President_Barack_Obama.jpg"> </img>
+                <img class="helpContent-image" src="/source/resources/GIFs/AddingGIF.gif"> </img>
                 </div>
                 <div id="Panel2-Content" class="helpContent" > 
-                        <img class="helpContent-image" src="../gifs/connection.gif"> </img>
+                        <img class="helpContent-image" src="/source/resources/GIFs/ConnectionGIF.gif"> </img>
                 </div>
                 <div id="Panel3-Content" class="helpContent" > 
-                    <img class="helpContent-image" src="https://bookstore.gpo.gov/sites/default/files/styles/product_page_image/public/covers/600x96-official_presidential_portrait_of_barack_obama_20x24.jpg?itok=IompvPfM"> </img>
+                    <img class="helpContent-image" src="/source/resources/GIFs/DeletePicture.png"> </img>
             </div>
                 <div id="Panel4-Content" class="helpContent" >
-                    <img class="helpContent-image" src="https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2194384120.jpg?c=16x9&q=h_833,w_1480,c_fill"> </img>
+                    <img class="helpContent-image" src="/source/resources/GIFs/TogglingGIF.gif"> </img>
             </div>
 
             </div>
