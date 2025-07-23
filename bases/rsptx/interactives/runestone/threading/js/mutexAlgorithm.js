@@ -75,7 +75,7 @@
         },
 
         ["evalIfMutex"]: (state, info, numLines)=>{
-            console.log("inEvalIfMutex")
+
             let x = state.readFromx;
             let y = state.y1;
             if(eval(info.comp)){
@@ -222,10 +222,30 @@ function generateText(state, thread1Info, thread){
     const ce = new RegExp("changeElse")
     const mutIf = new RegExp("evalIf")
     let changeNumber;
+    let allChanged = false;
     let i;
 
     thread = thread.filter(item=>item!="update");
+    console.log(thread)
     for (i = 0; i<thread.length; i++){
+
+        if(thread[i] == "ifElseMutex"){
+
+            threadText += "pthread_mutex_lock(&mutex);<br>";
+            thread[0] = "evalIf";
+            let j = 0;
+            for(j; j<thread1Info.lineSizeIf; j++){
+                thread.splice(i+1+j, 0, `${j}changeIf`);
+            }
+            for(let k = 0; k<thread1Info.lineSizeElse; k++){
+                thread.splice(i+1+k+j, 0, `${k}changeElse`);
+            }
+            unlockInstance = thread.length;
+            allChanged = true;
+            i--;
+            continue;
+        }
+
 
         if(ci.test(thread[i])||ce.test(thread[i])||(mutIf.test(thread[i])&&mut.test(thread[i]))){
             changeNumber = Number(thread[i].slice(0,1))
@@ -297,11 +317,17 @@ function generateText(state, thread1Info, thread){
 
     }
 
-    if(unlockInstance == i){
+    if(unlockInstance == i&&!allChanged){
         threadText += "     pthread_mutex_unlock();<br>"
         unlockInstance = -1
     }
-    threadText += `}<br>print("%d %d", x, y);<br>return NULL;</pre>`
+    threadText += `}<br>print("%d %d", x, y);<br>`
+
+    if(unlockInstance == i&&allChanged){
+        threadText += "pthread_mutex_unlock();<br>"
+        unlockInstance = -1
+    }
+    threadText+="return NULL;</pre>"
 
     return {initial: initialText, t1: threadText, t2: threadText};
 }
@@ -468,13 +494,8 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 arr[0][j-1].forEach((elem)=>{
 
                     if(regex.test(thread1[j-1])){
-                        console.log("inIf")
-                        console.log(thread1[j-1].slice(1,thread1[j-1].length))
-                        console.log(elem)
                         arr[0][j].push(JSON.stringify(threadTemplate1[thread1[j-1].slice(1,thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))))
                     }else{
-                        console.log("inElse")
-                        console.log(thread1[j-1])
                         arr[0][j].push(JSON.stringify(threadTemplate1[thread1[j-1]](JSON.parse(elem), thread1Info)))
                     }
                     
@@ -620,9 +641,21 @@ export function initialize(mode){
         }
         if(string == "evalIf"){
             string = `${thread1Info.lineSizeIf-1}`+string;
+            const CI = new RegExp("changeIf");
+            for(let z = 0; z<thread.length; z++){
+                if(CI.test(thread[z])){
+                    thread.splice(z,1);
+                }
+            }
         }
         string = string+"Mutex";
         thread[random] = string;
+    }
+
+    
+    const allRate = 0.15;
+    if(Math.random()<allRate){
+        thread = ["ifElseMutex"]
     }
 
     let text = generateText(state, thread1Info, thread);

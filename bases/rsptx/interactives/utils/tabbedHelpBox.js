@@ -2,6 +2,12 @@
  
 import "./css/tabbedHelpBox.css"
 
+
+
+//This is used to generate the help box.legend that you see on the circuit components
+// Params: numTabs: the number of tabs in the help window; div: the div evrything will be appended/prependd into; labels: the labels of tabs in the window ["Name1", "Name2"]
+// imgsrcs: an array of image sources ( ['/source/resources/x.png', '', ...]), prepend: will the element be apended or prepended into the div
+
 export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
 
@@ -30,6 +36,8 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
         nums.push(i)
     }
 
+
+    //I didn't have the heart to fully delete this :(
 
     // const IHTML = `
     //     <div class = "helpContainer">

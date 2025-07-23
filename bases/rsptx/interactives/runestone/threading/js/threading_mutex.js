@@ -366,7 +366,7 @@ export default class TM extends RunestoneBase {
         this.thread1.style.margin = "auto";
         this.thread2.style.margin = "auto";
         this.threadsDiv = document.createElement("div");
-        this.threadsDiv.style = "display: flex; width: 90%; margin: auto"
+        this.threadsDiv.style = "display: flex; margin: auto"
 
         this.thread1LabelDiv = document.createElement("div");
         this.thread2LabelDiv = document.createElement("div");
@@ -442,7 +442,7 @@ export default class TM extends RunestoneBase {
 
         this.codeBox = document.createElement('code');
         this.codeDiv.innerHTML = "Shared Global Variables:<br>"
-        this.codeDiv.style = "margin:auto; width:90%; text-align:center"
+        this.codeDiv.style = "margin:auto; text-align:center"
         this.codeBox.style = "font-size: 18px;";
         this.codeBox.innerHTML = this.problem.text.initial;
         this.codeBox.style.backgroundColor = "#f0f8ff"
