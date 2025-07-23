@@ -7,6 +7,8 @@ import circuitAST from "./circuit_AST/circuitAST.js";
 import circuit_generator from "./circuit_generate.js";
 import "../css/circuitdraw.css"
 import { updateHeight } from "../../../utils/updateHeight.js";
+import '../../../utils/tabbedHelpBox.js'
+import { tabbedHelpBox } from "../../../utils/tabbedHelpBox.js";
 
 export var DCList = {}; // Object containing all instances of DC that aren't a child of a timed assessment.
 
@@ -62,38 +64,7 @@ export default class DC extends RunestoneBase {
 
        this.initDCElement();
 
-        const setInvis = () => {
-        
-            let contentArray = []
-            let panelsArray = []
 
-
-            for(let i = 1; i <= 4; i++){
-                contentArray.push( document.getElementById(`Panel${i}-Content`) )
-                panelsArray.push( document.getElementById(`Panel${i}`) )
-
-            }
-
-            
-            contentArray.forEach(  elem => elem.style.display = "none")
-            panelsArray.forEach(  elem => elem.style.background = "")
-
-            return contentArray
-        }
-
-            
-
-        for(let i = 0; i < 4; i++){
-        document.getElementById(`Panel${i+1}`).addEventListener("click", ()=> {
-        console.log("click")
-        
-        
-        const arr = setInvis()
-        arr[i].style.display = "block"
-        document.getElementById(`Panel${i+1}`).style.background = "lightblue"
-        
-        })
-        }
 
 
        console.log("about to update height");
@@ -283,59 +254,59 @@ export default class DC extends RunestoneBase {
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
-        this.helpOpen = false;
+        // this.helpOpen = false;
 
-        this.instructionsButton = document.createElement("a")
-        this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
-        this.instructionsButton.className = 'instructionsButton'
+        // this.instructionsButton = document.createElement("a")
+        // this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+        // this.instructionsButton.className = 'instructionsButton'
 
-        this.wrapperDiv.appendChild(this.instructionsButton)
+        // this.wrapperDiv.appendChild(this.instructionsButton)
 
-        this.legend = document.createElement("div")
-        this.legend.style.display = "none"
-        this.legend.className = "instructionsLegend"
-
-
-        this.TabsDiv = document.createElement('div')
-        // this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
-        this.TabsDiv.className = 'legendImage'
-        this.TabsDiv.style.display = 'none'
+        // this.legend = document.createElement("div")
+        // this.legend.style.display = "none"
+        // this.legend.className = "instructionsLegend"
 
 
-        const IHTML = `
-            <div class = "helpContainer">
+        // this.TabsDiv = document.createElement('div')
+        // // this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
+        // this.TabsDiv.className = 'legendImage'
+        // this.TabsDiv.style.display = 'none'
+
+
+        // const IHTML = `
+        //     <div class = "helpContainer">
             
-            <div class="flexSidebar">
-                <div id="Panel1" class="flexItem">Adding Gates</div>
-                <div id="Panel2" class="flexItem">Making Connections</div>
-                <div id="Panel3" class="flexItem">Deleting Gates</div>
-                <div id="Panel4" class="flexItem">Toggling Inputs</div>
+        //     <div class="flexSidebar">
+        //         <div id="Panel1" class="flexItem">Adding Gates</div>
+        //         <div id="Panel2" class="flexItem">Making Connections</div>
+        //         <div id="Panel3" class="flexItem">Deleting Gates</div>
+        //         <div id="Panel4" class="flexItem">Toggling Inputs</div>
 
-            </div>
-            <div class = "helpContentHolder">
-                <div id="Panel1-Content" style="display:inherit" class="helpContent">  
-                <img class="helpContent-image" src="/source/resources/GIFs/AddingGIF.gif"> </img>
-                </div>
-                <div id="Panel2-Content" class="helpContent" > 
-                        <img class="helpContent-image" src="/source/resources/GIFs/ConnectionGIF.gif"> </img>
-                </div>
-                <div id="Panel3-Content" class="helpContent" > 
-                    <img class="helpContent-image" src="/source/resources/GIFs/DeletePicture.png"> </img>
-            </div>
-                <div id="Panel4-Content" class="helpContent" >
-                    <img class="helpContent-image" src="/source/resources/GIFs/TogglingGIF.gif"> </img>
-            </div>
+        //     </div>
+        //     <div class = "helpContentHolder">
+        //         <div id="Panel1-Content" style="display:inherit" class="helpContent">  
+        //         <img class="helpContent-image" src="/source/resources/GIFs/AddingGIF.gif"> </img>
+        //         </div>
+        //         <div id="Panel2-Content" class="helpContent" > 
+        //                 <img class="helpContent-image" src="/source/resources/GIFs/ConnectionGIF.gif"> </img>
+        //         </div>
+        //         <div id="Panel3-Content" class="helpContent" > 
+        //             <img class="helpContent-image" src="/source/resources/GIFs/DeletePicture.png"> </img>
+        //     </div>
+        //         <div id="Panel4-Content" class="helpContent" >
+        //             <img class="helpContent-image" src="/source/resources/GIFs/TogglingGIF.gif"> </img>
+        //     </div>
 
-            </div>
+        //     </div>
             
-            </div>
+        //     </div>
                
-        `
+        // `
 
-        this.TabsDiv.innerHTML =  IHTML;
-        this.TabsDiv.getElementBy
+        // this.TabsDiv.innerHTML =  IHTML;
+        // this.TabsDiv.getElementBy
 
-        this.legend.appendChild(this.TabsDiv)
+        // this.legend.appendChild(this.TabsDiv)
 
 
 
@@ -346,24 +317,26 @@ export default class DC extends RunestoneBase {
 
 
 
-        this.instructionsButton.addEventListener("click" , ()=> {
+        // this.instructionsButton.addEventListener("click" , ()=> {
             
-            this.legend.style.display = this.legend.style.display == "block" ? "none" : "block"
+        //     this.legend.style.display = this.legend.style.display == "block" ? "none" : "block"
 
-            this.helpOpen = !this.helpOpen
-            if(this.helpOpen){
-                this.instructionsButton.innerText = "Hide help ▲"
-                this.TabsDiv.style.display = "inherit"
+        //     this.helpOpen = !this.helpOpen
+        //     if(this.helpOpen){
+        //         this.instructionsButton.innerText = "Hide help ▲"
+        //         this.TabsDiv.style.display = "inherit"
 
-            }
-            else{
-                this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
-                this.TabsDiv.style.display = "none"
-            }
-            return false;
-        })
+        //     }
+        //     else{
+        //         this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+        //         this.TabsDiv.style.display = "none"
+        //     }
+        //     return false;
+        // })
 
-        this.wrapperDiv.appendChild(this.legend)
+        // this.wrapperDiv.appendChild(this.legend)
+
+        tabbedHelpBox(4, this.wrapperDiv, ["Adding Gates", "Making Connections", "Deleting Gates", "Toggling Inputs"], ["/source/resources/GIFs/AddingGIF.gif", "/source/resources/GIFs/ConnectionGIF.gif", "/source/resources/GIFs/DeletePicture.png", "/source/resources/GIFs/TogglingGIF.gif"])
 
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'
