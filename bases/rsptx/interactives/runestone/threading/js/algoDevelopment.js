@@ -96,8 +96,8 @@
             let x = state.readFromx;
             let y = state.y1;
             state = threadTemplate1["evalIfMutex"](state, info, numLinesIf);
-            for (let i = 0; i<numLinesElse; i++){
-                state = threadTemplate1["changeElseMutex"](state, info, numLinesElse);
+            for (let i = 0; i<numLinesElse+1; i++){
+                state = threadTemplate1["changeElseMutex"](state, info, i);
             }
             return state;
         }
@@ -161,12 +161,16 @@
                 }
             }
             state.readFromx = state.writeTox
+            console.log('inChangeIfMutex')
+            console.log(state)
             return state;
         },
         
         ['changeElseMutex']: (state, info, i) => {
             let x = state.readFromx;
             let y = state.y2;
+            console.log("stateinChangeElseMutex")
+            console.log(state)
             if(!state.inIf2){
                 if (info.operandElse[i] == "x"){
                     state.writeTox = eval(info.changeElse[i])
@@ -175,6 +179,7 @@
                 }
             }
             state.readFromx = state.writeTox
+            console.log(state)
             return state
 
         },
@@ -182,14 +187,20 @@
         ["evalIfMutex"]: (state, info, numLines)=>{
             let x = state.readFromx;
             let y = state.y2;
+            console.log("inevalIfMutex")
+            console.log(state)
+            
             if(eval(info.comp)){
                 state.inIf2 = true
+                
                 for(let i = 0; i<numLines+1; i++){
+                    
                     state = threadTemplate2["changeIfMutex"](state, info, i);
                 }
                 
             }
             else{
+                
                 state.inIf2 = false;
             }
             
@@ -199,9 +210,14 @@
         ["ifElseMutex"]: (state, info, numLinesIf, numLinesElse)=>{
             let x = state.readFromx;
             let y = state.y2;
+            console.log(numLinesIf)
+            console.log(numLinesElse)
+            console.log("inifElseMutex")
+            console.log(state)
             state = threadTemplate2["evalIfMutex"](state, info, numLinesIf);
-            for (let i = 0; i<numLinesElse; i++){
-                state = threadTemplate2["changeElseMutex"](state, info, numLinesElse);
+
+            for (let i = 0; i<numLinesElse+1; i++){
+                state = threadTemplate2["changeElseMutex"](state, info, i);
             }
             return state;
         }
@@ -432,7 +448,7 @@ function generateThreadInfo(mode, limitLineSize=false){
     changeElse = generateChange(operatorChange, operandElse, operands, lineSizeElse);
 
     
-    const thread = {comp: "y>=1", operandIf: ["x", "y"], operandElse: ["y"], changeIf: ["x + 2", "x"], changeElse: ["y+7"], lineSizeIf: 2, lineSizeElse: 1}
+    const thread = {comp: "x>7", operandIf: ["y", "x"], operandElse: ["x"], changeIf: ["y+x", "y"], changeElse: ["x+y"], lineSizeIf: 2, lineSizeElse: 1}
     return thread
 }
 
@@ -441,7 +457,7 @@ function generateInitialState(){
     let coinFlip = Math.floor(Math.random()*2);
     let y1 = coinFlip ? Math.floor(Math.random()*(6))+1 : Math.floor(Math.random()*(9-4))+5;
 
-    return {readFromx: 3, writeTox: 3, y1:4, y2:4, inIf1: false, inIf2: false}
+    return {readFromx: 3, writeTox: 3, y1:5, y2:5, inIf1: false, inIf2: false}
 }
 
 function toState(stateArr){
@@ -495,6 +511,8 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
                     if(regex.test(thread1[j-1])){
                         arr[0][j].push(JSON.stringify(threadTemplate1[thread1[j-1].slice(1,thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))))
+                    }else if (thread1[j-1]=="ifElseMutex"){
+                        arr[0][j].push(JSON.stringify(threadTemplate1[thread1[j-1]](JSON.parse(elem), thread1Info, thread1Info.lineSizeIf-1, thread1Info.lineSizeElse-1)))
                     }else{
                         arr[0][j].push(JSON.stringify(threadTemplate1[thread1[j-1]](JSON.parse(elem), thread1Info)))
                     }
@@ -510,6 +528,8 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 arr[i-1][0].forEach((elem)=>{
                     if(regex.test(thread2[i-1])){
                         arr[i][0].push(JSON.stringify(threadTemplate2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))))
+                    }else if (thread2[i-1]=="ifElseMutex"){
+                        arr[i][0].push(JSON.stringify(threadTemplate2[thread2[i-1]](JSON.parse(elem), thread2Info, thread2Info.lineSizeIf-1, thread2Info.lineSizeElse-1)))
                     }else{
                         arr[i][0].push(JSON.stringify(threadTemplate2[thread2[i-1]](JSON.parse(elem), thread2Info)))
                     }
@@ -527,7 +547,9 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                     let next;
 
                     if(regex.test(thread2[i-1])){
-                        next =threadTemplate2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))
+                        next = threadTemplate2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))
+                    }else if (thread2[i-1]=="ifElseMutex"){
+                        next = threadTemplate2[thread2[i-1]](JSON.parse(elem), thread2Info, thread2Info.lineSizeIf-1, thread2Info.lineSizeElse-1)
                     }else{
                         next = threadTemplate2[thread2[i-1]](JSON.parse(elem), thread2Info)
                     }
@@ -544,7 +566,9 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                     let next;
 
                     if(regex.test(thread1[j-1])){
-                        next =threadTemplate1[thread1[j-1].slice(1, thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))
+                        next = threadTemplate1[thread1[j-1].slice(1, thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))
+                    }else if (thread1[j-1]=="ifElseMutex"){
+                        next = threadTemplate1[thread1[j-1]](JSON.parse(elem), thread1Info, thread1Info.lineSizeIf-1, thread1Info.lineSizeElse-1)
                     }else{
                         next = threadTemplate1[thread1[j-1]](JSON.parse(elem), thread1Info)
                     }
@@ -657,7 +681,7 @@ function initialize(mode){
     if(Math.random()<allRate){
         thread = ["ifElseMutex"]
     }
-    thread = ["1evalIfMutex", "0changeElse"];
+    thread = ["ifElseMutex"];
     let text = generateText(state, thread1Info, thread);
 
 
