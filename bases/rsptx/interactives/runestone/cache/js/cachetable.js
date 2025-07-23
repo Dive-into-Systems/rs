@@ -66,7 +66,6 @@ export default class cachetable extends RunestoneBase {
 
         this.renderCacheTableMain();
         this.resetGeneration();
-        this.resetGeneration();
         this.renderCacheTableButtons();
         this.renderCacheTableFeedbackDiv();
 
@@ -100,7 +99,7 @@ export default class cachetable extends RunestoneBase {
         this.redo = true;
         this.generateAnother = true;
 
-        this.fixed = false;
+        this.preset = false;
         this.cacheTableInit = null;
         this.referenceList = null;
 
@@ -130,8 +129,8 @@ export default class cachetable extends RunestoneBase {
                 this.indexBits = eval(currentOptions["index"]);
                 this.numRows = 1 << this.indexBits;
             }
-            if (currentOptions["num-references"] != undefined) {
-                this.numRefs = eval(currentOptions["num-references"]);
+            if (currentOptions["ref"] != undefined) {
+                this.numRefs = eval(currentOptions["ref"]);
             }
             if (currentOptions["init-valid-rate"] != undefined) {
                 this.initValidRate = eval(currentOptions["init-valid-rate"]);
@@ -149,15 +148,23 @@ export default class cachetable extends RunestoneBase {
             if (currentOptions["algorithm"] != undefined) {
                 this.algorithm = currentOptions["algorithm"];
             }
-            if (currentOptions["fixed"] != undefined) {
-                this.fixed = eval(currentOptions["fixed"]);
-                if ( this.fixed ) {
-                    this.cacheTableInit = currentOptions["init-cache-table"];
-                    this.referenceList = currentOptions["reference-list"];
-                    if (this.cacheTableInit == null) {
-                        this.cacheTableInit = [];
-                    }
-                } 
+            
+            // Load preset components independently
+            if (currentOptions["init-cache-table"] != undefined) {
+                this.cacheTableInit = currentOptions["init-cache-table"];
+                this.preset = true;
+                if (!this.cacheTableInit) {
+                    this.cacheTableInit = [];
+                    this.preset = false;
+                }
+            }
+            if (currentOptions["reference-list"] != undefined) {
+                this.referenceList = currentOptions["reference-list"];
+                this.preset = true;
+                if (!this.referenceList) {
+                    this.referenceList = [];
+                    this.preset = false;
+                }
             }
             this.tagBits = this.numBits - this.indexBits - this.offsetBits;
         } catch (error) {
@@ -238,23 +245,22 @@ export default class cachetable extends RunestoneBase {
                 "<div>Click 'Redo Exercise' to redo the exercise.</div>";
         }
         if ( this.generateAnother ) {
-            this.helpStatement.innerHTML += 
-                "<div>Click 'Generate another' to generate another exercise.</div>";
+                    this.helpStatement.innerHTML += 
+            "<div>Click 'Generate another' to generate another exercise.</div>";
         }
-            
-        this.helpStatement.style.visibility = "visible";
         // create the button for display/hide help
         this.helpButton = document.createElement("button");
         this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
         this.helpButton.addEventListener(            
             "click",
             function() {
-                if (this.helpStatement.style.visibility == "visible") {
-                    this.helpStatement.style.visibility = "hidden";
+                // Check if help statement is currently in the DOM
+                if (this.helpDiv.contains(this.helpStatement)) {
+                    // Help is shown, hide it
                     this.helpDiv.removeChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_display_help");
                 } else {
-                    this.helpStatement.style.visibility = "visible";
+                    // Help is hidden, show it
                     this.helpDiv.appendChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
                     this.sendData(4)
@@ -263,6 +269,7 @@ export default class cachetable extends RunestoneBase {
             }.bind(this),
         false); 
 
+        this.helpDiv.appendChild(this.helpStatement);
         this.helpDiv.appendChild(document.createElement("br"));
         this.helpDiv.appendChild(this.helpButton);
         this.containerDiv.appendChild(this.helpDiv);
@@ -884,8 +891,7 @@ export default class cachetable extends RunestoneBase {
         this.generateButton.addEventListener(
             "click",
             function () {
-                this.fixed = false;
-                this.resetGeneration();
+                this.preset = false;
                 this.resetGeneration();
                 this.displayNecessaryFields();
                 this.hidefeedback();
@@ -910,6 +916,7 @@ export default class cachetable extends RunestoneBase {
         this.redoButton.addEventListener(
             "click",
             function () {
+                this.preset = true;
                 this.sendData(8); // Action 8 : Restart table for data logging
                 this.resetGeneration();
                 this.displayNecessaryFields();
@@ -990,7 +997,6 @@ export default class cachetable extends RunestoneBase {
         this.generateAllAnsers();
         this.storeReferenceList();
 
-        this.fixed = true;
         // this.initDisplayedTableBody();
         this.curr_tagIndex_table = [];
         this.readInitLines();
@@ -1005,7 +1011,8 @@ export default class cachetable extends RunestoneBase {
     }
 
     storeInitTable() {
-        if ( this.fixed ) {
+        // Only store if we don't have a preset cache table
+        if ( this.preset && this.cacheTableInit && this.cacheTableInit.length > 0 ) {
             return;
         }
         // save the cache table
@@ -1033,7 +1040,9 @@ export default class cachetable extends RunestoneBase {
     }
 
     storeReferenceList() {
-        if ( this.fixed ) {
+        console.log("store reference list ", this.referenceList, "cache table init ", this.cacheTableInit);
+        // Only store if we don't have a preset reference list
+        if ( this.preset && this.referenceList && this.referenceList.length > 0 ) {
             return;
         }
         // save the list of memory reference
@@ -1064,7 +1073,8 @@ export default class cachetable extends RunestoneBase {
 
     generateAnswerInit() {
         this.generateAnswerParams();
-        if ( this.fixed ) {
+        // Check if we have a preset cache table, otherwise generate one
+        if ( this.preset && this.cacheTableInit && this.cacheTableInit.length > 0 ) {
             this.readInitLines();
         } else {
             this.genRefBoostInit();
@@ -1128,7 +1138,6 @@ export default class cachetable extends RunestoneBase {
                 this.curr_tagIndex_table.push([[0, 0, ""],[0, 0, "",],0]);
             }
         }
-        //
         for (const line of this.cacheTableInit) {
             const index = line["index"];
             if ( this.cacheOrg == directMapped ) {
@@ -1183,12 +1192,12 @@ export default class cachetable extends RunestoneBase {
                 this.curr_tagIndex_table[ index ][ 1 ][ 1 ] = d2;
                 this.curr_tagIndex_table[ index ][ 1 ][ 2 ] = tag2;
             }
-            
         }
     }
 
     generateAnswerNext() {
-        if ( this.fixed ) {
+        // Check if we have a preset reference list, otherwise generate references
+        if ( this.preset && this.referenceList && this.referenceList.length > 0 ) {
             this.loadNextAnswer();
         } else {
             this.genRefBoostNext();
