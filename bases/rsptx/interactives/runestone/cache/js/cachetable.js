@@ -148,21 +148,22 @@ export default class cachetable extends RunestoneBase {
             if (currentOptions["algorithm"] != undefined) {
                 this.algorithm = currentOptions["algorithm"];
             }
-            if (currentOptions["preset"] != undefined) {
-                this.preset = eval(currentOptions["preset"]);
-            }
             
             // Load preset components independently
             if (currentOptions["init-cache-table"] != undefined) {
                 this.cacheTableInit = currentOptions["init-cache-table"];
+                this.preset = true;
                 if (!this.cacheTableInit) {
                     this.cacheTableInit = [];
+                    this.preset = false;
                 }
             }
             if (currentOptions["reference-list"] != undefined) {
                 this.referenceList = currentOptions["reference-list"];
+                this.preset = true;
                 if (!this.referenceList) {
                     this.referenceList = [];
+                    this.preset = false;
                 }
             }
             this.tagBits = this.numBits - this.indexBits - this.offsetBits;
@@ -915,6 +916,7 @@ export default class cachetable extends RunestoneBase {
         this.redoButton.addEventListener(
             "click",
             function () {
+                this.preset = true;
                 this.sendData(8); // Action 8 : Restart table for data logging
                 this.resetGeneration();
                 this.displayNecessaryFields();
