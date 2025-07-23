@@ -210,7 +210,7 @@
 function generateText(state, thread1Info, thread){
 
     let initialText = `<pre style="font-size: 18px; width:100%;">int x = ${state.readFromx};<br>int pthread_mutex_lock(pthread_mutex_t *mutex);</pre><br>`
-    let threadText = `<pre style="font-size: 16px;">int y = ${state.y1};<br>`
+    let threadText = `<pre style="font-size: 14.5px;">int y = ${state.y1};<br>`
     let firstElse = true;
     let unlockInstance = -1;
     let addMut = false;
@@ -271,11 +271,11 @@ function generateText(state, thread1Info, thread){
             threadText += "}else{<br>"
             firstElse = false;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&evalIfMutex){
-            threadText += "     pthread_mutex_unlock()<br>}<br>else{<br>     pthread_mutex_unlock()<br>"
+            threadText += "     pthread_mutex_unlock(&mutex);<br>}<br>else{<br>     pthread_mutex_unlock(&mutex);<br>"
             firstElse = false;
             unlockInstance = -1;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&!evalIfMutex){
-            threadText += "     pthread_mutex_unlock()<br>}<br>else{<br>"
+            threadText += "     pthread_mutex_unlock(&mutex);<br>}<br>else{<br>"
             firstElse = false;
             unlockInstance = -1;
         }
@@ -291,12 +291,12 @@ function generateText(state, thread1Info, thread){
         }
 
         if((i == unlockInstance) &&!(inIf||inElse)){
-            threadText += "pthread_mutex_unlock();<br>"
+            threadText += "pthread_mutex_unlock(&mutex);<br>"
             unlockInstance = -1
         }
 
         if((i == unlockInstance) &&(inIf||inElse)){
-            threadText += "     pthread_mutex_unlock();<br>"
+            threadText += "     pthread_mutex_unlock(&mutex);<br>"
             unlockInstance = -1
         }
 
@@ -318,13 +318,13 @@ function generateText(state, thread1Info, thread){
     }
 
     if(unlockInstance == i&&!allChanged){
-        threadText += "     pthread_mutex_unlock();<br>"
+        threadText += "     pthread_mutex_unlock(&mutex);<br>"
         unlockInstance = -1
     }
     threadText += `}<br>print("%d %d", x, y);<br>`
 
     if(unlockInstance == i&&allChanged){
-        threadText += "pthread_mutex_unlock();<br>"
+        threadText += "pthread_mutex_unlock(&mutex);<br>"
         unlockInstance = -1
     }
     threadText+="return NULL;</pre>"
