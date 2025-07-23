@@ -97,3 +97,11 @@ th {
 .outputModeDiv{
     display:flex
 }
+
+.instructionsButton {
+   cursor: pointer;
+   margin: 2% 2% 2% 0;
+   display: inline-block
+
+}
+

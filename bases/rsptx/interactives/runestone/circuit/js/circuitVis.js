@@ -5,6 +5,9 @@ import RunestoneBase from "../../common/js/runestonebase.js";
 import { Pass } from "codemirror";
 import "../css/circuitdraw.css"
 import { updateHeight } from "../../../utils/updateHeight.js";
+import { tabbedHelpBox } from "../../../utils/tabbedHelpBox.js";
+
+
 
 export var CVList = {}; // Object containing all instances of CV that aren't a child of a timed assessment.
 
@@ -64,7 +67,7 @@ export default class CV extends RunestoneBase {
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
-
+       updateHeight(window, document, this, true, 882)
        this.sendData(0);
    }
 
@@ -419,7 +422,11 @@ export default class CV extends RunestoneBase {
         this.instructionNode.style.paddingBottom = "2px";
         this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Draw a circuit that produces the truth table below. "
 
+
         this.wrapperDiv.appendChild(this.instructionNode);
+
+        tabbedHelpBox(2, this.wrapperDiv, ['Toggle Gates', 'Changing Circuits'], ['/source/resources/GIFs/CVToggle.gif', '/source/resources/GIFs/CVChange.gif'], false)
+
 
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'

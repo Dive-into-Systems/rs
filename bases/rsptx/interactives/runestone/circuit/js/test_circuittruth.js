@@ -35,6 +35,8 @@ import { updateHeight } from "../../../utils/updateHeight.js";
 import RunestoneBase from "../../common/js/runestonebase.js";
 import "../css/circuittruth.css";
 import circuit_generator from "./circuit_generate.js";
+import { tabbedHelpBox } from "../../../utils/tabbedHelpBox.js";
+
 
 export var CircuitTruthList = {};
 
@@ -61,12 +63,7 @@ export default class CircuitTruth extends RunestoneBase {
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
-        this.instructionNode = document.createElement("div");
-        // instruction text
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the randomly-generated circuit shown below, fill in the corresponding truth table.";
-        this.instructionNode.style.padding = "10px";
 
-        this.containerDiv.appendChild(this.instructionNode);
 
         
         this.statementDiv = document.createElement("div");
@@ -163,6 +160,22 @@ export default class CircuitTruth extends RunestoneBase {
         container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
         container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
         
+        tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['/source/resources/GIFs/FITTMoveGIF.gif', '/source/resources/GIFs/FITTToggleGIF.gif'], true)
+
+
+        this.instructionNode = document.createElement("div");
+        // instruction text
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the randomly-generated circuit shown below, fill in the corresponding truth table.";
+        this.instructionNode.style.padding = "10px 10px 10px 0";
+
+        this.containerDiv.prepend(this.instructionNode);
+
+
+
+        
+        
+        console.log('a')
+
         document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();   // avoid accidental form submits or re-generates
@@ -293,16 +306,45 @@ export default class CircuitTruth extends RunestoneBase {
          */
         function checkAnswers() {
             // Find every answer input
+            let i = 0
+            let inputNodes = document.getElementsByClassName('answer-input');
             container.querySelectorAll('.answer-input').forEach(input => {
                 const expected = input.dataset.expected;
                 const actual   = input.value.trim();
                 // color the containing TD
-                const td = input.parentElement;
+                let td = input.parentElement;
+                td.style.display = "flex"
+                inputNodes[i].style = "margin-left:46.5%"
+                let symbol;
+                symbol = document.createElement("div")
                 if (actual === expected) {
-                td.style.backgroundColor = 'lightgreen';
+                  td.style.backgroundColor = '#f4fcfc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  
+                  symbol.innerHTML = "✔️"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`;
+                  td.append(symbol);
+
                 } else {
-                td.style.backgroundColor = 'lightcoral';
+                  td.style.backgroundColor = '#f4dcdc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  symbol.innerHTML = "❌"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`
+                  td.append(symbol);
                 }
+                i++
             });
         }
 

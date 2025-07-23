@@ -102,7 +102,7 @@ export default class AM extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and an instruction, select whether or not the instruction accesses memory.  If so, specify whether it’s a read from memory or write to memory.  If the operation accesses memory or produces a memory address, fill in the blank with the corresponding address."
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given two register values and an instruction, select whether or not the instruction accesses memory.  If so, specify whether it’s a read from memory or write to memory.  If the operation accesses memory or produces a memory address, fill in the blank with the corresponding address.<br><br> Each question is independent and does not change the starting values of the registers."
 
         this.containerDiv.appendChild(this.instructionNode);
 
