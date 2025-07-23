@@ -51,6 +51,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
         updateHeight(window, document, this);
+        this.sendData(0)
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -364,17 +365,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
             this.tryAnother();
             updateHeight(window, document, this);
-            this.sendData(3);
+            this.sendData(3)
         });
         const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
             this.resetValues()
             updateHeight(window, document, this);
-            this.sendData(9);
+            this.sendData(9)
         });
         const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
             this.provideHelp();
             updateHeight(window, document, this);
-            this.sendData(4);
+            this.sendData(4)
             });
         const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
             this.checkAnswer()
@@ -538,13 +539,14 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const actionid = (isCorrect ? 1 : 2)
         const actualAnswers = this.allStates.slice(0, this.currentInstruction)
         const code = this.initialState[0].slice(0,this.currentInstruction)
-        const data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
+        this.data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
+
         if(isCorrect){
-            this.sendData(1);
-        }else{
+            this.sendData(1)
+        }
+        else {
             this.sendData(2);
         }
-        // 
     }
 
     // Handle case sensitivity or number forms
@@ -642,35 +644,26 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
 
     sendData(actionId) {
+        let checkedOPs = []
+        if(this.arith_checked){
+            checkedOPs.push("Data Movement");
+        }
+        if(this.memo_checked){
+            checkedOPs.push("Memory Operations");
+        }
+        if(this.stack_checked){
+            checkedOPs.push("Stack Operations");
+        }
 
         let details; 
         if (actionId == 1 || actionId == 2) {
-            details = {
-                config : {
-                    numBits : `${this.num_bits}`,
-                    checkedOperators : `${this.checkedValues}`,
-                    usedOperator : `${this.randomItem}`
-                },
-                prompt: {
-                    displayedPrompt: `${this.promptDivTextNode.textContent}`,
-                },
-                eval: {
-                    correctAnswer: `${this.target_num_string}`,
-                    userAnswer : this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null,
-                    correctpt1 : this.correctpt1,
-                }
-            }
-        
-
-
+            details = this.data;
         }
 
-        if(actionId == 3 || actionId == 0){
+        if(actionId == 3 || actionId == 0 || actionId == 9 || actionId == 4){
             details = {
                 config : {
-                    numBits : `${this.num_bits}`,
-                    checkedOperators : `${this.checkedValues}`,
-                    usedOperator : `${this.randomItem}`
+                    operations: `${checkedOPs}`,
                 },
             }
         }

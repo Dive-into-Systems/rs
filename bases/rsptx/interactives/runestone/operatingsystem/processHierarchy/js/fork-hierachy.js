@@ -25,7 +25,7 @@ export default class ProcHierarchy extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = "13.5";
+        this.componentId = "13.1";
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -49,7 +49,7 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Create the ProcHierarchy Element
     createElements() {
-        // this.sendData(0);
+        this.sendData(0);
         this.initParams();
         this.initInputField();
         this.initButtons();
@@ -298,7 +298,7 @@ export default class ProcHierarchy extends RunestoneBase {
         this.revealTreeButton.addEventListener("click", () => {
             if ($(this.hierarchyTreeDiv).css('display') == 'none') {
                 this.viewedHierarchy = true;
-                this.sendData(8);
+                this.sendData(10);
                 this.showProcessHierarchy();
             }
             else { this.hideProcessHierarchy(); }
