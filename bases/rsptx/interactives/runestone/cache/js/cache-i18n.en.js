@@ -29,7 +29,7 @@ $.i18n().load({
         msg_cacheinfo_too_many_bits: "Error: too many number of bits",
 
         msg_cachetable_correct: "Correct. Good job!",
-        msg_cachetable_generate_another: "Try a new table",
+        msg_cachetable_generate_another: "Generate another question",
         msg_cachetable_check_me: "Check answer",
         msg_cachetable_redo: "Restart this table",
         msg_cachetable_incorrect: "Incorrect. Please try again.",
