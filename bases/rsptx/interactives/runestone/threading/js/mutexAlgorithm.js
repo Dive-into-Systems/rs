@@ -80,7 +80,7 @@
             let y = state.y1;
             if(eval(info.comp)){
                 state.inIf1 = true
-                for(let i = 0; i<numLines; i++){
+                for(let i = 0; i<numLines+1; i++){
                     state = threadTemplate1["changeIfMutex"](state, info, i);
                 }
                 
@@ -96,8 +96,8 @@
             let x = state.readFromx;
             let y = state.y1;
             state = threadTemplate1["evalIfMutex"](state, info, numLinesIf);
-            for (let i = 0; i<numLinesElse; i++){
-                state = threadTemplate2["changeElseMutex"](state, info, numLinesElse);
+            for (let i = 0; i<numLinesElse+1; i++){
+                state = threadTemplate1["changeElseMutex"](state, info, numLinesElse);
             }
             return state;
         }
@@ -184,8 +184,8 @@
             let y = state.y2;
             if(eval(info.comp)){
                 state.inIf2 = true
-                for(let i = 0; i<numLines; i++){
-                    state = threadTemplate1["changeIfMutex"](state, info, i);
+                for(let i = 0; i<numLines+1; i++){
+                    state = threadTemplate2["changeIfMutex"](state, info, i);
                 }
                 
             }
@@ -199,8 +199,8 @@
         ["ifElseMutex"]: (state, info, numLinesIf, numLinesElse)=>{
             let x = state.readFromx;
             let y = state.y2;
-            state = threadTemplate1["evalIfMutex"](state, info, numLinesIf);
-            for (let i = 0; i<numLinesElse; i++){
+            state = threadTemplate2["evalIfMutex"](state, info, numLinesIf);
+            for (let i = 0; i<numLinesElse+1; i++){
                 state = threadTemplate2["changeElseMutex"](state, info, numLinesElse);
             }
             return state;
@@ -271,7 +271,7 @@ function generateText(state, thread1Info, thread){
             threadText += "}else{<br>"
             firstElse = false;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&evalIfMutex){
-            threadText += "}<br>pthread_mutex_unlock()<br>else{<br>"
+            threadText += "     pthread_mutex_unlock()<br>}<br>else{<br>     pthread_mutex_unlock()<br>"
             firstElse = false;
             unlockInstance = -1;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&!evalIfMutex){
