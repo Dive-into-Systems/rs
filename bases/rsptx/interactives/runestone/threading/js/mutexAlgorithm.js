@@ -209,8 +209,8 @@
 
 function generateText(state, thread1Info, thread){
 
-    let initialText = `int x = ${state.readFromx};\n`
-    let threadText = `int y = ${state.y1};\n`
+    let initialText = `<pre style="font-size: 18px; width:100%;">int x = ${state.readFromx};<br>int pthread_mutex_lock(pthread_mutex_t *mutex);</pre><br>`
+    let threadText = `<pre style="font-size: 16px;">int y = ${state.y1};<br>`
     let firstElse = true;
     let unlockInstance = -1;
     let addMut = false;
@@ -248,60 +248,60 @@ function generateText(state, thread1Info, thread){
         }
 
         if(firstElse && ce.test(thread[i])&&!(unlockInstance==i)){
-            threadText += "}else{\n"
+            threadText += "}else{<br>"
             firstElse = false;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&evalIfMutex){
-            threadText += "}\npthread_mutex_unlock()\nelse{\n"
+            threadText += "}<br>pthread_mutex_unlock()<br>else{<br>"
             firstElse = false;
             unlockInstance = -1;
         }else if (firstElse && ce.test(thread[i])&&(unlockInstance==i)&&!evalIfMutex){
-            threadText += "     pthread_mutex_unlock()\n}\nelse{\n"
+            threadText += "     pthread_mutex_unlock()<br>}<br>else{<br>"
             firstElse = false;
             unlockInstance = -1;
         }
 
         if(addMut && !(inIf||inElse)){
-            threadText += "int pthread_mutex_lock(pthread_mutex_t *mutex);\n"
+            threadText += "pthread_mutex_lock(&mutex);<br>"
             addMut = false;
         }
 
         if(addMut && (inIf||inElse)){
-            threadText += "     int pthread_mutex_lock(pthread_mutex_t *mutex);\n"
+            threadText += "     pthread_mutex_lock(&mutex);<br>"
             addMut = false;
         }
 
         if((i == unlockInstance) &&!(inIf||inElse)){
-            threadText += "pthread_mutex_unlock();\n"
+            threadText += "pthread_mutex_unlock();<br>"
             unlockInstance = -1
         }
 
         if((i == unlockInstance) &&(inIf||inElse)){
-            threadText += "     pthread_mutex_unlock();\n"
+            threadText += "     pthread_mutex_unlock();<br>"
             unlockInstance = -1
         }
 
         switch(thread[i]){
             case "evalIf":
-                threadText += `if (${thread1Info.comp}){\n`;
+                threadText += `if (${thread1Info.comp}){<br>`;
                 inIf = true;
                 break;
             case "changeIf":
-                threadText += `     ${thread1Info.operandIf[changeNumber]} = ${thread1Info.changeIf[changeNumber]};\n`;
+                threadText += `     ${thread1Info.operandIf[changeNumber]} = ${thread1Info.changeIf[changeNumber]};<br>`;
                 break;
             case "changeElse":
                 inIf=false;
                 inElse = true
-                threadText += `     ${thread1Info.operandElse[changeNumber]} = ${thread1Info.changeElse[changeNumber]};\n`
+                threadText += `     ${thread1Info.operandElse[changeNumber]} = ${thread1Info.changeElse[changeNumber]};<br>`
         }
 
 
     }
 
     if(unlockInstance == i){
-        threadText += "     pthread_mutex_unlock();\n"
+        threadText += "     pthread_mutex_unlock();<br>"
         unlockInstance = -1
     }
-    threadText += `}\nprint("%d %d", x, y);\nreturn NULL;`
+    threadText += `}<br>print("%d %d", x, y);<br>return NULL;</pre>`
 
     return {initial: initialText, t1: threadText, t2: threadText};
 }
@@ -440,7 +440,7 @@ function toState(stateArr){
 }
 
 
-function stateChange(state, thread1Info, thread2Info, thread1, thread2){
+export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     let arr = [];
     for(let n = 0; n<=thread2.length; n++){
         let temp = [];
@@ -550,7 +550,7 @@ function stateChange(state, thread1Info, thread2Info, thread1, thread2){
     return arr
 }
 
-function initialize(mode){
+export function initialize(mode){
 
 
     const state = generateInitialState();//{x: 4, y1:9, y2:3, inIf1: false, inIf2: false}
@@ -604,6 +604,26 @@ function initialize(mode){
         }
     }
 
+    let mutFlag = false;
+    const regEx = new RegExp("Mutex")
+    for (let i = 0; i< thread.length; i++){
+        if(regEx.test(thread[i])){
+            mutFlag = true;
+        }
+    }
+    if(!mutFlag){
+        let random = Math.floor(Math.random()*thread.length)
+        let string = thread[random]
+        while(string == "update"){
+            random = Math.floor(Math.random()*thread.length)
+            string = thread[random]
+        }
+        if(string == "evalIf"){
+            string = `${thread1Info.lineSizeIf-1}`+string;
+        }
+        string = string+"Mutex";
+        thread[random] = string;
+    }
 
     let text = generateText(state, thread1Info, thread);
 
@@ -611,7 +631,7 @@ function initialize(mode){
     return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread, thread2: thread};
 }
 
-function possibleFinalStates(stateArr, thread1Length, thread2Length){
+export function possibleFinalStates(stateArr, thread1Length, thread2Length){
     let finalState = stateArr[thread2Length][thread1Length];
     let ret = []
 
