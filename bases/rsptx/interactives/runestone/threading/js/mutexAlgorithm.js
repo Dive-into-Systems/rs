@@ -594,7 +594,7 @@ export function initialize(mode){
     let flag1 = Math.floor(Math.random()*2)
     let flag2 = Math.floor(Math.random()*2)
     let thread = [];
-    let evalMutexRate = 0.3;
+    const evalMutexRate = 0.2;
     if(Math.random()<evalMutexRate){
         thread.push(evalPossibilities[1]);
     }else{
