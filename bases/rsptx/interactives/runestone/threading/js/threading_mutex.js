@@ -161,14 +161,18 @@ export default class TM extends RunestoneBase {
             target = 5;
         }
 
-        for (let i = 0; i<20; i++){
-            this.problem = initialize(Number(this.modeSelect.value));
-            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
-            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+        if(!this.problemPreset){
+            for (let i = 0; i<20; i++){
+                this.problem = initialize(Number(this.modeSelect.value));
+                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-            if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                break;
+                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                    break;
+                }
             }
+        }else{
+            this.finalStates = this.problem.answerArr;
         }
 
         // Copy the original elements to the container holding what the user will see.
@@ -192,6 +196,7 @@ export default class TM extends RunestoneBase {
     }
 
     setCustomizedParams() {
+
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
         if(currentOptions["preset-questionType"]&&currentOptions["preset-mode"]){
             this.typeSelect = {value: currentOptions["questionType"].toString()};
@@ -207,6 +212,32 @@ export default class TM extends RunestoneBase {
         else if(currentOptions["preset-mode"]){
             this.modeSelect = {value: currentOptions["mode"].toString()};
             this.modePreset = true;
+        }
+        
+        if(currentOptions["preset-problem"]){
+            const initial = "<pre style='font-size: 18px; width:130px;'>"+currentOptions["initialText"].replaceAll("\n", "<br>")+"</pre><br>"
+            
+            let temp = currentOptions["thread1Text"];
+            temp = temp.replaceAll("\n", "<br>")
+            const t1 = "<pre style='font-size: 14.5px;'>" + temp + "</pre>";
+            temp = currentOptions["thread2Text"];
+            temp = temp.replaceAll("\n", "<br>");
+            const t2 = "<pre style='font-size: 14.5px;'>" + temp + "</pre>";
+            const ansArr = []
+            for (let i = 0; i<currentOptions["answerArr"].length; i++){
+                let answer = {readFromx: currentOptions["answerArr"][i][0], y1: currentOptions["answerArr"][i][1], y2: currentOptions["answerArr"][i][2]}
+                ansArr.push(JSON.stringify(answer));
+            }
+            const distractors = [];
+            if(currentOptions["distractors"]){
+                for (let i = 0; i<currentOptions["distractors"].length; i++){
+                    let answer = {readFromx: currentOptions["distractors"][i][0], y1: currentOptions["distractors"][i][1], y2: currentOptions["distractors"][i][2]}
+                    distractors.push(JSON.stringify(answer));
+                }
+            }
+            
+            this.problem = {text: {initial: initial, t1: t1, t2: t2}, answerArr: ansArr, distractors: distractors};
+            this.problemPreset = true;
         }
     };
 
@@ -291,7 +322,15 @@ export default class TM extends RunestoneBase {
                 this.numChoices = 5;
                 break;
         }
-
+        if(this.problemPreset){
+            let dataList = this.problem.answerArr;
+            dataList.push(this.problem.distractors);
+            dataList = dataList.flat();
+            for(let i = 0; i<dataList.length; i++){
+                dataList[i] = JSON.parse(dataList[i])
+            }
+            return dataList;
+        }
         if(this.ansKey.length < this.numChoices){
             for(let i = 0; i<this.ansKey.length; i++){
                 dataList.push(JSON.parse(this.ansKey[i]));
@@ -550,10 +589,11 @@ export default class TM extends RunestoneBase {
 
 
     clearButtons(){
-        this.generateButton.remove()
-        this.submitButton.remove()
-        this.noMoreRowsButton.remove()
-        
+        if(this.noMoreRowsButton){
+            this.noMoreRowsButton.remove();
+        }
+        this.generateButton.remove();
+        this.submitButton.remove();
     }
 
     recordAnswered() {
@@ -581,15 +621,20 @@ export default class TM extends RunestoneBase {
                 target = 5;
             }
 
-            for (let i = 0; i<50; i++){
-                this.problem = initialize(Number(this.modeSelect.value));
-                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
-                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+            if(!this.problemPreset){
+                for (let i = 0; i<50; i++){
+                    this.problem = initialize(Number(this.modeSelect.value));
+                    this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                    this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                    break;
+                    if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                        break;
+                    }
                 }
+            }else{
+                this.finalStates = this.problem.answerArr;
             }
+            
 
             switch(this.typeSelect.value){
                 case "1":
