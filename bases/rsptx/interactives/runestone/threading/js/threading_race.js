@@ -23,6 +23,7 @@ export default class TR extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+        this.setCustomizedParams();
 
         // Default configuration settings
         this.correct = null;
@@ -56,7 +57,6 @@ export default class TR extends RunestoneBase {
     
     createTRElement() {
         this.renderTRPromptAndInput();
-        //this.setCustomizedParams();
         switch(this.typeSelect.value){
             case "1":
                 this.renderAnswerDivMultipleChoice();
@@ -86,63 +86,69 @@ export default class TR extends RunestoneBase {
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
-        this.configHelperText = document.createElement("div");
-        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
-
-        this.statementDiv = document.createElement("div");
-        this.statementDiv.className = "statement-div"
-
-        this.statementDiv.append(this.configHelperText);
-
-        this.modeStatementNode = document.createTextNode("Select a mode:")
-        this.statementDiv.appendChild(this.modeStatementNode);
         
-        this.modeSelect = document.createElement("select")
-        this.modeSelect.className = "form-control fork-inline mode"
-        this.mode1Option = document.createElement("option")
-        this.mode1Option.value = "1"
-        this.mode1Option.textContent = "1"
-        this.modeSelect.append(this.mode1Option)
+        if(!(this.modePreset&&this.typePreset)){
+            this.configHelperText = document.createElement("div");
+            this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
-        this.mode2Option = document.createElement("option")
-        this.mode2Option.value = "2"
-        this.modeSelect.append(this.mode2Option)
-        this.mode2Option.textContent = "2"
+            this.statementDiv = document.createElement("div");
+            this.statementDiv.className = "statement-div"
 
-        this.mode2Option.selected = "selected"
+            this.statementDiv.append(this.configHelperText);
+            if(!(this.modePreset)){
+                this.modeStatementNode = document.createTextNode("Select a mode:")
+                this.statementDiv.appendChild(this.modeStatementNode);
+                
+                this.modeSelect = document.createElement("select")
+                this.modeSelect.className = "form-control fork-inline mode"
+                this.mode1Option = document.createElement("option")
+                this.mode1Option.value = "1"
+                this.mode1Option.textContent = "1"
+                this.modeSelect.append(this.mode1Option)
 
-        this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
+                this.mode2Option = document.createElement("option")
+                this.mode2Option.value = "2"
+                this.modeSelect.append(this.mode2Option)
+                this.mode2Option.textContent = "2"
+
+                this.mode2Option.selected = "selected"
+
+                this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
 
 
-        this.statementDiv.append(this.modeSelect)
-        const modeDiv= document.createElement('div')
-        modeDiv.innerHTML  = '<ul> <li>Mode 1: Each if/else body contains one expression.</li> <li>Mode 2: If/else bodies can contain two expressions.</li></ul>'
-        this.statementDiv.appendChild(modeDiv)
+                this.statementDiv.append(this.modeSelect)
+            
+            const modeDiv= document.createElement('div')
+            modeDiv.innerHTML  = '<ul> <li>Mode 1: Each if/else body contains one expression.</li> <li>Mode 2: If/else bodies can contain two expressions.</li></ul>'
+            this.statementDiv.appendChild(modeDiv)
+            }
 
-        this.typeStatementNode = document.createTextNode("Please select what type of question to generate:")
-        this.statementDiv.appendChild(this.typeStatementNode);
-        
-        this.typeSelect = document.createElement("select")
-        this.typeSelect.className = "form-control fork-inline mode"
-        this.type1Option = document.createElement("option")
-        this.type1Option.value = "1"
-        this.type1Option.textContent = "Select all";
-        this.typeSelect.append(this.type1Option)
+            if(!this.typePreset){
+                this.typeStatementNode = document.createTextNode("Please select what type of question to generate:")
+                this.statementDiv.appendChild(this.typeStatementNode);
+                
+                this.typeSelect = document.createElement("select")
+                this.typeSelect.className = "form-control fork-inline mode"
+                this.type1Option = document.createElement("option")
+                this.type1Option.value = "1"
+                this.type1Option.textContent = "Select all";
+                this.typeSelect.append(this.type1Option)
 
-        this.type2Option = document.createElement("option")
-        this.type2Option.value = "2"
-        this.typeSelect.append(this.type2Option)
-        this.type2Option.textContent = "Fill in the values"
+                this.type2Option = document.createElement("option")
+                this.type2Option.value = "2"
+                this.typeSelect.append(this.type2Option)
+                this.type2Option.textContent = "Fill in the values"
 
-        this.type2Option.selected = "selected"
+                this.type2Option.selected = "selected"
 
-        this.typeSelect.addEventListener("change", ()=>this.generateButton.click())
+                this.typeSelect.addEventListener("change", ()=>this.generateButton.click())
 
-        this.statementDiv.append(this.typeSelect);
-
-        this.containerDiv.appendChild(this.statementDiv);
+                this.statementDiv.append(this.typeSelect);
+            }
+            this.containerDiv.appendChild(this.statementDiv);
+            
+        }
         this.containerDiv.appendChild(document.createElement("br"));
-
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
 
@@ -187,21 +193,22 @@ export default class TR extends RunestoneBase {
 
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
-        if(currentOptions["questionType"] !== undefined&&currentOptions["mode"] !== undefined){
-            this.statementDiv.remove();
-            this.typeSelect.value = currentOptions["questionType"];
-            this.modeSelect = currentOptions["mode"];
+        if(currentOptions["preset-questionType"]&&currentOptions["preset-mode"]){
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.modeSelect = {value: currentOptions["mode"].toString()};
+            this.modePreset = true;
+            this.typePreset = true;
         }
-        if (currentOptions["questionType"] !== undefined) {
-            this.typeSelect.remove();
-            this.typeSelect.value = currentOptions["questionType"];
+        else if (currentOptions["preset-questionType"]) {
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.typePreset = true;
             
         }
-        if(currentOptions["mode"] !== undefined){
-            this.modeSelect.remove();
-            this.modeSelect = currentOptions["mode"];
+        else if(currentOptions["preset-mode"]){
+            this.modeSelect = {value: currentOptions["mode"].toString()};
+            this.modePreset = true;
         }
-};
+    };
 
     generateDistractors(coinFlip, template){
         switch(coinFlip){

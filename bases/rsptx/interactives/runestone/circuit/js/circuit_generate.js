@@ -61,7 +61,7 @@
 */
 import circuitAST from "./circuit_AST/circuitAST";
 export default class circuit_generator{
-    constructor(inputs, gateTypes, maxGates, minGates, exactInput=false, prevGen=null){
+    constructor(inputs, gateTypes, maxGates, minGates, exactInput=false, prevGen=null, preset=null){
         this.inputs = inputs;
         this.maxGates = maxGates;
         this.minGates = minGates;
@@ -69,6 +69,7 @@ export default class circuit_generator{
         this.exactInput = exactInput;
         this.notSelected = false;
         this.prevGen = prevGen;
+        this.preset = preset;
         if(this.gateTypes.includes("NOT")){
             this.gateTypes = this.gateTypes.filter(item => item!="NOT")
             this.notSelected = true;
@@ -76,6 +77,12 @@ export default class circuit_generator{
     }
 
     generateStatement = ()=>{
+        if(this.preset){
+            this.new_circuit = new circuitAST();
+            this.new_circuit.insert(this.preset);
+            this.newTruthTable = this.new_circuit.getTruthTable();
+            return this.preset;
+        }
         let numGates = Math.floor(Math.floor(Math.random() * (this.maxGates - this.minGates + 1)) + this.minGates);
         
         let additionalGateProb = 0.75
