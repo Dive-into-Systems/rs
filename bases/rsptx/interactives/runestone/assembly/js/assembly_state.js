@@ -1,6 +1,7 @@
 // assembly_state.js
 // *********
 // This file contains the JS for the Runestone Assembly State component. Created by Arys Aikyn, Kuzivakwashe Mavera 06/03/2024
+// Minor bug fixes (e.g. ARM64) and enhancement (e.g. reset config) by Zhengfei Li (Alex) 07/24/2025
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
@@ -32,7 +33,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.userId = this.getUserId();
 
         this.arith_checked = true;
-        this.memo_checked = false;
+        this.memo_checked = true;
         this.stack_checked = false;
 
         this.reset = true;
@@ -116,7 +117,6 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     renderCustomizations() {
 
         // Initialize the generator based on the architecture
-        // lzf changes
         const instructionTypes = [];
 
         if (this.architecture == "X86_64" || this.architecture == "X86_32") {
@@ -132,11 +132,19 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         instructionTypeDiv.append($("<div>").html("<strong><u>Configure Questions:</u></strong>" + " Select the types of instructions you want to be included in your question. This will configure the type of question you will attempt." + "<br></br>"));
 
         instructionTypes.forEach(family => {
+            // Set initial checked state based on backend defaults
+            let initialChecked = false;
+            if (family.value === "memOps") {
+                initialChecked = this.memo_checked;
+            } else if (family.value === "archOps") {
+                initialChecked = this.stack_checked;
+            }
+
             let checkbox = $("<input>").attr({
                 type: "checkbox",
                 id: family.value,
                 value: family.value,
-                checked: false
+                checked: initialChecked
             });
 
             checkbox.on("change", (event) => {
