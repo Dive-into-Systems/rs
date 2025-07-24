@@ -8,15 +8,45 @@ import "./css/tabbedHelpBox.css"
 // Params: numTabs: the number of tabs in the help window; div: the div evrything will be appended/prependd into; labels: the labels of tabs in the window ["Name1", "Name2"]
 // imgsrcs: an array of image sources ( ['/source/resources/x.png', '', ...]), prepend: will the element be apended or prepended into the div
 
+
+//High level overview of the code:
+// (1) Create the HTML through a series of nested javascript (I had a very elegant way of doing this using foreach in a template literal that I later had to delete :(     )
+// (2) Grab all the tab and image html elements
+// (3) Add necessary event handlers for functionallity
+
+
+//For a simple use case, check out CircuitVis.js
+
 export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
 
+    if(labels.length  != numTabs){
+        console.error(`ERROR: Labels has the wrong length! Expected value with length ${numTabs} but read value ${labels}`)
+    }
+    if(imgsrcs.length  != numTabs){
+        console.error(`ERROR: Imgsrcs has the wrong length! Expected value with length ${numTabs} but read value ${imgsrcs}`)
+    }
+    
+    
+
+    //keep track of whether or not the help window is open
     let helpOpen = false;
 
+
+    //These are the messages that will show up on the <a> when the help is open/closed
+    const OpenMessage = "Stuck? Click for a tutorial ▼";
+    const CloseMessage = "Hide help ▲";
+
+
+    //renders the <a> tag
     let instructionsButton = document.createElement("a")
-    instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+    instructionsButton.innerText = OpenMessage
     instructionsButton.className = 'instructionsButton'
 
+
+
+    // A lot of nested divs created for formating purposes:
+    // I make a side pane with tabs and then a pane on the right side of the window that holds windows?
 
 
     let legend = document.createElement("div")
@@ -25,39 +55,18 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
 
     let TabsDiv = document.createElement('div')
-    // legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
     TabsDiv.className = 'legendImage'
     TabsDiv.style.display = 'none'
 
 
+
+    //In all honesty, I am certain there is a cleaner way to do this.
     const nums = []
 
     for(let i = 1; i <= numTabs; i++){
         nums.push(i)
     }
 
-
-    //I didn't have the heart to fully delete this :(
-
-    // const IHTML = `
-    //     <div class = "helpContainer">
-        
-    //     <div class="flexSidebar">
-    //         ${nums.map(i =>`<div id="Panel${i}" class="flexItem">${labels[i=1]}</div>`)}
-    //     </div>
-    //     <div class = "helpContentHolder">
-    //             ${nums.map(i => 
-    //                 `
-    //                 <div id="Panel${i}-Content" style="display:inherit" class="helpContent">  
-    //                     <img class="helpContent-image" src="${imgsrcs[i-1]}"> </img>
-    //                  </div>
-    //                 `
-    //             )}
-    //     </div>
-        
-    //     </div>
-            
-    // `
 
     let helpContainer = document.createElement('div')
     helpContainer.className = 'helpContainer'
@@ -72,6 +81,7 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
     helpContainer.append(helpContentHolder)
 
 
+    //storing for later reference in the click event handlers
     let flexSidebarDivs = []
 
     nums.forEach( num => {
@@ -80,6 +90,8 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
         fsd.className = 'flexItem'
         fsd.textContent = labels[num-1]
 
+
+        //by default the first elem is selected
         if(num == 1){
             fsd.style.background = "lightblue"
         }
@@ -128,18 +140,19 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
 
 
+    //Handles the logic for opening/closing the help pane
     instructionsButton.addEventListener("click" , ()=> {
         
         legend.style.display = legend.style.display == "block" ? "none" : "block"
 
         helpOpen = !helpOpen
         if(helpOpen){
-            instructionsButton.innerText = "Hide help ▲"
+            instructionsButton.innerText = CloseMessage;
             TabsDiv.style.display = "inherit"
 
         }
         else{
-            instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
+            instructionsButton.innerText =  OpenMessage;
             TabsDiv.style.display = "none"
         }
         return false;
@@ -149,6 +162,7 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
 
 
+    //Make all the images in the help window invisible, set the background color of the tabs to white (not selected)
     const setInvis = () => {
         helpContentDivs.forEach(  elem => elem.style.display = "none")
         flexSidebarDivs.forEach(  elem => elem.style.background = "")
@@ -156,6 +170,7 @@ export function  tabbedHelpBox(numTabs, div, labels, imgsrcs, prepend=false ){
 
         
 
+    //Add the event handler that allows for selectino of a tab to all the tabs
     for(let i = 0; i < numTabs; i++){
     flexSidebarDivs[i].addEventListener("click", ()=> {
         console.log("click")
