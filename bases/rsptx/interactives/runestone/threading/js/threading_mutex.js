@@ -215,7 +215,7 @@ export default class TM extends RunestoneBase {
         }
         
         if(currentOptions["preset-problem"]){
-            const initial = "<pre style='font-size: 18px; width:130px;'>"+currentOptions["initialText"].replaceAll("\n", "<br>")+"</pre><br>"
+            const initial = "<pre style='font-size: 18px; width:100%;'>"+currentOptions["initialText"].replaceAll("\n", "<br>")+"</pre><br>"
             
             let temp = currentOptions["thread1Text"];
             temp = temp.replaceAll("\n", "<br>")
