@@ -12,7 +12,7 @@ import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { timeThursday } from "d3";
-import { updateHeight } from "../../../../utils/updateHeight.js";
+import { updateHeightWithAutoMonitoring, disconnectAutoHeightUpdate } from "../../../../utils/updateHeight.js";
 
 export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
 
@@ -56,7 +56,11 @@ export default class ProcHierarchy extends RunestoneBase {
         this.initFeedback_Hierarchy_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
         const obj = this;
-        updateHeight(window, document, obj, true);
+        // Set up automatic height monitoring with optimized settings for hierarchy component
+        this.heightObserver = updateHeightWithAutoMonitoring(window, document, obj, true, {
+            debounceDelay: 50, // Slightly higher delay for complex SVG rendering
+            watchAttributes: ['style', 'class', 'data-visible']
+        });
     }
 
     initParams() {
@@ -187,8 +191,6 @@ export default class ProcHierarchy extends RunestoneBase {
         if (this.hardCodedCCode == false) { this.updateSourceCode();} else {
             if (this.regeneration == true) { this.hardCodedCCode = false; }
         }
-        // console.log(this.numForks, this.numPrints, this.hasNest, this.hasExit, this.hasElse, this.hasLoop);
-        // console.log(this.source);
         this.genQuestionInfo();
     }
 
@@ -302,7 +304,6 @@ export default class ProcHierarchy extends RunestoneBase {
                 this.showProcessHierarchy();
             }
             else { this.hideProcessHierarchy(); }
-            // updateHeight(window, document, this, true);
         });
 
         /* Reveal help button */
@@ -568,6 +569,18 @@ export default class ProcHierarchy extends RunestoneBase {
         // render the feedback
         this.updateFeedbackDiv();
         return data;
+    }
+
+    // Clean up resources when component is destroyed
+    destroy() {
+        // Disconnect the automatic height update observer
+        if (this.heightObserver) {
+            disconnectAutoHeightUpdate(this, document);
+        }
+        // Call parent cleanup if available
+        if (super.destroy) {
+            super.destroy();
+        }
     }
 }
 

@@ -12,7 +12,7 @@ import * as timeline from "../algorithms/timelineDraw.js"
 import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
-import { updateHeight } from "../../../../utils/updateHeight.js";
+import { updateHeightWithAutoMonitoring, disconnectAutoHeightUpdate } from "../../../../utils/updateHeight.js";
 
 export var ProcTimelineList = {}; // All instances not in timed assessment
 
@@ -50,7 +50,11 @@ export default class ProcTimeline extends RunestoneBase {
         this.initFeedback_Hierarchy_Timeline_Help_Divs();
         $(this.origElem).replaceWith(this.containerDiv); // Replace intermediate HTML with rendered component
         const obj = this;
-        updateHeight(window, document, obj, true);
+        // Set up automatic height monitoring with MutationObserver
+        this.heightObserver = updateHeightWithAutoMonitoring(window, document, obj, true, {
+            debounceDelay: 50,
+            watchAttributes: ['style', 'class']
+        });
     }
 
     initParams() {
@@ -112,8 +116,13 @@ export default class ProcTimeline extends RunestoneBase {
                 `<span style='font-weight:bold'><u>Configure question</u></span>: 
                 You can generate the C code block from several modes:<br>
                 <ul style='line-height:90%'> 
-                    <li>Mode 1 simpler with 2 forks.</li> 
-                    <li>Mode 2 more complex with 3 forks.</li>
+                    <li><b>Mode 1</b> has 2 forks and the child process may or may not exit.</li> 
+                    <li><b>Mode 2 and mode 3</b> guarantees that the child process will exit within the code snippet:
+                        <ul style='line-height:90%'> 
+                            <li><b>Mode 2</b> is simpler with 2 forks.</li> 
+                            <li><b>Mode 3</b> is more complex with 3 forks.</li>
+                        </ul>
+                    </li> 
                 </ul>`
             );
             this.label = $("<label>").addClass("fork-inline").html("<span>Select a mode</span>:&ensp;");
@@ -187,16 +196,12 @@ export default class ProcTimeline extends RunestoneBase {
             this.updateSourceCode();
             this.genQuestionInfo();
         }
-        console.log("numForks and numPrints are", this.numForks, this.numPrints);
-        console.log("source code is", this.source);
-        console.log("printSeqs are", this.printSeqs);
         if (i == 100) {
             console.error("Failed to generate a question with more than 2 print sequences after 100 attempts.");
         }
     }
 
     updateSourceCode() {
-        console.log("Show menu is", this.showMenu);
         const generateNewSourceCode = () => {
             const ret = build.genSimpleWaitCode(this.numForks, this.numPrints);
             return ret;
@@ -255,9 +260,7 @@ export default class ProcTimeline extends RunestoneBase {
             if (i == 100) {
                 console.error("Failed to generate a new source code after 100 attempts.");
             }
-        }
-        console.log("Timeline Parameters: numForks and numPrints are", this.numForks, this.numPrints);
-        console.log("Timeline Source code is", this.source);
+        }  
     }
 
     genQuestionInfo() {
@@ -404,7 +407,6 @@ export default class ProcTimeline extends RunestoneBase {
             }
             let currAnswer = $("#" + this.divid + "_input_" + i).prop("checked");
             let currSolution = !this.answerMap[this.printSeqs[i]]; // map stores incorrect answers
-            console.log("Current answer is", currAnswer, "and solution is", currSolution);
             if (currAnswer !== currSolution) {
                 this.correct = false;
             }
@@ -413,12 +415,6 @@ export default class ProcTimeline extends RunestoneBase {
         else { this.feedback_msg.push(`Feedback TBD<br>`); }
         this.updateFeedbackDiv();
     }
-
-    // updateTreeGraph(traceCsv, traceLabels) {
-    //     console.log("Trace CSV is", traceCsv);
-    //     console.log("Trace labels is", traceLabels);
-    //     $('#hierarchy_graph').html(hierarchy.drawHierarchy(traceCsv, traceLabels));
-    // }
 
     // showProcessHierarchy() {
     //     $(this.hierarchyTreeDiv).css("display", "block");
@@ -454,8 +450,6 @@ export default class ProcTimeline extends RunestoneBase {
         const refreshCode = () => console.log("Refreshed");
 
         $('#timeline_graph').html(timeline.drawTimeline(constraints, tl_width, tl_height, margin));
-        console.log("Real ones", this.csvTree, this.labels);
-        console.log("print seq for ", this.source, "\n", constraints);
         this.bindCodeBlockEvents();
     }
 
@@ -549,8 +543,7 @@ export default class ProcTimeline extends RunestoneBase {
                     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
                     
                     // Get highlight info for timeline
-                    // const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId);
-                    console.log("blockId is", blockId);
+                    // const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId); 
                     // Redraw timeline with highlight
                     $('#timeline_graph').html(timeline.drawTimeline(
                         constraints, 
@@ -642,6 +635,18 @@ export default class ProcTimeline extends RunestoneBase {
         // Render feedback
         this.updateFeedbackDiv();
         return data;
+    }
+
+    // Clean up resources when component is destroyed
+    destroy() {
+        // Disconnect the automatic height update observer
+        if (this.heightObserver) {
+            disconnectAutoHeightUpdate(this, document);
+        }
+        // Call parent cleanup if available
+        if (super.destroy) {
+            super.destroy();
+        }
     }
 }
 
