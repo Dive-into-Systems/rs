@@ -1,5 +1,4 @@
-## Main idea:
-
+## DrawCircuit
 This exercise generates a truth table and asks the user to make the corresponding circuit.
 To generate the truth table, it uses Bohou's circuit generation functions, then converts the result to a truth table.
 
