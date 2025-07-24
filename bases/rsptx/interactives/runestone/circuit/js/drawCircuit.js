@@ -13,12 +13,48 @@ import { tabbedHelpBox } from "../../../utils/tabbedHelpBox.js";
 export var DCList = {}; // Object containing all instances of DC that aren't a child of a timed assessment.
 
 
+
+/*
+\
+Pretext params:
+truth table: the truth table you want to pre populate the exercise with
+numOuputs: the number of outputs in the circuit (either one or two)
+numInputs: the number of inputs to the circuit (correspondingly only two or three)
+//advancedGates: allow XOR, NAND, NOR, ...
+//allowAMA: true if the user is allowed to generate new questiosn afterwards
+
+Example params (passed into pretext) :
+
+                {
+
+                  "truthTable" : [[0,0,1],[0,1,0], [1,0,0], [1,1,1]],
+                  "numOutputs" : 1,
+                  "numInputs" : 2,
+                  "advancedGates" : false,
+                  "allowAMA" : true
+                  
+                }
+
+
+Example w 2 ouputs:
+
+        {
+            "truthTable" : [[0,0,0,1,1],[0,0,1,0,1], [0,1,0,0,1], [0,1,1,0,1], [1,0,0,0,1], [1,0,1,0,1], [1,1,0,0,1], [1,1,1,1,1]],
+            "numOutputs" : 2,
+            "numInputs" : 3,
+            "advancedGates" : false,
+            "allowAMA" : true
+        }
+*/
+
 export default class DC extends RunestoneBase {
    constructor(opts) {
        super(opts);
 
 
 
+
+       //Runestone stuff
        var orig = opts.orig; // entire <p> element
        this.useRunestoneServices = opts.useRunestoneServices;
        this.origElem = orig;
@@ -51,22 +87,63 @@ export default class DC extends RunestoneBase {
         this.gray = '#cbd5e1';
         this.darkGray = '#334155';
 
+        //GOJS related stuff
         this.diagramReady = false;
         this.myDiagram
+
+        //Stores the truth tabel that the user submitted in two forms: labelled object and unlaelled array
         this.userAnswerLabelledTruthTable = [];
         this.userAnswerTruthTable = []
 
+        //Variables related to prepopulating everything
+        this.PrePopulatedValues = undefined;
+        this.allowAMA = true;
+        this.firstQuestionLoaded = false;
+
+
+        //Grab any params from pretext
+        this.setCustomizedParams()
+
+        //validate the truth table: it needs to either have two inputs and one output or three inputs and two outputs
+
+        //So far, this only supports either 2 inputs and 1 output or 3 inputs and 2 outputs. I've tried to make it clear how the parameters are supposed to be passed with the alerts
+        if(this.PrePopulatedValues != undefined ){
+            if(!((this.PrePopulatedValues.numInputs == 3 && this.PrePopulatedValues.numOutputs == 2) || (this.PrePopulatedValues.numInputs == 2 && this.PrePopulatedValues.numOutputs == 1))){
+                alert(`The prepopulated values for this question must either have 2 inputs and 1 output or 3 inputs and 2 outputs. Currently reading ${this.PrePopulatedValues.numInputs} and ${this.PrePopulatedValues.numOutputs}`)
+                return;
+            }
+            if(this.PrePopulatedValues.truthTable.length != 2**this.PrePopulatedValues.numInputs){
+                alert(`The truth table is not long enough. Expect length of ${2**this.PrePopulatedValues.numInputs} but instead got ${this.PrePopulatedValues.truthTable.length}`)
+            }
+            this.truthTable = this.PrePopulatedValues.truthTable;
+            this.allowAMA = this.PrePopulatedValues.allowAMA != undefined? this.PrePopulatedValues.allowAMA : true ;
+        }
+        else{
+            //If there are no prepopulating values, we can just generate a new truth table on load
+            this.generateRandomTruthTable()
+        }
+
+
+
+        // Setting outputs based of prepopulated values
+       if(this.PrePopulatedValues && !this.firstQuestionLoaded){
+            this.numInputs = this.PrePopulatedValues.numInputs;
+            this.numOutputs = this.PrePopulatedValues.numOutputs;
+
+            //Presumably one output would imply mode 1
+            if(this.numOutputs == 1){
+                this.modeOutput = 1;
+            }
+       }
 
 
 
 
-       // Fields for logging data
 
        this.initDCElement();
 
 
-
-
+       //Sizing the iframe on load
        console.log("about to update height");
         updateHeight(window, document, this, true);
        if (typeof Prism !== "undefined") {
@@ -74,6 +151,9 @@ export default class DC extends RunestoneBase {
        }
        
        this.sendData(0);
+
+
+
    }
 
    // Find the script tag containing JSON in a given root DOM node.
@@ -94,22 +174,31 @@ export default class DC extends RunestoneBase {
     // this.containerDiv.remove()
    }
 
+
+   //The functio that grabs params from pretext
+    setCustomizedParams() {
+            const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+            if (currentOptions["truthTable"] !== undefined) {
+                this.PrePopulatedValues = {truthTable: currentOptions["truthTable"], numInputs: currentOptions["numInputs"], numOutputs: currentOptions["numOutputs"], advancedGates : currentOptions["advancedGates"], allowAMA : currentOptions["allowAMA"] }
+            }
+    }
+
+
    /*===========================================
    ====   Functions generating final HTML   ====
    ===========================================*/
    // Component initialization
 
    //This function sets up everything.
-    initDCElement() {
-        //utillity
-        const generateRandom = (n) => (Math.floor(Math.random()*n))
 
-        // this.numInputs = 2 + generateRandom(2);
-        // this.numOutputs = 1 + generateRandom(2)
 
-        //Generate two instances of the circuit class (each instance has only one output)
-        //If there are supposed to be two outputs (mode 2), force the second circuit to have the same number of inputs as the first one
 
+    generateRandomTruthTable = () => {
+
+
+        //The circuit generator script only supports one output, so we need to make two circuits and 'merge' them to have two outputs
+
+        //generate circuit 1
         let c1;
         if(this.modeOutput == 1){
             c1 = new circuit_generator(["A", "B"], ["AND", "OR", "NOR", "XOR", "NOT"],4,2, true, this.prevCircuit);
@@ -117,10 +206,13 @@ export default class DC extends RunestoneBase {
         else{
             c1 = new circuit_generator(["A", "B", "C"], ["AND", "OR", "NOR", "XOR", "NOT"],4,2, true, this.prevCircuit);
         }
+        //get the boolean algebra for circuit 1
         const s1 = c1.generateStatement();
         this.prevCircuit = s1
+        //circuit 1's truth table in array format
         const tt1 = c1.getTruthTable();
  
+        //same thing for c2
         const c2 = new circuit_generator(["A", "B", "C"].slice(0,c1.getInformation().numInputs), ["AND", "OR", "NOR", "XOR", "NOT"], 4,2, true, s1)
         const s2 = c2.generateStatement();
         const tt2 = c2.getTruthTable()
@@ -150,7 +242,17 @@ export default class DC extends RunestoneBase {
         }
 
         console.log(tt1)
+    }
 
+    initDCElement() {
+
+
+        //Only generate a truth table in two cases
+        // (1) No preopulated value
+        // (2) Allow AMA is true and the first question has already been loaded
+        if(!this.PrePopulatedValues || (this.firstQuestionLoaded && this.allowAMA)){
+            this.generateRandomTruthTable()
+        }
 
         // This JSON is used initialie the digram.
         this.startJson = `{ "class": "GraphLinksModel",
@@ -187,7 +289,6 @@ export default class DC extends RunestoneBase {
         console.log(JSON.parse(this.startJson))
 
 
-        // this.generateATruthTable()
         
         //Render the main html
         this.renderDCPromptAndInput();
@@ -204,6 +305,7 @@ export default class DC extends RunestoneBase {
             this.init()
         }
 
+        this.firstQuestionLoaded = true;
 
 
    }
@@ -254,98 +356,13 @@ export default class DC extends RunestoneBase {
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
-        // this.helpOpen = false;
-
-        // this.instructionsButton = document.createElement("a")
-        // this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
-        // this.instructionsButton.className = 'instructionsButton'
-
-        // this.wrapperDiv.appendChild(this.instructionsButton)
-
-        // this.legend = document.createElement("div")
-        // this.legend.style.display = "none"
-        // this.legend.className = "instructionsLegend"
-
-
-        // this.TabsDiv = document.createElement('div')
-        // // this.legendImage.src = 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRlJ4ZwNR5h_VyPNDygNN7JhWkqdoiL3I-QJ6c6k-xo7PiAKo5u'
-        // this.TabsDiv.className = 'legendImage'
-        // this.TabsDiv.style.display = 'none'
-
-
-        // const IHTML = `
-        //     <div class = "helpContainer">
-            
-        //     <div class="flexSidebar">
-        //         <div id="Panel1" class="flexItem">Adding Gates</div>
-        //         <div id="Panel2" class="flexItem">Making Connections</div>
-        //         <div id="Panel3" class="flexItem">Deleting Gates</div>
-        //         <div id="Panel4" class="flexItem">Toggling Inputs</div>
-
-        //     </div>
-        //     <div class = "helpContentHolder">
-        //         <div id="Panel1-Content" style="display:inherit" class="helpContent">  
-        //         <img class="helpContent-image" src="/source/resources/GIFs/AddingGIF.gif"> </img>
-        //         </div>
-        //         <div id="Panel2-Content" class="helpContent" > 
-        //                 <img class="helpContent-image" src="/source/resources/GIFs/ConnectionGIF.gif"> </img>
-        //         </div>
-        //         <div id="Panel3-Content" class="helpContent" > 
-        //             <img class="helpContent-image" src="/source/resources/GIFs/DeletePicture.png"> </img>
-        //     </div>
-        //         <div id="Panel4-Content" class="helpContent" >
-        //             <img class="helpContent-image" src="/source/resources/GIFs/TogglingGIF.gif"> </img>
-        //     </div>
-
-        //     </div>
-            
-        //     </div>
-               
-        // `
-
-        // this.TabsDiv.innerHTML =  IHTML;
-        // this.TabsDiv.getElementBy
-
-        // this.legend.appendChild(this.TabsDiv)
-
-
-
-
-
-    
-
-
-
-
-        // this.instructionsButton.addEventListener("click" , ()=> {
-            
-        //     this.legend.style.display = this.legend.style.display == "block" ? "none" : "block"
-
-        //     this.helpOpen = !this.helpOpen
-        //     if(this.helpOpen){
-        //         this.instructionsButton.innerText = "Hide help ▲"
-        //         this.TabsDiv.style.display = "inherit"
-
-        //     }
-        //     else{
-        //         this.instructionsButton.innerText = "Stuck? Click for a tutorial ▼"
-        //         this.TabsDiv.style.display = "none"
-        //     }
-        //     return false;
-        // })
-
-        // this.wrapperDiv.appendChild(this.legend)
-
+        //This the help box you see on the page
         tabbedHelpBox(4, this.wrapperDiv, ["Adding Gates", "Making Connections", "Deleting Gates", "Toggling Inputs"], ["/source/resources/GIFs/AddingGIF.gif", "/source/resources/GIFs/ConnectionGIF.gif", "/source/resources/GIFs/DeletePicture.png", "/source/resources/GIFs/TogglingGIF.gif"])
 
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'
-        //Configure question: Select a mode to determine what type of instructions are generated.
-        // modeDiv.innerHTML  = `<span style='font-weight:bold'><u>Configure Question</u></span>: Select a mode to determine what type of instructions are generated. <br> 
-        // <ul> <li> Mode 1 Lorem Ipsum Dolor Sit Amen </li> 
-        // <li>Mode 2 Amen Sit Dolor Ipsum Lorem </li></ul>`
 
-        // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        //This is more HTML stuff. It would be a lot more readable in regular HTML format but it needs to be this way so we can access the values
         this.modeSelect = document.createElement("select")
 
         this.modeSelect.className = "form-control fork-inline mode outputSelect"
@@ -358,20 +375,24 @@ export default class DC extends RunestoneBase {
         this.mode2Option.textContent = "2"
 
 
-        this.modeSelect.addEventListener("change", ()=>{ this.modeOutput = Number(this.modeSelect.value); this.generateButton.click()})
+        //If the user is allowed to generate another, then we let mode changes trigger a generate
+        if(this.allowAMA){
+            this.modeSelect.addEventListener("change", ()=>{ this.modeOutput = Number(this.modeSelect.value); this.generateButton.click()})
+        }
 
         this.modeSelectText = document.createElement("div")
-        this.modeSelectText.innerHTML = `<div style="margin-right: 2px;"> <span style='font-weight:bold'><u>Configure Question</u></span>:Select the number of outputs in the circuit: </div>`
+        this.modeSelectText.innerHTML = `<div style="margin-right: 2px;"> <span style='font-weight:bold'><u>Configure Question</u></span>: Select the number of outputs in the circuit: </div>`
 
         this.modeSelect.append(this.mode1Option)
         this.modeSelect.append(this.mode2Option)
 
+
+        // Output mode persists despite new uestion generation
         if(this.modeOutput == 1){
             this.mode1Option.selected = "selected"
         }
-        else{
+        else if( (this.allowAMA && this.PrePopulatedValues) || !this.PrePopulatedValues){
             this.mode2Option.selected = "selected"
-
         }
 
         modeDiv.append(this.modeSelectText)
@@ -383,7 +404,21 @@ export default class DC extends RunestoneBase {
         this.wrapperDiv.append(document.createElement("br"))
 
 
+        //Configure mode/outputs if numOutputs is prepopulated
+        if(this.PrePopulatedValues && !this.firstQuestionLoaded){
+            if(this.PrePopulatedValues.numOutputs == 1){
+                this.mode1Option.selected = "selected"
+                this.numOutputs = 1
+            }
+            else if(this.PrePopulatedValues.numOutputs == 2){
+                this.mode2Option.selected = "selected"
+                this.numOutputs = 2
+            }
+            else{
+                alert(`Error in prepopulated num outputs. Expeceted 1 or 2 but got ${this.PrePopulatedValues.numOutputs}`)
+            }
 
+        }
 
         //BTW, GoJS typically looks for a div with a pre-specified ID to set itself up in
         this.gojsDiv = document.createElement("div")
@@ -421,6 +456,7 @@ export default class DC extends RunestoneBase {
         this.tableDiv.className = 'tables-container'
 
 
+        //render out the truth table to prompt the user
         const table = document.createElement("table")
         table.className = 'register-table'
         const th = document.createElement("tr")
@@ -469,14 +505,18 @@ export default class DC extends RunestoneBase {
         this.generateButton.textContent = "Generate another question"
         this.generateButton.className = 'btn btn-success'
 
-        this.answerDiv.appendChild(this.generateButton)
+
+        if(this.allowAMA){
+            this.answerDiv.appendChild(this.generateButton)
+            //generate function
+            this.generateButton.addEventListener("click", ()=>{
+                this.removeEverything()
+                this.initDCElement()
+        })
+        }
         this.answerDiv.appendChild(this.checkButton)
 
-        //generate function
-        this.generateButton.addEventListener("click", ()=>{
-            this.removeEverything()
-            this.initDCElement()
-        })
+
 
 
         this.containerDiv.append(this.wrapperDiv)
@@ -485,52 +525,15 @@ export default class DC extends RunestoneBase {
 
     }
 
-    //This function is no longer used
-    //Actually I'm grateful it isn't because the code was heinous
-    generateATruthTable = () => {
-        
-        let toggleArray = []
-        this.truthTable = []
-        //copying this over because can't use pointers in js :(
-        // Really I wouldn't if there was pointers :(
-        //Hopefully this doesn't cause any problems in the future
-        const recursiveToggle = (n, param) => {
-            n= n;
-            if(n == 0){
-              toggleArray.push([...param, 0])
-              toggleArray.push([...param, 1])
-        
-            }
-            else if(param.length > 0){
-              recursiveToggle(n-1, [...param, 0])
-              recursiveToggle(n-1, [...param, 1])
-        
-            }
-            else{
-              recursiveToggle(n-1, [0])
-              recursiveToggle(n-1, [1])
-        
-            }
-          }
-        
-        recursiveToggle(this.numInputs-1, [])
-        //util
-        const ZeroOrOne = () => Math.floor(Math.random() * 2)
 
-        //
-        for(let elem of toggleArray){
-            let outputVals = []
-            for(let i = 0; i < this.numOutputs; i++){
-                outputVals.push(ZeroOrOne())
-            }
-            this.truthTable.push([...elem, ...outputVals])
-        }
-        console.log(this.truthTable)
-    }
     
 
     //This does the HTML stuff to render the user's truth table in feedback div
     renderFeedbackTruthTable () {
+
+
+        //This is almost a 1-1 analog of the code from earlier to render to front-facing truth table in the prompt, but this uses
+        // the truth table from the user's circuit
 
         const tDiv = document.createElement("div")
         tDiv.className = 'tables-container'
@@ -570,8 +573,11 @@ export default class DC extends RunestoneBase {
     }
 
 
-    //Handel the HTML side of the feedback 
+    //Handles the HTML side of the feedback 
     renderDCFeedbackDiv() {
+
+        //clean up the old feedback div to make space for the new one
+        // It's like the circle of life but for a pretext component 
         if(this.feedbackDiv){
             this.feedbackDiv.remove()
         }
@@ -580,7 +586,8 @@ export default class DC extends RunestoneBase {
 
         const correctDiv = document.createElement("div")
 
-        const msg = this.feedbackHTML ? this.feedbackHTML : 'no msg :('
+        //The second case should never be taken
+        const msg = this.feedbackHTML ? this.feedbackHTML : ''
         correctDiv.innerHTML = msg
 
         if (this.correct) {
@@ -596,12 +603,15 @@ export default class DC extends RunestoneBase {
         this.wrapperDiv.append(this.feedbackDiv)
     }
 
+
+    //TODO: at some point in the future
     sendData(actionId) {
        
     }
 
     //This loads in the GOJs script tags
-    //Figures jS needs go js to work, hence the delayed import 
+    //Figures.js needs go js to work, hence the delayed import 
+    //I apologize for how diabolical the nested .then s are.
     loadExternalScripts() {
         const self = this
         function loadScript(src, callback) {
@@ -716,6 +726,7 @@ export default class DC extends RunestoneBase {
         return node;
         }
 
+        //The default sizing/colors for nodes
         const shapeStyle = () => {
             return {
                 name: 'NODESHAPE',
@@ -726,6 +737,7 @@ export default class DC extends RunestoneBase {
             };
         }
 
+        //Default position, shape, etc. of ports (the things you drag connections to)
         const portStyle = (input, spot) => {
             return {
                 figure: 'Rectangle',
@@ -760,6 +772,14 @@ export default class DC extends RunestoneBase {
 
         //The text bindings are how I get the number/category type on the input. What's weird is that margin doesn't seem to work
         //changing this will be a pain.
+
+        //Basically, the way this works is that you
+        // (1) Set basic styl aspects of the template
+        // (2) Add any necessary shape/art
+        // (3) Add text and bidnings
+        // *Binding binds the value of some feature of the template to a variable
+        //For example, one of the text blocks below is bound to the input value
+
         const inputTemplate = applyNodeBindings(new go.Node('Spot', nodeStyle()))
             .set({
                 cursor: 'pointer',
@@ -956,7 +976,8 @@ export default class DC extends RunestoneBase {
         this.myDiagram.nodeTemplateMap.add('or', orTemplate);
         this.myDiagram.nodeTemplateMap.add('not', notTemplate);
 
-        if(this.modeOutput == 2){
+
+        if((this.modeOutput == 2 && !this.PrePopulatedValues) || (this.PrePopulatedValues && this.PrePopulatedValues.advancedGates) ){
             this.myDiagram.nodeTemplateMap.add('xor', xorTemplate);
             this.myDiagram.nodeTemplateMap.add('nand', nandTemplate);
             this.myDiagram.nodeTemplateMap.add('nor', norTemplate);
@@ -977,7 +998,7 @@ export default class DC extends RunestoneBase {
         ndArr.push({ category: 'or' })
         ndArr.push({ category: 'not' })
 
-        if(this.modeOutput == 2){
+        if((this.modeOutput == 2 && !this.PrePopulatedValues) || (this.PrePopulatedValues && this.PrePopulatedValues.advancedGates) ){
             ndArr.push({ category: 'nor' })
             ndArr.push({ category: 'nand' })
             ndArr.push({ category: 'xor' })
@@ -1065,176 +1086,176 @@ setOutputLinks = (node, color) => {
   // update nodes by the specific function for its type
   // determine the color of links coming out of this node based on those coming in and node type
 
-doInput = (node) => {
-    this.setOutputLinks(node, node.data.isOn ? this.green : this.red);
-  }
-
-doSwitch = (node) => {
-    const linksInto = node.findLinksInto();
-    const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) ? this.green : this.red;
-    node.findObject('NODESHAPE').fill = color;
-    let ang = node.findObject('NODESHAPE').panel.angle;
-    let isGoodAngle = ang >= 357 || ang <= 3;
-    this.setOutputLinks(node, node.data.isOn && isGoodAngle ? color : this.red);
-  }
-
-doAnd = (node) => {
-    const linksInto = node.findLinksInto();
-    const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) && linksInto.count % 2 == 0 ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-doNand = (node) => {
-    const color = !node.findLinksInto().all(this.linkIsTrue) ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-doNot = (node) => {
-    const color = !node.findLinksInto().all(this.linkIsTrue) ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-
-doOr = (node) => {
-    const color = node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-doNor = (node) => {
-    const color = !node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-
-doXor = (node) => {
-    let truecount = 0;
-    node.findLinksInto().each((link) => {
-      if (this.linkIsTrue(link)) truecount++;
-    });
-    const color = truecount % 2 !== 0 ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-doXnor = (node) => {
-    let truecount = 0;
-    node.findLinksInto().each((link) => {
-      if (this.linkIsTrue(link)) truecount++;
-    });
-    const color = truecount % 2 === 0 ? this.green : this.red;
-    this.setOutputLinks(node, color);
-  }
-
-doOutput = (node) => {
-    // assume there is just one input link
-    // we just need to update the node's data.isOn
-
-    //node.linksconnecetd is an iterator so I have to count it like this x(
-    let i = 0;
-    node.linksConnected.each((link) => {
-      this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
-      i++
-    });
-    if(i == 0){
-        this.myDiagram.model.setDataProperty(node.data, 'isOn', false);
+    doInput = (node) => {
+        this.setOutputLinks(node, node.data.isOn ? this.green : this.red);
     }
-  }
+
+    doSwitch = (node) => {
+        const linksInto = node.findLinksInto();
+        const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) ? this.green : this.red;
+        node.findObject('NODESHAPE').fill = color;
+        let ang = node.findObject('NODESHAPE').panel.angle;
+        let isGoodAngle = ang >= 357 || ang <= 3;
+        this.setOutputLinks(node, node.data.isOn && isGoodAngle ? color : this.red);
+    }
+
+    doAnd = (node) => {
+        const linksInto = node.findLinksInto();
+        const color = linksInto.count > 0 && linksInto.all(this.linkIsTrue) && linksInto.count % 2 == 0 ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+    doNand = (node) => {
+        const color = !node.findLinksInto().all(this.linkIsTrue) ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+    doNot = (node) => {
+        const color = !node.findLinksInto().all(this.linkIsTrue) ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+
+    doOr = (node) => {
+        const color = node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+    doNor = (node) => {
+        const color = !node.findLinksInto().any(this.linkIsTrue) ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+
+    doXor = (node) => {
+        let truecount = 0;
+        node.findLinksInto().each((link) => {
+        if (this.linkIsTrue(link)) truecount++;
+        });
+        const color = truecount % 2 !== 0 ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+    doXnor = (node) => {
+        let truecount = 0;
+        node.findLinksInto().each((link) => {
+        if (this.linkIsTrue(link)) truecount++;
+        });
+        const color = truecount % 2 === 0 ? this.green : this.red;
+        this.setOutputLinks(node, color);
+    }
+
+    doOutput = (node) => {
+        // assume there is just one input link
+        // we just need to update the node's data.isOn
+
+        //node.linksconnecetd is an iterator so I have to count it like this x(
+        let i = 0;
+        node.linksConnected.each((link) => {
+        this.myDiagram.model.setDataProperty(node.data, 'isOn', link.findObject('SHAPE').stroke == this.green);
+        i++
+        });
+        if(i == 0){
+            this.myDiagram.model.setDataProperty(node.data, 'isOn', false);
+        }
+    }
 
 
-load = () => {
-    this.myDiagram.model = go.Model.fromJson(this.startJson);
-  }
+    load = () => {
+        this.myDiagram.model = go.Model.fromJson(this.startJson);
+    }
 
 
-//Toggle thorugh the user inputs and see what the outputs are
-//Build a truth table out of this  
-getTruthTable = () => {
+    //Toggle thorugh the user inputs and see what the outputs are
+    //Build a truth table out of this  
+    getTruthTable = () => {
 
-    this.userAnswerLabelledTruthTable = []
-    this.userAnswerTruthTable = []
+        this.userAnswerLabelledTruthTable = []
+        this.userAnswerTruthTable = []
 
-    let inputNodes = [];
-    this.myDiagram.nodes.each(n=>{
-      if(n.category == "input"){
-        inputNodes.push({"obj":n, "data":n.data})
-      }
-    })
-    
-    let outputNodes = [];
+        let inputNodes = [];
         this.myDiagram.nodes.each(n=>{
-      if(n.category == "output"){
-        outputNodes.push({"obj":n, "data":n.data})
-      }
-    })
-  
-    
-    //Generate all possibile combinations of n two bit inputs
-    const toggleArray = [];
-    const recursiveToggle = (n, param) => {
-        n= n;
-        if(n == 0){
-          toggleArray.push([...param, 0])
-          toggleArray.push([...param, 1])
-    
+        if(n.category == "input"){
+            inputNodes.push({"obj":n, "data":n.data})
         }
-        else if(param.length > 0){
-          recursiveToggle(n-1, [...param, 0])
-          recursiveToggle(n-1, [...param, 1])
-    
-        }
-        else{
-          recursiveToggle(n-1, [0])
-          recursiveToggle(n-1, [1])
-    
-        }
-      }
-    
-    recursiveToggle(inputNodes.length-1, [])
-    
-    let truthTable = []
-    for(let elem of toggleArray){
-
-        let inputData = [];
-
-      for(let i = 0; i < elem.length; i++){
-        const val = elem[i] == 1 ? true : false
-        this.simulatedClickFunction(inputNodes[i].obj, val)
-        inputData.push({"text":inputNodes[i].data.text, "value": elem[i]})
-      }
-      
-
-      //Redundant, but necessary because sometimes the updates don't happen in the right order
-      //I'm not sure what the upper bound on how many updates might be needed, but beyond 3 seems to make no changes
-      this.myDiagram.redraw()
-      this.updateStates()
-      this.myDiagram.redraw()
-      this.updateStates()
-      this.myDiagram.redraw()
-      this.updateStates()
-  
+        })
         
-      let outputValues = [];
-      let outputNumbers = []
-      outputNodes.forEach(e => {
-        outputValues.push({"label": e.data.text,"value":e.data.isOn ? 1 : 0})
-        outputNumbers.push(e.data.isOn ? 1 : 0)
-      })
-      truthTable.push([inputData, outputValues])
-      this.userAnswerTruthTable.push([...elem, ...outputNumbers])
-      
+        let outputNodes = [];
+            this.myDiagram.nodes.each(n=>{
+        if(n.category == "output"){
+            outputNodes.push({"obj":n, "data":n.data})
+        }
+        })
+    
+        
+        //Generate all possibile combinations of n two bit inputs
+        const toggleArray = [];
+        const recursiveToggle = (n, param) => {
+            n= n;
+            if(n == 0){
+            toggleArray.push([...param, 0])
+            toggleArray.push([...param, 1])
+        
+            }
+            else if(param.length > 0){
+            recursiveToggle(n-1, [...param, 0])
+            recursiveToggle(n-1, [...param, 1])
+        
+            }
+            else{
+            recursiveToggle(n-1, [0])
+            recursiveToggle(n-1, [1])
+        
+            }
+        }
+        
+        recursiveToggle(inputNodes.length-1, [])
+        
+        let truthTable = []
+        for(let elem of toggleArray){
 
+            let inputData = [];
+
+        for(let i = 0; i < elem.length; i++){
+            const val = elem[i] == 1 ? true : false
+            this.simulatedClickFunction(inputNodes[i].obj, val)
+            inputData.push({"text":inputNodes[i].data.text, "value": elem[i]})
+        }
+        
+
+        //Redundant, but necessary because sometimes the updates don't happen in the right order
+        //I'm not sure what the upper bound on how many updates might be needed, but beyond 3 seems to make no changes
+        this.myDiagram.redraw()
+        this.updateStates()
+        this.myDiagram.redraw()
+        this.updateStates()
+        this.myDiagram.redraw()
+        this.updateStates()
+    
+            
+        let outputValues = [];
+        let outputNumbers = []
+        outputNodes.forEach(e => {
+            outputValues.push({"label": e.data.text,"value":e.data.isOn ? 1 : 0})
+            outputNumbers.push(e.data.isOn ? 1 : 0)
+        })
+        truthTable.push([inputData, outputValues])
+        this.userAnswerTruthTable.push([...elem, ...outputNumbers])
+        
+
+        }
+
+        console.log(truthTable)
+        console.log(this.userAnswerTruthTable)
+        this.userAnswerLabelledTruthTable = truthTable
+
+
+        
+    //   simulatedClickFunction(inputNodes[0].obj, false)
+    //     simulatedClickFunction(inputNodes[1].obj, true)
+        
+    //   console.log(inputNodes[0].data.isOn)
+    //     console.log(inputNodes[1].data.isOn)
+    //   updateStates()
+    //   console.log(outputNodes[0].data.isOn)
+    //     console.log(outputNodes[1].data.isOn)
+    
+    
     }
-
-    console.log(truthTable)
-    console.log(this.userAnswerTruthTable)
-    this.userAnswerLabelledTruthTable = truthTable
-
-
-    
-  //   simulatedClickFunction(inputNodes[0].obj, false)
-  //     simulatedClickFunction(inputNodes[1].obj, true)
-    
-  //   console.log(inputNodes[0].data.isOn)
-  //     console.log(inputNodes[1].data.isOn)
-  //   updateStates()
-  //   console.log(outputNodes[0].data.isOn)
-  //     console.log(outputNodes[1].data.isOn)
-  
-  
-  }
 
 
 
