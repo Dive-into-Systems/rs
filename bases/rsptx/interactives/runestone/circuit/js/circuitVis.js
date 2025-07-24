@@ -67,7 +67,7 @@ export default class CV extends RunestoneBase {
        if (typeof Prism !== "undefined") {
            Prism.highlightAllUnder(this.containerDiv);
        }
-       updateHeight(window, document, this, true, 882)
+       updateHeight(window, document, this, true, 986)
        this.sendData(0);
    }
 

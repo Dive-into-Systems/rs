@@ -46,6 +46,7 @@ export default class CircuitTruth extends RunestoneBase {
         var orig = opts.orig;
         this.origElem = orig;
         this.divid = orig.id;
+        this.setCustomizedParams();
         this.useRunestoneServices = opts.useRunestoneServices;
         document.body.classList.add('no-scroll');
 
@@ -55,9 +56,21 @@ export default class CircuitTruth extends RunestoneBase {
             Prism.highlightAllUnder(this.containerDiv);
         }
 
-        updateHeight(window, document, this, true, 1076);
+        updateHeight(window, document, this, true, 1250);
 
     }
+
+    scriptSelector(root_node) {
+        return $(root_node).find(`script[type="application/json"]`);
+    }
+
+    setCustomizedParams() {
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if(currentOptions["statement"] !== undefined){
+            this.circuit = currentOptions["statement"];
+        }
+        
+    };
 
     initCircuitElement() {
         this.containerDiv = document.createElement("div");
@@ -152,6 +165,10 @@ export default class CircuitTruth extends RunestoneBase {
         const id          = this.divid;
         const diagramDiv  = `${id}_myDiagramDiv`;
         let mode = this.modeSelect.value;
+        let presetCircuit
+        if(this.circuit){
+            presetCircuit = this.circuit;
+        }
 
         // Event listener for the Generate Circuit button
         container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
@@ -209,7 +226,12 @@ export default class CircuitTruth extends RunestoneBase {
             }
             // For more detailed documentation about the functionality and parameters of this class, see
             // circuit_generate.js
-            circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true, prevCircuit); 
+            if(presetCircuit){
+                circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true, prevCircuit, presetCircuit);
+                presetCircuit=null;
+            }else{
+                circuit_gen = new circuit_generator(inputs, gates, maxGates, minGates, true, prevCircuit); 
+            }
             let circuit = circuit_gen.generateStatement();
             prevCircuit = circuit;
 

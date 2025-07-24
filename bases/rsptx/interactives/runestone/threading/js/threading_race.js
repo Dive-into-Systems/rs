@@ -23,6 +23,7 @@ export default class TR extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+        this.setCustomizedParams();
 
         // Default configuration settings
         this.correct = null;
@@ -56,7 +57,6 @@ export default class TR extends RunestoneBase {
     
     createTRElement() {
         this.renderTRPromptAndInput();
-        //this.setCustomizedParams();
         switch(this.typeSelect.value){
             case "1":
                 this.renderAnswerDivMultipleChoice();
@@ -86,63 +86,69 @@ export default class TR extends RunestoneBase {
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
-        this.configHelperText = document.createElement("div");
-        this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
-
-        this.statementDiv = document.createElement("div");
-        this.statementDiv.className = "statement-div"
-
-        this.statementDiv.append(this.configHelperText);
-
-        this.modeStatementNode = document.createTextNode("Select a mode:")
-        this.statementDiv.appendChild(this.modeStatementNode);
         
-        this.modeSelect = document.createElement("select")
-        this.modeSelect.className = "form-control fork-inline mode"
-        this.mode1Option = document.createElement("option")
-        this.mode1Option.value = "1"
-        this.mode1Option.textContent = "1"
-        this.modeSelect.append(this.mode1Option)
+        if(!(this.modePreset&&this.typePreset)){
+            this.configHelperText = document.createElement("div");
+            this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
-        this.mode2Option = document.createElement("option")
-        this.mode2Option.value = "2"
-        this.modeSelect.append(this.mode2Option)
-        this.mode2Option.textContent = "2"
+            this.statementDiv = document.createElement("div");
+            this.statementDiv.className = "statement-div"
 
-        this.mode2Option.selected = "selected"
+            this.statementDiv.append(this.configHelperText);
+            if(!(this.modePreset)){
+                this.modeStatementNode = document.createTextNode("Select a mode:")
+                this.statementDiv.appendChild(this.modeStatementNode);
+                
+                this.modeSelect = document.createElement("select")
+                this.modeSelect.className = "form-control fork-inline mode"
+                this.mode1Option = document.createElement("option")
+                this.mode1Option.value = "1"
+                this.mode1Option.textContent = "1"
+                this.modeSelect.append(this.mode1Option)
 
-        this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
+                this.mode2Option = document.createElement("option")
+                this.mode2Option.value = "2"
+                this.modeSelect.append(this.mode2Option)
+                this.mode2Option.textContent = "2"
+
+                this.mode2Option.selected = "selected"
+
+                this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
 
 
-        this.statementDiv.append(this.modeSelect)
-        const modeDiv= document.createElement('div')
-        modeDiv.innerHTML  = '<ul> <li>Mode 1: Each if/else body contains one expression.</li> <li>Mode 2: If/else bodies can contain two expressions.</li></ul>'
-        this.statementDiv.appendChild(modeDiv)
+                this.statementDiv.append(this.modeSelect)
+            
+            const modeDiv= document.createElement('div')
+            modeDiv.innerHTML  = '<ul> <li>Mode 1: Each if/else body contains one expression.</li> <li>Mode 2: If/else bodies can contain two expressions.</li></ul>'
+            this.statementDiv.appendChild(modeDiv)
+            }
 
-        this.typeStatementNode = document.createTextNode("Please select what type of question to generate:")
-        this.statementDiv.appendChild(this.typeStatementNode);
-        
-        this.typeSelect = document.createElement("select")
-        this.typeSelect.className = "form-control fork-inline mode"
-        this.type1Option = document.createElement("option")
-        this.type1Option.value = "1"
-        this.type1Option.textContent = "Select all";
-        this.typeSelect.append(this.type1Option)
+            if(!this.typePreset){
+                this.typeStatementNode = document.createTextNode("Please select what type of question to generate:")
+                this.statementDiv.appendChild(this.typeStatementNode);
+                
+                this.typeSelect = document.createElement("select")
+                this.typeSelect.className = "form-control fork-inline mode"
+                this.type1Option = document.createElement("option")
+                this.type1Option.value = "1"
+                this.type1Option.textContent = "Select all";
+                this.typeSelect.append(this.type1Option)
 
-        this.type2Option = document.createElement("option")
-        this.type2Option.value = "2"
-        this.typeSelect.append(this.type2Option)
-        this.type2Option.textContent = "Fill in the values"
+                this.type2Option = document.createElement("option")
+                this.type2Option.value = "2"
+                this.typeSelect.append(this.type2Option)
+                this.type2Option.textContent = "Fill in the values"
 
-        this.type2Option.selected = "selected"
+                this.type2Option.selected = "selected"
 
-        this.typeSelect.addEventListener("change", ()=>this.generateButton.click())
+                this.typeSelect.addEventListener("change", ()=>this.generateButton.click())
 
-        this.statementDiv.append(this.typeSelect);
-
-        this.containerDiv.appendChild(this.statementDiv);
+                this.statementDiv.append(this.typeSelect);
+            }
+            this.containerDiv.appendChild(this.statementDiv);
+            
+        }
         this.containerDiv.appendChild(document.createElement("br"));
-
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
 
@@ -155,15 +161,21 @@ export default class TR extends RunestoneBase {
             target = 5;
         }
 
-        for (let i = 0; i<20; i++){
-            this.problem = initialize(Number(this.modeSelect.value));
-            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
-            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+        if(!this.problemPreset){
+            for (let i = 0; i<20; i++){
+                this.problem = initialize(Number(this.modeSelect.value));
+                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
+                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-            if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                break;
+                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                    break;
+                }
             }
+            
+        }else{
+            this.finalStates = this.problem.answerArr
         }
+        
 
         // Copy the original elements to the container holding what the user will see.
         $(this.origElem).children().clone().appendTo(this.containerDiv);
@@ -187,21 +199,48 @@ export default class TR extends RunestoneBase {
 
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
-        if(currentOptions["questionType"] !== undefined&&currentOptions["mode"] !== undefined){
-            this.statementDiv.remove();
-            this.typeSelect.value = currentOptions["questionType"];
-            this.modeSelect = currentOptions["mode"];
+        if(currentOptions["preset-questionType"]&&currentOptions["preset-mode"]){
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.modeSelect = {value: currentOptions["mode"].toString()};
+            this.modePreset = true;
+            this.typePreset = true;
         }
-        if (currentOptions["questionType"] !== undefined) {
-            this.typeSelect.remove();
-            this.typeSelect.value = currentOptions["questionType"];
+        else if (currentOptions["preset-questionType"]) {
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.typePreset = true;
             
         }
-        if(currentOptions["mode"] !== undefined){
-            this.modeSelect.remove();
-            this.modeSelect = currentOptions["mode"];
+        else if(currentOptions["preset-mode"]){
+            this.modeSelect = {value: currentOptions["mode"].toString()};
+            this.modePreset = true;
         }
-};
+        
+        if(currentOptions["preset-problem"]){
+            const initial = "<pre style='font-size: 18px; width:130px;'>"+currentOptions["initialText"].replaceAll("\n", "<br>")+"</pre><br>"
+            
+            let temp = currentOptions["thread1Text"];
+            temp = temp.replaceAll("\n", "<br>")
+            const t1 = "<pre style='font-size: 18px;'>" + temp + "</pre>";
+            temp = currentOptions["thread2Text"];
+            temp = temp.replaceAll("\n", "<br>");
+            const t2 = "<pre style='font-size: 18px;'>" + temp + "</pre>";
+            const ansArr = []
+            for (let i = 0; i<currentOptions["answerArr"].length; i++){
+                let answer = {readFromx: currentOptions["answerArr"][i][0], y1: currentOptions["answerArr"][i][1], y2: currentOptions["answerArr"][i][2]}
+                ansArr.push(JSON.stringify(answer));
+            }
+            const distractors = [];
+            if(currentOptions["distractors"]){
+                for (let i = 0; i<currentOptions["distractors"].length; i++){
+                    let answer = {readFromx: currentOptions["distractors"][i][0], y1: currentOptions["distractors"][i][1], y2: currentOptions["distractors"][i][2]}
+                    distractors.push(JSON.stringify(answer));
+                }
+            }
+            
+            this.problem = {text: {initial: initial, t1: t1, t2: t2}, answerArr: ansArr, distractors: distractors};
+            this.problemPreset = true;
+        }
+    };
 
     generateDistractors(coinFlip, template){
         switch(coinFlip){
@@ -272,6 +311,7 @@ export default class TR extends RunestoneBase {
     }
 
     generateChoices(){
+        
         let dataList = [];
         let wrongList = [];
         let loopCount = 0;
@@ -283,6 +323,16 @@ export default class TR extends RunestoneBase {
             case "2":
                 this.numChoices = 5;
                 break;
+        }
+
+        if(this.problemPreset){
+            let dataList = this.problem.answerArr;
+            dataList.push(this.problem.distractors);
+            dataList = dataList.flat();
+            for(let i = 0; i<dataList.length; i++){
+                dataList[i] = JSON.parse(dataList[i])
+            }
+            return dataList;
         }
 
         if(this.ansKey.length < this.numChoices){
@@ -432,6 +482,7 @@ export default class TR extends RunestoneBase {
         this.answerDiv.append(this.checkListDiv)
 
         this.containerDiv.append(this.answerDiv);
+        this.problemPreset = false;
     }
 
     renderAnswerDiv(){
@@ -504,7 +555,7 @@ export default class TR extends RunestoneBase {
         this.background.append(this.answerTable);
         this.answerDiv.append(this.background)
         this.containerDiv.append(this.answerDiv);
-            
+        this.problemPreset = false;
     }
 
     generateAnswerSlot(){
@@ -545,9 +596,12 @@ export default class TR extends RunestoneBase {
 
 
     clearButtons(){
+        if(this.noMoreRowsButton){
+            this.noMoreRowsButton.remove()
+        }
         this.generateButton.remove()
         this.submitButton.remove()
-        this.noMoreRowsButton.remove()
+            
         
     }
 
@@ -575,16 +629,20 @@ export default class TR extends RunestoneBase {
             } else if (this.modeSelect.value = "2"){
                 target = 5;
             }
+            if(!this.problemPreset){
+                for (let i = 0; i<50; i++){
+                    this.problem = initialize(Number(this.modeSelect.value));
+                    this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
+                    this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-            for (let i = 0; i<50; i++){
-                this.problem = initialize(Number(this.modeSelect.value));
-                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
-                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
-
-                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                    break;
+                    if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                        break;
+                    }
                 }
+            }else{
+                this.finalStates = this.problem.answerArr;
             }
+            
 
             switch(this.typeSelect.value){
                 case "1":
