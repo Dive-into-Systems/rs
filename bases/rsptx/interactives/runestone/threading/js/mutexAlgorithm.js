@@ -594,7 +594,13 @@ export function initialize(mode){
     let flag1 = Math.floor(Math.random()*2)
     let flag2 = Math.floor(Math.random()*2)
     let thread = [];
-    thread.push(evalPossibilities[Math.floor(Math.random()*2)]);
+    let evalMutexRate = 0.3;
+    if(Math.random()<evalMutexRate){
+        thread.push(evalPossibilities[1]);
+    }else{
+        thread.push(evalPossibilities[0]);
+    }
+    
     if(thread[0] == "evalIf"){
         for(let i = 0; i< thread1Info.lineSizeIf; i++){
             if(flag1){
