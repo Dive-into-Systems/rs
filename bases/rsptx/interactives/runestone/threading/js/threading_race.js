@@ -596,14 +596,12 @@ export default class TR extends RunestoneBase {
 
 
     clearButtons(){
-        if(this.typeSelect.value == "1"){
-            this.generateButton.remove()
-            this.submitButton.remove()
-        }else{
-            this.generateButton.remove()
-            this.submitButton.remove()
+        if(this.noMoreRowsButton){
             this.noMoreRowsButton.remove()
         }
+        this.generateButton.remove()
+        this.submitButton.remove()
+            
         
     }
 
