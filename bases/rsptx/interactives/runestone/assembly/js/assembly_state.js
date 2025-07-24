@@ -35,7 +35,17 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.memo_checked = false;
         this.stack_checked = false;
 
+        this.reset = true;
+        this.generateAnother = true;
+
+
         const json = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (json["reset"] != undefined) {
+            this.reset = json["reset"];
+        }
+        if (json["generate-another"] != undefined) {
+            this.generateAnother = json["generate-another"];
+        }
         if (json["instructions"] || json["registers"] || json["addresses"]) {
             // custom randomization of instructions, registers, and addresses
             this.instructions = json.instructions;
@@ -43,8 +53,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             this.memory = json.memory;
             this.selection = json.selection;
             this.createCustomizedAssemblyStateElement();
-        }
-        else {
+        } else {
             this.createRegularAssemblyStateElement();
         }
         
@@ -361,17 +370,26 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
     // Repopulates tables with current state after an instruction
     renderButtons() {
         const buttonContainer = $("<div>").addClass("button-container");
+        console.log("generateAnother", this.generateAnother);
+        console.log("reset", this.reset);
+        if (this.generateAnother) {
+            const tryAnotherButton = $("<button>").text(this.generateAnother ? "Generate another question" : "Try another question").addClass("btn-success").on("click", () => {
+                this.tryAnother();
+                updateHeight(window, document, this);
+                this.sendData(3)
+            });
+            buttonContainer.append(tryAnotherButton);
+        }
 
-        const tryAnotherButton = $("<button>").text("Generate another question").addClass("btn-success").on("click", () => {
-            this.tryAnother();
-            updateHeight(window, document, this);
-            this.sendData(3)
-        });
-        const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
-            this.resetValues()
-            updateHeight(window, document, this);
-            this.sendData(9)
-        });
+        if (this.reset) {
+            const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
+                this.resetValues()
+                updateHeight(window, document, this);
+                this.sendData(9)
+            });
+            buttonContainer.append(resetButton);
+        }
+
         const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
             this.provideHelp();
             updateHeight(window, document, this);
@@ -382,7 +400,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             updateHeight(window, document, this);
         });
 
-        buttonContainer.append(tryAnotherButton, resetButton, linkButton, checkAnswerButton);
+        buttonContainer.append(linkButton, checkAnswerButton);
         this.containerDiv.append(buttonContainer);
     }
 
