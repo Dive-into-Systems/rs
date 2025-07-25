@@ -28,3 +28,23 @@ but may be hard to read.
 4. For good circuit placement, abide by the same invariants as outlined in the previous section.
 
 ## Examples of prepopulating the circuit
+```html
+<div class="ptx-runestone-container">
+            <div class="runestone">
+            <div data-component="test_circuittruth" data-question_label="1" id="test_circuittruth">
+            <script type="application/json">
+                {"statement": "(A AND B) NOR (B XOR C)",
+                "disable-generate": false}
+              </script>
+
+              <style>
+                body{
+                  overflow-y: hidden;
+                  overflow-x: hidden;
+                }
+              </style>
+
+          </div>
+          </div> <!--runestone-->
+</div> <!--ptx-runestone-container-->
+```
