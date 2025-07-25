@@ -44,4 +44,39 @@ Instructors can prepopulate the question by passing in a JSON object with the fo
 ### Details for text fields
 1. Lines breaks should be indicated using the "\n" symbol.
 2. Indentation and spacing is preserved.
-3. Use XML special characters for < (&#60;), >(&#62;), &(&#38;), and "(&#34;). 
+3. Use XML special characters for < (&#60), >(&#62), &(&#38), and "(&#34).
+
+### Details for answer key and distractor fields
+1. Each entry should be a state represented by an array of three items, which are the values of x, y (thread1), y (thread2) in that order. For example,
+"answerArr" : [[3,5,5], [2,5,5]] indicates that there are two possible final states. The first state has values (x=3, y1=5. y2=5) and the second state
+has values (x=2, y1=5, y2=5).
+2. For questionType 2, answerArr can be any length and distractors can be left empty.
+3. For questionType 1, the total length of answerArr and distractors should not exceed 5 for mode 2 and should not exceed 4 for mode 1.
+
+## Examples:
+### threading_race prepopulating problem only
+```html
+<div class="ptx-runestone-container">
+            <div class="runestone">
+              <div data-component="threading_race" data-question_label="1" id="threading_race">
+                <script type="application/json">
+                  {
+                    "preset-questionType": false,
+                    "preset-mode": false,
+                    "preset-problem" : true,
+                    "disable-generate" : false,
+                    "questionType": 2,
+                    "mode": 2,
+                    "initialText" : "int x = 5;\n",
+                    "thread1Text" : "void *thread(void *arg) {\n    int y = 5;\n    if (x >= 9){\n        y = 9;\n    } else{\n        x = x + y;\n    }\n    print('%d %d', x, y);\n    return NULL;\n}",
+                    "thread2Text" : "void *thread(void *arg) {\n    int y = 7;\n    if (x >= y){\n        y = 1;\n    } else{\n        x = 1;\n    }\n    print('%d %d', x, y);\n    return NULL;\n}",
+                    "answerArr" : [[10,5,1],[1,5,7],[10,5,7],[6,5,7]],
+                    "distractors" : [[10,5,21]]
+                    
+                  }
+                </script>
+              </div> <!-- this component -->
+            </div> <!--runestone-->
+```
+
+<img width="662" height="957" alt="image" src="https://github.com/user-attachments/assets/3c113689-196b-4268-aaf1-f770a7cbc732" />
