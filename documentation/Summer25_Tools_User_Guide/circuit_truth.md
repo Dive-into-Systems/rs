@@ -28,6 +28,7 @@ but may be hard to read.
 4. For good circuit placement, abide by the same invariants as outlined in the previous section.
 
 ## Examples of prepopulating the circuit
+# Example 1: not disabling generate but prepopulating the circuit with a statement
 ```html
 <div class="ptx-runestone-container">
             <div class="runestone">
