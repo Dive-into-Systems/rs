@@ -18,7 +18,7 @@ Question Types:
 <img width="640" height="966" alt="image" src="https://github.com/user-attachments/assets/80a1883f-adbb-405a-a7f3-456825165bf7" />
 
 ### Mode 2 Question type 2 threading_race
-<img width="641" height="987" alt="image" src="https://github.com/user-attachments/assets/3d040784-5f93-4472-9283-2124c2d16000" />
+<img width="629" height="957" alt="image" src="https://github.com/user-attachments/assets/54e5e140-c34c-4503-af5b-953450414b2e" />
 
 ### Mode 2 Question type 1 threading_mutex
 <img width="642" height="987" alt="image" src="https://github.com/user-attachments/assets/0daf9d77-f0ef-4fa6-bf4b-0ee5da7412f0" />
