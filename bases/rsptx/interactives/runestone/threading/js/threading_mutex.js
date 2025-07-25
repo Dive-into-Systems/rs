@@ -86,7 +86,7 @@ export default class TM extends RunestoneBase {
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
-        if(!(this.modePreset&&this.typePreset)){
+        if((!(this.modePreset&&this.typePreset))&&!this.disableGenerate){
             this.configHelperText = document.createElement("div");
             this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
@@ -238,6 +238,12 @@ export default class TM extends RunestoneBase {
             
             this.problem = {text: {initial: initial, t1: t1, t2: t2}, answerArr: ansArr, distractors: distractors};
             this.problemPreset = true;
+        }
+
+        if(currentOptions["disable-generate"]){
+            this.disableGenerate = true;
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.modeSelect = {value: currentOptions["mode"].toString()};
         }
     };
 
@@ -592,7 +598,10 @@ export default class TM extends RunestoneBase {
         if(this.noMoreRowsButton){
             this.noMoreRowsButton.remove();
         }
-        this.generateButton.remove();
+        if(this.generateButton){
+            this.generateButton.remove();
+        }
+       
         this.submitButton.remove();
     }
 
@@ -666,7 +675,10 @@ export default class TM extends RunestoneBase {
                     this.logCurrentAnswer();
             
                 });
-                this.containerDiv.appendChild(this.generateButton);
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
+                
                 this.containerDiv.appendChild(this.submitButton);
                 break;
 
@@ -707,7 +719,10 @@ export default class TM extends RunestoneBase {
                     this.checkAllAnswers();
                     this.logCurrentAnswer();         
                 });
-                this.containerDiv.appendChild(this.generateButton);
+
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
                 this.row.appendChild(this.submitButton);
                 this.containerDiv.appendChild(this.noMoreRowsButton);   
                 break;
