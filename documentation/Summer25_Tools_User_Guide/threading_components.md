@@ -40,3 +40,8 @@ Instructors can prepopulate the question by passing in a JSON object with the fo
 10. "thread2Text" : string that is displayed under "thread 2"
 11. "answerArr" : an array of arrays that is used as the answer key.
 12. "distractors" : an array of arrays that is used as distractor answers for multiple choice questions.
+
+### Details for text fields
+1. Lines breaks should be indicated using the "\n" symbol.
+2. Indentation and spacing is preserved.
+3. Use XML special characters for < (&#60;), >(&#62;), &(&#38;), and "(&#34;). 
