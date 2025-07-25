@@ -445,7 +445,7 @@ export default class TM extends RunestoneBase {
         this.answerDiv.append(this.threadsDiv);
         this.answerDiv.append(document.createElement("br"));
 
-        this.answerStatement = document.createTextNode("Your answer: ");
+        this.answerStatement = document.createTextNode("Select all the possible final states: ");
         this.answerDiv.appendChild(this.answerStatement);
         
         this.ansKey = this.finalStates;
