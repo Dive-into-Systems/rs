@@ -54,7 +54,7 @@ has values (x=2, y1=5, y2=5).
 3. For questionType 1, the total length of answerArr and distractors should not exceed 5 for mode 2 and should not exceed 4 for mode 1.
 
 ## Examples:
-### threading_race prepopulating problem only
+### threading_race type 2 prepopulating problem only
 ```html
 <div class="ptx-runestone-container">
             <div class="runestone">
@@ -80,3 +80,54 @@ has values (x=2, y1=5, y2=5).
 ```
 
 <img width="662" height="957" alt="image" src="https://github.com/user-attachments/assets/3c113689-196b-4268-aaf1-f770a7cbc732" />
+
+### threading_race type 2 not prepopulating problem while disabling mode selection, question type selection, question generation
+```html
+<div class="ptx-runestone-container">
+            <div class="runestone">
+              <div data-component="threading_race" data-question_label="1" id="threading_race">
+                <script type="application/json">
+                  {
+                    "preset-questionType": true,
+                    "preset-mode": true,
+                    "preset-problem" : false,
+                    "disable-generate" : true,
+                    "questionType": 2,
+                    "mode": 2,
+                    "initialText" : "int x = 5;\n",
+                    "thread1Text" : "void *thread(void *arg) {\n    int y = 5;\n    if (x >= 9){\n        y = 9;\n    } else{\n        x = x + y;\n    }\n    print('%d %d', x, y);\n    return NULL;\n}",
+                    "thread2Text" : "void *thread(void *arg) {\n    int y = 7;\n    if (x >= y){\n        y = 1;\n    } else{\n        x = 1;\n    }\n    print('%d %d', x, y);\n    return NULL;\n}",
+                    "answerArr" : [[10,5,1],[1,5,7],[10,5,7],[6,5,7]],
+                    "distractors" : [[10,5,21]]
+                    
+                  }
+                </script>
+              </div> <!-- this component -->
+            </div> <!--runestone-->
+```
+
+<img width="648" height="807" alt="image" src="https://github.com/user-attachments/assets/d0f385fa-fe9e-4cdb-ab0b-08c6da693452" />
+
+### threading_mutex type 1 prepopulating problem and setting question type
+```html
+<div data-component="threading_mutex" data-question_label="1" id="threading_mutex">
+                <script type="application/json">
+                  {
+                    "preset-questionType": true,
+                    "preset-mode": false,
+                    "preset-problem" : true,
+                    "disable-generate" : false,
+                    "questionType": 1,
+                    "mode": 2,
+                    "initialText" : "int x = 5;\nint pthread_mutex_lock(pthread_mutex_t *mutex);",
+                    "thread1Text" : "int y = 6;\npthread_mutex_lock(&#38;mutex);\nif (x >= 7){\n     x = x - y;\n     y = y + x;\n     pthread_mutex_unlock(&#38;mutex);\n}\nelse{\n     pthread_mutex_unlock(&#38;mutex);\n     y = y + x;\n}\nprint('%d %d', x, y);\nreturn NULL;",
+                    "thread2Text" : "int y = 6;\npthread_mutex_lock(&#38;mutex);\nif (x >= 7){\n     x = x - y;\n     y = y + x;\n     pthread_mutex_unlock(&#38;mutex);\n}\nelse{\n     pthread_mutex_unlock(&#38;mutex);\n     y = y + x;\n}\nprint('%d %d', x, y);\nreturn NULL;",
+                    "answerArr" : [[5,11,11]],
+                    "distractors" : [[1,2,3],[2,3,4],[3,4,5],[4,5,6]]
+                  }
+                </script>
+              </div> <!-- this component -->
+            </div> <!--runestone-->
+```
+<img width="641" height="991" alt="image" src="https://github.com/user-attachments/assets/1adaf890-ce05-4985-8912-2c9058780942" />
+
