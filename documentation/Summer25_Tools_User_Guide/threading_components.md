@@ -23,5 +23,9 @@ Question Types:
 ### Mode 2 Question type 1 threading_mutex
 <img width="642" height="987" alt="image" src="https://github.com/user-attachments/assets/0daf9d77-f0ef-4fa6-bf4b-0ee5da7412f0" />
 
+### Mode 1 Question type 2 threading_mutex
+<img width="626" height="954" alt="image" src="https://github.com/user-attachments/assets/b0f0d1ed-2b1e-4f2c-a808-ab21293049e7" />
+
+
 
 
