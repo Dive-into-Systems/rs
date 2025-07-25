@@ -81,7 +81,6 @@ export default class TM extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, determine the possible values of the variables below after the threads execute in parallel."
 
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
@@ -130,7 +129,7 @@ export default class TM extends RunestoneBase {
                 this.typeSelect.className = "form-control fork-inline mode"
                 this.type1Option = document.createElement("option")
                 this.type1Option.value = "1"
-                this.type1Option.textContent = "Select all";
+                this.type1Option.textContent = "Multiple Choice";
                 this.typeSelect.append(this.type1Option)
 
                 this.type2Option = document.createElement("option")
@@ -159,6 +158,12 @@ export default class TM extends RunestoneBase {
             target = 4;
         } else if (this.modeSelect.value = "2"){
             target = 5;
+        }
+
+        if(this.typeSelect.value == "1"){
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
+        }else{
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
         }
 
         if(!this.problemPreset){
@@ -470,19 +475,36 @@ export default class TM extends RunestoneBase {
 
         shuffleArray(dataList)
 
-        this.checkListDiv = document.createElement("div")
-        let checkListDivHTML = "<ul class='items'>";
+        this.checkListDiv = document.createElement("div");
+        this.checkListDiv.className = "statement-div"
+        this.checkListTable = document.createElement("table");
+        let variables = ["", "x", "y (thread1)", "y (thread2)"];
+
+        let header = '<tr>';
+        for (const variable of variables) {
+            if(variable == "x"){
+                header += `<th style="text-align:center; width:180px">${variable}</th>`;
+                continue;
+            }
+            header += `<th style="text-align:center">${variable}</th>`;
+        }
+
+        this.checkListTable.innerHTML = header;
 
         for(let i = 0; i<this.numChoices; i++){
-            let displayString = `x: ${dataList[i].readFromx}    y (thread1): ${dataList[i].y1}   y (thread2): ${dataList[i].y2}`
-            checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
+            let row = '<tr>';
+            row += `<td><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input></td>`
+            row+= `<td>${dataList[i].readFromx}</td><td>${dataList[i].y1}</td><td>${dataList[i].y2}</td>`
+            row += '</tr>'
+            this.checkListTable.innerHTML += row;
         }
         
 
-        this.checkListDiv.innerHTML = checkListDivHTML;
+        this.checkListDiv.append(this.checkListTable);
         this.answerDiv.append(this.checkListDiv)
 
         this.containerDiv.append(this.answerDiv);
+        this.problemPreset = false;
     }
 
     renderAnswerDiv(){
@@ -551,6 +573,7 @@ export default class TM extends RunestoneBase {
 
         this.generateAnswerSlot();
         this.answerDiv.append(document.createElement("br"));
+        this.answerDiv.append(document.createTextNode("Fill in each row with a possible state:"))
         this.background.append(this.answerTable);
         this.answerDiv.append(this.background)
         this.containerDiv.append(this.answerDiv);
@@ -648,9 +671,13 @@ export default class TM extends RunestoneBase {
             switch(this.typeSelect.value){
                 case "1":
                     this.renderAnswerDivMultipleChoice();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
                     break;
                 case "2":
                     this.renderAnswerDiv();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
             }
 
             this.renderTRButtons()
@@ -705,7 +732,7 @@ export default class TM extends RunestoneBase {
                 });
                 this.submitButton.style.display = "inline-block"
                 this.noMoreRowsButton = document.createElement("button");
-                this.noMoreRowsButton.textContent = $.i18n("No more entries");
+                this.noMoreRowsButton.textContent = $.i18n("No more states");
                 $(this.noMoreRowsButton).attr({
                     class: "btn btn-success",
                     name: "answer",
@@ -914,7 +941,7 @@ export default class TM extends RunestoneBase {
             this.renderFeedback();
             return;
         }else{
-            this.feedback_msg = "Correct. Good job!"
+            this.feedback_msg = "The current row is correct! Fill in another row, or click 'No more states' if you believe these are all the possible states."
             this.userAnswers.push(JSON.parse(userRow));
             this.renderFeedback();
         }
