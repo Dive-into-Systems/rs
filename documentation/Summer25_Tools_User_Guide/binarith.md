@@ -33,11 +33,11 @@ This component is designed to help students practice binary addition/subtraction
       <div data-component="binarith" data-question_label="2" id="test_bitwise_arithmetic">
         <script type="application/json">
           {
-            "operand1" : "0001",
-            "operand2" : "0000",
+            "operand1" : "000001",
+            "operand2" : "100000",
             "operation" : "ADDITION",
+            "num_bits" : 6,
             "allowAMA" : false
-            
           }
         </script>
     
@@ -51,7 +51,7 @@ This component is designed to help students practice binary addition/subtraction
       </div>
     </div> <!--runestone-->
 ```
-<img width="690" height="462" alt="image" src="https://github.com/user-attachments/assets/7a9fba36-eea7-433f-9bf9-884aec6bea12" />
+<img width="690" height="697" alt="image" src="https://github.com/user-attachments/assets/2b7582d4-c8df-4816-98de-f87e389580a5" />
 
 <h4> Parameters</h4>
 There are four parameters that are necessary for prepopulating the component. If you aren't prepopulating, you can pass in an empty JSON object to the component.
