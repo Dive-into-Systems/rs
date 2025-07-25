@@ -60,6 +60,7 @@ There are four parameters that are necessary for prepopulating the component. If
   <li>operand1: A string containing the first operand in binary</li>
   <li>operand2: A string containing the second operand in binary</li>
   <li>operation: the operation that will be performed in the prepopulated question. Two possible values: "ADDITION" or "SUBTRACTION" </li>
+  <li>num_bits: the number of bits (needed to configure the question). Can be set to either 4, 6, or 8 </li>
   <li>allowAMA: true if the user allowed to generate new questions afterwards</li>
 </ol>
 
