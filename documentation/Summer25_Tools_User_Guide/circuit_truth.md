@@ -51,3 +51,51 @@ but may be hard to read.
 ```
 
 <img width="632" height="1146" alt="image" src="https://github.com/user-attachments/assets/6e575c06-f5d2-4e68-8d94-744aa33b35a3" />
+
+### Example 2: disabling generate but not prepopulating the circuit with a statement
+```html
+          <div class="ptx-runestone-container">
+            <div class="runestone">
+            <div data-component="test_circuittruth" data-question_label="1" id="test_circuittruth">
+            <script type="application/json">
+                {
+                "disable-generate": true}
+              </script>
+
+              <style>
+                body{
+                  overflow-y: hidden;
+                  overflow-x: hidden;
+                }
+              </style>
+
+          </div>
+          </div> <!--runestone-->
+        </div> <!--ptx-runestone-container-->
+```
+
+<img width="652" height="1033" alt="image" src="https://github.com/user-attachments/assets/69ec52a7-57ee-4039-b666-0b0d46573dac" />
+
+### Example 3: disabling generate and prepopulating the circuit with a statement
+```html
+<div class="ptx-runestone-container">
+            <div class="runestone">
+            <div data-component="test_circuittruth" data-question_label="1" id="test_circuittruth">
+            <script type="application/json">
+                {"statement": "(A AND B) NOR (B XOR C)",
+                "disable-generate": true}
+              </script>
+
+              <style>
+                body{
+                  overflow-y: hidden;
+                  overflow-x: hidden;
+                }
+              </style>
+
+          </div>
+          </div> <!--runestone-->
+        </div> <!--ptx-runestone-container-->
+```
+
+<img width="635" height="1021" alt="image" src="https://github.com/user-attachments/assets/c5abfb76-a2dd-450d-a98a-127e4919f58a" />
