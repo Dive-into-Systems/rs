@@ -424,7 +424,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 arr[i-1][j].forEach((elem)=>{
 
                     let next;
-
+                    //simulates the execution of another thread 2 instruction on all states in i-1th array location and stores it as a possible state
                     if(regex.test(thread2[i-1])){
                         next =threadTemplate2[thread2[i-1].slice(1, thread2[i-1].length)](JSON.parse(elem), thread2Info, parseInt(thread2[i-1]))
                     }else{
@@ -441,7 +441,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
                 arr[i][j-1].forEach((elem)=>{
 
                     let next;
-
+                    //simulates the execution of another thread 1 instruction on all state in j-1th array location and stores it as a possible state
                     if(regex.test(thread1[j-1])){
                         next =threadTemplate1[thread1[j-1].slice(1, thread1[j-1].length)](JSON.parse(elem), thread1Info, parseInt(thread1[j-1]))
                     }else{
@@ -454,7 +454,7 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
 
                 temp2 = temp2.flat();
 
-
+                //stores all the accumulated states from the execution of another step in thread 1 and another step in thread 2 in the current array location
                 arr[i][j] = []
                 arr[i][j].push(temp);
                 arr[i][j] = arr[i][j].flat();
@@ -469,9 +469,11 @@ export function stateChange(state, thread1Info, thread2Info, thread1, thread2){
   
     return arr
 }
+
+//this function initilizes the problems
 export function initialize(mode){
 
-
+    //sets the instructions of both threads
     let thread1 = ["evalIf", "0changeIf", "update", "1changeIf", "update", "0changeElse", "update", "1changeElse", "update"]
     let thread2 = ["evalIf", "0changeIf", "update", "1changeIf", "update", "0changeElse", "update", "1changeElse", "update"]
 
@@ -488,6 +490,7 @@ export function initialize(mode){
     return {state: state, text: text, thread1Info: thread1Info, thread2Info: thread2Info, thread1: thread1, thread2: thread2, threadTemplate1: threadTemplate1, threadTemplate2: threadTemplate2};
 }
 
+//this function filters out duplicate copies of states from the final posssible states and returns it as and array of strings
 export function possibleFinalStates(stateArr, thread1Length, thread2Length){
     let finalState = stateArr[thread2Length][thread1Length];
     let ret = []
