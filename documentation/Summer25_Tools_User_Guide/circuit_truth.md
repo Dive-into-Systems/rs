@@ -1,4 +1,4 @@
-## Circuit Truth
+# Circuit Truth
 Circuit truth generates a circuit and asks the user to fill in a truth table. It generates the circuit using the
 circuit_generator class found in circuit_generate.js, which has detailed comments about usage and functionality. 
 
@@ -28,7 +28,7 @@ but may be hard to read.
 4. For good circuit placement, abide by the same invariants as outlined in the previous section.
 
 ## Examples of prepopulating the circuit
-# Example 1: not disabling generate but prepopulating the circuit with a statement
+### Example 1: not disabling generate but prepopulating the circuit with a statement
 ```html
 <div class="ptx-runestone-container">
             <div class="runestone">
