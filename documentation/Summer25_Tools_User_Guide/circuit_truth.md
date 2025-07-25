@@ -99,3 +99,29 @@ but may be hard to read.
 ```
 
 <img width="635" height="1021" alt="image" src="https://github.com/user-attachments/assets/c5abfb76-a2dd-450d-a98a-127e4919f58a" />
+
+### Example 4: statement that would result in bad placement
+```html
+<div class="ptx-runestone-container">
+            <div class="runestone">
+            <div data-component="test_circuittruth" data-question_label="1" id="test_circuittruth">
+            <script type="application/json">
+                {"statement": "(A AND C) AND (NOT C)",
+                "disable-generate": true}
+              </script>
+
+              <style>
+                body{
+                  overflow-y: hidden;
+                  overflow-x: hidden;
+                }
+              </style>
+
+          </div>
+          </div> <!--runestone-->
+        </div> <!--ptx-runestone-container-->
+```
+
+<img width="641" height="874" alt="image" src="https://github.com/user-attachments/assets/00628d79-30cd-4654-a77a-bcda61e0b01a" />
+
+
