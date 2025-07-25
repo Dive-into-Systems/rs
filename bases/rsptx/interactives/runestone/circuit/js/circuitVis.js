@@ -12,6 +12,11 @@ import { tabbedHelpBox } from "../../../utils/tabbedHelpBox.js";
 export var CVList = {}; // Object containing all instances of CV that aren't a child of a timed assessment.
 
 
+//If you're trying to understand how GOjs/the circuit components work, I'd look at draw circuit
+// this component is mostly just a copy of that but with moderte changes and less comments
+
+
+
 export default class CV extends RunestoneBase {
    constructor(opts) {
        super(opts);
@@ -99,10 +104,11 @@ export default class CV extends RunestoneBase {
 
 
 
-        // This JSON is used initialie the digram.
+        // This JSON is used intialize the digram.
         this.startJson = ``;
 
         if(this.modeOutput == 1){
+            //Multiplexer Starting JSON
             this.startJson = `
                     { "class": "GraphLinksModel",
                     "isReadOnly": true,
@@ -168,6 +174,7 @@ export default class CV extends RunestoneBase {
             `        
         }
         else if (this.modeOutput == 2){
+            //RS latch             
             this.startJson = `
                 { "class": "GraphLinksModel",
                 "isReadOnly": true,
@@ -192,6 +199,7 @@ export default class CV extends RunestoneBase {
             `
         }
         else{
+            // Gated D-Latch
             this.startJson = `
                 { "class": "GraphLinksModel",
                 "isReadOnly": true,
@@ -260,6 +268,8 @@ export default class CV extends RunestoneBase {
             return
         }
 
+
+        //Get the current state of the inputs. This uniquely identifies the row
         let inputVals = [];
         this.myDiagram.nodes.each(n=>{
         if(n.category == "input"){
@@ -267,6 +277,7 @@ export default class CV extends RunestoneBase {
         }
         })
 
+        //Find the row the matches
         let outputRow
         for(let i = 0; i < this.userAnswerTruthTable.length; i++){
             let match = true;
@@ -282,7 +293,7 @@ export default class CV extends RunestoneBase {
             
         }
 
-        //need to set back to normal
+        // highlight the row that matches. set everything else to normal
         for(let i = 1; i < this.table.rows.length; i++){
             if(i == outputRow+1){
                 this.table.rows.item(i).style.background = "rgba(178, 255, 187, 0.5)" 
@@ -306,9 +317,13 @@ export default class CV extends RunestoneBase {
     this.tableDiv = document.createElement("div")
     this.tableDiv.className = 'tables-container'
 
+
+    //get the truth table of the current circuit
+    //a bit like the logic in draw circuit except we alredy know the circuit output ahead of time
     this.getTruthTable()
     
     
+    //Make the table
     this.table = document.createElement("table")
     this.table.className = 'register-table'
     const th = document.createElement("tr")
@@ -335,6 +350,9 @@ export default class CV extends RunestoneBase {
     this.answerDiv.append(this.tableDiv)
    }
 
+
+   //rendering the table is different for the MUX since it's not a 'truth table' per se 
+   //but a condensed version of what the truth table would look
    renderMUXTable(){
     this.tdH3 = document.createElement("div")
     this.tdH3.textContent = "Truth Table:"
@@ -359,6 +377,9 @@ export default class CV extends RunestoneBase {
     this.answerDiv.append(this.tableDiv)
    }
 
+    //Need a different function just for the multiplexer table since it has a different 
+    // format.
+    //The logic is basically the same   
    highlightMUXTable(){
     if(!this.MUXTable){
         return
@@ -385,7 +406,6 @@ export default class CV extends RunestoneBase {
         outputRow = 3
     }
 
-    //need to set back to normal
     for(let i = 1; i < this.table.rows.length; i++){
         if(i == outputRow+1){
             this.MUXTable.rows.item(i).style.background = "rgba(178, 255, 187, 0.5)" 
@@ -397,7 +417,9 @@ export default class CV extends RunestoneBase {
     }
    }
 
-       
+
+   //HTML Stuff happens in here.
+   //Not going to coment this up because it's just a lot of HTML reprsented as javascript
     renderCVPromptAndInput() {
 
         if(!this.containerDiv){
