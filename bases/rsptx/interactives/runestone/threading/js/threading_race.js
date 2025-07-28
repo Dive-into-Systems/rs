@@ -15,7 +15,7 @@ import { Pass } from "codemirror";
 export var TRList = {}
 import { updateHeight } from "../../../utils/updateHeight.js";
 
-// NC constructor
+// TR constructor
 export default class TR extends RunestoneBase {
     constructor(opts) {
         super(opts);
@@ -23,6 +23,7 @@ export default class TR extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+        //sets instructor configurable parameters
         this.setCustomizedParams();
 
         // Default configuration settings
@@ -41,6 +42,7 @@ export default class TR extends RunestoneBase {
         }
 
         this.contWrong = 0;
+        //dynamically resizes the height of the component
         const obj = this;
         updateHeight(window, document, obj, true);
         this.sendData(0);
@@ -59,8 +61,10 @@ export default class TR extends RunestoneBase {
         this.renderTRPromptAndInput();
         switch(this.typeSelect.value){
             case "1":
+                //renders the multiple choice version of the problem in type 1
                 this.renderAnswerDivMultipleChoice();
                 break;
+                //renders the fill in the blank version of the problem in type 2
             case "2":
                 this.renderAnswerDiv();
         }
@@ -75,19 +79,18 @@ export default class TR extends RunestoneBase {
 
     renderTRPromptAndInput() {
         this.userAnswers = [];
-        // Generate the two dropdown menus for number conversion
+        
         this.containerDiv = document.createElement("div");
         this.containerDiv.id = this.divid;
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, determine the possible values of the variables below after the threads execute in parallel."
 
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
-        
-        if(!(this.modePreset&&this.typePreset)){
+        //Only do this if the instructor doesn't want to preset mode, type, or disable generate
+        if(!(this.modePreset&&this.typePreset)&&!this.disableGenerate){
             this.configHelperText = document.createElement("div");
             this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
@@ -131,7 +134,7 @@ export default class TR extends RunestoneBase {
                 this.typeSelect.className = "form-control fork-inline mode"
                 this.type1Option = document.createElement("option")
                 this.type1Option.value = "1"
-                this.type1Option.textContent = "Select all";
+                this.type1Option.textContent = "Multiple Choice";
                 this.typeSelect.append(this.type1Option)
 
                 this.type2Option = document.createElement("option")
@@ -152,16 +155,26 @@ export default class TR extends RunestoneBase {
         this.feedbackDiv = document.createElement("div");
         this.feedbackDiv.setAttribute("id", this.divid + "_feedback");
 
+        //sets the rate of race conditions appearances at 75%.
         this.raceRate = 0.75;
         const flag = (Math.random()>this.raceRate)?1:0
         let target;
+        //sets the max number of states to generate at 4 for mode 1 and 5 for mode 2.
         if(this.modeSelect.value == "1"){
             target = 4;
         } else if (this.modeSelect.value = "2"){
             target = 5;
         }
+        //modifies instructions depending on the type of question.
+        if(this.typeSelect.value == "1"){
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
+        }else{
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
+        }
 
+        
         if(!this.problemPreset){
+            //regenerates the problem 20 times until it satisfies the the race rate and max targets.
             for (let i = 0; i<20; i++){
                 this.problem = initialize(Number(this.modeSelect.value));
                 this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
@@ -240,24 +253,31 @@ export default class TR extends RunestoneBase {
             this.problem = {text: {initial: initial, t1: t1, t2: t2}, answerArr: ansArr, distractors: distractors};
             this.problemPreset = true;
         }
+        if(currentOptions["disable-generate"]){
+            this.disableGenerate = true;
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.modeSelect = {value: currentOptions["mode"].toString()};
+        }
     };
 
+    //generates the distractors for multiple choice version of problem. It takes two parameters: a random number and a correct state.
     generateDistractors(coinFlip, template){
+        //randomly chooses one of the variables from the correct states to change.
         switch(coinFlip){
-            case 0:
-                let coinFlip = Math.floor((Math.random()*2)) ? 1:0
+            case 0: //the variable chosen is x
+                let coinFlip = Math.floor((Math.random()*2)) ? 1:0 //randomly picks a thread
                 if(coinFlip){
-                    if(this.problem.thread1Info.operandIf[0] == "x"){
+                    if(this.problem.thread1Info.operandIf[0] == "x"){ //looks for the read-modify-write pattern in the if body that affects the x value.
                         let x = template.readFromx;
                         let y = template.y1;
-                        x = eval(this.problem.thread1Info.changeIf[0]);
+                        x = eval(this.problem.thread1Info.changeIf[0]); //changes the value of x by performing the read-modify-write again to emulate incorrect evaluation of thread execution.
                         template.readFromx = x;
-                    }else if (this.problem.thread1Info.operandElse[0] == "x"){
+                    }else if (this.problem.thread1Info.operandElse[0] == "x"){ //if x is not changed in the if body, looks for a read-modify-write that occurs in the else body that affects x.
                         let x = template.readFromx;
                         let y = template.y1;
                         x = eval(this.problem.thread1Info.changeElse[0]);
                         template.readFromx = x;
-                    } else{
+                    } else{ //if x is not changed in both if and else (which should be impossible, but this is kept here as a failsafe), sets x to a random number between 0 and 10
                         template.readFromx = Math.floor(Math.random()*10);
                     }
                 }else{
@@ -276,7 +296,7 @@ export default class TR extends RunestoneBase {
                     }
                 }
                 break;
-            case 1:
+            case 1: //the variable chosen is y1
                 if(this.problem.thread1Info.operandIf[0] == "y"){
                     let x = template.readFromx;
                     let y = template.y1;
@@ -291,7 +311,7 @@ export default class TR extends RunestoneBase {
                     template.y1 = Math.floor(Math.random()*10);
                 }
                 break;
-            case 2:
+            case 2: //the variable chosen is y2
                 if(this.problem.thread2Info.operandIf[0] == "y"){
                     let x = template.readFromx;
                     let y = template.y2;
@@ -307,15 +327,15 @@ export default class TR extends RunestoneBase {
                 }
                 break
         }
-        return template
+        return template //returns the modified state as a distractor
     }
 
     generateChoices(){
         
-        let dataList = [];
-        let wrongList = [];
-        let loopCount = 0;
-        this.numChoices = 0;
+        let dataList = []; //the list that holds all the options
+        let wrongList = []; // the list that holds all the distractors
+        let loopCount = 0; // keeps track of looping so no infinite loops occur
+        this.numChoices = 0; // the number of options that should be generated
         switch(this.modeSelect.value){
             case "1":
                 this.numChoices = 4;
@@ -325,7 +345,7 @@ export default class TR extends RunestoneBase {
                 break;
         }
 
-        if(this.problemPreset){
+        if(this.problemPreset){ //sets the answer based on the instructor config if available
             let dataList = this.problem.answerArr;
             dataList.push(this.problem.distractors);
             dataList = dataList.flat();
@@ -335,23 +355,23 @@ export default class TR extends RunestoneBase {
             return dataList;
         }
 
-        if(this.ansKey.length < this.numChoices){
+        if(this.ansKey.length < this.numChoices){ //if the length of the answerKey is less than the target number of options
             for(let i = 0; i<this.ansKey.length; i++){
-                dataList.push(JSON.parse(this.ansKey[i]));
+                dataList.push(JSON.parse(this.ansKey[i])); // insert all correct answers into dataList
             }
-            for(let i = 0; i<this.numChoices-this.ansKey.length; i++){
+            for(let i = 0; i<this.numChoices-this.ansKey.length; i++){ // for the gap between the number of correct choices and the target number of options
                 let template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
                 template = JSON.parse(template);
                 let coinFlip = Math.floor(Math.random()*3);
-                template = this.generateDistractors(coinFlip, template)
+                template = this.generateDistractors(coinFlip, template) //generate distractors
                 let temp = JSON.stringify(template);
-                if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){
+                if(!this.ansKey.includes(temp)&&!wrongList.includes(temp)){ // checks to see that there are no duplicate distractors and distractor is not the same as a correct answer
                     dataList.push(template)
                     wrongList.push(temp);
                 }else{
-                    if(loopCount >= 10){
+                    if(loopCount >= 10){ // prevents infinite looping
                         let flag = false;
-                        while(!flag){
+                        while(!flag){ // triggers in the case that distractors are repeatedly duplicates or copies of correct answers
                             template = this.ansKey[Math.floor(Math.random()*this.ansKey.length)];
                             template = JSON.parse(template);
                             coinFlip = Math.floor(Math.random()*3);
@@ -382,7 +402,7 @@ export default class TR extends RunestoneBase {
             }
         }else{
             this.ansKey.forEach(answer=>{
-                dataList.push(JSON.parse(answer));
+                dataList.push(JSON.parse(answer)); //inserts all correct answers into dataList if length of correct answers matches target number of choices.
             })
             return dataList;
         }
@@ -439,15 +459,15 @@ export default class TR extends RunestoneBase {
         this.answerDiv.append(this.threadsDiv);
         this.answerDiv.append(document.createElement("br"));
 
-        this.answerStatement = document.createTextNode("Your answer: ");
+        this.answerStatement = document.createTextNode("Select all the possible final states: ");
         this.answerDiv.appendChild(this.answerStatement);
         
         this.ansKey = this.finalStates;
         console.log(this.ansKey)
-        let dataList = this.generateChoices();
+        let dataList = this.generateChoices();//generates all the options for multiple choice
         console.log(dataList)
 
-        function shuffleArray(array) {
+        function shuffleArray(array) { //shuffles the options list
             let currentIndex = array.length;
             let randomIndex;
           
@@ -469,16 +489,32 @@ export default class TR extends RunestoneBase {
 
         shuffleArray(dataList)
 
-        this.checkListDiv = document.createElement("div")
-        let checkListDivHTML = "<ul class='items'>";
+        this.checkListDiv = document.createElement("div");
+        this.checkListDiv.className = "statement-div"
+        this.checkListTable = document.createElement("table");
+        let variables = ["", "x", "y (thread1)", "y (thread2)"];
+
+        let header = '<tr>'; //creates the table that holds all the options
+        for (const variable of variables) {
+            if(variable == "x"){
+                header += `<th style="text-align:center; width:180px">${variable}</th>`;
+                continue;
+            }
+            header += `<th style="text-align:center">${variable}</th>`;
+        }
+
+        this.checkListTable.innerHTML = header;
 
         for(let i = 0; i<this.numChoices; i++){
-            let displayString = `x: ${dataList[i].readFromx}    y (thread1): ${dataList[i].y1}   y (thread2): ${dataList[i].y2}`
-            checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
+            let row = '<tr>';
+            row += `<td><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input></td>`
+            row+= `<td>${dataList[i].readFromx}</td><td>${dataList[i].y1}</td><td>${dataList[i].y2}</td>`
+            row += '</tr>'
+            this.checkListTable.innerHTML += row;
         }
         
 
-        this.checkListDiv.innerHTML = checkListDivHTML;
+        this.checkListDiv.append(this.checkListTable);
         this.answerDiv.append(this.checkListDiv)
 
         this.containerDiv.append(this.answerDiv);
@@ -543,26 +579,27 @@ export default class TR extends RunestoneBase {
 
         let variables = ["x", "y (thread1)", "y (thread2)"];
         // Create table header
-        let header = '<tr>';
+        let header = '<tr>'; 
         for (const variable of variables) {
             header += `<th style="text-align:center">${variable}</th>`;
         }
         
         this.answerTable.innerHTML = header;
 
-        this.generateAnswerSlot();
+        this.generateAnswerSlot();//creates the first row of the table that students input their answers into
         this.answerDiv.append(document.createElement("br"));
+        this.answerDiv.append(document.createTextNode("Fill in each row with a possible state:"))
         this.background.append(this.answerTable);
         this.answerDiv.append(this.background)
         this.containerDiv.append(this.answerDiv);
         this.problemPreset = false;
     }
 
-    generateAnswerSlot(){
+    generateAnswerSlot(){ //this function takes care of expanding the table after each row is checked
         
-        let variables = ["this.userAnswers[i].readFromx", "this.userAnswers[i].y1", "this.userAnswers[i].y2"]
-        this.row = document.createElement("tr");;
-        for(let j = 0; j < variables.length; j++){
+        let variables = ["this.userAnswers[i].readFromx", "this.userAnswers[i].y1", "this.userAnswers[i].y2"];
+        this.row = document.createElement("tr"); //creates a row
+        for(let j = 0; j < variables.length; j++){ // inserts the input boxes for the three variables into the row
             let cell = document.createElement("td");
             cell.style.width = "400px"
             let input = document.createElement("input");
@@ -578,14 +615,14 @@ export default class TR extends RunestoneBase {
 
         this.answerTable.append(this.row);
 
-        if(this.rowCount>= 1){
+        if(this.rowCount>= 1){ //repopulates the table when a new row is generated, since input values are removed by default
             for(let i = 0; i < this.rowCount; i++){
                 for (let j = 0; j<variables.length; j++){
 
                     let inputField = document.getElementById(`${i}${j}_answer`)
                     inputField.value = eval(variables[j])
-                    inputField.disabled = true;
-                    inputField.style.backgroundColor = "#D3D3D3"
+                    inputField.disabled = true; //disables input boxes that have already been checked and are correct
+                    inputField.style.backgroundColor = "#D3D3D3" //sets the background of correct answers to grey
                 }
             }
     
@@ -597,10 +634,13 @@ export default class TR extends RunestoneBase {
 
     clearButtons(){
         if(this.noMoreRowsButton){
-            this.noMoreRowsButton.remove()
+            this.noMoreRowsButton.remove();
         }
-        this.generateButton.remove()
-        this.submitButton.remove()
+        if(this.generateButton){
+            this.generateButton.remove();
+        }
+        
+        this.submitButton.remove();
             
         
     }
@@ -629,7 +669,7 @@ export default class TR extends RunestoneBase {
             } else if (this.modeSelect.value = "2"){
                 target = 5;
             }
-            if(!this.problemPreset){
+            if(!this.problemPreset){ //regenerates the problem until constraints are satisfied when no instructor configs are provided
                 for (let i = 0; i<50; i++){
                     this.problem = initialize(Number(this.modeSelect.value));
                     this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2, this.problem.threadTemplate1, this.problem.threadTemplate2);
@@ -647,9 +687,13 @@ export default class TR extends RunestoneBase {
             switch(this.typeSelect.value){
                 case "1":
                     this.renderAnswerDivMultipleChoice();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
                     break;
                 case "2":
                     this.renderAnswerDiv();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
             }
 
             this.renderTRButtons()
@@ -664,7 +708,7 @@ export default class TR extends RunestoneBase {
                     name: "answer",
                     type: "button",
                 });
-                // check the answer when the conversion is valid
+                // check the answer for multiple choice questions
                 this.submitButton.addEventListener("click", () => {
                     if(this.feedbackDiv){
                         this.feedbackDiv.remove()
@@ -674,12 +718,15 @@ export default class TR extends RunestoneBase {
                     this.logCurrentAnswer();
             
                 });
-                this.containerDiv.appendChild(this.generateButton);
+                //disables the generate another button if instructor config specifies
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
                 this.containerDiv.appendChild(this.submitButton);
                 break;
 
             case "2":
-                // "check me" button and "generate a number" button
+                // the check row button for fill in the blank buttons is created here
                 this.submitButton = document.createElement("button");
                 this.submitButton.textContent = $.i18n("Check row");
                 $(this.submitButton).attr({
@@ -687,7 +734,7 @@ export default class TR extends RunestoneBase {
                     name: "answer",
                     type: "button",
                 });
-                // check the answer when the conversion is valid
+                
                 this.submitButton.style = "display: inline-block;width: 140px;height:37px;"
                 this.submitButton.addEventListener("click", () => {
                     if(this.feedbackDiv){
@@ -700,14 +747,16 @@ export default class TR extends RunestoneBase {
             
                 });
                 this.submitButton.style.display = "inline-block"
+
+                //the no more states button is created here
                 this.noMoreRowsButton = document.createElement("button");
-                this.noMoreRowsButton.textContent = $.i18n("No more entries");
+                this.noMoreRowsButton.textContent = $.i18n("No more states");
                 $(this.noMoreRowsButton).attr({
                     class: "btn btn-success",
                     name: "answer",
                     type: "button",
                 });
-                // check the answer when the conversion is valid
+                
                 this.noMoreRowsButton.addEventListener("click", () => {
                     if(this.feedbackDiv){
                         this.feedbackDiv.remove()
@@ -715,7 +764,11 @@ export default class TR extends RunestoneBase {
                     this.checkAllAnswers();
                     this.logCurrentAnswer();         
                 });
-                this.containerDiv.appendChild(this.generateButton);
+
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
+                
                 this.row.appendChild(this.submitButton);
                 this.containerDiv.appendChild(this.noMoreRowsButton);   
                 break;
@@ -743,13 +796,13 @@ export default class TR extends RunestoneBase {
 
         
     }
-
+    //checks the answer for multiple choice questions
     checkAnswerMultipleChoice(){
         this.correct = true;
         let numChecked;
-
+        //checks the answer for each multiple choice selection
         for(let i = 0; i<this.numChoices; i++){
-            let curAns = this.checkListDiv.getElementsByClassName(`option${i+1}`);
+            let curAns = this.checkListTable.getElementsByClassName(`option${i+1}`);
             if(curAns[0].checked&&!this.ansKey.includes(curAns[0].value)){
                 this.correct = false;
                 this.feedback_msg = "Incorrect. One of the state that you've chosen is not a possible state.";
@@ -770,11 +823,14 @@ export default class TR extends RunestoneBase {
     
     checkAllAnswers(){
         this.correct = true;
+        //catches the user if they've gotten everything correct already but keeps clicking the no more states button.
         if(this.allCorrect == true){
             this.feedback_msg = "You've got everything! Stop clicking this button and generate another :D"
             this.renderFeedback()
             return;
         }
+
+        //catches the user if there are more states that available rows.
         if(this.rowCount < this.finalStates.length-1){
             this.correct = false;
             this.feedback_msg = "Incorrect. There are other possible states."
@@ -783,17 +839,21 @@ export default class TR extends RunestoneBase {
         }
 
         let answers = [];
+
+        //gets the answers from answer key as strings and parses it into JSON objects to remove the inIfs.
         this.finalStates.forEach(state =>{
             let temp = JSON.parse(state)
             answers.push({readFromx:temp.readFromx, y1:temp.y1, y2:temp.y2});
         })
+
+        //re-stringifies the answers
         for (let i = 0; i<answers.length; i++){
             answers[i] = JSON.stringify(answers[i])
         }
         let userRow = {};
 
         let variables = ["userRow.readFromx", "userRow.y1", "userRow.y2"];
-
+        //evaluates each user row and stores the answer as fields in the userRow dictionary
         for(let j = 0; j<variables.length; j++){
             let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
                 if(input==""){
@@ -804,18 +864,22 @@ export default class TR extends RunestoneBase {
                     eval(`${variables[j]}` + `= ${input}`);
                 }
         }
+        // stringifies the userRow for string comparison
+        userRow = JSON.stringify(userRow);
 
-        userRow = JSON.stringify(userRow)
-
-        let userAnswers = []
+        
+        let userAnswers = [];
+        //pushes all user answers into the userAnswers array except for the last row when an extra row is generated
         for (let i = 0; i<this.userAnswers.length; i++){
             userAnswers.push(JSON.stringify(this.userAnswers[i]))
         }
-
+        //if the last extra row is generated, push user answers if it's not empty (i.e., the user shouldn't have inputted
+        //something but they did)
         if(userRow != '{"readFromx":"","y1":"","y2":""}'){
             userAnswers.push(userRow);
         }
 
+        //incorrect if a row is in the user answers but is not in the correct answers
         for (let answer of userAnswers){
             if(!answers.includes(answer)){
                 this.correct = false;
@@ -824,7 +888,7 @@ export default class TR extends RunestoneBase {
                 return;
             }
         }
-        
+        //incorrect if a row is in the correct answers but is not in the user answers
         for (let answer of answers){
             if(!userAnswers.includes(answer)){
                 this.correct = false;
@@ -833,10 +897,10 @@ export default class TR extends RunestoneBase {
                 return;
             }
         }
-
+        //otherwise correct
         this.feedback_msg = "Correct. You've gotten all the possible states!"
         this.allCorrect = true
-
+        //disables the input fields if they are correct for the last row
         for(let i = 0; i < this.rowCount; i++){
             for (let j = 0; j<variables.length; j++){
 
@@ -851,12 +915,15 @@ export default class TR extends RunestoneBase {
 
     // check if the current answer is correct
     checkCurrentAnswer() {
+        //catches the user if they've already gotten everything correct but still clicks this button
         this.correct = true;
         if(this.allCorrect == true){
             this.feedback_msg = "You've got everything! Stop clicking this button and generate another :D"
             this.renderFeedback()
             return;
         }
+
+        //catches the user if the number of lines exceeds the number of final states but they keep clicking check row
         if (this.rowCount > this.finalStates.length){
             this.correct = false;
             this.feedback_msg = "There are no more possible states";
@@ -870,19 +937,25 @@ export default class TR extends RunestoneBase {
 
 
         let answers = [];
+        //parses the strings in final state array into JSON objects and stores them in answers to remove the inIf fields.
         this.finalStates.forEach(state =>{
             let temp = JSON.parse(state)
             answers.push({readFromx:temp.readFromx, y1:temp.y1, y2:temp.y2});
         })
+
+        //restringifies the answers for string comparisons.
         for (let i = 0; i<answers.length; i++){
             answers[i] = JSON.stringify(answers[i])
         }
         console.log(answers)
         let userAnswers = [];
+
+        //retrieves history of user answers and stores them as strings
         this.userAnswers.forEach(answer =>{
             userAnswers.push(JSON.stringify(answer));
         })
 
+        //evaluates the current row's answers and stores them as a userRow dictionary
         for(let j = 0; j<variables.length; j++){
             let input = document.getElementById(`${this.rowCount-1}${j}_answer`).value;
                 if(input==""){
@@ -893,25 +966,25 @@ export default class TR extends RunestoneBase {
                     eval(`${variables[j]}` + `= ${input}`);
                 }
         }
-
+        //converts user row to a string for comparison
         userRow = JSON.stringify(userRow)
-
+        //incorrect if user answer is not in correct answers
         if(!answers.includes(userRow)){
             this.correct = false;
             this.feedback_msg = "Incorrect. This is not a possible state."
             this.renderFeedback();
             return;
-        }else if(userAnswers.includes(userRow)){
+        }else if(userAnswers.includes(userRow)){ //incorrect if the entry is a duplicate
             this.correct = false;
             this.feedback_msg = "Incorrect. This is a duplicate entry."
             this.renderFeedback();
             return;
-        }else{
-            this.feedback_msg = "Correct. Good job!"
+        }else{ //otherwise it's correct and push the current row to the history of userAnswers
+            this.feedback_msg = "The current row is correct! Fill in another row, or click 'No more states' if you believe these are all the possible states."
             this.userAnswers.push(JSON.parse(userRow));
             this.renderFeedback();
         }
-
+        //generates a new row for users to enter states if their current row is correct
         this.generateAnswerSlot();
     }
 

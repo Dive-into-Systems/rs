@@ -69,6 +69,9 @@ export default class CircuitTruth extends RunestoneBase {
         if(currentOptions["statement"] !== undefined){
             this.circuit = currentOptions["statement"];
         }
+        if(currentOptions["disable-generate"]){
+            this.disableGenerate = true;
+        }
         
     };
 
@@ -82,33 +85,35 @@ export default class CircuitTruth extends RunestoneBase {
         this.statementDiv = document.createElement("div");
 
         this.statementDiv.className = "statement-div";
+        if(!this.disableGenerate){
+            this.configText = document.createElement("div");
+            this.configText.style.display = "flex";
+            this.configText.innerHTML = `<div style="margin-right: 2px;"> <span style='font-weight:bold'><u>Configure Question</u></span>: Select a mode to determine the circuit to generate: `
+            this.modeText = document.createElement("div");
+            this.modeText.innerHTML = "<ul><li>Mode 1 generates a smaller circuit containing only AND, OR, and NOT gates.</li><li>Mode 2 generates a larger circuit that can also contain NAND, NOR, and XOR gates.</li></ul>"
+            
+            
+            this.modeSelect = document.createElement("select")
+            this.modeSelect.style.width = "auto";
+            this.modeSelect.className = "form-control fork-inline mode"
+            this.mode1Option = document.createElement("option")
+            this.mode1Option.value = "1"
+            this.mode1Option.textContent = "1"
+            this.modeSelect.append(this.mode1Option)
 
-        this.configText = document.createElement("div");
-        this.configText.style.display = "flex";
-        this.configText.innerHTML = `<div style="margin-right: 2px;"> <span style='font-weight:bold'><u>Configure Question</u></span>: Select a mode to determine the circuit to generate: `
-        this.modeText = document.createElement("div");
-        this.modeText.innerHTML = "<ul><li>Mode 1 generates a smaller circuit containing only AND, OR, and NOT gates.</li><li>Mode 2 generates a larger circuit that can also contain NAND, NOR, and XOR gates.</li></ul>"
+            this.mode2Option = document.createElement("option")
+            this.mode2Option.value = "2"
+            this.modeSelect.append(this.mode2Option)
+            this.mode2Option.textContent = "2"
+
+            this.modeSelect.setAttribute("id", `${this.divid}_modeSelect`)
+            this.configText.append(this.modeSelect)
+            this.statementDiv.append(this.configText);
+            this.statementDiv.append(this.modeText)
+
+            this.containerDiv.append(this.statementDiv);
+        }
         
-        
-        this.modeSelect = document.createElement("select")
-        this.modeSelect.style.width = "auto";
-        this.modeSelect.className = "form-control fork-inline mode"
-        this.mode1Option = document.createElement("option")
-        this.mode1Option.value = "1"
-        this.mode1Option.textContent = "1"
-        this.modeSelect.append(this.mode1Option)
-
-        this.mode2Option = document.createElement("option")
-        this.mode2Option.value = "2"
-        this.modeSelect.append(this.mode2Option)
-        this.mode2Option.textContent = "2"
-
-        this.modeSelect.setAttribute("id", `${this.divid}_modeSelect`)
-        this.configText.append(this.modeSelect)
-        this.statementDiv.append(this.configText);
-        this.statementDiv.append(this.modeText)
-
-        this.containerDiv.append(this.statementDiv);
 
         this.containerDiv.innerHTML += `
           <div class="container">
@@ -116,9 +121,12 @@ export default class CircuitTruth extends RunestoneBase {
           <div id="${this.divid}_myDiagramDiv" style="width:600px; height:400px; border:1px solid gray; margin-bottom: 10px;"></div>
           <table id="${this.divid}_truthTable" border="1" cellspacing="0" cellpadding="5"></table>
           <br>
-          <div class="button-row">
-            <button id="${this.divid}_generateButton" class="btn btn-success">Generate another question</button>
-            <button id="${this.divid}_showExpression" class="btn btn-success">Show expression</button>
+          <div class="button-row">`
+        if(!this.disableGenerate){
+            this.containerDiv.innerHTML += `<button id="${this.divid}_generateButton" class="btn btn-success">Generate another question</button>`
+        }
+        
+        this.containerDiv.innerHTML += `<button id="${this.divid}_showExpression" class="btn btn-success">Show expression</button>
             <button id="${this.divid}_checkButton" class="btn btn-success">Check answers</button>
           </div>
           <div id="${this.divid}_circuitOutput"></div>
@@ -164,18 +172,28 @@ export default class CircuitTruth extends RunestoneBase {
         const container   = this.containerDiv;
         const id          = this.divid;
         const diagramDiv  = `${id}_myDiagramDiv`;
-        let mode = this.modeSelect.value;
+        let mode
+        if(!this.disableGenerate){
+            mode = this.modeSelect.value;
+        }else{
+            mode = "2"
+        }
+        
         let presetCircuit
         if(this.circuit){
             presetCircuit = this.circuit;
         }
 
         // Event listener for the Generate Circuit button
-        container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
+        if(!this.disableGenerate){
+            container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
+            container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
+            container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
+        }
+        
         container.querySelector(`#${id}_showExpression`).addEventListener('click', showExpression);
         container.querySelector(`#${id}_checkButton`).addEventListener('click', checkAnswers);
-        container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
-        container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
+
         
         tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['/source/resources/GIFs/FITTMoveGIF.gif', '/source/resources/GIFs/FITTToggleGIF.gif'], true)
 

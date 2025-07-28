@@ -81,12 +81,11 @@ export default class TM extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.padding = "10px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, determine the possible values of the variables below after the threads execute in parallel."
 
         // render the statement
         this.containerDiv.appendChild(this.instructionNode);
 
-        if(!(this.modePreset&&this.typePreset)){
+        if((!(this.modePreset&&this.typePreset))&&!this.disableGenerate){
             this.configHelperText = document.createElement("div");
             this.configHelperText.innerHTML = "<span style='font-weight:bold'><u>Configure question</u></span>:";
 
@@ -130,7 +129,7 @@ export default class TM extends RunestoneBase {
                 this.typeSelect.className = "form-control fork-inline mode"
                 this.type1Option = document.createElement("option")
                 this.type1Option.value = "1"
-                this.type1Option.textContent = "Select all";
+                this.type1Option.textContent = "Multiple Choice";
                 this.typeSelect.append(this.type1Option)
 
                 this.type2Option = document.createElement("option")
@@ -161,14 +160,24 @@ export default class TM extends RunestoneBase {
             target = 5;
         }
 
-        for (let i = 0; i<20; i++){
-            this.problem = initialize(Number(this.modeSelect.value));
-            this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
-            this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+        if(this.typeSelect.value == "1"){
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
+        }else{
+            this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
+        }
 
-            if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                break;
+        if(!this.problemPreset){
+            for (let i = 0; i<20; i++){
+                this.problem = initialize(Number(this.modeSelect.value));
+                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                    break;
+                }
             }
+        }else{
+            this.finalStates = this.problem.answerArr;
         }
 
         // Copy the original elements to the container holding what the user will see.
@@ -192,6 +201,7 @@ export default class TM extends RunestoneBase {
     }
 
     setCustomizedParams() {
+
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
         if(currentOptions["preset-questionType"]&&currentOptions["preset-mode"]){
             this.typeSelect = {value: currentOptions["questionType"].toString()};
@@ -207,6 +217,38 @@ export default class TM extends RunestoneBase {
         else if(currentOptions["preset-mode"]){
             this.modeSelect = {value: currentOptions["mode"].toString()};
             this.modePreset = true;
+        }
+        
+        if(currentOptions["preset-problem"]){
+            const initial = "<pre style='font-size: 18px; width:100%;'>"+currentOptions["initialText"].replaceAll("\n", "<br>")+"</pre><br>"
+            
+            let temp = currentOptions["thread1Text"];
+            temp = temp.replaceAll("\n", "<br>")
+            const t1 = "<pre style='font-size: 14.5px;'>" + temp + "</pre>";
+            temp = currentOptions["thread2Text"];
+            temp = temp.replaceAll("\n", "<br>");
+            const t2 = "<pre style='font-size: 14.5px;'>" + temp + "</pre>";
+            const ansArr = []
+            for (let i = 0; i<currentOptions["answerArr"].length; i++){
+                let answer = {readFromx: currentOptions["answerArr"][i][0], y1: currentOptions["answerArr"][i][1], y2: currentOptions["answerArr"][i][2]}
+                ansArr.push(JSON.stringify(answer));
+            }
+            const distractors = [];
+            if(currentOptions["distractors"]){
+                for (let i = 0; i<currentOptions["distractors"].length; i++){
+                    let answer = {readFromx: currentOptions["distractors"][i][0], y1: currentOptions["distractors"][i][1], y2: currentOptions["distractors"][i][2]}
+                    distractors.push(JSON.stringify(answer));
+                }
+            }
+            
+            this.problem = {text: {initial: initial, t1: t1, t2: t2}, answerArr: ansArr, distractors: distractors};
+            this.problemPreset = true;
+        }
+
+        if(currentOptions["disable-generate"]){
+            this.disableGenerate = true;
+            this.typeSelect = {value: currentOptions["questionType"].toString()};
+            this.modeSelect = {value: currentOptions["mode"].toString()};
         }
     };
 
@@ -291,7 +333,15 @@ export default class TM extends RunestoneBase {
                 this.numChoices = 5;
                 break;
         }
-
+        if(this.problemPreset){
+            let dataList = this.problem.answerArr;
+            dataList.push(this.problem.distractors);
+            dataList = dataList.flat();
+            for(let i = 0; i<dataList.length; i++){
+                dataList[i] = JSON.parse(dataList[i])
+            }
+            return dataList;
+        }
         if(this.ansKey.length < this.numChoices){
             for(let i = 0; i<this.ansKey.length; i++){
                 dataList.push(JSON.parse(this.ansKey[i]));
@@ -395,7 +445,7 @@ export default class TM extends RunestoneBase {
         this.answerDiv.append(this.threadsDiv);
         this.answerDiv.append(document.createElement("br"));
 
-        this.answerStatement = document.createTextNode("Your answer: ");
+        this.answerStatement = document.createTextNode("Select all the possible final states: ");
         this.answerDiv.appendChild(this.answerStatement);
         
         this.ansKey = this.finalStates;
@@ -425,19 +475,36 @@ export default class TM extends RunestoneBase {
 
         shuffleArray(dataList)
 
-        this.checkListDiv = document.createElement("div")
-        let checkListDivHTML = "<ul class='items'>";
+        this.checkListDiv = document.createElement("div");
+        this.checkListDiv.className = "statement-div"
+        this.checkListTable = document.createElement("table");
+        let variables = ["", "x", "y (thread1)", "y (thread2)"];
+
+        let header = '<tr>';
+        for (const variable of variables) {
+            if(variable == "x"){
+                header += `<th style="text-align:center; width:180px">${variable}</th>`;
+                continue;
+            }
+            header += `<th style="text-align:center">${variable}</th>`;
+        }
+
+        this.checkListTable.innerHTML = header;
 
         for(let i = 0; i<this.numChoices; i++){
-            let displayString = `x: ${dataList[i].readFromx}    y (thread1): ${dataList[i].y1}   y (thread2): ${dataList[i].y2}`
-            checkListDivHTML += `  <div class='resultBo'><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input> <label for='option${i+1}' class = 'ansLabel'>${displayString}</label><br></div> `
+            let row = '<tr>';
+            row += `<td><input class='option${i+1}' type='checkbox' value='${JSON.stringify(dataList[i])}' </input></td>`
+            row+= `<td>${dataList[i].readFromx}</td><td>${dataList[i].y1}</td><td>${dataList[i].y2}</td>`
+            row += '</tr>'
+            this.checkListTable.innerHTML += row;
         }
         
 
-        this.checkListDiv.innerHTML = checkListDivHTML;
+        this.checkListDiv.append(this.checkListTable);
         this.answerDiv.append(this.checkListDiv)
 
         this.containerDiv.append(this.answerDiv);
+        this.problemPreset = false;
     }
 
     renderAnswerDiv(){
@@ -506,6 +573,7 @@ export default class TM extends RunestoneBase {
 
         this.generateAnswerSlot();
         this.answerDiv.append(document.createElement("br"));
+        this.answerDiv.append(document.createTextNode("Fill in each row with a possible state:"))
         this.background.append(this.answerTable);
         this.answerDiv.append(this.background)
         this.containerDiv.append(this.answerDiv);
@@ -550,10 +618,14 @@ export default class TM extends RunestoneBase {
 
 
     clearButtons(){
-        this.generateButton.remove()
-        this.submitButton.remove()
-        this.noMoreRowsButton.remove()
-        
+        if(this.noMoreRowsButton){
+            this.noMoreRowsButton.remove();
+        }
+        if(this.generateButton){
+            this.generateButton.remove();
+        }
+       
+        this.submitButton.remove();
     }
 
     recordAnswered() {
@@ -581,22 +653,31 @@ export default class TM extends RunestoneBase {
                 target = 5;
             }
 
-            for (let i = 0; i<50; i++){
-                this.problem = initialize(Number(this.modeSelect.value));
-                this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
-                this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+            if(!this.problemPreset){
+                for (let i = 0; i<50; i++){
+                    this.problem = initialize(Number(this.modeSelect.value));
+                    this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                    this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
 
-                if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
-                    break;
+                    if ((this.finalStates.length > 1 || flag)&& this.finalStates.length<=target){
+                        break;
+                    }
                 }
+            }else{
+                this.finalStates = this.problem.answerArr;
             }
+            
 
             switch(this.typeSelect.value){
                 case "1":
                     this.renderAnswerDivMultipleChoice();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, select all possible values of the variables after the threads execute in parallel."
                     break;
                 case "2":
                     this.renderAnswerDiv();
+
+                    this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the global variables and code for two threads below, fill in the rows of the table with possible states after the threads execute in parallel. After you check a row, the table will expand to allow more entries for possible states."
             }
 
             this.renderTRButtons()
@@ -621,7 +702,10 @@ export default class TM extends RunestoneBase {
                     this.logCurrentAnswer();
             
                 });
-                this.containerDiv.appendChild(this.generateButton);
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
+                
                 this.containerDiv.appendChild(this.submitButton);
                 break;
 
@@ -648,7 +732,7 @@ export default class TM extends RunestoneBase {
                 });
                 this.submitButton.style.display = "inline-block"
                 this.noMoreRowsButton = document.createElement("button");
-                this.noMoreRowsButton.textContent = $.i18n("No more entries");
+                this.noMoreRowsButton.textContent = $.i18n("No more states");
                 $(this.noMoreRowsButton).attr({
                     class: "btn btn-success",
                     name: "answer",
@@ -662,7 +746,10 @@ export default class TM extends RunestoneBase {
                     this.checkAllAnswers();
                     this.logCurrentAnswer();         
                 });
-                this.containerDiv.appendChild(this.generateButton);
+
+                if(!this.disableGenerate){
+                    this.containerDiv.appendChild(this.generateButton);
+                }
                 this.row.appendChild(this.submitButton);
                 this.containerDiv.appendChild(this.noMoreRowsButton);   
                 break;
@@ -854,7 +941,7 @@ export default class TM extends RunestoneBase {
             this.renderFeedback();
             return;
         }else{
-            this.feedback_msg = "Correct. Good job!"
+            this.feedback_msg = "The current row is correct! Fill in another row, or click 'No more states' if you believe these are all the possible states."
             this.userAnswers.push(JSON.parse(userRow));
             this.renderFeedback();
         }

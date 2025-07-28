@@ -61,6 +61,14 @@ export default class BA extends RunestoneBase {
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
+
+        //prepopulation stuff
+        this.prePopulatedValues = undefined;
+        this.firstQuestionFinished = false;
+        this.setCustomizedParams()
+        if(this.prePopulatedValues){
+            this.num_bits = parseInt(this.prePopulatedValues.num_bits);
+        }
         
         // Behaviors when page is loaded
         this.createBAElement();
@@ -83,6 +91,9 @@ export default class BA extends RunestoneBase {
         //logging data variables
         this.sOfAnswer
         this.usOfAnswer
+
+
+
         
 
 
@@ -110,6 +121,19 @@ export default class BA extends RunestoneBase {
         const de = document.createElement("div");
         this.containerDiv.append(de);
         de.innerHTML = (text);
+    }
+
+    setCustomizedParams() {
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["operand1"] !== undefined && currentOptions["operand2"] !== undefined && currentOptions["operation"] != undefined ) {
+            this.prePopulatedValues = {}
+            this.prePopulatedValues.operand1 = currentOptions["operand1"];
+            this.prePopulatedValues.operand2 = currentOptions["operand2"];
+            this.prePopulatedValues.operation = currentOptions['operation']
+            this.prePopulatedValues.num_bits = currentOptions['num_bits']
+            this.prePopulatedValues.allowAMA = currentOptions["allowAMA"] ? currentOptions["allowAMA"] : false
+
+        }
     }
 
     // Create the NC Element
@@ -142,6 +166,9 @@ export default class BA extends RunestoneBase {
             option.value = this.toOpt[i];
             option.text = this.toOpt[i];
             this.menuNode2.appendChild(option);
+            if( this.prePopulatedValues && this.toOpt[i] == this.num_bits){
+                option.selected = 'selected'
+            }
         }
 
         // Assign the class of menuNode2. form-control is a class inherited from pretext
@@ -394,6 +421,11 @@ export default class BA extends RunestoneBase {
     }
 
     genFunc = () => {
+
+            if(this.prePopulatedValues && !this.prePopulatedValues.allowAMA){
+                return;
+            }
+
             this.inputNode.className = "form form-control";
             this.inputNode2.className = "form form-control";
             this.clearAnswer();
@@ -415,6 +447,8 @@ export default class BA extends RunestoneBase {
             this.checkValidConversion();
             
             this.sendData(3);
+
+            this.firstQuestionFinished = true;
     }
 
     submitFunc = () => {
@@ -486,7 +520,10 @@ export default class BA extends RunestoneBase {
         );
 
         // Add the buttons in the container
-        this.containerDiv.appendChild(this.generateButton);
+
+        if((this.prePopulatedValues && this.prePopulatedValues.allowAMA) || !this.prePopulatedValues){
+            this.containerDiv.appendChild(this.generateButton);
+        }
         this.containerDiv.appendChild(this.submitButton);
         if(this.runUnitTest){
             this.renderUnitTestButton();
@@ -542,7 +579,10 @@ export default class BA extends RunestoneBase {
 
 
     // Add the buttons in the container
+
+    if((this.prePopulatedValues && this.prePopulatedValues.allowAMA) || !this.prePopulatedValues){
     this.containerDiv.appendChild(this.generateButton);
+    }
     this.containerDiv.appendChild(this.submitButton2);
 
     // Check answer when pressing "Enter"
@@ -824,6 +864,10 @@ export default class BA extends RunestoneBase {
         if(this.runUnitTestLog){
             this.randomItem = this.unitTestRandomItem;
         }
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.randomItem = this.prePopulatedValues.operation;
+        }
     }
 
     // Convert an integer to its binary expression with leading zeros as a string.
@@ -901,6 +945,10 @@ export default class BA extends RunestoneBase {
     generateNumber() {
 
         this.num_bits = parseInt(this.menuNode2.value);
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.num_bits = parseInt(this.prePopulatedValues.num_bits)
+        }
+
         this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
         this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
         // 1<=this.num_shift<=half of this.num_bits
@@ -938,6 +986,14 @@ export default class BA extends RunestoneBase {
             this.displayed_num_string = this.logUnitTestInput1.toString();
             this.target_num2 = parseInt((this.logUnitTestInput2), 2)
             this.displayed_num_string2 = this.logUnitTestInput2.toString();
+        }
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.target_num = parseInt(this.prePopulatedValues.operand1, 2 );
+            this.displayed_num_string = this.prePopulatedValues.operand1.toString()
+            this.target_num2 = parseInt(this.prePopulatedValues.operand2, 2);
+            this.displayed_num_string2 = this.prePopulatedValues.operand2.toString();
+
         }
         this.generatePrompt();
     }

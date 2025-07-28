@@ -39,6 +39,8 @@ Here are two examples:
     </div> <!--runestone-->
 </div> <!--ptx-runestone-container-->
 ```
+<img width="690" height="1055" alt="image" src="https://github.com/user-attachments/assets/afeac261-0224-4500-8158-64bc67c7754e" />
+
 
 ```html
 <div class="ptx-runestone-container">
@@ -65,6 +67,9 @@ Here are two examples:
     </div> <!--runestone-->
 </div> <!--ptx-runestone-container-->
 ```
+<img width="690" height="1207" alt="image" src="https://github.com/user-attachments/assets/88d0d352-1c2a-41c8-8bf1-0e271851d62a" />
+
+
 There are 5 parameters:
 truthTable: a 2d array specifying the truth table you want to prepopulate the exercise with. Each subarray represents a row of the truth table.
 numInputs: the number of outputs in the circuit
