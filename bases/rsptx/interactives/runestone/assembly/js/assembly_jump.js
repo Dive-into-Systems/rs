@@ -70,12 +70,15 @@ export default class AJ extends RunestoneBase {
     ===========================================*/
     // Create the NC Element
 
+    //This is the function that grabs JSON parameters from pretext
     setCustomizedParams() {
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        //the ISA parameter (architecture)
         if (currentOptions["architecture"] !== undefined) {
             this.archSelect = currentOptions["architecture"];
         }
 
+        // parameters related to prepopulating the question
         if(currentOptions["instructions"] && currentOptions["mode"]){
             this.prePopulatedValues = {}
             this.prePopulatedValues.instructions = currentOptions["instructions"]
@@ -92,6 +95,7 @@ export default class AJ extends RunestoneBase {
             }
         }
 
+        //assuming no preopopulation, this sets the ISA of the class used to generate instructions
         switch (this.archSelect) {
             case "X86_64":
                 this.arch = new aj_x86();
@@ -113,6 +117,7 @@ export default class AJ extends RunestoneBase {
         }
     };
 
+    //Master functoin that renders everything
     createAJElement() {
         this.renderAJPromptAndInput();
         if(!this.prePopulatedValues || (this.prePopulatedValues && this.prePopulatedValues.allowAMA && this.firstQuestionFinished)){
@@ -127,25 +132,10 @@ export default class AJ extends RunestoneBase {
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
+    //renders prompt and input
+
+    //this function does all the HTML stuff for the prompt and input
     renderAJPromptAndInput() {
-        // parse options from the JSON script inside
-        var currOption = JSON.parse(
-            this.scriptSelector(this.origElem).html()
-        );
-        // read number of bits 
-        if (currOption["bits"] != undefined) {
-            this.num_bits = eval(currOption["bits"]);
-        }
-        // ensure number of bits is a multiple of 4
-        if ( this.num_bits % 4 != 0 ){
-            alert($.i18n("msg_NC_not_divisible_by_4"));
-            return;
-        }
-        // ensure number of bits is not too large
-        if ( this.num_bits > 64 ){
-            alert($.i18n("msg_NC_too_many_bits"));
-            return;
-        }
 
         // Generate the two dropdown menus for number conversion
         this.containerDiv = document.createElement("div");
@@ -163,6 +153,7 @@ export default class AJ extends RunestoneBase {
         this.containerDiv.appendChild(this.statementDiv);
         this.containerDiv.append(document.createElement("br"))
 
+        //I don't think this is used anywhere anymore, but it used to let you choose an ISA
         this.X86Option = document.createElement("option")
         this.X86Option.value = "X86_64"
         this.X86Option.textContent = "X86_64"
@@ -178,9 +169,8 @@ export default class AJ extends RunestoneBase {
 
         this.statementDiv.className = "statement-div";
 
-        console.log("MSB " + MinSelectBox)
 
-
+        //MOde descriptions
         const modeDiv= document.createElement('div')
         modeDiv.innerHTML  = 'Please choose a mode <br> <ul> <li>Mode 1: whether or not the jump instruction will be taken.</li> <li>Mode 2: the values of the registers after the code block executes.</li></ul>'
         this.statementDiv.appendChild(modeDiv)
@@ -202,6 +192,7 @@ export default class AJ extends RunestoneBase {
 
 
 
+        //To set a default mode if there are prepopulated values
         if(this.prePopulatedValues && !this.firstQuestionFinished){
             if(this.prePopulatedValues.mode == 1){
                 this.mode1Option.selected = 'selected'
@@ -214,6 +205,7 @@ export default class AJ extends RunestoneBase {
             this.mode2Option.selected = "selected"
         }
 
+        //Changing the mode generates a new question
         if((this.prePopulatedValues && this.prePopulatedValues.allowAMA) || !this.prePopulatedValues){
             this.modeSelect.addEventListener("change", ()=>this.generateButton.click())
         }

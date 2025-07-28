@@ -25,7 +25,14 @@ export default class AM extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         this.origElem = orig;
         this.divid = orig.id;
+
+
+        //Prepopulating Stuff
+        this.prePopulatedValues = undefined
+        this.firstQuestionFinished = false;
         this.setCustomizedParams();
+        
+        
         this.MAarray = [];
         this.checkButtonsDict = {};
         
@@ -62,9 +69,22 @@ export default class AM extends RunestoneBase {
 
 
     setCustomizedParams() {
+        //convention I'm following: question: [instruction, MA, RW, ADDR, isLEA]
             const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
             if (currentOptions["architecture"] !== undefined) {
                 this.archSelect = currentOptions["architecture"];
+            }
+            if (currentOptions["q1"] !== undefined && currentOptions["q2"] !== undefined && currentOptions["q3"] !== undefined  && currentOptions["q4"] !== undefined && currentOptions["allowAMA"] !== undefined && currentOptions["r1Init"] !== undefined && currentOptions["r2Init"] !== undefined   ) {
+                this.prePopulatedValues = {}
+                this.prePopulatedValues.q1 = currentOptions["q1"];
+                this.prePopulatedValues.q2 = currentOptions["q2"];
+                this.prePopulatedValues.q3 = currentOptions["q3"];
+                this.prePopulatedValues.q4 = currentOptions["q4"];
+                
+                this.prePopulatedValues.r1Init = currentOptions["r1Init"];
+                this.prePopulatedValues.r2Init = currentOptions["r2Init"];
+
+                this.prePopulatedValues.allowAMA = currentOptions["allowAMA"];
             }
     };
 
@@ -76,25 +96,9 @@ export default class AM extends RunestoneBase {
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
+    //does the main HTML stuff for the prompt
     renderAMPromptAndInput() {
-        // parse options from the JSON script inside
-        var currOption = JSON.parse(
-            this.scriptSelector(this.origElem).html()
-        );
-        // read number of bits 
-        if (currOption["bits"] != undefined) {
-            this.num_bits = eval(currOption["bits"]);
-        }
-        // ensure number of bits is a multiple of 4
-        if ( this.num_bits % 4 != 0 ){
-            alert($.i18n("msg_NC_not_divisible_by_4"));
-            return;
-        }
-        // ensure number of bits is not too large
-        if ( this.num_bits > 64 ){
-            alert($.i18n("msg_NC_too_many_bits"));
-            return;
-        }
+
 
         // Generate the two dropdown menus for number conversion
         this.containerDiv = document.createElement("div");
@@ -118,6 +122,7 @@ export default class AM extends RunestoneBase {
         <li>Mode 2 generates memory addresses with a register value, and potentially constant displacements and/or scaling.</li></ul>`
 
         // <select class="form-control fork-inline mode"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option></select>
+        //The box that lets you select between mode 1 and mode2
         this.modeSelect = document.createElement("select")
         this.modeSelect.className = "form-control fork-inline mode"
         this.mode1Option = document.createElement("option")
@@ -135,7 +140,7 @@ export default class AM extends RunestoneBase {
         this.modeSelectText = document.createElement("div")
         this.modeSelectText.append(document.createTextNode('Select a mode:'))
 
-        //DON'T DO IF ARM
+        //DON'T DO IF ARM (there's only one mode)
         if(this.archSelect != "arm_64"){
             this.containerDiv.appendChild(document.createElement("br"));
 
@@ -220,7 +225,9 @@ export default class AM extends RunestoneBase {
 
         const largeOl = document.createElement("ol")
 
+        //compute what hte answers should be
         this.generateAnswer();
+
         let registerData = this.generateRegisterState(0)
             let regA;
             let regB;
@@ -259,6 +266,13 @@ export default class AM extends RunestoneBase {
             let row = document.createElement('tr');
             let cell1;
             let cell2;
+
+
+            if(this.prePopulatedValues && !this.firstQuestionFinished){
+                registerData.values[0] = this.prePopulatedValues.r1Init
+                registerData.values[1] = this.prePopulatedValues.r2Init
+            }
+
             if(this.modeSelect.value){
                 switch (this.modeSelect.value){
                 case "1":
@@ -295,6 +309,14 @@ export default class AM extends RunestoneBase {
 
         this.questions.map((q,i)=>{
 
+
+
+            if(this.prePopulatedValues && !this.firstQuestionFinished){
+                const qString = `q${i+1}`
+                q.code = this.prePopulatedValues[qString][0]
+
+            }
+
             const index = i
 
             const li = document.createElement('li')
@@ -320,6 +342,7 @@ export default class AM extends RunestoneBase {
             
             li.append(document.createElement("br"))
 
+            //The table in which you input your answers => basically a lot of HTML
             const answerTable = document.createElement("div")
             answerTable.className = "tables-container"
             const tableWrapper = document.createElement("div")
@@ -469,6 +492,7 @@ export default class AM extends RunestoneBase {
 
 
 
+            //if memory access is set to yes, all the options should be set to available
             rYesMA.addEventListener("click", e => {
                 console.log("click")
                 if(rYesMA.checked){
@@ -483,9 +507,19 @@ export default class AM extends RunestoneBase {
                 }
                 
             })
+            //if memory access is set to no, everything else should be grayed (leal is a special case)
             rNoMA.addEventListener("click", e => {
                 console.log(this.MAarray, i)
-                if(rNoMA.checked && this.MAarray[i] == "NAlea"){
+                if(this.prePopulatedValues && !this.firstQuestionFinished && rNoMA.checked && this.prePopulatedValues[`q${i+1}`][4] == true){
+                    rwTd.style = "opacity: 0.4;"
+                    rwTd.disabled = true;
+
+                    rNoRW.checked = false;
+                    rYesRW.checked = false;
+                    rNoRW.disabled = true;
+                    rYesRW.disabled = true;
+                }
+                else if(rNoMA.checked && this.MAarray[i] == "NAlea"){
                     rwTd.style = "opacity: 0.4;"
                     rwTd.disabled = true;
 
@@ -513,6 +547,7 @@ export default class AM extends RunestoneBase {
 
 
             })
+
 
         })
 
@@ -560,13 +595,20 @@ export default class AM extends RunestoneBase {
         });
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
+            if(this.prePopulatedValues && !this.prePopulatedValues.allowAMA){
+                return;
+            }
+            this.firstQuestionFinished = true;
             this.clearAnswer();
             this.renderAnswerDiv();
             this.renderAMButtons();
             
         });
 
-        this.containerDiv.appendChild(this.generateButton);
+        //don't add generate button if not supposed to
+        if(!this.prePopulatedValues || (this.prePopulatedValues && this.prePopulatedValues.allowAMA)){
+            this.containerDiv.appendChild(this.generateButton);
+        }
         // this.containerDiv.appendChild(this.submitButton);
 
 
@@ -810,10 +852,54 @@ export default class AM extends RunestoneBase {
     // check if the answer is correct
     checkCurrentAnswer(index) {
         this.correct = false;
-        const memCorrect = this.checkMemAccess(index);
-        const RWCorrect = this.checkReadWrite(index);
-        const addressCorrect = this.checkMemAddress(index);
+
+        let memCorrect = this.checkMemAccess(index);
+        let RWCorrect = this.checkReadWrite(index);
+        let addressCorrect = this.checkMemAddress(index);
+
+        
+
         console.log(this.answers[index].answer);
+
+        console.log(this.returnAnswerAsArray(index));
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            const qString = `q${index+1}`
+            const correctAnsArr = this.prePopulatedValues[qString]
+            const userAnsArr = this.returnAnswerAsArray(index)
+
+            if(userAnsArr[0] == correctAnsArr[1]){
+                memCorrect = true;
+            }
+            else if(userAnsArr[0] == "empty"){
+                memCorrect = null
+            }
+            else{
+                memCorrect = false
+            }
+
+
+            if(userAnsArr[1] == correctAnsArr[2]){
+                RWCorrect = true
+            }
+            else if(correctAnsArr[4] == true || userAnsArr[0] == false){
+                RWCorrect = true
+            }
+            else if(userAnsArr[1] == "empty"){
+                RWCorrect = null
+            }
+            else{
+                RWCorrect = false;
+            }
+
+            if(userAnsArr[2] == correctAnsArr[3] || `0x${userAnsArr[2]}` == correctAnsArr[3]){
+                addressCorrect = true
+            }
+            else{
+                addressCorrect = false;
+            }
+        }
+
 
         if(memCorrect == null || RWCorrect == null || addressCorrect == null){
             this.feedback_msg[index] = $.i18n("msg_asm_imcomplete_answer");
@@ -833,6 +919,40 @@ export default class AM extends RunestoneBase {
         }
         this.renderFeedback(index);
         return 0;
+    }
+
+    //I'm just using this to grab the answers to check in the preopulated case.
+    returnAnswerAsArray(index){
+        
+        let res = []
+        
+        const memYes = this.answerDiv.getElementsByClassName(`radioMAYes${index}`)[0].checked;
+        const memNo = this.answerDiv.getElementsByClassName(`radioMANo${index}`)[0].checked;
+
+        if((!memYes && !memNo)){
+            res.push("empty")
+        }
+        else{
+            res.push(memYes)
+        }
+
+        const rwYes = this.answerDiv.getElementsByClassName(`radioRWYes${index}`)[0].checked;
+        const rwNo = this.answerDiv.getElementsByClassName(`radioRWNo${index}`)[0].checked;
+
+        if(!rwYes && !rwNo){
+            res.push("empty")
+        }
+        else{
+            res.push(rwYes)
+        }
+
+
+        const addrAnswer = this.answerDiv.getElementsByClassName(`addressInput${index}`)[0].value;
+
+        res.push(addrAnswer)
+
+        return res;
+        
     }
     
     //checks whether there was memory access
