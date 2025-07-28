@@ -13,6 +13,10 @@
  * TODO:
  *  - need to implement msg_hint_addition
 */
+
+
+//Please don't use this component to learn about pretext/runestone. It's the first component we worked on so it's very messy/unorganized
+
 "use strict";
 
 import RunestoneBase from "../../common/js/runestonebase.js";
