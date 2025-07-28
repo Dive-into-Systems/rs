@@ -64,6 +64,7 @@ export default class ProcHierarchy extends RunestoneBase {
     }
 
     initParams() {
+        this.alphabet = 'abcdefghijklmnopqrstuvwxyz'
         try {
             const params = JSON.parse(
                 this.scriptSelector(this.origElem).html()
@@ -186,10 +187,22 @@ export default class ProcHierarchy extends RunestoneBase {
         this.scriptSelector(this.containerDiv).remove(); // Remove the script tag.
     }
 
+    extractPrintNumFromSource(source) {
+        const printChars = new Set();
+        for (let i = 0; i < source.length; i++) {
+            const char = source[i];
+            if (this.alphabet.includes(char)) {
+                printChars.add(char);
+            }
+        }
+        return printChars.size;
+    }
+
     // Update configurations based on current menu choice, generate a new question, and its FULL answer. 
     genNewQuestionNAnswer() {
         if (this.hardCodedCCode == false) { this.updateSourceCode();} else {
             if (this.regeneration == true) { this.hardCodedCCode = false; }
+            this.numPrints = this.extractPrintNumFromSource(this.source);
         }
         this.genQuestionInfo();
     }
