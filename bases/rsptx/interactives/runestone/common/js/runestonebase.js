@@ -103,6 +103,42 @@ export default class RunestoneBase {
     }
 
 
+
+    //given a string, convert to an action;
+    //I'm doing this so we can have a lot of flexibillity with changing action IDs.
+
+    AIDs = {
+            "load" : 0,
+            "generate" : 1,
+            "help" : 2,
+            "correct": 3,
+            "incorrect": 4,
+            "reset" : 5,
+            "asmVis" : 15,
+            "viewHierarchy" : 16, 
+    }
+
+    a2ID(action){
+
+
+        if(!(`${action}` in this.AIDs)){
+            console.error(`${action} is not a valid action!`)
+        }
+        else{
+            return this.AIDs[`${action}`]
+        }
+    }
+
+    id2A(action){
+        if(`${action}` in Object.values(this.AIDs)){
+            return Object.keys(this.AIDs).find(key => this.AIDs[key] === value);
+        }
+        else{
+            console.alert(`Error: ${action} not in action id array`)
+        }
+    }
+
+
     getCID = () => {
     //convention I'm following: question: [instruction, MA, RW, ADDR, isLEA]
         const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
