@@ -76,24 +76,33 @@ export default class ProcTimeline extends RunestoneBase {
             if (params["source"] != undefined) { // Hard-coded source code
                 this.hardCodedCCode = true;
                 this.source = params["source"];
-                if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
-                if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
-                this.showMenu = false;
+                if (params['regeneration'] != undefined) { this.regeneration = params['regeneration']; } else { console.error("Invalid regeneration param from .ptx file"); }
+                if (params["preset-params"] != undefined && params["preset-params"] == true) { // If you want to hide the menu and manually set all parameters.
+                    if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
+                    if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
+                    this.showMenu = false; 
+                } else {
+                    this.modes = ["1", "2", "3"];
+                    this.showMenu = true;
+                }
+                if (!this.regeneration) {
+                    this.showMenu = false;
+                }
             }
             else {
                 this.hardCodedCCode = false;
+                this.regeneration = true;
                 if (params["preset-params"] != undefined && params["preset-params"] == true) { // Manual parameter setting
                     if (params['numForks'] != undefined) { this.numForks = params['numForks']; } else { console.error("Invalid numForks param from .ptx file"); }
                     if (params['numPrints'] != undefined) { this.numPrints = params['numPrints']; } else { console.error("Invalid numPrints param from .ptx file"); }
-                    if (params['hasElse'] != undefined) { this.hasElse = params['hasElse']; } else { console.error("Invalid hasElse param from .ptx file"); }
-                    if (params['hasNest'] != undefined) { this.hasNest = params['hasNest']; } else { console.error("Invalid hasNext param from .ptx file"); }
-                    if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
-                    if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
                     this.showMenu = false;
                 }
                 else {
                     this.modes = ["1", "2", "3"];
                     this.showMenu = true;
+                }
+                if (!this.regeneration) {
+                    this.showMenu = false;
                 }
             }
         } catch (error) { console.error("Error loading parameters:", error); }
@@ -185,19 +194,23 @@ export default class ProcTimeline extends RunestoneBase {
 
     // Generate new question and answer based on current configuration
     genNewQuestionNAnswer() {
-        if (this.hardCodedCCode == false) { this.updateSourceCode(); }
-
-        this.genQuestionInfo();
-        let i = 0;
-        for (i = 0; i < 100; i++) {
-            if (this.printSeqs.length > 2) {
-                break;
-            }
+        if (this.hardCodedCCode == false) { 
             this.updateSourceCode();
             this.genQuestionInfo();
-        }
-        if (i == 100) {
-            console.error("Failed to generate a question with more than 2 print sequences after 100 attempts.");
+            let i = 0;
+            for (i = 0; i < 100; i++) {
+                if (this.printSeqs.length > 2) {
+                    break;
+                }
+                this.updateSourceCode();
+                this.genQuestionInfo();
+            }
+            if (i == 100) {
+                console.error("Failed to generate a question with more than 2 print sequences after 100 attempts.");
+            }
+        } else {
+            if (this.regeneration == true) { this.hardCodedCCode = false; }
+            this.genQuestionInfo();
         }
     }
 
@@ -224,6 +237,7 @@ export default class ProcTimeline extends RunestoneBase {
             let prev, i;
             switch (mode) {
                 case "1":
+                    this.exit_disambig = true;
                     prev = this.source || "";
                     this.source = build.genSimpleWaitCodeMode1();
                     i = 0;
@@ -236,6 +250,7 @@ export default class ProcTimeline extends RunestoneBase {
                     }
                     break;
                 default:
+                    this.exit_disambig = false;
                     prev = this.source || "";
                     this.source = generateNewSourceCode();
                     i = 0;
@@ -268,7 +283,7 @@ export default class ProcTimeline extends RunestoneBase {
         const { csv: c, valuesList: l } = build.getTreeCSV(this.fullTree);
         this.csvTree = c;
         this.labels = l;
-        [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source);
+        [this.answerMap, this.printSeqs] = build.getAnswerSequence(this.source, this.exit_disambig);
     }
     
     // Randomly pick one item in list
@@ -346,7 +361,7 @@ export default class ProcTimeline extends RunestoneBase {
 
         this.buttonsDiv = $("<div>");
 
-        if (this.hardCodedCCode == false) { this.buttonsDiv.append(this.generateButton); }
+        if (this.regeneration) { this.buttonsDiv.append(this.generateButton); }
         this.buttonsDiv.append(this.revealTreeButton);
         this.buttonsDiv.append(this.revealTimeLineButton);
         this.buttonsDiv.append(this.helpButton);
@@ -432,24 +447,26 @@ export default class ProcTimeline extends RunestoneBase {
     showProcessTimeline() {
         $(this.timelineDiv).css("display", "block");
         $(this.timelineDiv).html(
-            "<strong>Process Timeline Graph:</strong> Lorem ipsum description of Process Timeline<br><br>" + 
-            "<div id='trace_hierarchy'>Lorem ipsum description of Process Timeline</div>" +
+            "<strong>Process Timeline Graph:</strong> This diagram shows the execution timeline of processes. " +
+            "Moving along the horizontal axis to the right represents time elapsed, and each horizontal contiguous line represents the sequence of a process execution. " + 
+            "Vertical arrows represents the fork-wait-exit relationship between different processes.<br><br>" + 
             "<br>" +
             "<div id='timeline_graph'></div>"
         );
         let constraints = build.printSequenceConstraints(this.source)
         // Timeline parameters
-        const tl_width = 0.9 * $(this.timelineDiv).width();
+        this.tl_width = 0.9 * $(this.timelineDiv).width();
         const stats = analyzeSequenceList(constraints);
-        const fork_depth = stats.maxDepth;
-        const fork_width = stats.maxWidth;
-        const tl_height = tl_width * fork_depth / fork_width * 1.2;
-        const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+        this.fork_depth = stats.maxDepth;
+        this.fork_width = stats.maxWidth;
+        this.tl_height = Math.min(this.tl_width * this.fork_depth / this.fork_width, this.tl_width * 0.6);
+        console.log("Fork depth is", this.fork_depth, "and fork width is", this.fork_width, "and tl_height is", this.tl_height);
+        this.margin = { top: 20, right: 20, bottom: 20, left: 20 };
         const traceArray = [];
         const extra_trace = { value: "" };
         const refreshCode = () => console.log("Refreshed");
 
-        $('#timeline_graph').html(timeline.drawTimeline(constraints, tl_width, tl_height, margin));
+        $('#timeline_graph').html(timeline.drawTimeline(constraints, this.tl_width, this.tl_height, this.margin, this.fork_depth, this.fork_width));
         this.bindCodeBlockEvents();
     }
 
@@ -538,18 +555,15 @@ export default class ProcTimeline extends RunestoneBase {
                 // Update timeline if visible
                 if ($(this.timelineDiv).css('display') == 'block') {
                     const constraints = build.printSequenceConstraints(this.source);
-                    const tl_width = 0.9 * $(this.timelineDiv).width();
-                    const tl_height = 0.7 * $(this.timelineDiv).width();
-                    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
                     
                     // Get highlight info for timeline
                     // const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId); 
                     // Redraw timeline with highlight
                     $('#timeline_graph').html(timeline.drawTimeline(
                         constraints, 
-                        tl_width, 
-                        tl_height, 
-                        margin,
+                        this.tl_width, 
+                        this.tl_height, 
+                        this.margin,
                         blockId
                     ));
                 }

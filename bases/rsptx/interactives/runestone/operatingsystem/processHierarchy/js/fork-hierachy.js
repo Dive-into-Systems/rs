@@ -88,10 +88,12 @@ export default class ProcHierarchy extends RunestoneBase {
                     if (params['hasExit'] != undefined) { this.hasExit = params['hasExit']; } else { console.error("Invalid hasExit param from .ptx file"); }
                     if (params['hasLoop'] != undefined) { this.hasLoop = params['hasLoop']; } else { console.error("Invalid hasLoop param from .ptx file"); }
                     this.showMenu = false;
-                }
-                else {
+                } else {
                     this.modes = ["1", "2", "3"];
                     this.showMenu = true;
+                }
+                if (!this.regeneration) {
+                    this.showMenu = false;
                 }
             }
             else {
@@ -109,6 +111,9 @@ export default class ProcHierarchy extends RunestoneBase {
                 else {
                     this.modes = ["1", "2", "3"];
                     this.showMenu = true;
+                }
+                if (!this.regeneration) {
+                    this.showMenu = false;
                 }
             }
         } catch (error) { console.error("Error loading parameters:", error); }

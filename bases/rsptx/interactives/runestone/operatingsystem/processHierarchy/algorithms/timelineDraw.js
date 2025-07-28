@@ -331,9 +331,9 @@ export function drawTimeline(
         .append("text")
         .attr("class", (d) => {
             let classes = "linkLabel";
-            if (d.source.print_idx === blockId) {
-                classes += " glow-yellow";
-            }
+            // if (d.source.print_idx === blockId) {
+            //     classes += " glow-yellow";
+            // }
             return classes;
         })
         .attr("text-anchor", "middle")
@@ -349,11 +349,11 @@ export function drawTimeline(
         .append("text")
         .attr("class", (d) => {
             let classes = "nodeLabel";
-            if ((d.fork_node && d.fork_idx === blockId) ||
-                (d.exit_node && d.exit_idx === blockId) ||
-                (d.wait_node && d.wait_idx === blockId)) {
-                classes += " glow-yellow";
-            }
+            // if ((d.fork_node && d.fork_idx === blockId) ||
+            //     (d.exit_node && d.exit_idx === blockId) ||
+            //     (d.wait_node && d.wait_idx === blockId)) {
+            //     classes += " glow-yellow";
+            // }
             return classes;
         })
         .attr("text-anchor", "middle")
