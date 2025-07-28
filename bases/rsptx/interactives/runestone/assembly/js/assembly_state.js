@@ -28,7 +28,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
 
         // Fields for logging data
-        this.componentId = "7.2";
+        this.componentId = this.getCID()
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -693,6 +693,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 },
             }
         }
+
 
         this.logData(null, details, actionId, this.componentId);
     }

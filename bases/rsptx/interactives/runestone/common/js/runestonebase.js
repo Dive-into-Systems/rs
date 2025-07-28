@@ -101,6 +101,22 @@ export default class RunestoneBase {
         console.log("Local Storage is", localStorage.getItem("Dive-into-Systems-user-Id"));
         return userId;
     }
+
+
+    getCID = () => {
+    //convention I'm following: question: [instruction, MA, RW, ADDR, isLEA]
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["componentLoggingID"] !== undefined) {
+            const CID =  currentOptions["componentLoggingID"];
+            console.log("CID " + CID)
+            return CID;
+        }
+        else{
+            alert(`ComponentLoggingID is null for ${this.constructor.name} `)
+            return null
+        }
+
+    };
     
     ///// This function sends data to the Dive in to Systems exercise book database. /////
     logData(bundle=null, details=null, actionId=null, componentId=null) {

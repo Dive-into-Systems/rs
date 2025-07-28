@@ -260,16 +260,19 @@ export default class AJ extends RunestoneBase {
         }
     }
 
+    //the div that contains the instructions, answer
     renderAnswerDiv(){
         console.log(this.modeSelect.value)
 
 
+        //starting value of rax/rcx
         const raxInitValue = this.arch.rax ? this.arch.rax : this.rax
         const rcxInitValue = this.arch.rcx ? this.arch.rcx : this.rcx
         
 
 
-
+        //different HTML for modes 2 and 3
+        //Not going to comment this up since it's fairly straightforward (I think/I hope/ I'll feel really bad if this ends up being a problem later)
         if(this.modeSelect.value == 2){
             const tableHTML ="<div class='tables-container'><div class='table-wrapper'>" +
             "<table class='register-table'><caption>Registers:</caption><thead>"+
@@ -401,6 +404,9 @@ export default class AJ extends RunestoneBase {
     }
 
 
+    //Opted to just use a different function if there's prepopulated values
+    //I have it that way because all the values come from a completely different source when prepopulated
+    // This gets called if the first question hasn't been finished and prepoulated values is defined
     renderAnswerDivPrepopulated(){
         console.log(this.modeSelect.value)
 
@@ -542,7 +548,7 @@ export default class AJ extends RunestoneBase {
     }
 
 
-
+    //get rid of all the buttons
     clearButtons(){
         this.generateButton.remove()
         this.submitButton.remove()
@@ -552,10 +558,15 @@ export default class AJ extends RunestoneBase {
         }
     }
 
+    // TBH Not sure what this one does
     recordAnswered() {
         this.isAnswered = true;
     }
 
+
+
+    //renders the buttons. There's some weird logic in some of the event listeners to ensure that the right logic get's called
+    // if there are prepopulated values
     renderAJButtons() {
         // "check me" button and "generate a number" button
         this.submitButton = document.createElement("button");
@@ -592,9 +603,12 @@ export default class AJ extends RunestoneBase {
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
 
+            //if the generate button has been pressed, the prepopulated question is guaranteed to be gone for good
             this.firstQuestionFinished = true;
 
             this.clearAnswer();
+
+            //No longer relevant, but I'm not going to delete this incase we later need it
             if(!this.runUnitTests){
                 if (this.archSelect == "X86_64"){
                     this.arch = new aj_x86();
@@ -639,6 +653,7 @@ export default class AJ extends RunestoneBase {
 
 
 
+        //the show help button
         this.helpButton = document.createElement("button");
         this.helpButton.textContent = $.i18n("Get Help");
         $(this.helpButton).attr({
@@ -893,6 +908,7 @@ export default class AJ extends RunestoneBase {
     }
 
 
+    //different source of answers when preopulated
     checkCurrentAnswerPrepopulated(){
 
         this.correct = false;
@@ -1027,6 +1043,8 @@ export default class AJ extends RunestoneBase {
             rcxVal = this.rcx;
         }
 
+        //this is what makes the asm vis link. You have to parse it specially so that the special characetrs get encoded correctly
+
         let asmLink = `https://asm.diveintosystems.org/arithmetic/${linkISA}/`
         // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
         asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
@@ -1052,6 +1070,7 @@ export default class AJ extends RunestoneBase {
 
 
 
+    //hopefully doesn't need to be used in the future
     UnitTest(){
         //rax rcx
 
