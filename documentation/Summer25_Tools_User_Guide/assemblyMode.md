@@ -60,4 +60,8 @@ looks like
 <img width="460" height="1088" alt="image" src="https://github.com/user-attachments/assets/f45d2abb-f93d-4bb3-ac35-99876d43a1d2" />
 
 
+<h4>Parameters</h4>
+<ol>
+    <ul>Architecture: This parameter must be specified for the component to work! </ul>
+</ol>
 
