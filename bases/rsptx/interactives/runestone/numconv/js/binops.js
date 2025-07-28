@@ -46,6 +46,7 @@ export default class BO extends RunestoneBase {
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
+
         
         // Behaviors when page is loaded
         this.createBOElement();
@@ -239,6 +240,10 @@ export default class BO extends RunestoneBase {
             $(blank).change(this.recordAnswered.bind(this));
         }
    }
+
+    setCustomizedParams() {
+
+    }
 
     // Get the list of operators being checked
     getCheckedValues(){

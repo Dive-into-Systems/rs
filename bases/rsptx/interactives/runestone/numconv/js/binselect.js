@@ -56,6 +56,18 @@ export default class BS extends RunestoneBase {
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
+
+
+        //minSelectBox stuff
+        this.windowOpen = false;
+        this.setWindowOpen = val => this.windowOpen = val;
+        this.getWindowOpen = () => this.windowOpen;
+
+        //prepopulating stuff
+        this.prePopulatedValues = undefined
+        this.firstQuestionFinished = false;
+        this.setCustomizedParams()
+
         
         // Behaviors when page is loaded
         this.createBSElement();
@@ -92,6 +104,20 @@ export default class BS extends RunestoneBase {
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
+    setCustomizedParams(){
+        const currentOptions = JSON.parse(this.scriptSelector(this.origElem).html());
+        if (currentOptions["operand1"] !== undefined && currentOptions["operand2"] !== undefined && currentOptions["result"] !== undefined && currentOptions["allowedOps"] !== undefined && currentOptions["allowAMA"] !== undefined) {
+            this.prePopulatedValues = {}
+            this.prePopulatedValues.operand1 = currentOptions["operand1"]
+            this.prePopulatedValues.operand2 = currentOptions["operand2"]
+            this.prePopulatedValues.result = currentOptions["result"]
+            this.prePopulatedValues.allowedOps = currentOptions["allowedOps"]
+            this.prePopulatedValues.operation = currentOptions["operation"]
+            this.prePopulatedValues.num_bits = currentOptions['num_bits']
+            this.prePopulatedValues.allowAMA = currentOptions["allowAMA"]
+        }
+    }
+
    // Generate the layout of the prompt and input
    renderBSPromptAndInput() {
         // Create the parent div which contains everything
@@ -121,22 +147,16 @@ export default class BS extends RunestoneBase {
         // Build the inner HTML using template literals
         // Inner HTML defines the items in the dropdown
         
-        const binSelectBox = MinSelectBox(this.menuNode1, 2, ["addBoxSelect", "subBoxSelect","andBoxSelect", "orBoxSelect", "xorBoxSelect", "lShiftBoxSelect", "lrShiftBoxSelect", "arShiftBoxSelect"], ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"], [true, true, true, true, true, false, false, false], "Operators", this.generateButton)
-        // var html =   "<span class='anchor'>Select Operators</span>"+
-        // "<ul class='items'>"+
-        // "  <li><input class='addBoxSelect' type='checkbox' value='ADDITION' checked/>Addition </li>"+ //pre checked item
-        // "  <li><input  class='subBoxSelect' type='checkbox' value='SUBTRACTION' checked/>Subtraction </li>"+
-        // "  <li><input class='andBoxSelect' type='checkbox' value='AND' checked/>And </li>"+
-        // "  <li><input class='orBoxSelect' type='checkbox' value='OR' checked/>Or </li>"+
-        // "  <li><input class='xorBoxSelect' type='checkbox' value='XOR' checked/>Exclusive Or </li>"+
-        // "  <li><input class='lShiftBoxSelect' type='checkbox' value='Left Shift' uncheck/>Left Shift</li>"+
-        // "  <li><input class='lrShiftBoxSelect' type='checkbox' value='Right Shift(Logical)' uncheck/>Logical Right Shift</li>"+
-        // "  <li><input class='arShiftBoxSelect' type='checkbox' value='Right Shift(Arithmetic)' uncheck/>Arithmetic Right Shift</li>"+
-
-        // "</ul>"
-        
-        // Assign the built HTML to innerHTML of the this.menuNode1 container
-        // this.menuNode1.innerHTML = html;
+        let binSelectBox;
+        if(!this.prePopulatedValues){
+            MinSelectBox(this.menuNode1, 2, ["addBoxSelect", "subBoxSelect","andBoxSelect", "orBoxSelect", "xorBoxSelect", "lShiftBoxSelect", "lrShiftBoxSelect", "arShiftBoxSelect"], ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"], [true, true, true, true, true, false, false, false], "Operators", this.getWindowOpen, this.setWindowOpen, this.genFunc)
+        }
+        else if(this.prePopulatedValues && !this.prePopulatedValues.allowAMA){
+            MinSelectBox(this.menuNode1, 2, ["addBoxSelect", "subBoxSelect","andBoxSelect", "orBoxSelect", "xorBoxSelect", "lShiftBoxSelect", "lrShiftBoxSelect", "arShiftBoxSelect"], ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"], this.prePopulatedValues.allowedOps, "Operators", this.getWindowOpen, this.setWindowOpen, ()=>{})
+        }
+        else{
+            MinSelectBox(this.menuNode1, 2, ["addBoxSelect", "subBoxSelect","andBoxSelect", "orBoxSelect", "xorBoxSelect", "lShiftBoxSelect", "lrShiftBoxSelect", "arShiftBoxSelect"], ["ADDITION", "SUBTRACTION", "AND", "OR", "XOR", "Left Shift", "Right Shift(Logical)", "Right Shift(Arithmetic)"], this.prePopulatedValues.allowedOps, "Operators", this.getWindowOpen, this.setWindowOpen,  this.genFunc)
+        }
 
         this.addBoxSelect = this.menuNode1.getElementsByClassName("addBoxSelect")[0]
         this.subBoxSelect = this.menuNode1.getElementsByClassName("subBoxSelect")[0]
@@ -147,30 +167,6 @@ export default class BS extends RunestoneBase {
         this.lrShiftBoxSelect = this.menuNode1.getElementsByClassName("lrShiftBoxSelect")[0]
         this.arShiftBoxSelect = this.menuNode1.getElementsByClassName("arShiftBoxSelect")[0]
 
-
-        this.countSelected = 5;
-        
-        
-        const boxCheckHandler = (box) => {
-            if(!box.checked && (this.countSelected-1) < 2){
-                box.checked = true;
-            }
-            else if(!box.checked){
-                this.countSelected --;
-            }
-            else{
-                this.countSelected++;
-            }
-            console.log(this.countSelected) 
-        }
-        this.addBoxSelect.addEventListener('change',() => boxCheckHandler(this.addBoxSelect) )
-        this.subBoxSelect.addEventListener('change',() => boxCheckHandler(this.subBoxSelect) )
-        this.andBoxSelect.addEventListener('change',() => boxCheckHandler(this.andBoxSelect) )
-        this.orBoxSelect.addEventListener('change',() => boxCheckHandler(this.orBoxSelect) )
-        this.xorBoxSelect.addEventListener('change',() => boxCheckHandler(this.xorBoxSelect) )
-        this.lShiftBoxSelect.addEventListener('change',() => boxCheckHandler(this.lShiftBoxSelect) )
-        this.lrShiftBoxSelect.addEventListener('change',() => boxCheckHandler(this.lrShiftBoxSelect) )
-        this.arShiftBoxSelect.addEventListener('change',() => boxCheckHandler(this.arShiftBoxSelect) )
 
 
         // Access the anchor for adding click event
@@ -204,6 +200,10 @@ export default class BS extends RunestoneBase {
             var option = document.createElement("option");
             option.value = this.toOpt[i];
             option.text = this.toOpt[i];
+
+            if(this.prePopulatedValues && this.toOpt[i] == this.prePopulatedValues.num_bits){
+                option.selected = 'selected'
+            }
             this.menuNode2.appendChild(option);
         }
 
@@ -211,16 +211,7 @@ export default class BS extends RunestoneBase {
         this.menuNode2.setAttribute("class", "form form-control selectwidthauto");
         // When the value of menuNode2 is changed, do these...
         this.menuNode2.addEventListener("change",
-            function () {
-                    var random = this.randomItem;
-                    this.getCheckedValues();
-                    this.generateOperands();
-                    this.clearAnswer();
-                    this.generateTargNum();
-                    this.generateAnswer();
-                    this.checkValidConversion();
-                    this.contWrong = 0;
-            }.bind(this),
+            this.genFunc,
             false);
 
         // Render the statement
@@ -393,6 +384,29 @@ export default class BS extends RunestoneBase {
 
     }
 
+    genFunc = () => {
+
+            this.firstQuestionFinished = true;
+            if(this.prePopulatedValues && !this.prePopulatedValues.allowAMA){
+                return
+            }
+            this.clearAnswer();
+            this.getCheckedValues();
+            // only generate new prompt when there is item selected
+            if (this.checkedValues.length != 0){
+                this.generateOperands();
+                this.generateTargNum();
+                this.generateAnswer();
+            }
+            this.controlAnswerVisibillity()
+            console.log(this.randomItem);
+            console.log("target_num_string:" + this.target_num_string);
+            console.log("op1: " + this.displayed_num_string);
+            console.log("op2: " + this.displayed_num_string2);
+            this.checkValidConversion();
+            this.sendData(3);
+    }
+
     // Create the buttons
     renderBSButtons() {
         // "check answer" button
@@ -428,29 +442,15 @@ export default class BS extends RunestoneBase {
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
-            function () {
-                this.clearAnswer();
-                this.getCheckedValues();
-                // only generate new prompt when there is item selected
-                if (this.checkedValues.length != 0){
-                    this.generateOperands();
-                    this.generateTargNum();
-                    this.generateAnswer();
-                }
-                this.controlAnswerVisibillity()
-                console.log(this.randomItem);
-                console.log("target_num_string:" + this.target_num_string);
-                console.log("op1: " + this.displayed_num_string);
-                console.log("op2: " + this.displayed_num_string2);
-                this.checkValidConversion();
-                this.sendData(3);
-            }.bind(this),
+            this.genFunc,
             false
         );
 
         // Add the buttons in the container
         this.containerDiv.appendChild(document.createElement("br"));
-        this.containerDiv.appendChild(this.generateButton);
+        if(!this.prePopulatedValues || (this.prePopulatedValues && this.prePopulatedValues.allowAMA)){
+            this.containerDiv.appendChild(this.generateButton);
+        }
         this.containerDiv.appendChild(this.submitButton);
 
         if(this.runUT){
@@ -515,6 +515,9 @@ export default class BS extends RunestoneBase {
     // on different operators and set the number to display
     generateOperands() {
         this.num_bits = parseInt(this.menuNode2.value);
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.num_bits = this.prePopulatedValues.num_bits
+        }
         this.target_num = Math.floor(Math.random() * (1 << this.num_bits));
         this.target_num2 = Math.floor(Math.random() * (1 << this.num_bits));
         console.log(this.target_num);
@@ -563,6 +566,13 @@ export default class BS extends RunestoneBase {
             this.target_num = parseInt((this.UTOperand1), 2);
             this.target_num2 = parseInt((this.UTOperand2), 2);
         }
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.target_num = parseInt(this.prePopulatedValues.operand1,2 );
+            this.displayed_num_string = (this.prePopulatedValues.operand1).toString()
+            this.target_num2 = parseInt( this.prePopulatedValues.operand2,2)
+            this.displayed_num_string2 = (this.prePopulatedValues.operand2).toString()
+        }
     }
     
     // This function generates two random numbers from 0 to 2^(this.num_bits)-1 based
@@ -571,6 +581,17 @@ export default class BS extends RunestoneBase {
         this.hideFeedback();
         this.feedback_msg = "";
         this.num_bits = parseInt(this.menuNode2.value);
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.num_bits = this.prePopulatedValues.num_bits
+        }
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            this.randomItem = this.prePopulatedValues.operation;
+        }
+        else{
+            this.getRandomItem(this.checkedValues)
+        }
+
         switch (this.randomItem) {
             case "ADDITION":
                 this.target_num_string = this.toBinary(this.target_num+this.target_num2);
@@ -611,6 +632,10 @@ export default class BS extends RunestoneBase {
                     this.target_num_string = this.toBinary(this.target_num >> this.target_num2);  
                 }
                 break;
+        }
+
+        if(this.prePopulatedValues && !this.firstQuestionFinished){
+            
         }
         // update the prompt
         this.generatePrompt();

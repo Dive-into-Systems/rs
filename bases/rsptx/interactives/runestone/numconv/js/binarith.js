@@ -166,7 +166,7 @@ export default class BA extends RunestoneBase {
             option.value = this.toOpt[i];
             option.text = this.toOpt[i];
             this.menuNode2.appendChild(option);
-            if(this.toOpt[i] == this.num_bits){
+            if( this.prePopulatedValues && this.toOpt[i] == this.num_bits){
                 option.selected = 'selected'
             }
         }
