@@ -61,7 +61,19 @@ looks like
 
 
 <h4>Parameters</h4>
-<ol>
-    <ul>Architecture: This parameter must be specified for the component to work! </ul>
-</ol>
+<ul>
+    <li>Architecture: This parameter must be specified for the component to work! This decides the architecture format of the question the three options are "X86_64", "ia_32", and "ARM64".</li>
+</ul>
+
+Question parameters follow the following format: ["text of instruction", memory access? (bool, true if yes), read/wrtie? (true if read), "answer (with 0x behind it)", leal?(true if lea(l), false for everything else)
+
+Rest of the parameters
+
+<ul>
+    <li>q1 - q4: array of the values following above format. There must be four of these</li>
+    <li>r1Init: the initial value of register 1</li>
+    <li>r2Init: the initial value of register 2</li>
+    <li>allowAMA: true if the user is allowed to generate new questions afterwards</li>
+</ul>
+
 
