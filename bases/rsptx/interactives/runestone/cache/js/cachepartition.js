@@ -22,7 +22,7 @@ export default class cachepartition extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = "11.2";
+        this.componentId = "Replace with Get";
         this.questionId = 1;
         this.userId = this.getUserId();
 

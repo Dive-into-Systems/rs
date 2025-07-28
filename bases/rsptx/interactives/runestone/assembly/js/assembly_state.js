@@ -28,7 +28,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
 
         // Fields for logging data
-        this.componentId = "7.2";
+        this.componentId = this.getCID()
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -61,7 +61,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
         updateHeight(window, document, this);
-        this.sendData(0)
+        this.sendData(this.a2ID("load"))
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -384,7 +384,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const tryAnotherButton = $("<button>").text(this.generateAnother ? "Generate another question" : "Try another question").addClass("btn-success").on("click", () => {
                 this.tryAnother();
                 updateHeight(window, document, this);
-                this.sendData(3)
+                this.sendData(this.a2ID("generate"))
             });
             buttonContainer.append(tryAnotherButton);
         }
@@ -393,7 +393,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             const resetButton = $("<button>").text("Reset").addClass("btn-success").on("click", () => {
                 this.resetValues()
                 updateHeight(window, document, this);
-                this.sendData(9)
+                this.sendData(this.a2ID("reset"))
             });
             buttonContainer.append(resetButton);
         }
@@ -401,7 +401,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const linkButton = $("<button>").text("Help").addClass("btn-success").on("click", () => {
             this.provideHelp();
             updateHeight(window, document, this);
-            this.sendData(4)
+            this.sendData(this.a2ID("help"))
             });
         const checkAnswerButton = $("<button>").text("Check Answer").addClass("btn-success").on("click", () => {
             this.checkAnswer()
@@ -562,16 +562,16 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             }
         }
 
-        const actionid = (isCorrect ? 1 : 2)
+        const actionid = this.a2ID((isCorrect ? "correct" : "incorrect"))
         const actualAnswers = this.allStates.slice(0, this.currentInstruction)
         const code = this.initialState[0].slice(0,this.currentInstruction)
         this.data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
 
         if(isCorrect){
-            this.sendData(1)
+            this.sendData(this.a2ID("correct"))
         }
         else {
-            this.sendData(2);
+            this.sendData(this.a2ID("incorrect"));
         }
     }
 
@@ -693,6 +693,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 },
             }
         }
+
 
         this.logData(null, details, actionId, this.componentId);
     }
