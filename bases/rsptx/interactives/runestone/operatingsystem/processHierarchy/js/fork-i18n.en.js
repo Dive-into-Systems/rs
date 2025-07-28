@@ -10,5 +10,7 @@ $.i18n().load({
         msg_fork_help: "Help",
         msg_fork_correct: "Correct. Good job!",
         msg_fork_generate_another: "Generate another question",
+        msg_fork_timeline_incorrect_exit_disambig: "Incorrect. Please try again.<br>Hint: you may need to pay attention to whether the child process exited or not.",
+        msg_fork_timeline_incorrect_general: "Incorrect. Please try again."
     },
 });

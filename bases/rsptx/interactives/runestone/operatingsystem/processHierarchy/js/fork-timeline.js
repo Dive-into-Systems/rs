@@ -71,7 +71,10 @@ export default class ProcTimeline extends RunestoneBase {
                     Your task is to determine which of the provided output sequences could be produced by the program, 
                     considering the possible concurrency allowed by <code>fork()</code> and synchronization required by
                     <code>wait()</code>.<br>
-                    Please tick all of the possible output print sequences that could be produced by the program.`);
+                    Please tick all of the possible output print sequences that could be produced by the program.<br>
+                    <br>
+                    For hints and definitions of the system calls, you may click on the <b>Help</b> button.<br>
+                    You may draw the process timeline to help you answer the question, and verify your drawing by clicking the <b>Show process timeline</b> button.`);
             }
             if (params["source"] != undefined) { // Hard-coded source code
                 this.hardCodedCCode = true;
@@ -427,7 +430,13 @@ export default class ProcTimeline extends RunestoneBase {
             }
         }
         if (this.correct === true) { this.feedback_msg.push($.i18n('msg_fork_correct')); }
-        else { this.feedback_msg.push(`Feedback TBD<br>`); }
+        else { 
+            if (this.exit_disambig) {
+                this.feedback_msg.push($.i18n('msg_fork_timeline_incorrect_exit_disambig'));
+            } else {
+                this.feedback_msg.push($.i18n('msg_fork_timeline_incorrect_general'));
+            }
+        }
         this.updateFeedbackDiv();
     }
 
@@ -492,6 +501,7 @@ export default class ProcTimeline extends RunestoneBase {
             <ul>
                 <li><code>fork()</code> creates a new process. It returns 0 to the newly created child process, and returns the child process's ID (non-zero) to the parent process.</li>
                 <li><code>exit()</code> terminates the process that calls it.</li>
+                <li><code>wait()</code> is a blocking call by the parent process that waits for the child process to exit before continuing.</li>
             </ul>
             <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>`
         );
