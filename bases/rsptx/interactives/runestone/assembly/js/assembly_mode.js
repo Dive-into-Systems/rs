@@ -56,7 +56,9 @@ export default class AM extends RunestoneBase {
 
         this.contWrong = 0;
         updateHeight(window, document, this, true);
-        this.sendData(0);
+
+
+        this.sendData(this.a2ID("load"));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -272,6 +274,9 @@ export default class AM extends RunestoneBase {
                 registerData.values[0] = this.prePopulatedValues.r1Init
                 registerData.values[1] = this.prePopulatedValues.r2Init
             }
+
+            this.r1Val = registerData.values[0]
+            this.r2Val = registerData.values[1]
 
             if(this.modeSelect.value){
                 switch (this.modeSelect.value){
@@ -602,7 +607,7 @@ export default class AM extends RunestoneBase {
             this.clearAnswer();
             this.renderAnswerDiv();
             this.renderAMButtons();
-            
+            this.sendData(this.a2ID("generate"))
         });
 
         //don't add generate button if not supposed to
@@ -904,7 +909,6 @@ export default class AM extends RunestoneBase {
         if(memCorrect == null || RWCorrect == null || addressCorrect == null){
             this.feedback_msg[index] = $.i18n("msg_asm_imcomplete_answer");
             this.renderFeedback(index);
-            return 0;
         }
 
         if (memCorrect && RWCorrect && addressCorrect){
@@ -918,6 +922,8 @@ export default class AM extends RunestoneBase {
             this.feedback_msg[index] = $.i18n("msg_asm_memAddressIncorrect");
         }
         this.renderFeedback(index);
+
+        this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'), index)
         return 0;
     }
 
@@ -1022,8 +1028,29 @@ export default class AM extends RunestoneBase {
 
     }
 
-    sendData(actionId) {
+    sendData(actionId, index = 0) {
 
+        let details = {}
+
+        details.config = {}
+
+        details.config.prompts = this.questions
+        details.config.mode = this.modeSelect.value
+
+        if(this.id2A(actionId) != "load" ){
+            details.config.intialValues = [this.r1Val,this.r2Val]
+        }
+        
+        if(this.id2A(actionId) == "correct" || this.id2A(actionId) == "incorrect"){
+            details.eval = {}
+            details.eval.answers = this.answers[index]
+            if(!this.correct){
+                details.eval.userAnswers = this.returnAnswerAsArray(index)
+            }
+        }
+
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
     /*===================================

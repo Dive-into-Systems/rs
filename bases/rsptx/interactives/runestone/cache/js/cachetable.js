@@ -294,7 +294,7 @@ export default class cachetable extends RunestoneBase {
         "<tr>" +
         "   <td>Number of rows : " + this.numRows.toString() + "</td>" +
         "</tr>";
-        this.logPrompt = {cacheOrg: this.cacheOrg, numBits: this.numBits.toString(), blockSize: this.blockSize.toString(), numRows: this.numRows.toString()};
+        this.logPrompt = {};
         this.promptDiv.appendChild(this.tableInfo);
     }
     // height: auto; display:flex; flex-direction: row; justify-content:space-between
@@ -1814,36 +1814,54 @@ export default class cachetable extends RunestoneBase {
         }
         if (actionId !== 0) {
             bundle.details = {
-                config : {
-                    cache_organization : `${this.cacheOrg}`,
-                    address_length : `${this.numBits}`,
-                    block_size : `${this.blockSize}`,
-                    num_rows : `${this.numRows}`,
-                    algorithm : {
-                        name: `${this.algorithm}`,
-                        chance_hit: `${this.chance_hit}`, 
-                        hit_incr: `${this.hit_incr}`, 
-                        chance_conf: `${this.chance_conf}`, 
-                        conf_incr: `${this.conf_incr}`
-                    }
-                },
+                // config : {
+                //     // cache_organization : `${this.cacheOrg}`,
+                //     address_length : `${this.numBits}`,
+                //     block_size : `${this.blockSize}`,
+                //     num_rows : `${this.numRows}`,
+                //     // algorithm : {
+                //     //     name: `${this.algorithm}`,
+                //     //     chance_hit: `${this.chance_hit}`, 
+                //     //     hit_incr: `${this.hit_incr}`, 
+                //     //     chance_conf: `${this.chance_conf}`, 
+                //     //     conf_incr: `${this.conf_incr}`
+                //     // }
+                // },
                 prompt : this.logPrompt,
-                eval : {
-                    correct_answer : this.logCorrect,
-                    user_input : this.logUserInput
-                },
-                algorithm : {
-                    name: `${this.algorithm}`,
-                    params: {
-                        chance_hit: `${this.chance_hit}`, 
-                        hit_incr: `${this.hit_incr}`, 
-                        chance_conf: `${this.chance_conf}`, 
-                        conf_incr: `${this.conf_incr}`
-                    }
-                }
+                // algorithm : {
+                //     name: `${this.algorithm}`,
+                //     params: {
+                //         chance_hit: `${this.chance_hit}`, 
+                //         hit_incr: `${this.hit_incr}`, 
+                //         chance_conf: `${this.chance_conf}`, 
+                //         conf_incr: `${this.conf_incr}`
+                //     }
+                // }
             }
         }
         else { bundle.details = null }
+
+
+        let mergedAnswerTable = []
+
+
+        //the answers aren't all stored in one place, so I build it from the data that's available
+
+        for(let i = 0; i < this.answer_list.length; i++){
+            mergedAnswerTable.push([this.hit_miss_list[i], ...this.answer_list[i].slice(1,)])
+        }
+
+        let slicepoint = this.curr_ref + 1;
+        if(this.id2A(actionId) == "correct" && slicepoint != 0){
+            slicepoint --;
+        }
+
+        if(this.id2A(actionId) == "correct" || this.id2A(actionId) == "incorrect"){
+            bundle.details.eval = {
+                correct_answer : mergedAnswerTable.slice(0, slicepoint),
+                user_input : this.correct ? null :  this.logUserInput
+            }
+        }
 
         this.logData(bundle);
     }

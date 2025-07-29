@@ -59,7 +59,7 @@ export default class AJ extends RunestoneBase {
 
         this.contWrong = 0;
         updateHeight(window, document, this, true);
-        this.sendData(0);
+        this.sendData(this.a2ID("load"));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -269,6 +269,8 @@ export default class AJ extends RunestoneBase {
         const raxInitValue = this.arch.rax ? this.arch.rax : this.rax
         const rcxInitValue = this.arch.rcx ? this.arch.rcx : this.rcx
         
+        this.r1InitVal = raxInitValue;
+        this.r2InitVal = rcxInitValue;
 
 
         //different HTML for modes 2 and 3
@@ -648,6 +650,8 @@ export default class AJ extends RunestoneBase {
                 this.renderAnswerDivPrepopulated()
             }
             this.renderAJButtons()
+
+            this.sendData(this.a2ID("generate"))
             
         });
 
@@ -661,7 +665,7 @@ export default class AJ extends RunestoneBase {
             name: "Get Help",
             type: "button",
         });
-        this.helpButton.addEventListener("click", ()=>{this.renderHelp()})
+        this.helpButton.addEventListener("click", ()=>{this.renderHelp(); this.sendData(this.a2ID("help"))})
 
         this.unitTestButton = document.createElement("button")
         this.unitTestButton.textContent = "Unit Test!"
@@ -897,13 +901,20 @@ export default class AJ extends RunestoneBase {
                 asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
                 asmLink += `/0/0/0/0/${raxVal}/${rcxVal}/0`
                 console.log(asmLink)
-                this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+                this.feedback_msg += `<a className="asmLink" href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
                 
+
+
             }
             this.renderFeedback();
         }
         
-        
+        if(this.correct){
+            this.sendData(this.a2ID("correct"))
+        }
+        else{
+            this.sendData(this.a2ID("incorrect"))
+        }
 
     }
 
@@ -955,7 +966,7 @@ export default class AJ extends RunestoneBase {
                 asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
                 asmLink += `/0/0/0/0/${this.rax}/${this.rcx}/0`
                 console.log(asmLink)
-                this.feedback_msg += `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+                this.feedback_msg += `<a className="asmLink" href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
                 
             }
             this.renderFeedback();
@@ -970,7 +981,43 @@ export default class AJ extends RunestoneBase {
     }
 
     sendData(actionId) {
+        let details = {}
+        details.data = {}
 
+        details.operations = {cmp : this.checkBoxes[0].checked, test: this.checkBoxes[1].checked}
+        details.mode = this.modeSelect.value;
+
+        details.data.initialValues = [this.r1InitVal, this.r2InitVal]
+
+        if(this.id2A(actionId) == "correct" || this.id2A(actionId) == "incorrect"){
+            if(!(this.prePopulatedValues && !this.firstQuestionFinished)){
+                details.data.answers = [this.arch.rax, this.arch.rcx]
+
+                if(this.modeSelect.value == 1){
+                    details.data.jumpTaken = this.jumpInfo.result;
+                }
+
+                if(!this.correct){
+                    details.data.userAnswer = [this.RAXInput.value, this.RCXInput.value]
+                }
+            }
+            else{
+                details.data.answers = [this.prePopulatedValues.r1Val, this.prePopulatedValues.r2Val]
+
+                if(this.modeSelect.value == 1){
+                    details.data.jumpTaken = this.prePopulatedValues.jumpTaken;
+                }
+
+
+                if(!this.correct){
+                    details.data.userAnswer = [this.RAXInput.value, this.RCXInput.value]
+                }  
+            }
+        }
+
+        details.prompt = this.codeBox.textContent
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
     /*===================================
@@ -1008,6 +1055,12 @@ export default class AJ extends RunestoneBase {
         
         this.feedbackDiv.innerHTML = feedback_html;
         this.displayFeedback();
+
+        if(this.feedbackDiv.getElementsByTagName("a").length > 0){
+            this.feedbackDiv.getElementsByTagName("a")[0].addEventListener('click', ()=>this.sendData(this.a2ID("asmVis")))
+        }
+
+
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }
@@ -1049,7 +1102,7 @@ export default class AJ extends RunestoneBase {
         // asmLink += this.codeBox.innerHTML.split("<br>").join("%0A").split(",").join("%2C").split("%").join("%25").split(":").join("%3A").split(' ').join("%20")
         asmLink += encodeURIComponent(this.codeBox.innerHTML.split("<br>").join("\n"))
         asmLink += `/0/0/0/0/${raxVal}/${rcxVal}/0`
-        this.helpmsg = `<a href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
+        this.helpmsg = `<a className="asmLink" href='${asmLink}' target='_blank'> Try it in ASM Visualizer! </a>`
         
         var help_html = "<dev>" + this.helpmsg + "</dev>";
 
@@ -1057,6 +1110,11 @@ export default class AJ extends RunestoneBase {
 
 
         this.helpDiv.innerHTML = help_html;
+
+
+        this.helpDiv.getElementsByTagName("a")[0].addEventListener('click', ()=>this.sendData(this.a2ID("asmVis")))
+
+
         if (typeof MathJax !== "undefined") {
             this.queueMathJax(document.body);
         }

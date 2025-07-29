@@ -521,12 +521,12 @@ export default class ProcHierarchy extends RunestoneBase {
                     hardCodedQuestion: `${this.hardCodedCCode}`,
                     regeneration: `${this.regeneration}`,
                     showMenu: `${this.showMenu}`,
-                    numForks: `${this.numForks}`,
-                    numPrints: `${this.numPrints}`,
-                    hasElse: `${this.hasElse}`,
-                    hasNest: `${this.hasNest}`,
-                    hasExit: `${this.hasExit}`,
-                    hasLoop: `${this.hasLoop}`,
+                    // numForks: `${this.numForks}`,
+                    // numPrints: `${this.numPrints}`,
+                    // hasElse: `${this.hasElse}`,
+                    // hasNest: `${this.hasNest}`,
+                    // hasExit: `${this.hasExit}`,
+                    // hasLoop: `${this.hasLoop}`,
                     selectedMode: this.showMenu === true ? `${this.modeMenu.val()}` : null
                 },
                 prompt : {
