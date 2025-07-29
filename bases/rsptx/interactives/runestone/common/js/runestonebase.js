@@ -122,7 +122,7 @@ export default class RunestoneBase {
     a2ID(action){
 
 
-        if(!(`${action}` in this.AIDs)){
+        if(!(Object.keys(this.AIDs).includes(action))){
             console.error(`${action} is not a valid action!`)
         }
         else{
@@ -131,7 +131,7 @@ export default class RunestoneBase {
     }
 
     id2A(action){
-        if(`${action}` in Object.values(this.AIDs)){
+        if(Object.values(this.AIDs).includes(action)){
             return Object.keys(this.AIDs).find(key => this.AIDs[key] === action);
         }
         else{

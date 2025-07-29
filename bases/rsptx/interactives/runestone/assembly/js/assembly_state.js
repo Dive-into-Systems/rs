@@ -448,7 +448,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
             const bookChapter = this.architecture == "ARM64" ? "C9-ARM64/common.html" : (this.architecture == "X86_32" ? "C8-IA32/common.html" : "C7-x86_64/common.html");
             helpDiv.append($("<div>").text("Click the link to the textbook chapter for more information:").css("font-weight", "bold"));
-            helpDiv.append($("<button>").text("Textbook").addClass("link-button").on("click", () => window.open(`https://diveintosystems.org/book/${bookChapter}`)));
+            helpDiv.append($("<button>").text("Textbook").addClass("link-button").on("click", () => 
+                {
+                    this.sendData(this.a2ID("textbook"))
+                    window.open(`https://diveintosystems.org/book/${bookChapter}`)
+                }
+            ));
 
 
             this.containerDiv.append(helpDiv);
@@ -464,6 +469,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const encodedInstructions = instructions.map(inst => encodeURIComponent(inst)).join('%0A');
         const encodedRegisters = registers.map(reg => encodeURIComponent(reg.value)).join('/');
         const encodedMemoryValues = memoryValues.map(value => encodeURIComponent(value)).join('/');
+
+        this.sendData(this.a2ID("asmVis"))
 
         const link = `https://asm.diveintosystems.org/arithmetic/${encodedArchitecture}/${encodedInstructions}/${encodedMemoryValues}/${encodedRegisters}`;
 
@@ -548,8 +555,8 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
     // Checks the user's answer and provides feedback
     checkAnswer() {
-        const [userRegisters, userMemory] = this.gatherInput();
-        const isCorrect = this.validateAnswers(userRegisters, userMemory);
+        let [userRegisters, userMemory] = this.gatherInput();
+        let isCorrect = this.validateAnswers(userRegisters, userMemory);
 
         this.reRenderFeedback(isCorrect);
         if (isCorrect) {
@@ -563,9 +570,14 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             }
         }
 
-        const actionid = this.a2ID((isCorrect ? "correct" : "incorrect"))
         const actualAnswers = this.allStates.slice(0, this.currentInstruction)
         const code = this.initialState[0].slice(0,this.currentInstruction)
+
+        if(isCorrect){
+            userMemory = null;
+            userRegisters = null;
+        }
+
         this.data = { code ,userRegisters, userMemory, currentInstruction: this.currentInstruction, actualAnswers }
 
         if(isCorrect){
@@ -688,7 +700,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             details = this.data;
         }
 
-        if(aid == "generate" || aid == "load" || aid == "reset" || aid == "help"){
+        if(aid == "generate" || aid == "load" || aid == "reset" || aid == "help" || aid == "asmVis" || aid == "textbook"){
             details = {
                 config : {
                     operations: `${checkedOPs}`,
