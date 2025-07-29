@@ -62,6 +62,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         $(this.origElem).replaceWith(this.containerDiv);
         updateHeight(window, document, this);
         this.sendData(this.a2ID("load"))
+
     }
 
     // Find the script tag containing JSON in a given root DOM node.
@@ -682,11 +683,12 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         }
 
         let details; 
-        if (actionId == 1 || actionId == 2) {
+        let aid = this.id2A(actionId)
+        if (aid == "correct" || aid == "incorrect") {
             details = this.data;
         }
 
-        if(actionId == 3 || actionId == 0 || actionId == 9 || actionId == 4){
+        if(aid == "generate" || aid == "load" || aid == "reset" || aid == "help"){
             details = {
                 config : {
                     operations: `${checkedOPs}`,

@@ -49,7 +49,7 @@ export default class cachetable extends RunestoneBase {
         };
         
         updateHeight(window, document, this, true);
-        this.sendData(0);
+        this.sendData(this.a2ID("load"));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -253,7 +253,7 @@ export default class cachetable extends RunestoneBase {
         this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
         this.helpButton.addEventListener(            
             "click",
-            function() {
+            () => {
                 // Check if help statement is currently in the DOM
                 if (this.helpDiv.contains(this.helpStatement)) {
                     // Help is shown, hide it
@@ -263,10 +263,10 @@ export default class cachetable extends RunestoneBase {
                     // Help is hidden, show it
                     this.helpDiv.appendChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_cachetable_hide_help");
-                    this.sendData(4)
+                    this.sendData(this.a2ID("help"))
                 }
                 
-            }.bind(this),
+            },
         false); 
 
         this.helpDiv.appendChild(this.helpStatement);
@@ -890,7 +890,7 @@ export default class cachetable extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.preset = false;
                 this.resetGeneration();
                 this.displayNecessaryFields();
@@ -901,8 +901,8 @@ export default class cachetable extends RunestoneBase {
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
                 this.logCorrect = {};
                 this.logUserInput = {}; 
-                this.sendData(3)
-            }.bind(this),
+                this.sendData(this.a2ID("generate"))
+            },
             false
         );
 
@@ -915,14 +915,14 @@ export default class cachetable extends RunestoneBase {
         });
         this.redoButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.preset = true;
-                this.sendData(8); // Action 8 : Restart table for data logging
+                this.sendData(this.a2ID("reset")); // Action 8 : Restart table for data logging
                 this.resetGeneration();
                 this.displayNecessaryFields();
                 this.hidefeedback();
                 
-            }.bind(this),
+            },
             false
         );
 
@@ -961,9 +961,9 @@ export default class cachetable extends RunestoneBase {
                     this.disableAnswerTableCurrentRow(this.curr_ref-1);
                     this.completed = true;
                 }
-                this.sendData(1);
+                this.sendData(this.a2ID("correct"));
             }else{
-                this.sendData(2);
+                this.sendData(this.a2ID("incorrect"));
             }
             this.logCurrentAnswer();
         }

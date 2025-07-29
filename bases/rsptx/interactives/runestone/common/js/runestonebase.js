@@ -114,6 +114,7 @@ export default class RunestoneBase {
             "correct": 3,
             "incorrect": 4,
             "reset" : 5,
+            "textbook": 6,
             "asmVis" : 15,
             "viewHierarchy" : 16, 
     }
@@ -131,7 +132,7 @@ export default class RunestoneBase {
 
     id2A(action){
         if(`${action}` in Object.values(this.AIDs)){
-            return Object.keys(this.AIDs).find(key => this.AIDs[key] === value);
+            return Object.keys(this.AIDs).find(key => this.AIDs[key] === action);
         }
         else{
             console.alert(`Error: ${action} not in action id array`)
@@ -168,6 +169,7 @@ export default class RunestoneBase {
             
         };
 
+        console.log("anonymous logging data")
         console.log(data);
         
         const url = 'http://runestone.cs.swarthmore.edu/log/log';

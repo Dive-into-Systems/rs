@@ -49,7 +49,7 @@ export default class ProcHierarchy extends RunestoneBase {
 
     // Create the ProcHierarchy Element
     createElements() {
-        this.sendData(0);
+        this.sendData(this.a2ID("load"));
         this.initParams();
         this.initInputField();
         this.initButtons();
@@ -289,7 +289,7 @@ export default class ProcHierarchy extends RunestoneBase {
             id: this.divid + "submit",
         });
         this.generateButton.addEventListener("click", () => {
-            this.sendData(3);
+            this.sendData(this.a2ID("generate"));
             this.clearInputNFeedbackField();
             this.loadAnotherQuestion();
         });
@@ -318,7 +318,7 @@ export default class ProcHierarchy extends RunestoneBase {
         this.revealTreeButton.addEventListener("click", () => {
             if ($(this.hierarchyTreeDiv).css('display') == 'none') {
                 this.viewedHierarchy = true;
-                this.sendData(10);
+                this.sendData(this.a2ID("viewHierarchy"));
                 this.showProcessHierarchy();
             }
             else { this.hideProcessHierarchy(); }
@@ -335,7 +335,7 @@ export default class ProcHierarchy extends RunestoneBase {
         this.helpButton.addEventListener("click", () => {
             if ($(this.helpDiv).css('display') == 'none') {
                 this.viewedHelp = true;
-                this.sendData(4);
+                this.sendData(this.a2ID("help"));
                 this.showHelp();
             }
             else { this.hideHelp(); }
@@ -406,11 +406,11 @@ export default class ProcHierarchy extends RunestoneBase {
         }
         if (this.correct === true) {
             this.feedback_msg.push($.i18n('msg_fork_correct'));
-            this.sendData(1);
+            this.sendData(this.a2ID("correct"));
         }
         else {
             this.incorrectAttempts++;
-            this.sendData(2);
+            this.sendData(this.a2ID("incorrect"));
         }
         this.updateFeedbackDiv();
     }
@@ -452,8 +452,9 @@ export default class ProcHierarchy extends RunestoneBase {
         );
 
         const self = this;
-        $('#bookLink').on("click", function(event) {
+        $('#bookLink').on("click", (event) => {
             self.usedTextbook = true;
+            this.sendData(this.a2ID("textbook"))
         });
     }
 
@@ -529,16 +530,16 @@ export default class ProcHierarchy extends RunestoneBase {
                     selectedMode: this.showMenu === true ? `${this.modeMenu.val()}` : null
                 },
                 prompt : {
-                    displayedPrompt: `${this.cCode}`,
+                    // displayedPrompt: `${this.cCode}`,
                     sourceCode: `${this.source}`
                 },
-                eval: actionId !== 3 ? {
+                eval: ((actionId == this.a2ID("correct")) || (actionId == this.a2ID("incorrect"))) ? {
                     correctAnswer: `${this.correctAnswer}`,
-                    userAnswer: `${this.userAnswer}`,
+                    userAnswer: `${this.correct ? null : this.userAnswer}`,
                     viewedHierarchy : `${this.viewedHierarchy}`,
                     interactedWithTree: `${this.interacted}`,
-                    viewedHelp: `${this.viewedHelp}`,
-                    usedTextbook: `${this.usedTextbook}`,
+                    // viewedHelp: `${this.viewedHelp}`,
+                    // usedTextbook: `${this.usedTextbook}`,
                     incorrectAttempts: `${this.incorrectAttempts}`
                 } : null
             }
