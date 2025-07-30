@@ -37,6 +37,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.stack_checked = false;
 
         this.reset = true;
+        this.show_config = true;
         this.generateAnother = true;
 
 
@@ -53,6 +54,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             this.registers = json.registers;
             this.memory = json.memory;
             this.selection = json.selection;
+            if (this.selection != undefined) {
+                this.show_config = false;
+            }
             this.createCustomizedAssemblyStateElement();
         } else {
             this.createRegularAssemblyStateElement();
@@ -86,8 +90,22 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         this.renderHeader();
         this.initialState = [this.instructions, this.registers, this.memory];
         this.currentInstruction = 1;
+        
+        // Generate all states by executing the instructions
+        this.generator.executeInstructions(this.initialState);
+        this.allStates = this.generator.states;
+        // Add the initial state at the beginning
+        this.allStates.unshift({
+            instruction: null,
+            step: 0,
+            registers: JSON.parse(JSON.stringify(this.registers)),
+            memory: JSON.parse(JSON.stringify(this.memory))
+        });
+        if (this.show_config) {
+            this.renderCustomizations();
+        }
         this.customizedTryAnother();
-
+        console.log("allStates", this.allStates);
     }
 
     // Creates the Regular Assembly State exercise element

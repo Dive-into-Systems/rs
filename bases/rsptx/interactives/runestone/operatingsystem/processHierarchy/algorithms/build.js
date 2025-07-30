@@ -592,7 +592,7 @@ export function getPrintSequenceIncorrect(sequenceList, depth = 0, exit_disambig
         } else if (sequenceList[i] instanceof ForkItem) {
             forked = true;
             let beforeWait, afterWait, child, temp_injected, temp;
-            [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait, depth + 1);
+            [beforeWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].beforeWait, depth + 1, exit_disambig);
             error_injected ||= temp_injected;
             
             // Error injection logic on afterwait:
@@ -602,12 +602,14 @@ export function getPrintSequenceIncorrect(sequenceList, depth = 0, exit_disambig
             // error injection: parent afterwait prints when child does not exit,
             //                  (when parent should be put on infinite wait)
             if (sequenceList[i].childExited) {
-                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
+                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1, exit_disambig);
                 error_injected ||= temp_injected;
-            } else if (Math.random() < 0.25) {
+            } else if (exit_disambig && Math.random() < 0.5 && sequenceList[i].afterWait.length > 0) {
                 // error injection: parent afterwait prints when child does not exit
-                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1);
+                console.log("error injection: parent afterwait prints when child does not exit");
+                [afterWait, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].afterWait, depth + 1, exit_disambig);
                 error_injected = true;
+                exit_disambig = false;
             } else {
                 afterWait = [];
             }
@@ -618,10 +620,10 @@ export function getPrintSequenceIncorrect(sequenceList, depth = 0, exit_disambig
             //      child prints what it should print, but we inject the last afterwait print (should not be printed)
             // error injection when child did not exit:
             //      child prints what it should print, but we remove the last print char
-            [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child, depth + 1);
+            [child, temp_injected] = getPrintSequenceIncorrect(sequenceList[i].child, depth + 1, exit_disambig);
             error_injected ||= temp_injected;
             child_exited ||= sequenceList[i].childExited;  
-            if (exit_disambig && Math.random() < 0.25) {
+            if (exit_disambig) {
                 if (afterWait.length > 0 && sequenceList[i].childExited) {
                     error_injected = true;
                     child.push(afterWait[afterWait.length - 1]);
@@ -802,10 +804,22 @@ export function getAnswerSequence(source, exit_disambig = false) {
     let constraints = printSequenceConstraints(source);
     let map = {};
     let incorrect_cnt = 0;
+    let exit_disambig_cnt = 0;
+    if (exit_disambig) {
+        exit_disambig_cnt = 2;
+    }
     for (let i = 0; i < 20; i++) {
+        if (exit_disambig_cnt > 0) {
+            exit_disambig = true;
+        } else {
+            exit_disambig = false;
+        }
         let [sequence, bool_incorrect] = getPrintSequenceIncorrect(constraints, 0, exit_disambig);
         let sequenceStr = sequence.join("");
         if (!(sequenceStr in map)) {
+            if (exit_disambig_cnt > 0 && bool_incorrect) {
+                exit_disambig_cnt--;
+            }
             if (bool_incorrect) {
                 incorrect_cnt++;
             } else if (Object.keys(map).length === 3 && incorrect_cnt === 0) {
