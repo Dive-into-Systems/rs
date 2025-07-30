@@ -42,7 +42,7 @@ export default class BO extends RunestoneBase {
         this.toOpt = ["4", "6", "8"];
 
         // Fields for logging data
-        this.componentId = "4.5";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
@@ -64,7 +64,7 @@ export default class BO extends RunestoneBase {
             Prism.highlightAllUnder(this.containerDiv);
         }
         updateHeight(window, document, this, true);
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -297,7 +297,7 @@ export default class BO extends RunestoneBase {
         // Generate a new prompt
         this.generateButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.clearAnswer();
                 this.getCheckedValues();
                 // only generate new prompt when there is item selected
@@ -306,8 +306,8 @@ export default class BO extends RunestoneBase {
                     this.generateAnswer();
                 } 
                 this.checkValidConversion();
-                this.sendData(3);
-            }.bind(this),
+                this.sendData(this.a2ID('generate'));
+            },
             false
         );
 
@@ -539,7 +539,7 @@ export default class BO extends RunestoneBase {
             this.correct = true;
             this.contWrong = 0;
        }
-       if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
+       if (this.correct === true) { this.sendData(this.a2ID('correct')); } else { this.sendData(this.a2ID('incorrect')); }
    }
 
     // log the answer and other info to the server (in the future)
@@ -576,7 +576,7 @@ export default class BO extends RunestoneBase {
             userId : this.userId
         }
 
-        if (actionId !== 0) {
+        if (this.id2A(actionId) != 'load') {
             bundle.details = {
                 config : {
                     numBits : `${this.num_bits}`,
@@ -588,7 +588,8 @@ export default class BO extends RunestoneBase {
                 },
                 eval: {
                     correctAnswer: `${this.target_num_string}`,
-                    userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                    //next level diabolical nested ternary x(
+                    userAnswer : this.correct ? null : ( this.inputNode ? this.inputNode.value.toLowerCase() : null)
                 }
             }
         }

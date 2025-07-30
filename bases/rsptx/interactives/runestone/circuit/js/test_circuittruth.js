@@ -50,6 +50,8 @@ export default class CircuitTruth extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
         document.body.classList.add('no-scroll');
 
+        this.componentId = this.getCID()
+
         this.initCircuitElement();
         
         if (typeof Prism !== "undefined") {
@@ -57,6 +59,8 @@ export default class CircuitTruth extends RunestoneBase {
         }
 
         updateHeight(window, document, this, true, 1250);
+
+        this.sendData(this.a2ID('load'))
 
     }
 
@@ -74,6 +78,36 @@ export default class CircuitTruth extends RunestoneBase {
         }
         
     };
+
+
+    sendData(actionId){
+
+        let details = {}
+
+        if(this.modeSelect){
+         details.mode = this.modeSelect.value
+
+        }
+
+
+        if(this.logCircuit){
+            details.circuit = this.logCircuit
+        }
+
+        if( this.id2A(actionId) == "correct" || this.id2A(actionId) == "incorrect"){
+            details.answers = this.logAnswers
+        }
+
+        if(this.id2A(actionId) == "incorrect"){
+            details.userAnswers = this.logUserAnswers
+        }
+        
+
+
+
+
+        this.logData(null, details, actionId, this.componentId);
+    }
 
     initCircuitElement() {
         this.containerDiv = document.createElement("div");
@@ -159,7 +193,84 @@ export default class CircuitTruth extends RunestoneBase {
 
     }
 
-    main= ()=>{
+    /**
+     * Function to be executed when showExpression button is clicked.
+     */
+    showExpression = () => {
+        // grab the <div> that holds the expression
+        const exprDiv = this.containerDiv.querySelector(`#${this.divid}_circuitOutput`);
+        // make it visible
+        exprDiv.style.visibility = 'visible';
+
+        this.sendData(this.a2ID('showExpression'))
+    }
+
+
+        /**
+         * This function evaluates the user-inputted answers and give feedback.
+         * The cell color changes to green when the answer is correct and red
+         * if not.
+         */
+        checkAnswers = () => {
+            // Find every answer input
+            
+            this.logAnswers = []
+            this.logUserAnswers = []
+
+            this.correct = true;
+
+            let i = 0
+            let inputNodes = document.getElementsByClassName('answer-input');
+            this.containerDiv.querySelectorAll('.answer-input').forEach(input => {
+                const expected = input.dataset.expected;
+                const actual   = input.value.trim();
+
+                this.logAnswers.push(expected)
+                this.logUserAnswers.push(actual)
+
+                // color the containing TD
+                let td = input.parentElement;
+                td.style.display = "flex"
+                inputNodes[i].style = "margin-left:46.5%"
+                let symbol;
+                symbol = document.createElement("div")
+                if (actual === expected) {
+                  td.style.backgroundColor = '#f4fcfc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  
+                  symbol.innerHTML = "✔️"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`;
+                  td.append(symbol);
+
+                } else {
+                  td.style.backgroundColor = '#f4dcdc';
+
+                  let nodeToRemove = document.getElementById(`symbol${i}`);
+                  if(nodeToRemove){
+                    td.removeChild(nodeToRemove);
+                  }
+                  
+                  symbol.innerHTML = "❌"
+                  symbol.style = "margin-left:30%"
+                  symbol.id = `symbol${i}`
+                  td.append(symbol);
+
+                  this.correct = false;
+                }
+                i++
+            });
+
+            this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
+
+        }
+
+    main = ()=>{
         /* Global Variables */
         var json; // JSON to visualize the circuit
         const red = '#115222ff';
@@ -184,47 +295,14 @@ export default class CircuitTruth extends RunestoneBase {
             presetCircuit = this.circuit;
         }
 
-        // Event listener for the Generate Circuit button
-        if(!this.disableGenerate){
-            container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
-            container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
-            container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
-        }
-        
-        container.querySelector(`#${id}_showExpression`).addEventListener('click', showExpression);
-        container.querySelector(`#${id}_checkButton`).addEventListener('click', checkAnswers);
-
-        
-        tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['/source/resources/GIFs/FITTMoveGIF.gif', '/source/resources/GIFs/FITTToggleGIF.gif'], true)
-
-
-        this.instructionNode = document.createElement("div");
-        // instruction text
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the randomly-generated circuit shown below, fill in the corresponding truth table.";
-        this.instructionNode.style.padding = "10px 10px 10px 0";
-
-        this.containerDiv.prepend(this.instructionNode);
-
-
-
-        
-        
-        console.log('a')
-
-        document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();   // avoid accidental form submits or re-generates
-            checkAnswers();
-        }
-        });
 
 
         function changeMode(){
-            mode = (mode=="1") ? mode = "2": mode = "1";
-        }
+                    mode = (mode=="1") ? mode = "2": mode = "1";
+                }
 
         let circuit_gen;
-        function generateCircuit() {
+        const generateCircuit = () => {
             let inputs; // possible inputs
             let gates;  // the gates that are possible to generate
             let maxGates; // the maximum number of gates that can be generated
@@ -260,6 +338,9 @@ export default class CircuitTruth extends RunestoneBase {
                 const re = new RegExp(`\\b${toReplace}\\b`);
                 circuit = circuit.replace(re, 'A');
             }
+
+            this.logCircuit = circuit;
+
             
             // update HTML to display the text. This is currently set invisible.
             container.querySelector(`#${id}_circuitOutput`).innerText = circuit
@@ -296,7 +377,50 @@ export default class CircuitTruth extends RunestoneBase {
     
             }
             
+            this.sendData(this.a2ID("generate"))
         }
+
+
+
+
+
+
+        // Event listener for the Generate Circuit button
+        if(!this.disableGenerate){
+            container.querySelector(`#${id}_generateButton`).addEventListener('click', generateCircuit);
+            container.querySelector(`#${id}_modeSelect`).addEventListener('change', changeMode);
+            container.querySelector(`#${id}_modeSelect`).addEventListener('change', generateCircuit);
+        }
+        
+        container.querySelector(`#${id}_showExpression`).addEventListener('click', this.showExpression);
+        container.querySelector(`#${id}_checkButton`).addEventListener('click', this.checkAnswers);
+
+        
+        tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['/source/resources/GIFs/FITTMoveGIF.gif', '/source/resources/GIFs/FITTToggleGIF.gif'], true)
+
+
+        this.instructionNode = document.createElement("div");
+        // instruction text
+        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Given the randomly-generated circuit shown below, fill in the corresponding truth table.";
+        this.instructionNode.style.padding = "10px 10px 10px 0";
+
+        this.containerDiv.prepend(this.instructionNode);
+
+
+
+        
+        
+        console.log('a')
+
+        document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();   // avoid accidental form submits or re-generates
+            this.checkAnswers();
+        }
+        });
+
+
+       
 
         /**
          * This function handles the truth table display.
@@ -339,64 +463,11 @@ export default class CircuitTruth extends RunestoneBase {
             container.querySelector(`#${id}_result`).innerText = '';
         }
         
-        /**
-         * This function evaluates the user-inputted answers and give feedback.
-         * The cell color changes to green when the answer is correct and red
-         * if not.
-         */
-        function checkAnswers() {
-            // Find every answer input
-            let i = 0
-            let inputNodes = document.getElementsByClassName('answer-input');
-            container.querySelectorAll('.answer-input').forEach(input => {
-                const expected = input.dataset.expected;
-                const actual   = input.value.trim();
-                // color the containing TD
-                let td = input.parentElement;
-                td.style.display = "flex"
-                inputNodes[i].style = "margin-left:46.5%"
-                let symbol;
-                symbol = document.createElement("div")
-                if (actual === expected) {
-                  td.style.backgroundColor = '#f4fcfc';
 
-                  let nodeToRemove = document.getElementById(`symbol${i}`);
-                  if(nodeToRemove){
-                    td.removeChild(nodeToRemove);
-                  }
-                  
-                  
-                  symbol.innerHTML = "✔️"
-                  symbol.style = "margin-left:30%"
-                  symbol.id = `symbol${i}`;
-                  td.append(symbol);
 
-                } else {
-                  td.style.backgroundColor = '#f4dcdc';
+        
 
-                  let nodeToRemove = document.getElementById(`symbol${i}`);
-                  if(nodeToRemove){
-                    td.removeChild(nodeToRemove);
-                  }
-                  
-                  symbol.innerHTML = "❌"
-                  symbol.style = "margin-left:30%"
-                  symbol.id = `symbol${i}`
-                  td.append(symbol);
-                }
-                i++
-            });
-        }
 
-        /**
-         * Function to be executed when showExpression button is clicked.
-         */
-        function showExpression(){
-            // grab the <div> that holds the expression
-            const exprDiv = container.querySelector(`#${id}_circuitOutput`);
-            // make it visible
-            exprDiv.style.visibility = 'visible';
-        }
 
         /**
          * Visualizes the tree structure in text. This is used during debugging so it is 

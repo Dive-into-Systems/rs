@@ -60,6 +60,8 @@ export default class DC extends RunestoneBase {
        this.origElem = orig;
        this.divid = orig.id;
 
+       this.componentId =  this.getCID()
+
 
 
 
@@ -328,6 +330,7 @@ export default class DC extends RunestoneBase {
     console.log(msg)
     this.feedbackHTML = `${msg}`
     this.renderDCFeedbackDiv()
+    this.sendData(this.a2ID(correct ? 'correct' : 'incorrect'))
    }
        
     renderDCPromptAndInput() {
@@ -512,6 +515,7 @@ export default class DC extends RunestoneBase {
             this.generateButton.addEventListener("click", ()=>{
                 this.removeEverything()
                 this.initDCElement()
+                this.sendData(this.a2ID('generate'))
         })
         }
         this.answerDiv.appendChild(this.checkButton)
@@ -607,6 +611,22 @@ export default class DC extends RunestoneBase {
     //TODO: at some point in the future
     sendData(actionId) {
        
+        let details = {}
+
+
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answers = this.truthTable;
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+            details.userAnswers = this.userAnswerTruthTable
+        }
+
+        details.config = {}
+
+        details.config.mode = this.modeSelect.value
+
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
     //This loads in the GOJs script tags

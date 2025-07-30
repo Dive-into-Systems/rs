@@ -27,7 +27,7 @@ export default class cacheinfo extends RunestoneBase {
         this.last_rand_choice = [0,0,0];
 
         // Fields for logging data
-        this.componentId = "11.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -42,7 +42,7 @@ export default class cacheinfo extends RunestoneBase {
         this.contWrong = 0;
         updateHeight(window, document, this, true);
         
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -268,14 +268,14 @@ export default class cacheinfo extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.generateAddress();
                 this.clearInput();
                 this.generateAnswer();
                 this.generateButtonCounter++;
                 
-                this.sendData(3);
-            }.bind(this),
+                this.sendData(this.a2ID('generate'));
+            },
             false)
         ;
         this.containerDiv.appendChild(this.generateButton);
@@ -405,12 +405,21 @@ export default class cacheinfo extends RunestoneBase {
             actionId : actionId,
             userId : this.userId
         }
-        if (actionId !== 0) {
+
+        let userInput = {
+                        block_size: `${this.inputNode1.value}`,
+                        num_entries: `${this.inputNode2.value}`,
+                        num_lines: (this.orgMenuNode.value !== "Direct-Mapped") ? `${this.inputNode3.value}` : null
+                        }
+        
+        
+
+        if (this.id2A(actionId) != "load") {
             bundle.details = {
-                config : {
-                    cache_organization : `${this.orgMenuNode.value}`,
-                    address_length : `${this.addrMenuNode.value}`
-                },
+                // config : {
+                //     cache_organization : `${this.orgMenuNode.value}`,
+                //     address_length : `${this.addrMenuNode.value}`
+                // },
                 prompt : {
                     address: `${this.address_eg}`,
                     tag_bits: `${this.tag_bits}`,
@@ -424,11 +433,7 @@ export default class cacheinfo extends RunestoneBase {
                         num_lines: (this.orgMenuNode.value !== "Direct-Mapped") ? `${this.num_line_ans}` : null
 
                     },
-                    user_input : {
-                        block_size: `${this.inputNode1.value}`,
-                        num_entries: `${this.inputNode2.value}`,
-                        num_lines: (this.orgMenuNode.value !== "Direct-Mapped") ? `${this.inputNode3.value}` : null
-                    }
+                    user_input : this.correct ? null : userInput
                 }
             }
         }
@@ -494,7 +499,7 @@ export default class cacheinfo extends RunestoneBase {
             this.contWrong = 0;
         }
 
-        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
+        if (this.correct === true) { this.sendData(this.a2ID('correct')); } else { this.sendData(this.a2ID('incorrect')); }
     }
 
     async logCurrentAnswer(sid) {

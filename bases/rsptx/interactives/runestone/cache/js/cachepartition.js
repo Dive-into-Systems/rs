@@ -22,7 +22,7 @@ export default class cachepartition extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = "Replace with Get";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -34,7 +34,7 @@ export default class cachepartition extends RunestoneBase {
             Prism.highlightAllUnder(this.containerDiv);
         }
         updateHeight(window, document, this, true);
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -274,7 +274,7 @@ export default class cachepartition extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.clearFeedback();
                 this.updatePromptNAnswer();
                 this.resetHighlight();
@@ -282,9 +282,8 @@ export default class cachepartition extends RunestoneBase {
                 this.indexIncorrectCount = 0;
                 this.offsetIncorrectCount = 0;
                 this.generateButtonCounter++; //increment the counter each time this button is pressed to generate a new question
-                
-                this.sendData(3);
-            }.bind(this), false);
+                this.sendData(this.a2ID('generate'))
+            }, false);
         
         // set to TAG button
         this.questionButtionDiv = document.createElement("div");
@@ -482,16 +481,16 @@ export default class cachepartition extends RunestoneBase {
             actionId : actionId,
             userId : this.userId
         }
-        if (actionId !== 0) {
+        if (this.id2A(actionId) != 'load') {
             bundle.details = {
-                config : {
-                    cache_organization : `${this.orgMenuNode.value}`,
-                    address_length : `${this.addrMenuNode.value}`
-                },
+                // config : {
+                //     cache_organization : `${this.orgMenuNode.value}`,
+                //     address_length : `${this.addrMenuNode.value}`
+                // },
                 prompt : {
                     address: `${this.addressNodeText.textContent}`,
-                    block_size : `${this.block_size_ans}`, 
-                    num_lines : `${this.num_line_ans}`
+                    // block_size : `${this.block_size_ans}`, 
+                    // num_lines : `${this.num_line_ans}`
                 },
                 eval : {
                     correct_answer : {
@@ -499,11 +498,11 @@ export default class cachepartition extends RunestoneBase {
                         index_bits: `${this.index_bits}`,
                         offset_bits: `${this.offset_bits}`
                     },
-                    user_input : {
+                    user_input :( this.id2A(actionId) == 'correct' ? null : {
                         tag_bits: `${this.input_tag_bits}`,
                         index_bits: `${this.input_index_bits}`,
                         offset_bits: `${this.input_offset_bits}`
-                    },
+                    }),
                     incorrect_attempts : {
                         tag_bits_incorrect_count: `${this.tagIncorrectCount}`,
                         index_bits_incorrect_count: `${this.indexIncorrectCount}`,
@@ -570,7 +569,7 @@ export default class cachepartition extends RunestoneBase {
         // The overall correctness is true only if all parts are correct
         this.correct = tagCorrect && indexCorrect && offsetCorrect;
 
-        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
+        if (this.correct === true) { this.sendData(this.a2ID('correct')); } else { this.sendData(this.a2ID('incorrect')); }
     }
 
     async logCurrentAnswer(sid) {

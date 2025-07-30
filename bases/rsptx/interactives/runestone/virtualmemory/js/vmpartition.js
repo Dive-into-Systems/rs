@@ -23,7 +23,7 @@ export default class vmpartition extends RunestoneBase {
         this.correct = null;
 
         // Fields for logging data
-        this.componentId = "13.2";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -35,6 +35,10 @@ export default class vmpartition extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
+        console.log('vmparition')
+
+        this.sendData(this.a2ID('load'))
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -58,6 +62,25 @@ export default class vmpartition extends RunestoneBase {
         this.setDefaultParams();
         this.loadParams();
     }
+
+    
+    sendData(actionId){
+
+        let details = {}
+
+        details.num_bits = this.num_bits
+        details.num_frames = this.num_frames
+        details.block_size = this.block_size
+
+        //the rnage of things that shouldn't be highlighted
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answer = [this.index_bits, this.num_bits];
+        }
+
+
+        this.logData(null, details, actionId, this.componentId);
+    }
+
 
     setDefaultParams() {
         this.num_bits_list = [8, 12, 16];
@@ -215,11 +238,13 @@ export default class vmpartition extends RunestoneBase {
         });
         this.submitButton.addEventListener(
             "click",
-            function () {
+             () => {
                 this.checkCurrentAnswer();
                 this.logCurrentAnswer();
+
+                this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
                
-            }.bind(this),
+            },
             false
         );
         
@@ -232,13 +257,14 @@ export default class vmpartition extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.generateAnswer();
                 this.generateAddress();
                 this.generatePrompt();
-               
+                
+                this.sendData(this.a2ID('generate'))
                 // this.resetHighlight();
-            }.bind(this),
+            },
             false)
        
         

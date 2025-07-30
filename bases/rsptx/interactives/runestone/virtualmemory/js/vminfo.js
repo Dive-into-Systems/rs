@@ -22,7 +22,7 @@ export default class vmInfo extends RunestoneBase {
         this.correct = null;
 
         // Fields for logging data
-        this.componentId = "13.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -34,6 +34,8 @@ export default class vmInfo extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
+        this.sendData(this.a2ID('generate'))
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -74,6 +76,31 @@ export default class vmInfo extends RunestoneBase {
             // pass
         }
     }
+
+
+    sendData(actionId){
+
+        let details = {}
+
+        // this.num_bits = this.num_bits_list[ this.generateRandomInt(0, this.num_bits_list.length ) ];
+        // this.num_frames = 1 << this.generateRandomInt(1,5);
+        // this.block_size
+
+        details.num_bits = this.num_bits
+        details.num_frames = this.num_frames
+        details.block_size = this.block_size
+
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answer = this.answers;
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+            details.userAnswer = this.userAnswer;
+        }
+
+        this.logData(null, details, actionId, this.componentId);
+    }
+
+
 
     rendervmInfoInput() {
         // Generate the drop-down menu for cache organization
@@ -204,8 +231,8 @@ export default class vmInfo extends RunestoneBase {
             "click",
             function () {
                 this.checkCurrentAnswer();
-                this.logCurrentAnswer();
-               
+                // this.logCurrentAnswer();
+                this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
             }.bind(this),
             false
         );
@@ -219,12 +246,12 @@ export default class vmInfo extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+             () => {
                 this.generateQuestion();
                 this.clearInput();
                 this.generateAnswer();
-               
-            }.bind(this),
+               this.sendData(this.a2ID('generate'))
+            },
             false)
        
 
@@ -332,6 +359,9 @@ export default class vmInfo extends RunestoneBase {
         for (var i = 0; i < 2; i ++ ) {
             var input_value = this.inputNodes[i].value;
             input_value = this.exponentialParser(input_value);
+
+            this.userAnswer = input_value;
+
             if ( input_value === "" ) {
                 this.feedback_msg.push($.i18n("msg_vminfo_no_answer"));
                 this.correct = false;
@@ -350,34 +380,34 @@ export default class vmInfo extends RunestoneBase {
         }
     }
 
-    async logCurrentAnswer(sid) {
-        let answer = JSON.stringify([this.inputNodes[0].value, this.inputNodes[1].value]);
-        let question = JSON.stringify({
-            "num-bits"  : this.num_bits,
-            "num-frames": this.num_frames,
-            "block-size": this.block_size
-        });
-        // Save the answer locally.
-        let feedback = true;
-        this.setLocalStorage({
-            answer: answer,
-            timestamp: new Date(),
-        });
-        let data = {
-            event: "vmInfo",
-            act: answer || "",
-            answer: answer || "",
-            correct: this.correct ? "T" : "F",
-            div_id: this.divid,
-        };
-        if (typeof sid !== "undefined") {
-            data.sid = sid;
-            feedback = false;
-        }
+    // async logCurrentAnswer(sid) {
+    //     let answer = JSON.stringify([this.inputNodes[0].value, this.inputNodes[1].value]);
+    //     let question = JSON.stringify({
+    //         "num-bits"  : this.num_bits,
+    //         "num-frames": this.num_frames,
+    //         "block-size": this.block_size
+    //     });
+    //     // Save the answer locally.
+    //     let feedback = true;
+    //     this.setLocalStorage({
+    //         answer: answer,
+    //         timestamp: new Date(),
+    //     });
+    //     let data = {
+    //         event: "vmInfo",
+    //         act: answer || "",
+    //         answer: answer || "",
+    //         correct: this.correct ? "T" : "F",
+    //         div_id: this.divid,
+    //     };
+    //     if (typeof sid !== "undefined") {
+    //         data.sid = sid;
+    //         feedback = false;
+    //     }
         
-        this.renderfeedback();
-        return data;
-    }
+    //     this.renderfeedback();
+    //     return data;
+    // }
 
     // update the prompt
     generatePrompt() {

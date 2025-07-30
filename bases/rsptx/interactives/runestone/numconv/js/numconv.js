@@ -29,7 +29,7 @@ export default class NC extends RunestoneBase {
         this.prev_num = -1;
         
         // Fields for logging data
-        this.componentId = "4.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -49,7 +49,7 @@ export default class NC extends RunestoneBase {
 
         this.contWrong = 0;
         updateHeight(window, document, this, true);
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -259,7 +259,7 @@ export default class NC extends RunestoneBase {
         });
         // generate a new number for conversion 
         this.generateButton.addEventListener("click", () => {
-            this.sendData(3);
+            this.sendData(this.a2ID('generate'));
             this.checkValidConversion();
             if ( this.valid_conversion ) {
                 this.clearAnswer();
@@ -487,7 +487,7 @@ export default class NC extends RunestoneBase {
             this.contWrong = 0;
         }
         // Log data 
-        if (this.correct === true) { this.sendData(1); } else { this.sendData(2); }
+        if (this.correct === true) { this.sendData(this.a2ID('correct')); } else { this.sendData(this.a2ID('incorrect')); }
     }
 
     // log the answer and other info to the server (in the future)
@@ -524,7 +524,7 @@ export default class NC extends RunestoneBase {
             userId : this.userId
         }
 
-        if (actionId !== 0) {
+        if (this.id2A(actionId) !=  'load') {
             bundle.details = {
                 config : {
                     fromSystem : `${this.menuNode1.value}`,
@@ -535,7 +535,7 @@ export default class NC extends RunestoneBase {
                 },
                 eval : {
                     correctAnswer: `${this.target_num_string}`,
-                    userAnswer : this.inputNode ? this.inputNode.value.toLowerCase() : null
+                    userAnswer : this.correct ? null : ( this.inputNode ? this.inputNode.value.toLowerCase() : null )
                 }
             }
         }

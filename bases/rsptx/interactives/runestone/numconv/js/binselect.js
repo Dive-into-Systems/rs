@@ -52,7 +52,7 @@ export default class BS extends RunestoneBase {
 
 
         // Fields for logging data
-        this.componentId = "4.2";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
@@ -86,6 +86,8 @@ export default class BS extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
+        this.sendData(this.a2ID('load'))
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -404,7 +406,7 @@ export default class BS extends RunestoneBase {
             console.log("op1: " + this.displayed_num_string);
             console.log("op2: " + this.displayed_num_string2);
             this.checkValidConversion();
-            this.sendData(3);
+            this.sendData(this.a2ID('generate'));
     }
 
     // Create the buttons
@@ -420,15 +422,15 @@ export default class BS extends RunestoneBase {
         // check the answer
         this.submitButton.addEventListener(
             "click",
-            function () {
+            () => {
                 this.checkValidConversion();
                 if ( this.valid_conversion ) {
                     this.generateAnswer();
                     this.checkCurrentAnswer();
-                    this.sendData(1)
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
                     this.logCurrentAnswer();
                 }
-            }.bind(this),
+            },
             false
         );
         this.generateButton = document.createElement("button");
@@ -874,7 +876,7 @@ export default class BS extends RunestoneBase {
 
     sendData(actionId) {
         let details; 
-        if (actionId == 1 || actionId == 2) {
+        if (this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect') {
             details = {
                 config : {
                     numBits : `${this.num_bits}`,
@@ -886,12 +888,12 @@ export default class BS extends RunestoneBase {
                 },
                 eval: {
                     correctAnswer: this.answers,
-                    userAnswer : this.sendUserAns,
+                    userAnswer : this.correct ? null : this.sendUserAns,
                     correct : this.correct,
                 }
             }
         }
-        else if (actionId == 3 || actionId == 0){
+        else{
             details = {
                 config : {
                     numBits : `${this.num_bits}`,

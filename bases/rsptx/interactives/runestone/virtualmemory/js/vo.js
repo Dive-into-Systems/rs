@@ -23,7 +23,7 @@ export default class VO extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = "13.4";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -31,10 +31,14 @@ export default class VO extends RunestoneBase {
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");
         
+
+        this.sendData(this.a2ID('load'))
+
         // this.checkServer("vo", true);
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
+
         
     }
 
@@ -61,6 +65,23 @@ export default class VO extends RunestoneBase {
     initParams() {
         this.setDefaultParams();
         this.setCustomizedParams();
+    }
+
+    sendData(actionId, i=0){
+
+        let details = {}
+
+        details.prompts = this.promptList;
+
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answers = this.answerList
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+            details.userAnswer = this.answer;
+        }
+
+
+        this.logData(null, details, actionId, this.componentId);
     }
 
     // set default parameters
@@ -196,11 +217,13 @@ export default class VO extends RunestoneBase {
                     type: "button",
                     id: this.divid + "submit" + i
                 })
-                .on("click", function() {
+                .on("click", () => {
                     this.checkThisAnswers(i);
                     this.logCurrentAnswer();
+
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
                     
-                }.bind(this));
+                });
             this.submitButton.addClass("button-check checkingbutton");
             this.innerQuestions.append(this.submitButton);
             this.newDiv.append(this.innerQuestions);
@@ -353,6 +376,7 @@ export default class VO extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
+            this.sendData(this.a2ID('generate'))
         });
         this.containerDiv.append("<br>");
         this.containerDiv.append(this.generateButton);
@@ -583,8 +607,20 @@ export default class VO extends RunestoneBase {
     }
         // log the answer and other info to the server (in the future)
     async logCurrentAnswer(sid) {
-        let answer = JSON.stringify(this.inputNodes);
+
+        this.answer = []
+
+        let answer = JSON.stringify(this.inputNodes.flat().forEach(e =>
+            { 
+                e.forEach( i => {
+                    this.answer.push(i[0].value)
+                })
+
+            }));
         let feedback = true;
+
+        this.answer = answer
+
         // Save the answer locally.
         this.setLocalStorage({
             answer: answer,

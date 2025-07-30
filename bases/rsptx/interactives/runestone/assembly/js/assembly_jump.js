@@ -33,7 +33,7 @@ export default class AJ extends RunestoneBase {
         this.prev_num = -1;
         
         // Fields for logging data
-        this.componentId = "4.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 

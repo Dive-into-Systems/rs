@@ -25,7 +25,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.useRunestoneServices = opts.useRunestoneServices;
 
         // Fields for logging data
-        this.componentId = "7.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
@@ -50,7 +50,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.renderQuestions();
         this.renderTryAgainButton();
 
-        this.sendData(0)
+        this.sendData(this.a2ID('load'))
         $(this.origElem).replaceWith(this.containerDiv);
     }
 
@@ -408,7 +408,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
             QuestionText : this.promptList[index],
         }
 
-        this.sendData(1)
+        this.sendData(this.a2ID( (userAnswer == correctAnswer) ? 'correct' : 'incorrect'))
 
         feedbackDiv.html($("<span>").text(`${msg}`));
     }
@@ -425,7 +425,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.cleanInputNFeedbackField(); // clear answers, clear prev feedback, and enable all for the input fields
             this.updatePrompts();
-            this.sendData(3)
+            this.sendData(this.a2ID('generate'))
             
         });
         this.containerDiv.append("<br>");
@@ -511,14 +511,14 @@ export default class ASM_EXCERCISE extends RunestoneBase {
         }
 
         let details; 
-        if (actionId == 0|| actionId == 3) {
+        if (this.id2A(actionId) == 'generate' || this.id2A(actionId) == 'load') {
             details = {
                 config : {
                     checkedOperations : `${checkedOPs}`,
                 },
             }
         }
-        else if (actionId == 1 || actionId == 2){
+        else if (this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
             details = {
                 config : {
                     checkedOperations : `${checkedOPs}`,
@@ -528,7 +528,7 @@ export default class ASM_EXCERCISE extends RunestoneBase {
                 },
                 eval: {
                     correctAnswer: `${this.dataToBeLogged.Answer}`,
-                    userAnswer : this.inputNode ? this.dataToBeLogged.UserAnswer.toLowerCase() : null,
+                    userAnswer : this.dataToBeLogged.UserAnswer,
                     correct : this.dataToBeLogged.Correct,
                     questionNumber : this.dataToBeLogged.QuestionNumber,
                 }

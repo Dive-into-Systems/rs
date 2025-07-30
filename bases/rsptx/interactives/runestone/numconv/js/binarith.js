@@ -61,7 +61,7 @@ export default class BA extends RunestoneBase {
         this.getWindowOpen = () => (this.windowOpen)
 
         // Fields for logging data
-        this.componentId = "4.4";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.contWrong = 0;
         this.userId = this.getUserId();
@@ -111,7 +111,7 @@ export default class BA extends RunestoneBase {
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        this.sendData(0);
+        this.sendData(this.a2ID("load"));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -450,7 +450,7 @@ export default class BA extends RunestoneBase {
             } 
             this.checkValidConversion();
             
-            this.sendData(3);
+            this.sendData(this.a2ID('generate'));
 
             this.firstQuestionFinished = true;
     }
@@ -464,7 +464,7 @@ export default class BA extends RunestoneBase {
                 this.correctpt2 = true;
                 this.checkCurrentAnswerPt2();
                 // this.logCurrentAnswer();
-                this.sendData(1, true)
+                this.sendData(this.a2ID(this.correctpt2 ? 'correct' : 'incorrect'), true)
                 
                 this.renderFeedback2();
                 console.log(this.correctpt2);
@@ -475,7 +475,7 @@ export default class BA extends RunestoneBase {
             this.checkCurrentAnswer();
             console.log(this.target_num_string);
             // this.logCurrentAnswer();
-            this.sendData(1, false)
+            this.sendData(this.a2ID(this.correctpt1 ? 'correct' : 'incorrect'), false)
             this.renderFeedback();
             this.correctpt1 = true;
 
@@ -1440,8 +1440,12 @@ export default class BA extends RunestoneBase {
 
     sendData(actionId, part2=false) {
 
-        let details; 
-        if (actionId == 1 || actionId == 2) {
+        let details;
+
+        const userAnswer = this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null;
+
+        
+        if (this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect') {
             details = {
                 config : {
                     numBits : `${this.num_bits}`,
@@ -1453,7 +1457,7 @@ export default class BA extends RunestoneBase {
                 },
                 eval: {
                     correctAnswer: `${this.target_num_string}`,
-                    userAnswer : this.inputNode ? this.inputNode2.value+this.inputNode.value.toLowerCase() : null,
+                    userAnswer : this.id2A(actionId) == 'correct' ? null : userAnswer,
                     correctpt1 : this.correctpt1,
                 }
             }
@@ -1469,12 +1473,12 @@ export default class BA extends RunestoneBase {
                     unsignedBool = true;
                 }
                 details.eval.correctpt2 = this.correctpt2;
-                details.eval.userAnswer = [this.USInput.value, this.SInput.value, unsignedBool, signedBool]
+                details.eval.userAnswer = this.id2A(actionId) == 'correct' ? null : [this.USInput.value, this.SInput.value, unsignedBool, signedBool]
                 details.eval.correctAnswer = [this.ans, this.toSignedDecimal(), this.UTunsignedOverflow, this.UTsignedOverflow]
             }
         }
 
-        if(actionId == 3 || actionId == 0){
+        else{
             details = {
                 config : {
                     numBits : `${this.num_bits}`,

@@ -167,7 +167,7 @@ export default class CircuitTruth extends RunestoneBase {
          */
 
         //TODO: take params min and max num gates and if you want exact number of gates set to be the same.
-        function generateCircuit() {
+        const generateCircuit = () => {
             const inputs = ['A', 'B', 'C']; // possible inputs
             const gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
             // const gates2 = ['AND', 'OR', 'XOR']; //maybe use this for the easy level (maybe just AND OR NOT)
@@ -251,6 +251,7 @@ export default class CircuitTruth extends RunestoneBase {
                 const re = new RegExp(`\\b${toReplace}\\b`, 'g');
                 circuit = circuit.replace(re, 'A');
             }
+
             
             // update HTML to display the text. This is currently set invisible.
             container.querySelector(`#${id}_circuitOutput`).innerText = circuit

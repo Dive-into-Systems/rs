@@ -116,7 +116,8 @@ export default class RunestoneBase {
             "reset" : 5,
             "textbook": 6,
             "asmVis" : 15,
-            "viewHierarchy" : 16, 
+            "viewHierarchy" : 16,
+            "showExpression" : 17,
     }
 
     a2ID(action){
