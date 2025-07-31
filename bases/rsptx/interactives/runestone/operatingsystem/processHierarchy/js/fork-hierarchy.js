@@ -513,7 +513,7 @@ export default class ProcHierarchy extends RunestoneBase {
             actionId : actionId,
             userId : this.userId
         }
-        if (actionId !== 0) {
+        if (this.id2A(actionId) !== 'load') {
             this.getUserInputAndAnswer();
 
             bundle.details = {

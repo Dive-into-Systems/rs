@@ -118,6 +118,7 @@ export default class RunestoneBase {
             "asmVis" : 15,
             "viewHierarchy" : 16,
             "showExpression" : 17,
+            "viewTimeline" : 18,
     }
 
     a2ID(action){

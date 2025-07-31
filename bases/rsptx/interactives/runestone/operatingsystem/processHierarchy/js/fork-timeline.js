@@ -25,11 +25,15 @@ export default class ProcTimeline extends RunestoneBase {
         this.divid = orig.id;
 
         // Logging data fields
-        this.componentId = "13.6";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
         this.createElements();
+
+
+        this.sendData(this.a2ID('load'))
+
         this.caption = "Process timeline";
         this.addCaption("runestone");
 
@@ -55,6 +59,47 @@ export default class ProcTimeline extends RunestoneBase {
             debounceDelay: 50,
             watchAttributes: ['style', 'class']
         });
+    }
+
+
+
+    sendData(actionId) {
+        let now = new Date();
+        let bundle = {
+            timestamp: now.toString(),
+            componentId : this.componentId,
+            questionId : this.questionId,
+            actionId : actionId,
+            userId : this.userId
+        }
+        if (this.id2A(actionId) !== 'load') {
+
+            bundle.details = {
+                config : {
+                    hardCodedQuestion: `${this.hardCodedCCode}`,
+                    regeneration: `${this.regeneration}`,
+                    showMenu: `${this.showMenu}`,
+                    // numForks: `${this.numForks}`,
+                    // numPrints: `${this.numPrints}`,
+                    // hasElse: `${this.hasElse}`,
+                    // hasNest: `${this.hasNest}`,
+                    // hasExit: `${this.hasExit}`,
+                    // hasLoop: `${this.hasLoop}`,
+                    selectedMode: this.showMenu === true ? `${this.modeMenu.val()}` : null
+                },
+                prompt : {
+                    // displayedPrompt: `${this.cCode}`,
+                    sourceCode: `${this.source}`
+                },
+                eval: ((actionId == this.a2ID("correct")) || (actionId == this.a2ID("incorrect"))) ? {
+                    correctAnswer: `${this.logAnswer}`,
+                    userAnswer: `${this.correct ? null : this.logUserAnswer}`,
+                } : null
+            }
+        }
+        else { bundle.details = null }
+
+        this.logData(bundle);
     }
 
     initParams() {
@@ -308,6 +353,7 @@ export default class ProcTimeline extends RunestoneBase {
         this.generateButton.addEventListener("click", () => {
             this.clearInputNFeedbackField();
             this.loadAnotherQuestion();
+            this.sendData(this.a2ID('generate'))
         });
 
         // Check answer button
@@ -321,6 +367,8 @@ export default class ProcTimeline extends RunestoneBase {
         this.checkAnswerButton.addEventListener("click", () => {
             this.checkCurrentAnswer();
             this.updateFeedbackDiv();
+
+            this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
         });
 
         // Reveal tree button
@@ -345,7 +393,7 @@ export default class ProcTimeline extends RunestoneBase {
             id: this.divid + "draw_timeline",
         });
         this.revealTimeLineButton.addEventListener("click", () => {
-            if ($(this.timelineDiv).css('display') == 'none') { this.showProcessTimeline(); }
+            if ($(this.timelineDiv).css('display') == 'none') { this.showProcessTimeline(); this.sendData(this.a2ID('viewTimeline')) }
             else { this.hideProcessTimeline(); }
         });
 
@@ -358,7 +406,7 @@ export default class ProcTimeline extends RunestoneBase {
             id: this.divid + "help",
         });
         this.helpButton.addEventListener("click", () => {
-            if ($(this.helpDiv).css('display') == 'none') { this.showHelp(); }
+            if ($(this.helpDiv).css('display') == 'none') { this.showHelp(); this.sendData(this.a2ID('help')) }
             else { this.hideHelp(); }
         });
 
@@ -419,12 +467,16 @@ export default class ProcTimeline extends RunestoneBase {
         this.feedback_msg = []; // Clear feedback
         this.correct = true; // Start as correct, update if incorrect
 
+        this.logUserAnswer = []
+        this.logAnswer = []
         for (let i = 0; i < this.printSeqs.length; i++) {
             if (!this.answerMap.hasOwnProperty(this.printSeqs[i])) {
                 continue;
             }
             let currAnswer = $("#" + this.divid + "_input_" + i).prop("checked");
+            this.logUserAnswer.push(currAnswer)
             let currSolution = !this.answerMap[this.printSeqs[i]]; // map stores incorrect answers
+            this.logAnswer.push(currSolution)
             if (currAnswer !== currSolution) {
                 this.correct = false;
             }
@@ -495,7 +547,7 @@ export default class ProcTimeline extends RunestoneBase {
 
     showHelp() {
         $(this.helpDiv).css("display", "block");
-        $(this.helpDiv).html(
+        this.helpDiv[0].innerHTML = (
             `<strong>Try viewing the process timeline to see full answer.</strong><br><br>
             For reference:
             <ul>
@@ -505,6 +557,10 @@ export default class ProcTimeline extends RunestoneBase {
             </ul>
             <br>For more detailed information, please refer to the <a href='https://diveintosystems.org/book/C13-OS/processes.html' target='_blank'>Processes section of Chapter 13.2</a> in <i>Dive into Systems</i>`
         );
+        this.helpDiv[0].getElementsByTagName('a')[0].addEventListener('click', ()=>{
+            this.sendData(this.a2ID('textbook'))
+        })
+        
     }
 
     hideHelp() {

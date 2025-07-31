@@ -28,11 +28,15 @@ export default class VO extends RunestoneBase {
         this.userId = this.getUserId();
 
         this.createVOElement();
+
+
+        this.sendData(this.a2ID('load'))
+
+
         this.caption = "Virtual Memory Operations";
         this.addCaption("runestone");
         
 
-        this.sendData(this.a2ID('load'))
 
         // this.checkServer("vo", true);
         if (typeof Prism !== "undefined") {
@@ -612,14 +616,19 @@ export default class VO extends RunestoneBase {
 
         let answer = JSON.stringify(this.inputNodes.flat().forEach(e =>
             { 
-                e.forEach( i => {
-                    this.answer.push(i[0].value)
-                })
+                if(e[0][0].checked){
+                    this.answer.push(true)
+                }
+                else if(e[1][0].checked){
+                    this.answer.push(false)
+                }
+                else{
+                    this.answer.push(undefined)
+                }
 
             }));
         let feedback = true;
 
-        this.answer = answer
 
         // Save the answer locally.
         this.setLocalStorage({

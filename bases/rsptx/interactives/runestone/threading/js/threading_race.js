@@ -29,7 +29,7 @@ export default class TR extends RunestoneBase {
         // Default configuration settings
         this.correct = null;
         // Fields for logging data
-        this.componentId = "13.3.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
         
@@ -45,7 +45,7 @@ export default class TR extends RunestoneBase {
         //dynamically resizes the height of the component
         const obj = this;
         updateHeight(window, document, obj, true);
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -57,6 +57,35 @@ export default class TR extends RunestoneBase {
     // Create the NC Element
 
     
+    sendData(actionId) {
+
+        let details = {}
+
+
+                    // this.problem = initialize(Number(this.modeSelect.value));
+                    // this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                    // this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+        if(this.id2A(actionId) != 'load'){
+            details.mode = this.modeSelect.value
+            details.questionType = this.typeSelect.value
+            details.problem = this.problem
+            // details.stateArr = this.stateArr
+            // details.finalStates = this.finalStates
+
+        }
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answer = this.logAnswers
+            details.userAnswer = this.logUserAnswers
+
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+        }
+
+            this.logData(null, details, actionId, this.componentId);
+
+    }
+
     createTRElement() {
         this.renderTRPromptAndInput();
         switch(this.typeSelect.value){
@@ -698,6 +727,7 @@ export default class TR extends RunestoneBase {
 
             this.renderTRButtons()
             
+            this.sendData(this.a2ID('generate'))
         });
         switch(this.typeSelect.value){
             case "1":
@@ -744,7 +774,8 @@ export default class TR extends RunestoneBase {
                     this.checkCurrentAnswer();
                     this.row.appendChild(this.submitButton);
                     this.logCurrentAnswer();
-            
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
+
                 });
                 this.submitButton.style.display = "inline-block"
 
@@ -762,7 +793,8 @@ export default class TR extends RunestoneBase {
                         this.feedbackDiv.remove()
                     }
                     this.checkAllAnswers();
-                    this.logCurrentAnswer();         
+                    this.logCurrentAnswer();        
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect')) 
                 });
 
                 if(!this.disableGenerate){
@@ -968,6 +1000,10 @@ export default class TR extends RunestoneBase {
         }
         //converts user row to a string for comparison
         userRow = JSON.stringify(userRow)
+
+        this.logUserAnswers = userRow;
+        this.logAnswers = answers;
+
         //incorrect if user answer is not in correct answers
         if(!answers.includes(userRow)){
             this.correct = false;
@@ -986,6 +1022,7 @@ export default class TR extends RunestoneBase {
         }
         //generates a new row for users to enter states if their current row is correct
         this.generateAnswerSlot();
+
     }
 
     // log the answer and other info to the server (in the future)
@@ -993,9 +1030,6 @@ export default class TR extends RunestoneBase {
 
     }
 
-    sendData(actionId) {
-
-    }
 
     /*===================================
     === Checking/loading from storage ===

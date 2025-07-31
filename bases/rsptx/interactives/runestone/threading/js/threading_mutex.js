@@ -27,7 +27,7 @@ export default class TM extends RunestoneBase {
         // Default configuration settings
         this.correct = null;
         // Fields for logging data
-        this.componentId = "13.3.1";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
         
@@ -42,7 +42,7 @@ export default class TM extends RunestoneBase {
         this.contWrong = 0;
         const obj = this;
         updateHeight(window, document, obj, true);
-        this.sendData(0);
+        this.sendData(this.a2ID('load'));
     }
     // Find the script tag containing JSON in a given root DOM node.
     scriptSelector(root_node) {
@@ -681,6 +681,8 @@ export default class TM extends RunestoneBase {
             }
 
             this.renderTRButtons()
+
+            this.sendData(this.a2ID('generate'))
             
         });
         switch(this.typeSelect.value){
@@ -728,6 +730,8 @@ export default class TM extends RunestoneBase {
                     this.checkCurrentAnswer();
                     this.row.appendChild(this.submitButton);
                     this.logCurrentAnswer();
+
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))
             
                 });
                 this.submitButton.style.display = "inline-block"
@@ -744,7 +748,8 @@ export default class TM extends RunestoneBase {
                         this.feedbackDiv.remove()
                     }
                     this.checkAllAnswers();
-                    this.logCurrentAnswer();         
+                    this.logCurrentAnswer(); 
+                    this.sendData(this.a2ID(this.correct ? 'correct' : 'incorrect'))        
                 });
 
                 if(!this.disableGenerate){
@@ -912,6 +917,7 @@ export default class TM extends RunestoneBase {
             answers[i] = JSON.stringify(answers[i])
         }
         console.log(answers)
+
         let userAnswers = [];
         this.userAnswers.forEach(answer =>{
             userAnswers.push(JSON.stringify(answer));
@@ -930,6 +936,9 @@ export default class TM extends RunestoneBase {
 
         userRow = JSON.stringify(userRow)
 
+        this.logUserAnswers = userRow;
+        this.logAnswers = answers;
+
         if(!answers.includes(userRow)){
             this.correct = false;
             this.feedback_msg = "Incorrect. This is not a possible state."
@@ -946,6 +955,8 @@ export default class TM extends RunestoneBase {
             this.renderFeedback();
         }
 
+
+
         this.generateAnswerSlot();
     }
 
@@ -955,6 +966,31 @@ export default class TM extends RunestoneBase {
     }
 
     sendData(actionId) {
+
+        let details = {}
+
+
+                    // this.problem = initialize(Number(this.modeSelect.value));
+                    // this.stateArr = stateChange(this.problem.state, this.problem.thread1Info, this.problem.thread2Info, this.problem.thread1, this.problem.thread2);
+                    // this.finalStates = possibleFinalStates(this.stateArr, this.problem.thread1.length, this.problem.thread2.length)
+
+        if(this.id2A(actionId) != 'load'){
+            details.mode = this.modeSelect.value
+            details.questionType = this.typeSelect.value
+            details.problem = this.problem
+            // details.stateArr = this.stateArr
+            // details.finalStates = this.finalStates
+
+        }
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answer = this.logAnswers
+            details.userAnswer = this.logUserAnswers
+
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+        }
+
+            this.logData(null, details, actionId, this.componentId);
 
     }
 

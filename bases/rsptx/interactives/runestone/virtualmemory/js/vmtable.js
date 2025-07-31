@@ -26,11 +26,14 @@ export default class vmtable extends RunestoneBase {
         this.divid = orig.id;
 
         // Fields for logging data
-        this.componentId = "13.3";
+        this.componentId = this.getCID();
         this.questionId = 1;
         this.userId = this.getUserId();
 
         this.createVmtableElement();
+
+        this.sendData(this.a2ID('load'))
+
         this.caption = "Virtual Memory Table";
         this.addCaption("runestone");
         // this.checkServer("vmtable", true);
@@ -64,6 +67,55 @@ export default class vmtable extends RunestoneBase {
 
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
+    }
+
+    sendData(actionId){
+
+        let details = {}
+
+        if(this.id2A(actionId) == 'correct' || this.id2A(actionId) == 'incorrect'){
+            details.answer = this.logAnswers
+        }
+        if(this.id2A(actionId) == 'incorrect'){
+            details.userAnswer = this.logUserAnswers
+        }
+
+        let ramTableValues = []
+
+        if(this.ramTableBody){
+            for(let i = 0; i < this.ramTableBody.rows.length; i++){
+                let pushArr = []
+                for(let j = 0; j < this.ramTableBody.rows[i].children.length; j++){
+                    pushArr.push(this.ramTableBody.rows[i].children[j].textContent)
+                }
+
+                ramTableValues.push(pushArr)
+            }
+        }
+
+
+        let displayTableValues = []
+
+        if(this.displayedTableBody){
+            for(let i = 0; i < this.displayedTableBody.rows.length; i++){
+                let pushArr = []
+
+                    for(let j = 0; j < this.displayedTableBody.rows[i].children.length; j++){
+                        pushArr.push(this.displayedTableBody.rows[i].children[j].textContent)
+
+                    }
+                displayTableValues.push(pushArr)
+
+            }
+        }
+
+
+        details.ramTableValues = ramTableValues
+        details.displayTableValues = displayTableValues
+
+
+        this.logData(null, details, actionId, this.componentId);
+
     }
 
     initParams() {
@@ -256,7 +308,7 @@ export default class vmtable extends RunestoneBase {
         this.helpButton.textContent = $.i18n("msg_vmtable_display_help");
         this.helpButton.addEventListener(            
             "click",
-            function() {
+            () => {
                 if (this.helpStatement.style.visibility == "hidden") {
                     this.helpStatement.style.visibility = "visible";
                     this.helpDiv.appendChild(this.helpStatement);
@@ -266,9 +318,10 @@ export default class vmtable extends RunestoneBase {
                     this.helpDiv.removeChild(this.helpStatement);
                     this.helpButton.textContent = $.i18n("msg_vmtable_display_help");
                 }
-                
-            }.bind(this),
+                this.sendData(this.a2ID('help'))   
+            },
         false); 
+        this.helpButton.click()
         this.helpDiv.appendChild(document.createElement("br"));
         this.helpDiv.appendChild(this.helpButton);
         this.containerDiv.appendChild(this.helpDiv);
@@ -779,13 +832,14 @@ export default class vmtable extends RunestoneBase {
         });
         this.generateButton.addEventListener(
             "click",
-            function () {
+             () => {
                 this.fixed = false;
                 this.fixedMinIndex = false;
                 this.resetGeneration();
                 this.hidefeedback();
+                this.sendData(this.a2ID('generate'))
                 
-            }.bind(this),
+            },
             false
         );
 
@@ -844,7 +898,15 @@ export default class vmtable extends RunestoneBase {
                     this.completed = true;
                 }
             }
-            this.logCurrentAnswer();
+
+            if(this.correct){
+                this.sendData(this.a2ID('correct'))
+            }
+            else{
+                this.sendData(this.a2ID('incorrect'))
+            }
+
+            // this.logCurrentAnswer();
         }
     }
 
@@ -1359,8 +1421,13 @@ export default class vmtable extends RunestoneBase {
         const curr_ref = this.curr_ref;
         const curr_ref_str = this.getCurrRefStr();
         try {
-            const response_hit_miss = 
-                document.querySelector('input[name="HM' + curr_ref_str + '"]:checked').value === "H" ? true : false;
+
+            this.logAnswers = [this.hit_miss_list[curr_ref], ...this.answer_list[curr_ref].slice(2,)]
+
+            let response_hit_miss;
+            if(document.querySelector('input[name="HM' + curr_ref_str + '"]:checked').value){
+                    response_hit_miss = document.querySelector('input[name="HM' + curr_ref_str + '"]:checked').value === "H" ? true : false;
+                } 
             const response_index =
                 document.querySelector('input[name="Index' + curr_ref_str + '"]').value;
             const response_dirty =
@@ -1372,6 +1439,11 @@ export default class vmtable extends RunestoneBase {
             const response_evicted =
                 document.querySelector('select[name="Evicted' + curr_ref_str + '"]').value;
             const curr_answers = this.answer_list[ curr_ref ];
+            
+            this.logUserAnswers = [response_hit_miss, response_index , response_valid, response_dirty, response_frame, response_evicted]
+
+
+
             if ( curr_answers[ 2 ].toString() != response_index ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_index");
                 return;
