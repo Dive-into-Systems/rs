@@ -48,15 +48,18 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         if (json["generate-another"] != undefined) {
             this.generateAnother = json["generate-another"];
         }
+        if (json["show-config"] != undefined) {
+            this.show_config = json["show-config"];
+        }
         if (json["instructions"] || json["registers"] || json["addresses"]) {
             // custom randomization of instructions, registers, and addresses
             this.instructions = json.instructions;
             this.registers = json.registers;
             this.memory = json.memory;
             this.selection = json.selection;
-            if (this.selection != undefined) {
-                this.show_config = false;
-            }
+            this.arith_checked = this.selection[0];
+            this.memo_checked = this.selection[1];
+            this.stack_checked = this.selection[2];
             this.createCustomizedAssemblyStateElement();
         } else {
             this.createRegularAssemblyStateElement();
@@ -65,7 +68,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         // replaces the intermediate HTML for this component with the rendered HTML of this component
         $(this.origElem).replaceWith(this.containerDiv);
         updateHeight(window, document, this);
-        this.sendData(this.a2ID("load"))
+        this.sendData(this.a2ID("load"));
 
     }
 
@@ -88,6 +91,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
 
         // rendering the whole thing
         this.renderHeader();
+        this.memory.reverse();
         this.initialState = [this.instructions, this.registers, this.memory];
         this.currentInstruction = 1;
         
@@ -99,7 +103,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             instruction: null,
             step: 0,
             registers: JSON.parse(JSON.stringify(this.registers)),
-            memory: JSON.parse(JSON.stringify(this.memory))
+            memory: JSON.parse(JSON.stringify(this.memory.reverse()))
         });
         if (this.show_config) {
             this.renderCustomizations();
@@ -218,7 +222,7 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
             num_instructions,
             num_registers,
             num_addresses,
-            this.selection ? [this.selection[0], this.selection[1], this.selection[2]] : [this.arith_checked, this.memo_checked, this.stack_checked]
+            [this.arith_checked, this.memo_checked, this.stack_checked]
         );
 
         this.initialState = this.allStates[0];
@@ -327,6 +331,40 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
         const tablesContainer = $("<div>").addClass("tables-container");
         tablesContainer.append(registersWrapper, memoryWrapper);
         this.containerDiv.append(tablesContainer);
+    }
+
+    // Repopulates tables with final state after all instructions are complete
+    repopulateFinalTables() {
+        const finalState = this.allStates[this.currentInstruction];
+
+        // Clear the tables
+        const registersTableBody = $(".register-table tbody");
+        const memoryRegistersTableBody = $(".memory-register-table tbody");
+        registersTableBody.empty();
+        memoryRegistersTableBody.empty();
+
+        // Repopulate Registers table
+        finalState.registers.forEach(({ register, value, type }) => {
+            const displayValue = value || "0";
+            const row = $("<tr>").append(
+                $("<td>").text(register),
+                $("<td>").text(displayValue),
+                $("<td>").append($("<input>").attr("type", "text").attr("placeholder", `${displayValue}`))
+            );
+            registersTableBody.append(row);
+        });
+
+        // Repopulate Memory table
+        const memoryTableBody = this.containerDiv.find('.memory-table tbody');
+        memoryTableBody.empty();
+        finalState.memory.forEach(addr => {
+            const row = $("<tr>").append(
+                $("<td>").text(addr.address),
+                $("<td>").text(addr.value),
+                $("<td>").append($("<input>").attr("type", "text").val("").attr("placeholder", `${addr.value}`))
+            );
+            memoryTableBody.append(row);
+        });
     }
 
     // Repopulates the initial state of registers and memory tables
@@ -582,6 +620,9 @@ export default class ASMState_EXCERCISE extends RunestoneBase {
                 this.renderFinalFeedback();
                 this.containerDiv.find('.button-container button:contains("Check Answer")').prop('disabled', true);
                 this.containerDiv.find(".instruction-div").removeClass("current").addClass("disabled");
+                // Update tables to show the final state
+                this.resetInputFields();
+                this.repopulateFinalTables();
             } else {
                 this.currentInstruction++;
                 this.moveToNextInstruction();

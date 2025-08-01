@@ -645,7 +645,7 @@ class ArchInstructions {
                 this.setValue(dest, memoryLocation.value, registers, memoryArray);
             } else if (op === "str") {
                 value = this.getValue(dest, registers, memoryArray);
-                memoryLocation.value = value;
+                memoryLocation.value = String(value);
             }
         } else {
             const baseReg = this.architecture === "X86_32" ? 'esp' : 'rsp';
@@ -664,7 +664,7 @@ class ArchInstructions {
                 if (!newMemoryLocation) {
                     throw new Error(`Memory location not found at address: ${newAddress}`);
                 }
-                newMemoryLocation.value = value;
+                newMemoryLocation.value = String(value);
                 this.updateStackPointer(registers, newAddress);
             } else if (op === 'pop') {
                 this.setValue(dest, memoryLocation.value, registers, memoryArray);
@@ -684,7 +684,7 @@ class ArchInstructions {
                 if (!newMemoryLocation) {
                     throw new Error(`Memory location not found at address: ${newAddress}`);
                 }
-                newMemoryLocation.value = value;
+                newMemoryLocation.value = String(value);
                 this.updateStackPointer(registers, newAddress);
             } else if (op === 'popl') {
                 this.setValue(dest, memoryLocation.value, registers, memoryArray);
@@ -720,7 +720,7 @@ class ArchInstructions {
 
         // Handle immediate values
         if (operand.startsWith('$') || operand.startsWith('#')) {
-            return parseInt(operand.slice(1), 16); // Parse as hex
+            return parseInt(operand.slice(1)); // Parse as decimal
         }
 
         // Handle memory accesses
