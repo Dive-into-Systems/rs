@@ -130,7 +130,7 @@ export default class cachetable extends RunestoneBase {
                 this.numRows = 1 << this.indexBits;
             }
             if (currentOptions["ref"] != undefined) {
-                this.numRefs = eval(currentOptions["ref"]);
+                this.genNumRefs = eval(currentOptions["ref"]);
             }
             if (currentOptions["init-valid-rate"] != undefined) {
                 this.initValidRate = eval(currentOptions["init-valid-rate"]);
@@ -1072,6 +1072,11 @@ export default class cachetable extends RunestoneBase {
     }
 
     generateAnswerInit() {
+        if (this.preset) {
+            this.numRefs = this.referenceList.length;
+        } else {
+            this.numRefs = this.genNumRefs;
+        }
         this.generateAnswerParams();
         // Check if we have a preset cache table, otherwise generate one
         if ( this.preset && this.cacheTableInit && this.cacheTableInit.length > 0 ) {
