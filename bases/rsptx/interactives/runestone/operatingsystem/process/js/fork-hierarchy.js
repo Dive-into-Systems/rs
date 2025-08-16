@@ -1,8 +1,27 @@
-// *********
-// fork.js
-// *********
-// This file contains the process hierarchy component. 
-// It is created by Luyuan Fan and Tony Cao (Summer 2024). 
+/**
+ * @file fork-hierarchy.js
+ * @brief Interactive process hierarchy component for Runestone educational platform
+ * 
+ * This component provides an educational interface for learning about process
+ * hierarchies created by fork() system calls. Students answer questions about
+ * how many times each letter will be printed by different processes.
+ * 
+ * Key features:
+ * - Generates random C code with configurable complexity
+ * - Interactive visualization of process hierarchy trees
+ * - Step-by-step code execution tracing
+ * - Multiple difficulty modes for progressive learning
+ * - Comprehensive logging for learning analytics
+ * - Help system with external resources
+ * 
+ * Educational objectives:
+ * - Understanding fork() behavior and return values
+ * - Process parent-child relationships
+ * - Concurrent execution and output interleaving
+ * - Wait/exit synchronization patterns
+ * 
+ * @author Luyuan Fan, Tony Cao (Summer 2024)
+ */
 
 import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
@@ -14,61 +33,85 @@ import { validLetter } from "jexcel";
 import { timeThursday } from "d3";
 import { updateHeightWithAutoMonitoring, disconnectAutoHeightUpdate } from "../../../../utils/updateHeight.js";
 
-export var ProcHierarchyList = {}; // Object containing all instances of Fork that aren't a child of a timed assessment.
+// Global registry of all process hierarchy component instances
+// Used for managing components outside of timed assessments
+export var ProcHierarchyList = {};
 
 export default class ProcHierarchy extends RunestoneBase {
     constructor(opts) {
         super(opts);
         var orig = opts.orig;
         this.useRunestoneServices = opts.useRunestoneServices;
-        this.origElem = orig;
-        this.divid = orig.id;
+        this.origElem = orig;       // Store reference to original element
+        this.divid = orig.id;       // Component unique identifier
 
-        // Fields for logging data
-        this.componentId = this.getCID();
-        this.questionId = 1;
-        this.userId = this.getUserId();
+        // Logging and analytics setup
+        this.componentId = this.getCID();    // Runestone component ID
+        this.questionId = 1;                 // Question instance counter
+        this.userId = this.getUserId();      // Current user identifier
 
+        // Initialize the complete component interface
         this.createElements();
         this.caption = "Process hierarchy";
         this.addCaption("runestone");
 
+        // Enable syntax highlighting if Prism.js is available
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
-        
     }
 
     scriptSelector(root_node) {
         return $(root_node).find(`script[type="application/json"]`);
     }
 
-    /*===========================================
-    ====   Functions generating final HTML   ====
-    ===========================================*/
+    // ============================================================================
+    // COMPONENT INITIALIZATION AND SETUP
+    // ============================================================================
 
-    // Create the ProcHierarchy Element
+
     createElements() {
-        this.sendData(this.a2ID("load"));
-        this.initParams();
-        this.initInputField();
-        this.initButtons();
-        this.initFeedback_Hierarchy_Help_Divs();
-        $(this.origElem).replaceWith(this.containerDiv); // replaces the intermediate HTML for this component with the rendered HTML of this component
+        this.sendData(this.a2ID("load"));              // Log component load event
+        this.initParams();                             // Parse configuration parameters
+        this.initInputField();                         // Create question and input interface
+        this.initButtons();                            // Create interactive buttons
+        this.initFeedback_Hierarchy_Help_Divs();     // Create feedback and help areas
+        
+        // Replace the original placeholder element with the complete component
+        $(this.origElem).replaceWith(this.containerDiv);
+        
         const obj = this;
-        // Set up automatic height monitoring with optimized settings for hierarchy component
+        // Set up automatic height monitoring for responsive design
+        // This is crucial for SVG visualizations that can change size dynamically
         this.heightObserver = updateHeightWithAutoMonitoring(window, document, obj, true, {
-            debounceDelay: 50, // Slightly higher delay for complex SVG rendering
+            debounceDelay: 50,    // Slightly higher delay for complex SVG rendering
             watchAttributes: ['style', 'class', 'data-visible']
         });
     }
 
+    /**
+     * Initialize component parameters from JSON configuration and set defaults.
+     * This method handles multiple configuration modes:
+     * - Hard-coded source code vs generated code
+     * - Preset parameters vs user-configurable modes  
+     * - Different complexity levels and features
+     * 
+     * Configuration parameters affect:
+     * - Number of fork operations and processes
+     * - Types of synchronization (wait/exit)
+     * - Code complexity and nesting
+     * - User interface options
+     */
     initParams() {
-        this.alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        this.alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        
         try {
+            // Parse JSON configuration from embedded script tag
             const params = JSON.parse(
                 this.scriptSelector(this.origElem).html()
             );
+            
+            // Set instruction text (customizable or default)
             if (params["instruction"] != undefined) {
                 this.instructionText = params["instruction"];
             } else {
@@ -174,7 +217,8 @@ export default class ProcHierarchy extends RunestoneBase {
                 'id' : this.divid + '_input_' + i
             }).addClass("form-control input-box");
 
-            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
+            this.subPrompt = $("<div>").html("How many times will <code></code> print?");
+            this.subPrompt.find('code').text(this.printContent[i]);
             this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i).append(this.subPrompt, this.inputBox);
             this.inputDiv.append(this.subQuestionDiv);
         }
@@ -375,7 +419,8 @@ export default class ProcHierarchy extends RunestoneBase {
                 'id' : this.divid + '_input_' + i
             }).addClass("form-control input-box");
 
-            this.subPrompt = $("<div>").html("How many times will <code>" + this.printContent[i] + "</code> print?");
+            this.subPrompt = $("<div>").html("How many times will <code></code> print?");
+            this.subPrompt.find('code').text(this.printContent[i]);
             this.subQuestionDiv = $("<div>").attr("id", this.divid + "_question_" + i).append(this.subPrompt, this.inputBox);
             this.inputDiv.append(this.subQuestionDiv);
         }
@@ -489,7 +534,7 @@ export default class ProcHierarchy extends RunestoneBase {
     
             /* Remove highlight line on mouseout */
             $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
-                const blockId = $(event.this).data('block');
+                const blockId = $(event.target).data('block');
                 $(`span[data-block="${blockId}"]`).removeClass('highlight');
             });
     

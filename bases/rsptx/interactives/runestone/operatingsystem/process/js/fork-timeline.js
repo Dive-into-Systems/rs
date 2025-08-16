@@ -1,42 +1,76 @@
-// Process Timeline component for fork/wait/exit visualization
-// Initiated by Luyuan Fan and Tony Cao (Summer 2024)
-// Fixed and finalized by Zhengfei Li (Spring 2025-Summer 2025)
+/**
+ * @file fork-timeline.js
+ * @brief Interactive process timeline component for Runestone educational platform
+ * 
+ * This component provides an educational interface for learning about process
+ * execution timelines and synchronization using fork(), wait(), and exit() system calls.
+ * Students analyze possible output sequences from concurrent processes.
+ * 
+ * Key differences from hierarchy component:
+ * - Focus on temporal execution order rather than parent-child relationships
+ * - Timeline visualization showing concurrent execution
+ * - Multiple choice questions about possible output sequences
+ * - Emphasis on process synchronization and race conditions
+ * 
+ * Educational objectives:
+ * - Understanding concurrent execution and output interleaving
+ * - Process synchronization with wait() calls
+ * - Temporal relationships between fork, wait, and exit operations
+ * - Analysis of all possible execution orderings
+ * 
+ * @author Luyuan Fan, Tony Cao (Summer 2024), Zhengfei Li (Spring 2025)
+ */
 
 import RunestoneBase from "../../../common/js/runestonebase.js";
 import "./fork-i18n.en.js";
 import "../css/fork.css";
 import "../css/timeline.css";
 import * as build from "../algorithms/build.js";
-// import * as hierarchy from "../algorithms/hierarchyDraw.js";
 import * as timeline from "../algorithms/timelineDraw.js"
 import { analyzeSequenceList } from "../algorithms/timeline_statistics.js"
 import { Pass } from "codemirror";
 import { validLetter } from "jexcel";
 import { updateHeightWithAutoMonitoring, disconnectAutoHeightUpdate } from "../../../../utils/updateHeight.js";
 
-export var ProcTimelineList = {}; // All instances not in timed assessment
+// ============================================================================
+// CONSTANTS AND CONFIGURATION
+// ============================================================================
+
+/** Maximum attempts to generate a valid question before giving up */
+const MAX_GENERATION_ATTEMPTS = 100;
+/** Maximum number of alphabet letters available for print statements */
+const MAX_ALPHABET_SIZE = 26;
+
+// Global registry of all process timeline component instances
+// Used for managing components outside of timed assessments
+export var ProcTimelineList = {};
+
 
 export default class ProcTimeline extends RunestoneBase {
+
     constructor(opts) {
         super(opts);
         var orig = opts.orig;
         this.useRunestoneServices = opts.useRunestoneServices;
-        this.origElem = orig;
-        this.divid = orig.id;
+        this.origElem = orig;       // Store reference to original element
+        this.divid = orig.id;       // Component unique identifier
 
-        // Logging data fields
-        this.componentId = this.getCID();
-        this.questionId = 1;
-        this.userId = this.getUserId();
+        // Logging and analytics setup
+        this.componentId = this.getCID();    // Runestone component ID
+        this.questionId = 1;                 // Question instance counter
+        this.userId = this.getUserId();      // Current user identifier
 
+        // Initialize the complete component interface
         this.createElements();
 
+        // Log the component load event
+        this.sendData(this.a2ID('load'));
 
-        this.sendData(this.a2ID('load'))
-
+        // Set up component metadata
         this.caption = "Process timeline";
         this.addCaption("runestone");
 
+        // Enable syntax highlighting if Prism.js is available
         if (typeof Prism !== "undefined") {
             Prism.highlightAllUnder(this.containerDiv);
         }
@@ -46,18 +80,32 @@ export default class ProcTimeline extends RunestoneBase {
         return $(root_node).find(`script[type="application/json"]`);
     }
 
-    // Create the ProcTimeline Element
+    // ============================================================================
+    // COMPONENT INITIALIZATION AND SETUP
+    // ============================================================================
+
+    /**
+     * Main method to create and initialize all component elements.
+     * Timeline component setup includes:
+     * 1. Parameter initialization and configuration parsing
+     * 2. Question generation with complexity validation
+     * 3. Multiple choice interface creation
+     * 4. Interactive button setup (timeline, help, check answer)
+     * 5. Feedback and visualization area creation
+     * 6. Responsive height monitoring for dynamic content
+     */
     createElements() {
-        this.initParams();
-        this.initInputField();
-        this.initButtons();
-        this.initFeedback_Hierarchy_Timeline_Help_Divs();
-        $(this.origElem).replaceWith(this.containerDiv); // Replace intermediate HTML with rendered component
+        this.initParams();                                  // Parse configuration and set defaults
+        this.initInputField();                              // Create question and checkbox interface
+        this.initButtons();                                 // Create interactive buttons
+        this.initFeedback_Hierarchy_Timeline_Help_Divs();  // Create feedback and visualization areas
+        $(this.origElem).replaceWith(this.containerDiv);   // Replace placeholder with component
+        
         const obj = this;
-        // Set up automatic height monitoring with MutationObserver
+        // Set up automatic height monitoring for responsive timeline visualizations
         this.heightObserver = updateHeightWithAutoMonitoring(window, document, obj, true, {
-            debounceDelay: 50,
-            watchAttributes: ['style', 'class']
+            debounceDelay: 50,                              // Balanced delay for timeline rendering
+            watchAttributes: ['style', 'class']            // Monitor visual state changes
         });
     }
 
@@ -114,8 +162,7 @@ export default class ProcTimeline extends RunestoneBase {
                     In this exercise, you'll analyze a C program that utilizes <code>fork()</code>, 
                     <code>wait()</code>, and <code>exit()</code> system calls to manage process creation and synchronization. <br>
                     Your task is to determine which of the provided output sequences could be produced by the program, 
-                    considering the possible concurrency allowed by <code>fork()</code> and synchronization required by
-                    <code>wait()</code>.<br>
+                    considering the possible concurrency allowed by <code>fork()</code> and <code>wait()</code>.<br>
                     Please tick all of the possible output print sequences that could be produced by the program.<br>
                     <br>
                     For hints and definitions of the system calls, you may click on the <b>Help</b> button.<br>
@@ -155,13 +202,13 @@ export default class ProcTimeline extends RunestoneBase {
             }
         } catch (error) { console.error("Error loading parameters:", error); }
         this.printContent = [];
-        for (var i = 0; i < 26; i++) { // All letters available
+        for (var i = 0; i < MAX_ALPHABET_SIZE; i++) { // All letters available
             this.printContent.push(String.fromCharCode((i + 97)));
         }
     }
 
     initInputField() {
-        this.containerDiv = $("<div>").attr("id", this.divid);
+        this.containerDiv = $("<div>").attr("id", this.divid).addClass("proc-timeline-component");
         this.configDiv = $("<div>").addClass("config-box");
 
         // Instructions
@@ -176,8 +223,8 @@ export default class ProcTimeline extends RunestoneBase {
                     <li><b>Mode 1</b> has 2 forks and the child process may or may not exit.</li> 
                     <li><b>Mode 2 and mode 3</b> guarantees that the child process will exit within the code snippet:
                         <ul style='line-height:90%'> 
-                            <li><b>Mode 2</b> is simpler with 2 forks.</li> 
-                            <li><b>Mode 3</b> is more complex with 3 forks.</li>
+                            <li><b>Mode 2</b> generates 2 forks.</li> 
+                            <li><b>Mode 3</b> generates 3 forks: would be more complex.</li>
                         </ul>
                     </li> 
                 </ul>`
@@ -218,7 +265,8 @@ export default class ProcTimeline extends RunestoneBase {
             
             let $label = $("<label>")
                 .attr("for", `${this.divid}_input_${i}`)
-                .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
+                .html("<code class='candidate-print-sequence'></code>");
+            $label.find('code').text(printSeq);
             
             let $questionDiv = $("<div>")
                 .attr("id", `${this.divid}_question_${i}`)
@@ -246,15 +294,15 @@ export default class ProcTimeline extends RunestoneBase {
             this.updateSourceCode();
             this.genQuestionInfo();
             let i = 0;
-            for (i = 0; i < 100; i++) {
+            for (i = 0; i < MAX_GENERATION_ATTEMPTS; i++) {
                 if (this.printSeqs.length > 2) {
                     break;
                 }
                 this.updateSourceCode();
                 this.genQuestionInfo();
             }
-            if (i == 100) {
-                console.error("Failed to generate a question with more than 2 print sequences after 100 attempts.");
+            if (i == MAX_GENERATION_ATTEMPTS) {
+                console.error(`Failed to generate a question with more than 2 print sequences after ${MAX_GENERATION_ATTEMPTS} attempts.`);
             }
         } else {
             if (this.regeneration == true) { this.hardCodedCCode = false; }
@@ -289,12 +337,12 @@ export default class ProcTimeline extends RunestoneBase {
                     prev = this.source || "";
                     this.source = build.genSimpleWaitCodeMode1();
                     i = 0;
-                    while (this.source === prev && i < 100) {
+                    while (this.source === prev && i < MAX_GENERATION_ATTEMPTS) {
                         this.source = build.genSimpleWaitCodeMode1();
                         i++;
                     }
-                    if (i == 100) {
-                        console.error("Failed to generate a new source code after 100 attempts.");
+                    if (i == MAX_GENERATION_ATTEMPTS) {
+                        console.error(`Failed to generate a new source code after ${MAX_GENERATION_ATTEMPTS} attempts.`);
                     }
                     break;
                 default:
@@ -302,12 +350,12 @@ export default class ProcTimeline extends RunestoneBase {
                     prev = this.source || "";
                     this.source = generateNewSourceCode();
                     i = 0;
-                    while (this.source === prev && i < 100) {
+                    while (this.source === prev && i < MAX_GENERATION_ATTEMPTS) {
                         this.source = generateNewSourceCode();
                         i++;
                     }
-                    if (i == 100) {
-                        console.error("Failed to generate a new source code after 100 attempts.");
+                    if (i == MAX_GENERATION_ATTEMPTS) {
+                        console.error(`Failed to generate a new source code after ${MAX_GENERATION_ATTEMPTS} attempts.`);
                     }
                     break;
             }
@@ -316,12 +364,12 @@ export default class ProcTimeline extends RunestoneBase {
             let prev = this.source || "";
             this.source = generateNewSourceCode();
             let i = 0;
-            while (this.source == prev && i < 100) {
+            while (this.source == prev && i < MAX_GENERATION_ATTEMPTS) {
                 this.source = generateNewSourceCode();
                 i++;
             }
-            if (i == 100) {
-                console.error("Failed to generate a new source code after 100 attempts.");
+            if (i == MAX_GENERATION_ATTEMPTS) {
+                console.error(`Failed to generate a new source code after ${MAX_GENERATION_ATTEMPTS} attempts.`);
             }
         }  
     }
@@ -425,13 +473,7 @@ export default class ProcTimeline extends RunestoneBase {
         $('input').val("");
         this.inputDiv.html("");
 
-        // Unbind event handlers before clearing
-        $(this.codeDiv).off('mouseover', 'span[data-block]');
-        $(this.codeDiv).off('mouseout', 'span[data-block]');
-        $(this.codeDiv).off('click', 'span[data-block]');
-
         $(this.feedbackDiv).css("display", "none");
-        // $(this.hierarchyTreeDiv).css("display", "none").empty();
         $(this.timelineDiv).css("display", "none").empty();
         $(this.helpDiv).css("display", "none");
     }
@@ -453,7 +495,8 @@ export default class ProcTimeline extends RunestoneBase {
             
             let $label = $("<label>")
                 .attr("for", `${this.divid}_input_${i}`)
-                .html("<code class='candidate-print-sequence'>" + printSeq + "</code>");
+                .html("<code class='candidate-print-sequence'></code>");
+            $label.find('code').text(printSeq);
             
             let $questionDiv = $("<div>")
                 .attr("id", `${this.divid}_question_${i}`)
@@ -520,12 +563,14 @@ export default class ProcTimeline extends RunestoneBase {
         const stats = analyzeSequenceList(constraints);
         this.fork_depth = stats.maxDepth;
         this.fork_width = stats.maxWidth;
-        this.tl_height = Math.min(this.tl_width * this.fork_depth / this.fork_width, this.tl_width * 0.6);
-        console.log("Fork depth is", this.fork_depth, "and fork width is", this.fork_width, "and tl_height is", this.tl_height);
+        this.tl_height = this.fork_width === 0 ? this.tl_width * 0.6 : 
+            Math.min(this.tl_width * this.fork_depth / this.fork_width, this.tl_width * 0.6);
+        // Debug info for timeline dimensions
+        // console.log("Fork depth is", this.fork_depth, "and fork width is", this.fork_width, "and tl_height is", this.tl_height);
         this.margin = { top: 20, right: 20, bottom: 20, left: 20 };
         const traceArray = [];
         const extra_trace = { value: "" };
-        const refreshCode = () => console.log("Refreshed");
+        // const refreshCode = () => console.log("Refreshed");
 
         $('#timeline_graph').html(timeline.drawTimeline(constraints, this.tl_width, this.tl_height, this.margin, this.fork_depth, this.fork_width));
         this.bindCodeBlockEvents();
@@ -547,7 +592,7 @@ export default class ProcTimeline extends RunestoneBase {
 
     showHelp() {
         $(this.helpDiv).css("display", "block");
-        this.helpDiv[0].innerHTML = (
+        $(this.helpDiv).html(
             `<strong>Try viewing the process timeline to see full answer.</strong><br><br>
             For reference:
             <ul>
@@ -587,95 +632,7 @@ export default class ProcTimeline extends RunestoneBase {
     }
 
     bindCodeBlockEvents() {
-        // Unbind existing handlers to prevent accumulation
-        $(this.codeDiv).off('mouseover', 'span[data-block]');
-        $(this.codeDiv).off('mouseout', 'span[data-block]');
-        $(this.codeDiv).off('click', 'span[data-block]');
-        
-        // if ($(this.hierarchyTreeDiv).css('display') == 'block' || $(this.timelineDiv).css('display') == 'block') {
-        if ($(this.timelineDiv).css('display') == 'block') {
-            // Highlight on mouseover
-            $(this.codeDiv).on('mouseover', 'span[data-block]', (event) => {
-                const blockId = $(event.target).data('block');
-                $(`span[data-block="${blockId}"]`).addClass('highlight');
-            });
-    
-            // Remove highlight on mouseout
-            $(this.codeDiv).on('mouseout', 'span[data-block]', (event) => {
-                const blockId = $(event.target).data('block');
-                $(`span[data-block="${blockId}"]`).removeClass('highlight');
-            });
-    
-            // Handle clicks for both hierarchy and timeline
-            $(this.codeDiv).on('click', 'span[data-block]', (event) => {
-                const blockId = $(event.target).data('block');
-                
-                // Update hierarchy if visible
-                // if ($(this.hierarchyTreeDiv).css('display') == 'block') {
-                //     const traceRoot = build.traceTree(this.source, blockId);
-                //     console.log("Trace root is", traceRoot, "and blockId is", blockId);
-                //     const { csv: csvTree, valuesList: labels } = build.getTreeCSV(traceRoot);
-                //     this.updateTreeGraph(csvTree, labels);
-                // }
-                
-                // Update timeline if visible
-                if ($(this.timelineDiv).css('display') == 'block') {
-                    const constraints = build.printSequenceConstraints(this.source);
-                    
-                    // Get highlight info for timeline
-                    // const highlightInfo = this.getTimelineHighlightInfo(constraints, blockId); 
-                    // Redraw timeline with highlight
-                    $('#timeline_graph').html(timeline.drawTimeline(
-                        constraints, 
-                        this.tl_width, 
-                        this.tl_height, 
-                        this.margin,
-                        blockId
-                    ));
-                }
-            });
-        }
-    }
-
-    getTimelineHighlightInfo(constraints, blockId) {
-        // Convert blockId to position in sequence
-        const position = parseInt(blockId);
-        
-        let currentPos = 0;
-        let highlightInfo = {
-            nodeId: null,
-            edgeId: null
-        };
-        
-        // Recursively search constraints for matching position
-        const findPosition = (constraint, parentNode = null) => {
-            if (typeof constraint === 'string') {
-                if (currentPos === position) {
-                    highlightInfo.nodeId = currentPos;
-                    return true;
-                }
-                currentPos++;
-                return false;
-            } else {
-                // Check beforeWait, child, afterWait
-                if (findPosition(constraint.beforeWait, currentPos)) {
-                    return true;
-                }
-                
-                if (findPosition(constraint.child, currentPos)) {
-                    return true;
-                }
-                
-                if (findPosition(constraint.afterWait, currentPos)) {
-                    return true;
-                }
-            }
-            
-            return false;
-        };
-        
-        findPosition(constraints);
-        return highlightInfo;
+        // pass
     }
 
     // Storage methods (unused but required)

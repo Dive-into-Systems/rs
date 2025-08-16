@@ -47,6 +47,11 @@ span[data-block]:hover {
   background-color: yellow;
 }
 
+/* Disable hover highlighting for timeline component only */
+.proc-timeline-component span[data-block]:hover {
+  background-color: transparent;
+}
+
 .prompt-div {
   height: auto;
   overflow-y: auto;
