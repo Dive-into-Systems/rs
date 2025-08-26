@@ -392,7 +392,8 @@ export default class cacheinfo extends RunestoneBase {
                 this.question3.style.display = 'block';
                 break;
         }
-        this.answers = [this.block_size_ans, this.entries_ans, this.num_line_ans];
+        // KCW swapped the order of the second two here
+        this.answers = [this.block_size_ans, this.num_line_ans, this.entries_ans];
         this.generatePrompt();
     }
 
