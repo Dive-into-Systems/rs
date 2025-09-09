@@ -447,7 +447,7 @@ export default class CV extends RunestoneBase {
 
         this.wrapperDiv.appendChild(this.instructionNode);
 
-        tabbedHelpBox(2, this.wrapperDiv, ['Toggle Gates', 'Changing Circuits'], ['/source/resources/GIFs/CVToggle.gif', '/source/resources/GIFs/CVChange.gif'], false)
+        tabbedHelpBox(2, this.wrapperDiv, ['Toggle Gates', 'Changing Circuits'], ['external/GIFs/CVToggle.gif', 'external/GIFs/CVChange.gif'], false)
 
 
         const modeDiv= document.createElement('div')

@@ -396,7 +396,7 @@ export default class CircuitTruth extends RunestoneBase {
         container.querySelector(`#${id}_checkButton`).addEventListener('click', this.checkAnswers);
 
         
-        tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['/source/resources/GIFs/FITTMoveGIF.gif', '/source/resources/GIFs/FITTToggleGIF.gif'], true)
+        tabbedHelpBox(2, container, ['Moving Gates', 'Toggling Gates'], ['external/GIFs/FITTMoveGIF.gif', 'external/GIFs/FITTToggleGIF.gif'], true)
 
 
         this.instructionNode = document.createElement("div");

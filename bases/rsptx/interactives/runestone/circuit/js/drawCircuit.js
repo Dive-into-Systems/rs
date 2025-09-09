@@ -360,7 +360,7 @@ export default class DC extends RunestoneBase {
         this.wrapperDiv.appendChild(this.instructionNode);
 
         //This the help box you see on the page
-        tabbedHelpBox(4, this.wrapperDiv, ["Adding Gates", "Making Connections", "Deleting Gates", "Toggling Inputs"], ["/source/resources/GIFs/AddingGIF.gif", "/source/resources/GIFs/ConnectionGIF.gif", "/source/resources/GIFs/DeletePicture.png", "/source/resources/GIFs/TogglingGIF.gif"])
+        tabbedHelpBox(4, this.wrapperDiv, ["Adding Gates", "Making Connections", "Deleting Gates", "Toggling Inputs"], ["external/GIFs/AddingGIF.gif", "external/GIFs/ConnectionGIF.gif", "external/GIFs/DeletePicture.png", "external/GIFs/TogglingGIF.gif"])
 
         const modeDiv= document.createElement('div')
         modeDiv.className = 'outputModeDiv'
