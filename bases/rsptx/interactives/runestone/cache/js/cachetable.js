@@ -47,7 +47,7 @@ export default class cachetable extends RunestoneBase {
             tag: 0,
             lru: 0 
         };
-        
+        console.log("rending cacheTable");
         updateHeight(window, document, this, true);
         this.sendData(this.a2ID("load"));
     }
@@ -630,6 +630,7 @@ export default class cachetable extends RunestoneBase {
         referenceTableNewRow.appendChild(cellCurrRef);
 
         // the second column is the address
+        //Error happenning here
         const curr_address = this.answer_list[curr_ref][0];
         var cellCurrAddr = document.createElement("td");
         cellCurrAddr.textContent = curr_address;
