@@ -995,6 +995,7 @@ export default class cachetable extends RunestoneBase {
         this.generateAnswerInit();
         // this.generateAnswerNext();
         this.storeInitTable();
+        //Source of error is in this.generateAllAnsers
         this.generateAllAnsers();
         this.storeReferenceList();
 
