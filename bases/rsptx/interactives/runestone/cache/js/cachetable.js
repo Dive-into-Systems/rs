@@ -630,7 +630,6 @@ export default class cachetable extends RunestoneBase {
         referenceTableNewRow.appendChild(cellCurrRef);
 
         // the second column is the address
-        //Error happenning here
         const curr_address = this.answer_list[curr_ref][0];
         var cellCurrAddr = document.createElement("td");
         cellCurrAddr.textContent = curr_address;
@@ -995,7 +994,6 @@ export default class cachetable extends RunestoneBase {
         this.generateAnswerInit();
         // this.generateAnswerNext();
         this.storeInitTable();
-        //Source of error is in this.generateAllAnsers
         this.generateAllAnsers();
         this.storeReferenceList();
 
