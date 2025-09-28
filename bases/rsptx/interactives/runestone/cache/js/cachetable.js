@@ -1075,9 +1075,9 @@ export default class cachetable extends RunestoneBase {
 
     generateAnswerInit() {
         if (this.preset) {
-            this.numRefs = this.referenceList.length;
-        } else {
             this.numRefs = this.genNumRefs;
+        } else {
+            this.numRefs = this.numRefs;
         }
         this.generateAnswerParams();
         // Check if we have a preset cache table, otherwise generate one
