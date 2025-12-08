@@ -176,26 +176,26 @@ export default class CV extends RunestoneBase {
         else if (this.modeOutput == 2){
             //RS latch             
             this.startJson = `
-                { "class": "GraphLinksModel",
-                "isReadOnly": true,
-                "linkFromPortIdProperty": "fromPort",
-                "linkToPortIdProperty": "toPort",
-                "nodeDataArray": [
-                {"category":"input","isOn":true,"key":-1,"loc":"-755 -330","text":"R"},
-                {"category":"input","isOn":true,"key":-2,"loc":"-756 -200","text":"S"},
-                {"category":"nand","key":-3,"loc":"-544 -320"},
-                {"category":"nand","key":-4,"loc":"-610 -205"},
-                {"category":"output","key":-5,"loc":"-355 -360","isOn":false,"text":"X"},
-                {"category":"output","key":-6,"loc":"-358 -222","isOn":true,"text":"Y"}
-                ],
-                "linkDataArray": [
-                {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
-                {"from":-2,"to":-4,"fromPort":"","toPort":"in2"},
-                {"from":-3,"to":-4,"fromPort":"out","toPort":"in1"},
-                {"from":-4,"to":-3,"fromPort":"out","toPort":"in2"},
-                {"from":-4,"to":-6,"fromPort":"out","toPort":""},
-                {"from":-3,"to":-5,"fromPort":"out","toPort":""}
-                ]}
+                    { "class": "GraphLinksModel",
+                    "isReadOnly": true,
+                    "linkFromPortIdProperty": "fromPort",
+                    "linkToPortIdProperty": "toPort",
+                    "nodeDataArray": [
+                    {"category":"input","isOn":true,"key":-1,"loc":"-785 -319","text":"S"},
+                    {"category":"input","isOn":true,"key":-2,"loc":"-786 -199","text":"R"},
+                    {"category":"nand","key":-3,"loc":"-672 -308"},
+                    {"category":"nand","key":-4,"loc":"-650 -204"},
+                    {"category":"output","key":-5,"loc":"-566 -307","isOn":true,"text":": Q (stored value)"},
+                    {"category":"output","key":-6,"loc":"-572 -203","isOn":false,"text":": ~Q"}
+                    ],
+                    "linkDataArray": [
+                    {"from":-1,"to":-3,"fromPort":"","toPort":"in1"},
+                    {"from":-2,"to":-4,"fromPort":"","toPort":"in2"},
+                    {"from":-3,"to":-4,"fromPort":"out","toPort":"in1"},
+                    {"from":-4,"to":-3,"fromPort":"out","toPort":"in2"},
+                    {"from":-4,"to":-6,"fromPort":"out","toPort":""},
+                    {"from":-3,"to":-5,"fromPort":"out","toPort":""}
+                    ]}
             `
         }
         else{
@@ -442,7 +442,18 @@ export default class CV extends RunestoneBase {
 
         this.instructionNode = document.createElement("div");
         this.instructionNode.style.paddingBottom = "2px";
-        this.instructionNode.innerHTML = "<span style='font-weight:bold'><u>Instructions</u></span>: Draw a circuit that produces the truth table below. "
+
+        let circuitType = "Multiplexer"
+        if(this.modeOutput == 1){
+            circuitType = "Multiplexer"
+        }
+        else if(this.modeOutput == 2){
+            circuitType = "R-S Latch"
+        }
+        else{
+            circuitType = "Gated D-Latch"
+        }
+        this.instructionNode.innerHTML = `<span style='font-weight:bold'><u>Instructions</u></span>: Trace through the ${circuitType} below `
 
 
         this.wrapperDiv.appendChild(this.instructionNode);
@@ -467,7 +478,7 @@ export default class CV extends RunestoneBase {
 
         this.mode2Option = document.createElement("option")
         this.mode2Option.value = "2"
-        this.mode2Option.textContent = "RS Latch"
+        this.mode2Option.textContent = "R-S Latch"
 
         this.mode3Option = document.createElement("option")
         this.mode3Option.value = "3"
