@@ -645,7 +645,7 @@ export default class DC extends RunestoneBase {
         loadScript("https://cdn.jsdelivr.net/npm/gojs/release/go-debug.js", function() {
             loadScript("https://gojs.net/latest/extensions/PortShiftingTool.js", function() {
                 go.Diagram.licenseKey =
-"2b8647e1b2604fc702d90676423d6bbc5cf07d34cd960ef6590015f5ec5b6f40729be17906dad8c4d3f04df9487ac6d9ddc26c2ac31b003fe165d2df10f096ffb26424b2165b47daa40321c390f22ca0a97078f7cbb374a3dd7ed9f0effbc5985abcf2d740c95cb3792d0635066cbf4ce2abdf7bab52cd5d7b6e99a4fef6a856fa";
+"2bf013e7ba6642c702da712246386bee1bb37e3b9a831bf65a0546f4ff186e407299e97902d4df90d0f14fab132ec4d8d5c66c7b904a053be034d08814e782ffe63670e10618418ef75426c1cafa7ea1fc7f71fbcab376f7d27189fbedabc29b5abdf1d01bcc0abd7d790539552ca71ae2fbdd2beb12ca1a3b6b98f5aae8bd59fa";
                 import('./figures.js').then(()=>self.init())
             });
         });
