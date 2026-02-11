@@ -52,7 +52,7 @@ export default class vmtable extends RunestoneBase {
     ===========================================*/
     createVmtableElement() {
         this.feedbackDiv = document.createElement("div");
-
+        
         // initialize parameters
         this.initParams();
         this.renderVmtableMain();
@@ -896,6 +896,8 @@ export default class vmtable extends RunestoneBase {
                     // render feedback that congrats and this is all of the question
                     this.disableAnswerTableCurrentRow(this.curr_ref-1);
                     this.completed = true;
+                    this.feedbackDiv.innerHTML = "Congratulations! You have completed all questions.";
+                    this.feedbackDiv.className = "alert alert-success";
                 }
             }
 
@@ -990,7 +992,7 @@ export default class vmtable extends RunestoneBase {
         this.feedbackDiv.id = this.divid + "_feedback";
         this.containerDiv.appendChild(document.createElement("br"));
         this.containerDiv.appendChild(this.feedbackDiv);
-        this.feedbackWrongAnswer = "";
+        this.feedbackWrongAnswer = "Testing Answer Feedback Render";
     }
 
     // prepopulate the page table 
@@ -1420,6 +1422,8 @@ export default class vmtable extends RunestoneBase {
         this.correct = false;
         const curr_ref = this.curr_ref;
         const curr_ref_str = this.getCurrRefStr();
+        this.feedbackDiv.style.display = '';
+        
         try {
 
             this.logAnswers = [this.hit_miss_list[curr_ref], ...this.answer_list[curr_ref].slice(2,)]
@@ -1443,31 +1447,41 @@ export default class vmtable extends RunestoneBase {
             this.logUserAnswers = [response_hit_miss, response_index , response_valid, response_dirty, response_frame, response_evicted]
 
 
-
-            if ( curr_answers[ 2 ].toString() != response_index ) {
-                this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_index");
-                return;
-            }
-
             if ( this.hit_miss_list[ curr_ref ] != response_hit_miss  ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_HM");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
                 return;
             }
-            
+            if ( curr_answers[ 2 ].toString() != response_index ) {
+                this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_index");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
+                return;
+            }
+
             if ( curr_answers[ 3 ].toString() != response_valid ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_valid");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
                 return;
             }
             if ( curr_answers[ 4 ].toString() != response_dirty ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_dirty");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
                 return;
             }
             if ( curr_answers[ 5 ].toString() != response_frame ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_frame");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
                 return;
             }       
             if ( curr_answers[ 1 ].toString() != response_evicted ) {
                 this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_evicted");
+                this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                this.feedbackDiv.className = "alert alert-danger";
                 return;
             } else if ( response_evicted != "-1" ) {
                 const response_dirty2 =
@@ -1476,16 +1490,24 @@ export default class vmtable extends RunestoneBase {
                     document.querySelector('input[name="Valid2' + curr_ref_str + '"]').value;
                 if ( "0" != response_valid2 ) {
                     this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_evicted_valid");
+                    this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                    this.feedbackDiv.className = "alert alert-danger";
                     return;
                 }
                 if ( "0" != response_dirty2 ) {
                     this.feedbackWrongAnswer = $.i18n("msg_vmtable_wrong_evicted_dirty");
+                    this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+                    this.feedbackDiv.className = "alert alert-danger";  
                     return;
                 }
-            } 
+            }
+            this.feedbackDiv.innerHTML = $.i18n("msg_vmtable_correct");
+            this.feedbackDiv.className = "alert alert-success";
             this.correct = true;
         } catch (error) {
             this.feedbackWrongAnswer = $.i18n("msg_vmtable_incomplete_answer");
+            this.feedbackDiv.innerHTML = this.feedbackWrongAnswer;
+            this.feedbackDiv.className = "alert alert-danger";
             this.correct = false;
         }
     }
